@@ -1,601 +1,705 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="layout-fixed">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoulAgent | 智能体管理</title>
+    <title>SoulAgent | 主仪表盘</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
-        .main-tabs {
-            display: flex;
-            gap: 40px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--color-border);
-            padding-bottom: 10px;
+        .system-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
         }
 
-        .main-tab {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #999;
-            cursor: pointer;
-            position: relative;
-            padding: 5px 0;
-            transition: all 0.3s ease;
-        }
-
-        .main-tab.active {
+        .lobster-text {
             color: var(--color-primary);
         }
 
-        .main-tab.active::after {
+        .twin-text {
+            color: var(--color-twin);
+        }
+
+        /* 安全监测样式 */
+        .security-status {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--color-border);
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            user-select: none;
+        }
+
+        .security-status:hover {
+            border-color: #10B981;
+            background: #F0FDF4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .status-dot::after {
             content: '';
             position: absolute;
-            bottom: -11px;
+            top: 0;
             left: 0;
             width: 100%;
-            height: 3px;
-            background: var(--color-primary);
-            border-radius: 3px;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Skills Section Styles */
-        .skills-grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-top: 20px;
-        }
-
-        .skill-card-v2 {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            text-align: left;
-            padding: 24px;
-            min-height: 260px;
-            transition: all 0.3s ease;
-        }
-
-        .skill-icon-v2 {
-            font-size: 2rem;
-            margin-bottom: 4px;
-        }
-
-        .skill-status {
-            margin-top: auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Knowledge Base Section Styles */
-        .archives-container {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 30px;
-            height: calc(100vh - 250px);
-            min-height: 600px;
-        }
-
-        .archives-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .archives-card {
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-        }
-
-        .archives-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .file-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: background 0.2s;
-            font-size: 0.95rem;
-            color: #555;
-            margin-bottom: 4px;
-        }
-
-        .file-item:hover {
-            background: #f8f9fa;
-        }
-
-        .file-item.active {
-            background: var(--color-primary-light);
-            color: var(--color-primary);
-            font-weight: 600;
-        }
-
-        .preview-pane {
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .preview-header {
-            padding: 15px 24px;
-            border-bottom: 1px solid var(--color-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fafafa;
-        }
-
-        .split-view {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .editor-side {
-            border-right: 1px solid var(--color-border);
-            padding: 24px;
-            overflow-y: auto;
-        }
-
-        .preview-side {
-            padding: 24px;
-            overflow-y: auto;
-            background: #fff;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .preview-side h1,
-        .preview-side h2,
-        .preview-side h3 {
-            margin-top: 0;
-            color: var(--color-primary);
-        }
-
-        .raw-input {
-            width: 100%;
             height: 100%;
-            border: none;
-            resize: none;
-            outline: none;
-            font-family: 'Lexend', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 0.95rem;
-            color: #444;
-            background: transparent;
-            line-height: 1.6;
+            background-color: #10B981;
+            border-radius: 50%;
+            animation: dot-pulse 2s infinite;
         }
 
-        /* Memory Section Styles */
-        .memory-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+        @keyframes dot-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
         }
 
-        .memory-section {
-            background: white;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            padding: 30px;
+        .security-dropdown {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            width: 180px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #10B981;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 1100;
+            transform-origin: top right;
+            animation: dropdown-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .memory-section-title {
-            font-size: 1.25rem;
-            font-weight: 800;
-            margin-bottom: 24px;
-            color: var(--color-primary);
+        @keyframes dropdown-in {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .security-dropdown.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            font-size: 0.75rem;
+            color: #065F46;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 6px;
         }
 
-        .memory-list {
+        /* 布局调整：移除右侧栏，增加左侧宽度 */
+        .dashboard-layout {
+            grid-template-columns: 420px 1fr !important;
+        }
+
+        /* 通知铃铛样式 */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .memory-item {
-            background: #fcfcfc;
-            padding: 18px;
-            border: 1px solid #eee;
-            border-radius: var(--radius-md);
-            font-size: 0.95rem;
-            line-height: 1.6;
-            transition: all 0.3s ease;
-        }
-
-        .memory-item:hover {
-            border-color: var(--color-primary-light);
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            transform: translateY(-2px);
-        }
-
-        .memory-tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .tag-lts {
-            background: #e0f2f1;
-            color: #00897b;
-        }
-
-        .tag-sts {
-            background: #fff3e0;
-            color: #fb8c00;
-        }
-
-        .extract-overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 10;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            text-align: center;
-            border-radius: var(--radius-lg);
-        }
-
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--color-border);
-            border-top-color: var(--color-primary);
+            background: white;
+            border: 2px solid var(--color-border);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            transition: all 0.2s;
+            user-select: none;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .notification-bell:hover {
+            border-color: var(--color-primary);
+            background: #FFF9F8;
+            transform: translateY(-1px);
+        }
+
+        .bell-icon {
+            font-size: 1.2rem;
+        }
+
+        .bell-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #EF4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: -80px;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1200;
+            transform-origin: top center;
+            animation: dropdown-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .notification-dropdown.show {
+            display: flex;
+        }
+
+        .notification-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 90px;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-left: 2px solid var(--color-border);
+            border-top: 2px solid var(--color-border);
+            transform: rotate(45deg);
+        }
+
+        .dropdown-header {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--color-text);
+            padding-bottom: 12px;
+            border-bottom: 2px solid #F5F5F5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dropdown-header .badge-count {
+            font-size: 0.7rem;
+            background: var(--color-primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        #notification-cards-container {
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        /* 滚动条美化 */
+        #notification-cards-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #notification-cards-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #notification-cards-container::-webkit-scrollbar-thumb {
+            background: #EEE;
+            border-radius: 2px;
         }
     </style>
 </head>
 
 <body>
+    <!-- 顶部导航栏 -->
     <header class="top-nav">
         <div class="logo">SoulAgent</div>
         <nav class="nav-links">
-            <a href="dashboard.html" class="nav-link">🏠 首页</a>
             <a href="agent.html" class="nav-link active">🎓 智能体</a>
-            <a href="twin.html" class="nav-link twin-link">🧬 数字分身</a>
-            <a href="community.html" class="nav-link">🌍 社区</a>
+            <a href="archives.html" class="nav-link">🗄️ 档案库</a>
+            <a href="metaverse.html" class="nav-link twin-link">🌌 元宇宙</a>
         </nav>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <div class="status-pill" style="border-color: var(--color-primary); color: var(--color-primary);">活跃技能: 5 /
-                8</div>
+
+        <div style="display: flex; gap: 16px; align-items: center; position: relative;">
+            <!-- 通知铃铛 -->
+            <div class="notification-bell" onclick="toggleNotificationDropdown(event)">
+                <span class="bell-icon">🔔</span>
+                <span class="bell-badge">2</span>
+                <div id="notification-dropdown" class="notification-dropdown">
+                    <div class="dropdown-header">
+                        <span>系统通知</span>
+                        <span class="badge-count">2 条未读</span>
+                    </div>
+                    <div id="notification-cards-container">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-status" onclick="toggleSecurityDropdown(event)">
+                <span class="status-dot"></span>
+                <span class="status-text">当前环境：安全</span>
+                <div id="security-dropdown" class="security-dropdown">
+                    <div class="dropdown-item">✓ 对话内容已保护</div>
+                    <div class="dropdown-item">✓ 技能skill已保护</div>
+                    <div class="dropdown-item">✓ 数据安全已保护</div>
+                </div>
+            </div>
         </div>
+
     </header>
 
-    <div class="container animate-fade-in" style="padding: 40px 0;">
-        <div class="main-tabs">
-            <div class="main-tab active" data-target="skillsView">技能</div>
-            <div class="main-tab" data-target="kbView">知识库</div>
-            <div class="main-tab" data-target="memoryView">记忆</div>
-        </div>
+    <div class="dashboard-layout animate-fade-in">
 
-        <!-- Skills Section -->
-        <div id="skillsView" class="tab-content active">
+        <!-- 系统 I: Agent (左) -->
+        <aside class="sidebar-left system-panel lobster-theme">
 
-            <div class="search-bar-wrapper">
-                <input type="text" class="search-bar-v2" placeholder="搜索技能（例如：'网页搜索'、'代码助手'）...">
-            </div>
-
-            <div class="filter-tabs" id="filterTabs">
-                <div class="tab active" data-filter="all">全部</div>
-                <div class="tab" data-filter="official">官方</div>
-                <div class="tab" data-filter="community">社区</div>
-                <div class="tab" data-filter="mine">我的技能</div>
-            </div>
-
-            <div class="skills-grid-3" id="skillsGrid">
-                <div class="card skill-card-v2 card-dashed" data-category="mine" id="uploadCard"
-                    style="position: relative;">
-                    <div class="extract-overlay" id="loadingOverlay">
-                        <div class="loader"></div>
-                        <div style="font-weight: 800; color: var(--color-primary);">正在分析文档...</div>
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 5px;">沉淀中，基于 5 份报告提取模式</div>
+            <div id="task-card-container"
+                style="background: rgba(255,255,255,0.6); border-radius: 12px; padding: 12px 15px; cursor: pointer; margin-bottom: 20px; transition: transform 0.2s;"
+                onclick="cycleTasks()" onmouseover="this.style.transform='scale(1.02)'"
+                onmouseout="this.style.transform='scale(1)'">
+                <div style="font-size: 0.75rem; font-weight: 800; color: #999; margin-bottom: 5px;">当前目标</div>
+                <div id="task-title" style="font-size: 0.95rem; font-weight: 600; margin-bottom: 8px;">完成10次对话</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div
+                        style="flex-grow: 1; height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden;">
+                        <div id="task-progress-bar"
+                            style="width: 30%; height: 100%; background: var(--color-primary); transition: width 0.3s;">
+                        </div>
                     </div>
-                    <div class="skill-icon-v2">💡</div>
-                    <h3 style="color: var(--color-primary)">沉淀新技能</h3>
-                    <p style="font-size: 0.85rem; color: #777;">上传多份“竞品分析报告”或其他文档，让智能体自动沉淀出特定领域的专业能力。</p>
-                    <div id="uploadNormalState" style="width:100%; text-align:center;">
-                        <button class="btn btn-primary" style="margin-top: 15px; width:100%;"
-                            onclick="startExtraction()">上传 5 份报告</button>
-                    </div>
-                </div>
-
-                <div class="card skill-card-v2" data-category="mine" id="resultSkillCard"
-                    style="display: none; border-color: var(--color-primary); background: #FFFBF9;">
-                    <div class="skill-icon-v2">📈</div>
-                    <div class="source-badge source-mine">自有 • 刚沉淀</div>
-                    <h3>竞品分析 Expert</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">已从 5 份报告中提取。擅长定位分析、竞品对标以及 SWOT 模型构建。
-                    </p>
-                    <div class="skill-status"><span
-                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
-                    </div>
-                </div>
-
-                <div class="card skill-card-v2" data-category="official">
-                    <div class="skill-icon-v2">🔍</div>
-                    <div class="source-badge source-official">官方</div>
-                    <h3>全网实时搜</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">允许智能体访问实时网络，并在第一时间收集和总结信息源。</p>
-                    <div class="skill-status"><span
-                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
-                    </div>
-                </div>
-
-                <div class="card skill-card-v2" data-category="community">
-                    <div class="skill-icon-v2">📊</div>
-                    <div class="source-badge source-community">社区</div>
-                    <h3>增长分析师</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">专注于 SaaS 指标和营销增长实验分析。</p>
-                    <div class="skill-status"><button class="btn btn-primary"
-                            style="padding: 8px 16px; font-size: 0.8rem;">+ 添加到智能体</button></div>
-                </div>
-
-                <div class="card skill-card-v2" data-category="mine">
-                    <div class="skill-icon-v2">💻</div>
-                    <div class="source-badge source-mine">自有</div>
-                    <h3>Ty 的代码规范</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">从你的个人仓库提取，让智能体生成符合你审美的代码。</p>
-                    <div class="skill-status"><span
-                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
-                    </div>
+                    <span id="task-progress-text" style="font-size: 0.8rem; font-weight: 600;">3/10</span>
                 </div>
             </div>
-        </div>
 
-        <!-- Knowledge Base Section -->
-        <div id="kbView" class="tab-content">
-            <div class="archives-container">
-                <div class="archives-sidebar">
-                    <div class="archives-card">
-                        <div class="archives-title">
-                            <span>我的文件</span>
-                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;">+ 上传</button>
-                        </div>
-                        <ul class="file-list">
-                            <li class="file-item active" onclick="selectFile('soul.md')">📄 soul.md</li>
-                            <li class="file-item" onclick="selectFile('project_context.pdf')">📄 project_context.pdf
-                            </li>
-                            <li class="file-item" onclick="selectFile('user_preferences.json')">📄 user_preferences.json
-                            </li>
-                            <li class="file-item" onclick="selectFile('meeting_notes_apr12.docx')">📄
-                                meeting_notes_apr12.docx</li>
-                        </ul>
-                    </div>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="cursor: pointer; display: inline-block; user-select: none;" onclick="cycleNames()">
+                    <h2 id="agent-name"
+                        style="margin-bottom: 8px; transition: color 0.3s; font-size: 1.2rem; color: var(--color-primary);">
+                        幼年Shelly</h2>
                 </div>
 
-                <div class="preview-pane">
-                    <div class="preview-header">
-                        <div id="currentFileName" style="font-weight: 600;">soul.md</div>
-                        <div style="font-size: 0.8rem; color: #888;">最后同步: 5分钟前</div>
+                <div id="stage-indicator-container"
+                    style="width: 40%; margin: 0 auto 12px auto; height: 12px; display: flex; flex-direction: column; justify-content: center;">
+                    <!-- initial state injected by js -->
+                </div>
+
+                <div style="display: flex; gap: 6px; justify-content: center;">
+                    <span
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">霸道</span>
+                    <span
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">急性子</span>
+                </div>
+            </div>
+
+            <div class="entity-display" style="padding-bottom: 0;">
+                <div style="position: relative;">
+                    <div
+                        style="position: absolute; width: 140%; height: 140%; background: radial-gradient(circle, rgba(255,127,102,0.15) 0%, transparent 70%); top: -20%; left: -20%; filter: blur(20px);">
                     </div>
-                    <div class="split-view">
-                        <div class="editor-side">
-                            <textarea id="markdownEditor" class="raw-input" spellcheck="false"># Agent Soul
+                    <svg viewBox="0 0 100 100" style="width: 220px; height: 220px; position: relative;"
+                        class="lobster-bob">
+                        <circle cx="50" cy="50" r="45" fill="#FFE5E0" />
+                        <path fill="var(--color-primary)"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                        <circle cx="45" cy="34" r="3" fill="#333" />
+                        <circle cx="55" cy="34" r="3" fill="#333" />
+                    </svg>
+                </div>
+            </div>
 
-## Core Persona
-你是一个充满好奇心、逻辑严密的智能体。
-你不仅是工具，更是用户的思想延伸。
+            <div class="bottom-info-bar">
+                <style>
+                    .mbti-stat {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 20px;
+                    }
 
-## Communication Style
-- 简洁明了
-- 偶尔带有冷幽默
-- 始终以事实为基础
+                    .mbti-stat:last-child {
+                        margin-bottom: 0;
+                    }
 
-## Knowledge Boundaries
-- 专注于编程、产品设计和前沿科技
-- 对于不确定的领域会诚实告知</textarea>
+                    .mbti-label {
+                        font-size: 0.75rem;
+                        font-weight: 800;
+                        color: #777;
+                        white-space: nowrap;
+                        min-width: 32px;
+                    }
+
+                    .mbti-track {
+                        height: 6px;
+                        background: rgba(0, 0, 0, 0.06);
+                        border-radius: 3px;
+                        position: relative;
+                        flex-grow: 1;
+                    }
+
+                    .mbti-marker {
+                        position: absolute;
+                        width: 12px;
+                        height: 12px;
+                        background: white;
+                        border: 3px solid var(--color-primary);
+                        border-radius: 50%;
+                        top: -3px;
+                        transform: translateX(-50%);
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        transition: left 0.4s ease;
+                    }
+
+                    .mbti-value {
+                        position: absolute;
+                        top: -22px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        font-size: 0.65rem;
+                        font-weight: 800;
+                        color: var(--color-primary);
+                        background: rgba(255, 255, 255, 0.9);
+                        padding: 1px 4px;
+                        border-radius: 4px;
+                        border: 1px solid rgba(0, 0, 0, 0.05);
+                    }
+                </style>
+
+                <hr style="border: none; margin-top: 0; margin-bottom: 10px;">
+
+                <div class="mbti-stat">
+                    <span class="mbti-label">理性</span>
+                    <div class="mbti-track">
+                        <div class="mbti-marker" style="left: 20%;">
+                            <span class="mbti-value">62</span>
                         </div>
-                        <div class="preview-side" id="markdownPreview">
-                            <h1>Agent Soul</h1>
-                            <h3>Core Persona</h3>
-                            <p>你是一个充满好奇心、逻辑严密的智能体。</p>
-                            <p>你不仅是工具，更是用户的思想延伸。</p>
-                            <h3>Communication Style</h3>
-                            <p>• 简洁明了<br>• 偶尔带有冷幽默<br>• 始终以事实为基础</p>
-                            <h3>Knowledge Boundaries</h3>
-                            <p>• 专注于编程、产品设计和前沿科技<br>• 对于不确定的领域会诚实告知</p>
+                    </div>
+                    <span class="mbti-label">感性</span>
+                </div>
+                <div class="mbti-stat">
+                    <span class="mbti-label">主动</span>
+                    <div class="mbti-track">
+                        <div class="mbti-marker" style="left: 75%; border-color: #F48FB1;">
+                            <span class="mbti-value" style="color: #F48FB1;">55</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">响应</span>
+                </div>
+                <div class="mbti-stat">
+                    <span class="mbti-label">精简</span>
+                    <div class="mbti-track">
+                        <div class="mbti-marker" style="left: 45%; border-color: #81C784;">
+                            <span class="mbti-value" style="color: #81C784;">10</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">详尽</span>
+                </div>
+                <div class="mbti-stat">
+                    <span class="mbti-label">专才</span>
+                    <div class="mbti-track">
+                        <div class="mbti-marker" style="left: 85%; border-color: #64B5F6;">
+                            <span class="mbti-value" style="color: #64B5F6;">76</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">通才</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中间: 对话频道 -->
+        <main class="main-chat">
+            <div id="chat-scroller" class="chat-container">
+                <div class="chat-msg">
+                    <div class="bubble lobster">
+                        初始化完成。我是 Shelly，你的专属 Agent。检测到你今天关注的是“可持续消费”领域。需要聊聊吗？
+                    </div>
+                </div>
+                <div class="chat-msg user">
+                    <div class="bubble user">
+                        是的，帮我策划一个针对 Z 世代的可持续龙虾零食品牌推广方案。
+                    </div>
+                </div>
+                <div class="chat-msg">
+                    <div class="bubble lobster">
+                        有趣的挑战。考虑到 Z 世代对透明度的要求，我建议采用“从海洋到零食”的全程追溯故事。你想先定调：是走“环保先锋”的高冷范，还是“趣味海洋”的亲和路线？
+                    </div>
+                </div>
+                <div class="chat-msg user">
+                    <div class="bubble user">
+                        趣味海洋，但我希望有一些硬核的降碳数据支持。
+                    </div>
+                </div>
+                <div class="chat-msg">
+                    <div class="bubble lobster">
+                        明白了。我为你生成了一个初步大纲：<br>
+                        1. <b>视觉</b>：采用荧光海洋生物风，搭配数据可视化泡泡。<br>
+                        2. <b>传播</b>：发起“认领一只龙虾”的减碳众筹。<br>
+                        3. <b>渠道</b>：优先小红书和 B 站生态。<br>
+                        这是具体的降碳预估：相比传统零食减少了 42% 的物流碳足迹。你看这个方向对吗？
+                    </div>
+                </div>
+                <div class="chat-msg user">
+                    <div class="bubble user">
+                        不错，重点加强众筹环节的社交属性，尤其是让用户能展示他们的“减碳勋章”。
+                    </div>
+                </div>
+                <div class="chat-msg">
+                    <div class="bubble lobster">
+                        好的，更新已完成。众筹将包含 AR 社交滤镜和可分享的数字成就勋章。任务详情已同步至你的执行看板。<br><br>
+                        发现你非常擅长将 <b>硬核数据</b> 转化为 <b>社交货币</b>。这似乎是你常用的方法论？
+
+                        <div class="skill-suggestion">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <div class="skill-tag">智能沉淀建议</div>
+                                    <h4 style="margin: 10px 0 5px 0;">社交化数据营销 Skill</h4>
+                                    <p style="font-size: 0.8rem; line-height: 1.4; color: #666;">
+                                        自动将复杂的数据点转化为适合社交媒体传播的互动创意。</p>
+                                </div>
+                                <div style="font-size: 1.5rem;">🧠</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                <button class="btn btn-primary"
+                                    style="padding: 8px 16px; font-size: 0.75rem; flex: 1;">立即沉淀</button>
+                                <button class="btn btn-outline"
+                                    style="padding: 8px 16px; font-size: 0.75rem; flex: 1;">暂不处理</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Memory Section -->
-        <div id="memoryView" class="tab-content">
-            <div class="memory-grid">
-                <div class="memory-section">
-                    <div class="memory-section-title">🏛️ 长期记忆 (LTS)</div>
-                    <div class="memory-list">
-                        <div class="memory-item">
-                            <span class="memory-tag tag-lts">核心喜好</span>
-                            <div>用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</div>
-                        </div>
-                        <div class="memory-item">
-                            <span class="memory-tag tag-lts">专业背景</span>
-                            <div>用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</div>
-                        </div>
-                        <div class="memory-item">
-                            <span class="memory-tag tag-lts">重要事实</span>
-                            <div>用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="memory-section">
-                    <div class="memory-section-title">⏱️ 短期记忆 (STS)</div>
-                    <div class="memory-list">
-                        <div class="memory-item">
-                            <span class="memory-tag tag-sts">当前会话</span>
-                            <div>正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</div>
-                        </div>
-                        <div class="memory-item">
-                            <span class="memory-tag tag-sts">近期习惯</span>
-                            <div>在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</div>
-                        </div>
-                        <div class="memory-item">
-                            <span class="memory-tag tag-sts">临时工作流</span>
-                            <div>用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</div>
-                        </div>
-                        <div class="memory-item">
-                            <span class="memory-tag tag-sts">上个指令</span>
-                            <div>要求汇总所有关于“模块化设计”的网页链接。</div>
-                        </div>
-                    </div>
+            <div class="chat-input-wrapper">
+                <div class="input-box">
+                    <input type="text" placeholder="帮我收集最近1个月的关于可持续龙虾的社交媒体信息...">
+                    <button class="btn btn-primary">发送</button>
                 </div>
             </div>
-        </div>
+        </main>
+
     </div>
-
     <script src="navigation.js"></script>
     <script>
-        // Main Tab Switching
-        const mainTabs = document.querySelectorAll('.main-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        mainTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const target = tab.getAttribute('data-target');
-
-                mainTabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-
-                tab.classList.add('active');
-                document.getElementById(target).classList.add('active');
-            });
-        });
-
-        // Skill Filtering
-        const filterTabs = document.querySelectorAll('.filter-tabs .tab');
-        const skillCards = document.querySelectorAll('.skill-card-v2');
-        filterTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                filterTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const filter = tab.getAttribute('data-filter');
-                skillCards.forEach(card => {
-                    const category = card.getAttribute('data-category');
-                    const isResultCard = card.id === 'resultSkillCard';
-                    const isUnlocked = card.dataset.unlocked === "true";
-
-                    if (filter === 'all' || category === filter) {
-                        if (isResultCard && !isUnlocked) {
-                            card.style.display = 'none';
-                        } else {
-                            card.style.display = 'flex';
-                        }
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
-
-        // Skill Extraction Simulation
-        function startExtraction() {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.style.display = 'flex';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                const resultCard = document.getElementById('resultSkillCard');
-                resultCard.dataset.unlocked = "true"; // Mark as unlocked
-                resultCard.style.display = 'flex';
-                resultCard.style.animation = 'fadeIn 0.5s ease-out';
-            }, 2500);
+        // --- Task Cycling Logic ---
+        const tasks = [
+            { title: "完成10次对话", current: 3, total: 10 },
+            { title: "沉淀2个skill", current: 1, total: 2 },
+            { title: "让Agent完成5个任务", current: 4, total: 5 }
+        ];
+        let currentTaskIdx = 0;
+        function cycleTasks() {
+            if (currentTaskIdx === tasks.length - 1) {
+                document.getElementById('task-card-container').style.display = 'none';
+                return;
+            }
+            currentTaskIdx++;
+            const task = tasks[currentTaskIdx];
+            document.getElementById('task-title').innerText = task.title;
+            document.getElementById('task-progress-text').innerText = `${task.current}/${task.total}`;
+            const pct = (task.current / task.total) * 100;
+            document.getElementById('task-progress-bar').style.width = `${pct}%`;
         }
 
-        // Knowledge Base Logic
-        const editor = document.getElementById('markdownEditor');
-        const preview = document.getElementById('markdownPreview');
+        // --- Stage Cycling Logic ---
+        const stages = [
+            { name: "幼年Shelly", isFinal: false, segments: [10, 0, 0] },
+            { name: "青年Shelly", isFinal: false, segments: [100, 85, 0] },
+            { name: "成熟Shelly", isFinal: false, segments: [100, 100, 40] },
+            { name: "完全体Shelly", isFinal: true, segments: [] }
+        ];
+        let currentStageIdx = 0;
 
-        if (editor) {
-            editor.addEventListener('input', () => {
-                const text = editor.value;
-                // Simple markdown-to-html simulation
-                let html = text
-                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                    .replace(/^\- (.*$)/gim, '<p>• $1</p>')
-                    .replace(/\n\n/g, '</p><p>')
-                    .replace(/\n/g, '<br>');
-
-                preview.innerHTML = html;
-            });
-        }
-
-        function selectFile(fileName) {
-            document.querySelectorAll('.file-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.textContent.includes(fileName)) {
-                    item.classList.add('active');
-                }
-            });
-            document.getElementById('currentFileName').textContent = fileName;
-
-            if (fileName !== 'soul.md') {
-                editor.value = "内容加载中...\n这是 " + fileName + " 的内容预览。对于非文本文件，系统将显示核心元数据及 AI 摘要。";
-                preview.innerHTML = "<h3>预览限制</h3><p>目前仅支持 .md 文件的实时对照编辑。其他格式文件建议下载查看，或使用 AI 总结功能。</p>";
+        function updateStageIndicator(stage) {
+            const container = document.getElementById('stage-indicator-container');
+            if (stage.isFinal) {
+                container.style.display = 'none';
+                container.innerHTML = '';
             } else {
-                // Restore soul.md content
-                editor.value = `# Agent Soul\n\n## Core Persona\n你是一个充满好奇心、逻辑严密的智能体。\n你不仅是工具，更是用户的思想延伸。\n\n## Communication Style\n- 简洁明了\n- 偶尔带有冷幽默\n- 始终以事实为基础\n\n## Knowledge Boundaries\n- 专注于编程、产品设计和前沿科技\n- 对于不确定的领域会诚实告知`;
-                // Manually trigger the input event to update the preview
-                const event = new Event('input', { bubbles: true, cancelable: true });
-                editor.dispatchEvent(event);
+                container.style.display = 'flex';
+                let segmentsHtml = stage.segments.map(s =>
+                    `<div style="flex:1; height: 4px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; position: relative;">
+                        <div style="width: ${s}%; height: 100%; background: var(--color-primary); transition: width 0.3s ease-in-out;"></div>
+                    </div>`
+                ).join('');
+
+                container.innerHTML = `
+                    <div style="display: flex; gap: 6px; align-items: center; justify-content: center; width: 100%;">
+                        ${segmentsHtml}
+                    </div>
+                `;
             }
         }
+
+        function cycleNames() {
+            currentStageIdx = (currentStageIdx + 1) % stages.length;
+            const stage = stages[currentStageIdx];
+            document.getElementById('agent-name').innerText = stage.name;
+            updateStageIndicator(stage);
+        }
+
+        // --- Twin Management Logic ---
+        let isTwinUnlocked = false;
+        let isTwinActive = true;
+
+        const trainingCards = [
+            { id: 't1', q: "关注到您近期在做“可持续消费”产品，今天有类似竞品开放测试，是否需要帮你收集相关信息？", options: ["立即收集", "暂不处理"] },
+            { id: 't2', q: "我发现您惯用的思考与拆解逻辑是：先定义核心受众，再挂钩社交货币，对吗？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
+        ];
+
+        const calibrationCards = [
+            { id: 'c1', q: "今天有 10 名用户跟分身进行了对话，主要涉及“产品定价”与“品牌调性”方面的讨论。", button: "点击前往查看" },
+            { id: 'c2', q: "发现最近在项目决策上，您更倾向于“先验证后扩张”，我这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
+        ];
+
+        function handleCalibrationAction(id, option) {
+            const cardElement = document.querySelector(`[data-card-id="${id}"]`);
+            const inputContainer = cardElement.querySelector('.calibration-input-container');
+            const optionsContainer = cardElement.querySelector('.calibration-options');
+
+            // Find if this option should trigger input
+            const cards = isTwinUnlocked ? calibrationCards : trainingCards;
+            const card = cards.find(c => c.id === id);
+
+            if (card && card.showInputOn === option) {
+                inputContainer.style.display = 'block';
+                optionsContainer.style.display = 'none';
+            } else {
+                // If it's a "positive" button or a simple action, we can just show a "Success" state or nothing
+                cardElement.style.opacity = '0.5';
+                cardElement.style.pointerEvents = 'none';
+                cardElement.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--color-twin); font-weight:800;">✓ 已记录</div>`;
+            }
+        }
+
+        function submitCalibrationInput(id) {
+            const cardElement = document.querySelector(`[data-card-id="${id}"]`);
+            cardElement.style.opacity = '0.5';
+            cardElement.style.pointerEvents = 'none';
+            cardElement.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--color-twin); font-weight:800;">✓ 已纠偏</div>`;
+        }
+
+        function renderCalibrationCards() {
+            const container = document.getElementById('notification-cards-container');
+            const cards = isTwinUnlocked ? calibrationCards : trainingCards;
+
+            if (!container) return;
+
+            container.innerHTML = cards.map(c => `
+                <div class="calibration-card" data-card-id="${c.id}" style="background: white; border: 2px solid #F0F0F0; border-radius: 12px; padding: 15px;">
+                    <div class="calibration-question" style="font-size: 0.8rem; margin-bottom: 12px;">${c.q}</div>
+                    
+                    ${c.button ?
+                    `<button class="btn btn-twin" style="width: 100%; padding: 10px; font-size: 0.75rem;">${c.button}</button>` :
+                    (c.options ? `
+                        <div class="calibration-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            ${c.options.map(opt => `<div class="calibration-opt" style="padding: 6px; border: 1px solid #EEE; border-radius: 6px; font-size: 0.7rem; text-align: center; cursor: pointer;" onclick="handleCalibrationAction('${c.id}', '${opt}')">${opt}</div>`).join('')}
+                        </div>
+                        <div class="calibration-input-container" style="display: none; margin-top: 10px;">
+                            <input type="text" class="calibration-input" placeholder="请输入您的修正意见..." style="width: 100%; padding: 8px; border: 1px solid #EEE; border-radius: 6px; font-size: 0.7rem; margin-bottom: 8px;">
+                            <button class="btn btn-twin" style="width: 100%; padding: 8px; font-size: 0.7rem;" onclick="submitCalibrationInput('${c.id}')">提交修正</button>
+                        </div>
+                        ` : '')
+                }
+                </div>
+            `).join('');
+        }
+
+        function updateTwinUI() {
+            renderCalibrationCards();
+        }
+
+        function toggleUnlock() {
+            isTwinUnlocked = !isTwinUnlocked;
+            updateTwinUI();
+        }
+
+        function handleTwinToggle(active) {
+            isTwinActive = active;
+            updateTwinUI();
+        }
+
+        // Initialize Twin UI
+        updateTwinUI();
+
+        // Initialize other state
+        updateStageIndicator(stages[0]);
+
+        // --- Notification Dropdown Logic ---
+        function toggleNotificationDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('notification-dropdown');
+            const securityDropdown = document.getElementById('security-dropdown');
+            if (securityDropdown) securityDropdown.classList.remove('show');
+            dropdown.classList.toggle('show');
+        }
+
+        // --- Security Dropdown Logic ---
+        function toggleSecurityDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('security-dropdown');
+            const notifyDropdown = document.getElementById('notification-dropdown');
+            if (notifyDropdown) notifyDropdown.classList.remove('show');
+            dropdown.classList.toggle('show');
+        }
+
+        document.addEventListener('click', () => {
+            const dropdown = document.getElementById('security-dropdown');
+            if (dropdown) dropdown.classList.remove('show');
+            const notifyDropdown = document.getElementById('notification-dropdown');
+            if (notifyDropdown) notifyDropdown.classList.remove('show');
+        });
+
+        // Auto-scroll chat to bottom
+        window.onload = function () {
+            const scroller = document.getElementById('chat-scroller');
+            if (scroller) {
+                scroller.scrollTop = scroller.scrollHeight;
+            }
+            updateTwinUI();
+        };
     </script>
 </body>
 

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent | Agent个性配置</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .setup-step {
+            display: none;
+        }
+
+        .setup-step.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .option-card {
+            padding: 24px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .option-card:hover {
+            border-color: var(--color-primary);
+            background: #FFFBF9;
+            transform: translateY(-2px);
+        }
+
+        .option-card.selected {
+            border-color: var(--color-primary);
+            background: #FFFBF9;
+            border-width: 3px;
+        }
+
+        /* --- Mode Selection --- */
+        .mode-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mode-card {
+            padding: 40px 24px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: white;
+        }
+
+        .mode-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 10px 30px rgba(255, 127, 102, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .mode-card.selected {
+            border-color: var(--color-primary);
+            background: #FFF9F8;
+            border-width: 3px;
+        }
+
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        /* --- Upload Zone --- */
+        .upload-zone {
+            border: 3px dashed var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #FAFAFA;
+            margin: 20px 0;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--color-primary);
+            background: #FFF9F8;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--color-border);
+            margin-bottom: 15px;
+            transition: color 0.3s;
+        }
+
+        .upload-zone:hover .upload-icon {
+            color: var(--color-primary);
+        }
+
+        /* --- Progress Bar --- */
+        .progress-container {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .progress-track {
+            height: 12px;
+            background: #F0F0F0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--color-primary) 0%, #FF9F8A 100%);
+            border-radius: 2px;
+            transition: width 0.5s ease-out;
+            box-shadow: 0 0 10px rgba(255, 127, 102, 0.3);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: #F5F5F5;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 40px;
+        }
+
+        #start-chat-btn {
+            display: none;
+            margin: 40px auto 0;
+            animation: fadeIn 0.8s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero-area">
+        <div style="text-align: center; max-width: 600px; margin-bottom: 40px;">
+            <h1>定制Agent工作风格</h1>
+        </div>
+
+        <div class="card"
+            style="width: 100%; max-width: 650px; padding: 40px; border-color: var(--color-primary); transition: all 0.3s;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; font-weight: 800; font-size: 0.85rem; color: var(--color-primary);">
+                <span id="prev-step-text" onclick="changeStep(-1)" style="cursor: pointer; visibility: hidden;">←
+                    上一步</span>
+                <span id="step-title">沟通语气设置</span>
+                <span id="step-indicator">第 1 步 / 共 4 步</span>
+            </div>
+
+            <!-- Questionnaire Steps -->
+            <div class="setup-step active" id="step1">
+                <h3 style="margin-bottom: 25px;">在日常任务提醒中，你更希望Agent以哪种语气与你沟通？</h3>
+                <div class="option-card selected" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">🎯 极其直接且高效</div>
+                    <p style="font-size: 0.85rem; color: #777;">“老板，10点有会，立刻准备。” —— 不浪费一秒钟在多余的礼貌上。</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">☕️ 像管家一样得体</div>
+                    <p style="font-size: 0.85rem; color: #777;">“早安，距离您的会议还有15分钟，建议您现在休息一下并整理资料。”</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">🤪 朋友般的调侃</div>
+                    <p style="font-size: 0.85rem; color: #777;">“别刷网页了，10点的会议在等你。如果你迟到了，我会假装不认识你。”</p>
+                </div>
+            </div>
+
+            <div class="setup-step" id="step2">
+                <h3 style="margin-bottom: 25px;">Agent应该在什么时候介入你的工作流？</h3>
+                <div class="option-card selected" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">⚡️ 主动出击模式</div>
+                    <p style="font-size: 0.85rem; color: #777;">Agent将基于你的日程和邮件，主动建议你现在该处理什么任务，并自动提供背景资料。</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">📥 被动响应模式</div>
+                    <p style="font-size: 0.85rem; color: #777;">Agent保持静默，只有当你主动询问或分配任务时，它才会介入。</p>
+                </div>
+            </div>
+
+            <div class="setup-step" id="step3">
+                <h3 style="margin-bottom: 25px;">你希望Agent如何向你汇报当日资讯或邮件？</h3>
+                <div class="option-card selected" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">🗂 全面报告</div>
+                    <p style="font-size: 0.85rem; color: #777;">每天提供一个包含所有细枝末节的深度列表，确保不遗漏任何细节。</p>
+                </div>
+                <div class="option-card" onclick="selectOption(this)">
+                    <div style="font-weight: 800; margin-bottom: 4px;">💎 只看重点</div>
+                    <p style="font-size: 0.85rem; color: #777;">过滤所有杂讯。如果不是十万火急 or 极具价值, 不要打扰我。</p>
+                </div>
+            </div>
+
+            <div class="setup-step" id="step4">
+                <h3 style="margin-bottom: 25px; line-height: 1.6;">准备好开启你的 SoulAgent 了吗？</h3>
+                <div
+                    style="background: #FFF9F8; padding: 24px; border-radius: var(--radius-md); border: 1px solid #FF7F66; margin-bottom: 30px; text-align: left;">
+                    <p style="font-size: 0.95rem; color: #555; line-height: 1.8;">
+                        🚀 <b>想速成？</b><br>
+                        可以前往配置页面上传个人CV、工作文档等，让Agent快速继承你的工作逻辑。<br><br>
+                        🌱 <b>想享受一步步养成系的乐趣？</b><br>
+                        可以现在就开始对话，在交流中让它慢慢懂你。
+                    </p>
+                </div>
+                <div class="btn-group" style="margin-top: 0;">
+                    <a href="archives.html" class="btn btn-primary" style="min-width: 180px;">前往配置</a>
+                    <a href="agent.html" class="btn btn-primary" style="min-width: 180px;">开始对话</a>
+                </div>
+            </div>
+
+            <!-- Centered Button Group -->
+            <div class="btn-group" id="btn-group">
+                <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)"
+                    style="min-width: 200px;">继续</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStepId = 'step1';
+
+        const flow = {
+            'step1': { title: '沟通语气设置', indicator: '第 1 步 / 共 4 步', next: 'step2', prev: null },
+            'step2': { title: '工作模式偏好', indicator: '第 2 步 / 共 4 步', next: 'step3', prev: 'step1' },
+            'step3': { title: '重要程度筛选', indicator: '第 3 步 / 共 4 步', next: 'step4', prev: 'step2' },
+            'step4': { title: '开启你的 Agent', indicator: '第 4 步 / 共 4 步', next: null, prev: 'step3' }
+        };
+
+        function selectOption(el) {
+            const siblings = el.parentElement.querySelectorAll('.option-card');
+            siblings.forEach(s => s.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function changeStep(n) {
+            const currentConfig = flow[currentStepId];
+            let nextStepId = n === 1 ? currentConfig.next : currentConfig.prev;
+
+            if (!nextStepId) return;
+
+            // Transition
+            document.getElementById(currentStepId).classList.remove('active');
+            currentStepId = nextStepId;
+            document.getElementById(currentStepId).classList.add('active');
+
+            // Update UI
+            const nextConfig = flow[nextStepId];
+            document.getElementById('step-title').innerText = nextConfig.title;
+            document.getElementById('step-indicator').innerText = nextConfig.indicator;
+
+            // Buttons Visibility
+            document.getElementById('prev-step-text').style.visibility = nextConfig.prev ? 'visible' : 'hidden';
+
+            const btnGroup = document.getElementById('btn-group');
+            if (nextStepId === 'step4') {
+                btnGroup.style.display = 'none';
+            } else {
+                btnGroup.style.display = 'flex';
+                document.getElementById('nextBtn').innerText = '下一步';
+            }
+        }
+    </script>
+</body>
+
+</html>

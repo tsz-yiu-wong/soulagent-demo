@@ -145,9 +145,17 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
         }
 
         .btn-group {
@@ -194,8 +202,15 @@
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -235,15 +250,16 @@
             <div class="setup-step" id="step-quick-upload">
                 <h3 style="margin-bottom: 10px;">上传您的参考文档</h3>
                 <p style="margin-bottom: 25px; font-size: 0.9rem;">系统将通过这些文件快速构建您的专属Agent助手。</p>
-                
+
                 <div class="upload-zone" onclick="document.getElementById('file-input').click()">
                     <div class="upload-icon">📂</div>
                     <div style="font-weight: 700; margin-bottom: 8px;">点击或拖拽文件到这里</div>
                     <p style="font-size: 0.8rem;">支持 PDF, Word, TXT, Markdown (最大 50MB)</p>
                     <input type="file" id="file-input" style="display: none;">
                 </div>
-                
-                <div id="file-list" style="margin-top: 15px; font-size: 0.85rem; color: var(--color-text-light); text-align: left;">
+
+                <div id="file-list"
+                    style="margin-top: 15px; font-size: 0.85rem; color: var(--color-text-light); text-align: left;">
                     <!-- Placeholder for simulated file list -->
                 </div>
             </div>
@@ -253,12 +269,13 @@
                 <div class="progress-container">
                     <div id="status-badge" class="status-badge">正在读取文档...</div>
                     <h3 id="progress-text" style="margin-bottom: 30px;">Agent 正在深度学习您的习惯</h3>
-                    
+
                     <div class="progress-track">
                         <div id="progress-fill" class="progress-fill"></div>
                     </div>
-                    
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #999; font-weight: 600;">
+
+                    <div
+                        style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #999; font-weight: 600;">
                         <span>建立索引</span>
                         <span>逻辑提取</span>
                         <span>生成人格</span>
@@ -269,8 +286,11 @@
                         <h4>⚠️ 文档处理耗时预警</h4>
                         <p>检测到文件内容较多（识别耗时过久），您可以先点击下方按钮开启对话。Agent 将在后台静默处理，识别完成后将自动更新回复逻辑。</p>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem;" onclick="window.location.href='dashboard.html'">开启对话</button>
-                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 0.8rem; border-color: #FFD8A8; color: #D9480F;" onclick="resumeSimulation()">继续等待</button>
+                            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem;"
+                                onclick="window.location.href='agent.html'">开启对话</button>
+                            <button class="btn btn-outline"
+                                style="padding: 8px 16px; font-size: 0.8rem; border-color: #FFD8A8; color: #D9480F;"
+                                onclick="resumeSimulation()">继续等待</button>
                         </div>
                     </div>
                 </div>
@@ -324,15 +344,15 @@
                 <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)"
                     style="min-width: 200px;">开始配置</button>
             </div>
-            
-            <a href="dashboard.html" class="btn btn-primary" id="start-chat-btn" style="min-width: 240px;">开始对话</a>
+
+            <a href="agent.html" class="btn btn-primary" id="start-chat-btn" style="min-width: 240px;">开始对话</a>
         </div>
     </div>
 
     <script>
         let currentMode = 'slow'; // Default to 'slow'
         let currentStepId = 'step-mode';
-        
+
         const flow = {
             'mode': { title: '选择培养方式', indicator: '准备开始', next: () => currentMode === 'quick' ? 'quick-upload' : 'step1' },
             'quick-upload': { title: '上传参考资料', indicator: '速成模式', next: 'quick-progress', prev: 'mode' },
@@ -378,7 +398,7 @@
 
             // Transition
             document.getElementById(currentStepId).classList.remove('active');
-            
+
             // Map tag to ID correctly
             // If tag is 'step1', ID is 'step1'. If tag is 'quick-upload', ID is 'step-quick-upload'.
             if (nextStepTag.startsWith('step')) {
@@ -386,7 +406,7 @@
             } else {
                 currentStepId = 'step-' + nextStepTag;
             }
-            
+
             const nextEl = document.getElementById(currentStepId);
             if (!nextEl) {
                 console.error("Target step element not found:", currentStepId);
@@ -398,14 +418,14 @@
             const nextConfig = flow[nextStepTag];
             document.getElementById('step-title').innerText = nextConfig.title;
             document.getElementById('step-indicator').innerText = nextConfig.indicator;
-            
+
             // Buttons
             document.getElementById('prevBtn').style.display = nextConfig.prev ? 'inline-flex' : 'none';
-            
+
             if (nextStepTag === 'step3') {
                 document.getElementById('nextBtn').innerText = '开始对话';
                 document.getElementById('nextBtn').onclick = () => {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'agent.html';
                 };
             } else {
                 document.getElementById('nextBtn').innerText = '继续';
@@ -427,7 +447,7 @@
             const btnGroup = document.getElementById('btn-group');
             const nextBtn = document.getElementById('nextBtn');
             const prevBtn = document.getElementById('prevBtn');
-            
+
             // Setup Cancel Button
             prevBtn.style.display = 'none';
             nextBtn.innerText = '取消识别';
@@ -437,7 +457,7 @@
                 document.getElementById(currentStepId).classList.remove('active');
                 currentStepId = 'step-quick-upload';
                 document.getElementById(currentStepId).classList.add('active');
-                
+
                 // Reset UI
                 const config = flow['quick-upload'];
                 document.getElementById('step-title').innerText = config.title;
@@ -499,7 +519,7 @@
         }
 
         // Initialize file input simulation
-        document.getElementById('file-input')?.addEventListener('change', function(e) {
+        document.getElementById('file-input')?.addEventListener('change', function (e) {
             const list = document.getElementById('file-list');
             if (e.target.files.length > 0) {
                 list.innerHTML = `<div style="padding: 10px; background: #eee; border-radius: 8px;">📎 已选择: ${e.target.files[0].name}</div>`;

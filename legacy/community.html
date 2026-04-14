@@ -167,7 +167,7 @@
             backdrop-filter: blur(10px);
             z-index: 5;
             padding: 20px 40px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             display: flex;
             gap: 30px;
         }
@@ -204,9 +204,11 @@
         }
 
         .creative-card {
-            display: inline-block; /* 核心：瀑布流必备 */
+            display: inline-block;
+            /* 核心：瀑布流必备 */
             width: 100%;
-            break-inside: avoid; /* 防止内容跨列断裂 */
+            break-inside: avoid;
+            /* 防止内容跨列断裂 */
             margin-bottom: 24px;
             background: white;
             border-radius: var(--radius-lg);
@@ -247,8 +249,15 @@
             letter-spacing: 1px;
         }
 
-        .agent-theme .card-brand { background: var(--color-primary); color: white; }
-        .twin-theme .card-brand { background: var(--color-twin); color: white; }
+        .agent-theme .card-brand {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .twin-theme .card-brand {
+            background: var(--color-twin);
+            color: white;
+        }
 
         .card-body {
             padding: 24px;
@@ -284,8 +293,17 @@
             gap: 2px;
         }
 
-        .stat-val { font-weight: 800; font-size: 0.85rem; color: var(--color-text); }
-        .stat-lab { font-size: 0.65rem; color: #AAA; text-transform: uppercase; }
+        .stat-val {
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--color-text);
+        }
+
+        .stat-lab {
+            font-size: 0.65rem;
+            color: #AAA;
+            text-transform: uppercase;
+        }
 
         .card-footer {
             padding: 0 24px 24px;
@@ -305,11 +323,27 @@
             font-size: 0.85rem;
         }
 
-        .agent-theme .btn-creative { background: #FFF0ED; color: var(--color-primary); border: none; }
-        .agent-theme .btn-creative:hover { background: var(--color-primary); color: white; }
-        
-        .twin-theme .btn-creative { background: #F3F1FF; color: var(--color-twin); border: none; }
-        .twin-theme .btn-creative:hover { background: var(--color-twin); color: white; }
+        .agent-theme .btn-creative {
+            background: #FFF0ED;
+            color: var(--color-primary);
+            border: none;
+        }
+
+        .agent-theme .btn-creative:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .twin-theme .btn-creative {
+            background: #F3F1FF;
+            color: var(--color-twin);
+            border: none;
+        }
+
+        .twin-theme .btn-creative:hover {
+            background: var(--color-twin);
+            color: white;
+        }
 
         /* 发现页瀑布流布局 */
         .discovery-feed {
@@ -341,8 +375,15 @@
             margin-bottom: 16px;
         }
 
-        .post-user { font-weight: 700; font-size: 0.9rem; }
-        .post-meta { font-size: 0.75rem; color: #AAA; }
+        .post-user {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .post-meta {
+            font-size: 0.75rem;
+            color: #AAA;
+        }
 
         .post-content {
             font-size: 0.9rem;
@@ -351,7 +392,12 @@
             margin-bottom: 20px;
         }
 
-        .post-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+        .post-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
         .post-tag {
             font-size: 0.75rem;
             color: var(--color-primary);
@@ -388,8 +434,15 @@
         }
 
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .premium-search-box {
@@ -402,7 +455,7 @@
             width: 100%;
             max-width: 580px;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
         }
 
         .premium-search-box:focus-within {
@@ -467,9 +520,9 @@
     <header class="top-nav">
         <div class="logo">SoulAgent</div>
         <nav class="nav-links">
-            <a href="dashboard.html" class="nav-link">🏠 首页</a>
-            <a href="agent.html" class="nav-link">🎓 智能体</a>
-            <a href="twin.html" class="nav-link twin-link">🧬 数字分身</a>
+            <a href="agent.html" class="nav-link">🏠 首页</a>
+            <a href="archives.html" class="nav-link">🎓 智能体</a>
+            <a href="metaverse.html" class="nav-link twin-link">🧬 数字分身</a>
             <a href="community.html" class="nav-link active">🌍 社区</a>
         </nav>
         <div class="community-header-stats" style="margin-bottom: 0;">
@@ -492,14 +545,16 @@
                 <div class="sidebar-group">
                     <div class="sidebar-group-title">最近对话</div>
                     <div class="msg-item active" onclick="openChat('智源研发技术群', '🦞')">
-                        <div class="avatar-circle" style="background: #FFF0ED; border-color: var(--color-primary);">🦞</div>
+                        <div class="avatar-circle" style="background: #FFF0ED; border-color: var(--color-primary);">🦞
+                        </div>
                         <div class="msg-info">
                             <div class="msg-name">智源研发技术群 <span class="msg-time">14:20</span></div>
                             <div class="msg-preview">张伟：这次模型微调的效果提升了15%...</div>
                         </div>
                     </div>
                     <div class="msg-item" onclick="openChat('Elon Musk (Twin)', '👤')">
-                        <div class="avatar-circle" style="background: #F3F1FF; border-color: var(--color-twin);">👤</div>
+                        <div class="avatar-circle" style="background: #F3F1FF; border-color: var(--color-twin);">👤
+                        </div>
                         <div class="msg-info">
                             <div class="msg-name">Elon Musk (Twin) <span class="msg-time">昨天</span></div>
                             <div class="msg-preview">If we make it to Mars, it's a huge win...</div>
@@ -570,13 +625,17 @@
                                 <div class="card-visual">📊</div>
                                 <div class="card-body">
                                     <div class="card-title">战略大师</div>
-                                    <div class="card-desc">基于 500+ 商学院经典案例训练。擅长协助进行市场进入分析、竞品解构及五年发展战略规划。协助您用极低成本完成高质量的商业洞察。</div>
+                                    <div class="card-desc">基于 500+
+                                        商学院经典案例训练。擅长协助进行市场进入分析、竞品解构及五年发展战略规划。协助您用极低成本完成高质量的商业洞察。</div>
                                     <div class="card-stats">
-                                        <div class="stat-pill"><span class="stat-val">9.8</span><span class="stat-lab">逻辑力</span></div>
-                                        <div class="stat-pill"><span class="stat-val">12k</span><span class="stat-lab">已解决</span></div>
+                                        <div class="stat-pill"><span class="stat-val">9.8</span><span
+                                                class="stat-lab">逻辑力</span></div>
+                                        <div class="stat-pill"><span class="stat-val">12k</span><span
+                                                class="stat-lab">已解决</span></div>
                                     </div>
                                 </div>
-                                <div class="card-footer"><button class="btn-creative" onclick="openChat('战略大师', '📊')">开启战略咨询 →</button></div>
+                                <div class="card-footer"><button class="btn-creative"
+                                        onclick="openChat('战略大师', '📊')">开启战略咨询 →</button></div>
                             </div>
 
                             <!-- 卡片 2 -->
@@ -587,11 +646,14 @@
                                     <div class="card-title">张伟 <span class="verified-badge">已认证</span></div>
                                     <div class="card-desc">前资深产品经理，现创业者。如果你对 SaaS 增长路径或产品冷启动感兴趣，随时与我的数字分身交流。</div>
                                     <div class="card-stats">
-                                        <div class="stat-pill"><span class="stat-val">85%</span><span class="stat-lab">同步率</span></div>
-                                        <div class="stat-pill"><span class="stat-val">9.2</span><span class="stat-lab">共情度</span></div>
+                                        <div class="stat-pill"><span class="stat-val">85%</span><span
+                                                class="stat-lab">同步率</span></div>
+                                        <div class="stat-pill"><span class="stat-val">9.2</span><span
+                                                class="stat-lab">共情度</span></div>
                                     </div>
                                 </div>
-                                <div class="card-footer"><button class="btn-creative" onclick="openChat('张伟', '👤')">与张伟沟通 →</button></div>
+                                <div class="card-footer"><button class="btn-creative"
+                                        onclick="openChat('张伟', '👤')">与张伟沟通 →</button></div>
                             </div>
 
                             <!-- 卡片 3 (长卡片) -->
@@ -600,12 +662,16 @@
                                 <div class="card-visual">🎨</div>
                                 <div class="card-body">
                                     <div class="card-title">创意工坊</div>
-                                    <div class="card-desc">不仅仅是文案。我能帮助你进行视觉构思、脚本撰写，甚至协助你进行多维度的灵感碰撞。支持多模态输入，能够理解复杂的视觉隐喻。针对设计师与创意人定制，让每一份灵感都能如约而至。</div>
+                                    <div class="card-desc">
+                                        不仅仅是文案。我能帮助你进行视觉构思、脚本撰写，甚至协助你进行多维度的灵感碰撞。支持多模态输入，能够理解复杂的视觉隐喻。针对设计师与创意人定制，让每一份灵感都能如约而至。
+                                    </div>
                                     <div class="card-stats">
-                                        <div class="stat-pill"><span class="stat-val">S级</span><span class="stat-lab">想象力</span></div>
+                                        <div class="stat-pill"><span class="stat-val">S级</span><span
+                                                class="stat-lab">想象力</span></div>
                                     </div>
                                 </div>
-                                <div class="card-footer"><button class="btn-creative" onclick="openChat('创意工坊', '🎨')">激发灵感 →</button></div>
+                                <div class="card-footer"><button class="btn-creative"
+                                        onclick="openChat('创意工坊', '🎨')">激发灵感 →</button></div>
                             </div>
 
                             <!-- 卡片 4 -->
@@ -616,10 +682,12 @@
                                     <div class="card-title">陈莎莎 <span class="verified-badge">已认证</span></div>
                                     <div class="card-desc">风险投资人、潜水爱好者。我的数字分身承载了我的行业研判和生活哲学。</div>
                                     <div class="card-stats">
-                                        <div class="stat-pill"><span class="stat-val">92%</span><span class="stat-lab">同步率</span></div>
+                                        <div class="stat-pill"><span class="stat-val">92%</span><span
+                                                class="stat-lab">同步率</span></div>
                                     </div>
                                 </div>
-                                <div class="card-footer"><button class="btn-creative" onclick="openChat('陈莎莎', '🧬')">即刻对话 →</button></div>
+                                <div class="card-footer"><button class="btn-creative"
+                                        onclick="openChat('陈莎莎', '🧬')">即刻对话 →</button></div>
                             </div>
 
                             <!-- 卡片 5 (短卡片) -->
@@ -630,10 +698,12 @@
                                     <div class="card-title">极客助手</div>
                                     <div class="card-desc">专注于代码评审与流程自动化。</div>
                                     <div class="card-stats">
-                                        <div class="stat-pill"><span class="stat-val">99%</span><span class="stat-lab">准确度</span></div>
+                                        <div class="stat-pill"><span class="stat-val">99%</span><span
+                                                class="stat-lab">准确度</span></div>
                                     </div>
                                 </div>
-                                <div class="card-footer"><button class="btn-creative" onclick="openChat('极客助手', '💡')">代码审查 →</button></div>
+                                <div class="card-footer"><button class="btn-creative"
+                                        onclick="openChat('极客助手', '💡')">代码审查 →</button></div>
                             </div>
 
                             <!-- 卡片 6 -->
@@ -642,9 +712,11 @@
                                 <div class="card-visual">🚀</div>
                                 <div class="card-body">
                                     <div class="card-title">Elon (Twin)</div>
-                                    <div class="card-desc">First Principles Thinking. Mars Exploration. Sustainable Energy and Multi-planetary species.</div>
+                                    <div class="card-desc">First Principles Thinking. Mars Exploration. Sustainable
+                                        Energy and Multi-planetary species.</div>
                                 </div>
-                                <div class="card-footer"><button class="btn-creative" onclick="openChat('Elon (Twin)', '🚀')">Discuss Mars →</button></div>
+                                <div class="card-footer"><button class="btn-creative"
+                                        onclick="openChat('Elon (Twin)', '🚀')">Discuss Mars →</button></div>
                             </div>
                         </div>
                     </div>
@@ -664,51 +736,76 @@
                             <!-- 置顶帖子 -->
                             <div class="post-card" style="background: #FFFBF9; border-color: rgba(255,127,102,0.2);">
                                 <div class="post-header">
-                                    <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.9rem; background: #FFAB91;">🦞</div>
-                                    <div><div class="post-user">Lobster_Official <span class="post-meta">· 置顶</span></div></div>
+                                    <div class="avatar-circle"
+                                        style="width: 32px; height: 32px; font-size: 0.9rem; background: #FFAB91;">🦞
+                                    </div>
+                                    <div>
+                                        <div class="post-user">Lobster_Official <span class="post-meta">· 置顶</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="post-content">
                                     🚀 <strong>新功能预告：</strong> 社区分享现已支持“一键同步对话记录”！<br><br>
                                     用户可以直接将与 Agent 或 Twin 的精彩深度对话转化为发现页的帖子。点击查看如何操作...
                                 </div>
-                                <div class="post-tags"><span class="post-tag">#版本更新</span><span class="post-tag">#社区指南</span></div>
+                                <div class="post-tags"><span class="post-tag">#版本更新</span><span
+                                        class="post-tag">#社区指南</span></div>
                                 <div class="post-actions"><span>❤️ 512</span><span>💬 102</span></div>
                             </div>
 
                             <div class="post-card">
                                 <div class="post-header">
-                                    <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.9rem;">JD</div>
-                                    <div><div class="post-user">TechGuru <span class="post-meta">· 2h</span></div></div>
+                                    <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.9rem;">JD
+                                    </div>
+                                    <div>
+                                        <div class="post-user">TechGuru <span class="post-meta">· 2h</span></div>
+                                    </div>
                                 </div>
                                 <div class="post-content">分享了我的数字分身：在喂了100多篇我的技术博客后，它现在已经能非常准确地模拟我写代码的初稿风格了！</div>
-                                <div class="post-tags"><span class="post-tag">#数字分身</span><span class="post-tag">#效率</span></div>
+                                <div class="post-tags"><span class="post-tag">#数字分身</span><span
+                                        class="post-tag">#效率</span></div>
                                 <div class="post-actions"><span>❤️ 124</span><span>💬 18</span></div>
                             </div>
 
                             <div class="post-card">
                                 <div class="post-header">
-                                    <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.9rem; background: #E0F7FA;">PW</div>
-                                    <div><div class="post-user">ProductWhiz <span class="post-meta">· 昨天</span></div></div>
+                                    <div class="avatar-circle"
+                                        style="width: 32px; height: 32px; font-size: 0.9rem; background: #E0F7FA;">PW
+                                    </div>
+                                    <div>
+                                        <div class="post-user">ProductWhiz <span class="post-meta">· 昨天</span></div>
+                                    </div>
                                 </div>
-                                <div class="post-content">强烈推荐这周精品页里的“战略大师”Agent。我在分析某竞品SaaS工具的增长模型时，它给出的波特五力框架非常扎实，甚至考虑到了市场饱和度对新进入者的隐形壁垒。目前智能体已经可以作为我的 P0 级桌面助手。</div>
+                                <div class="post-content">
+                                    强烈推荐这周精品页里的“战略大师”Agent。我在分析某竞品SaaS工具的增长模型时，它给出的波特五力框架非常扎实，甚至考虑到了市场饱和度对新进入者的隐形壁垒。目前智能体已经可以作为我的
+                                    P0 级桌面助手。</div>
                                 <div class="post-tags"><span class="post-tag">#Agent推荐</span></div>
                                 <div class="post-actions"><span>❤️ 89</span><span>💬 5</span></div>
                             </div>
 
                             <div class="post-card">
                                 <div class="post-header">
-                                    <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.9rem; background: #FFF3E0;">LH</div>
-                                    <div><div class="post-user">LifeHacker <span class="post-meta">· 3d</span></div></div>
+                                    <div class="avatar-circle"
+                                        style="width: 32px; height: 32px; font-size: 0.9rem; background: #FFF3E0;">LH
+                                    </div>
+                                    <div>
+                                        <div class="post-user">LifeHacker <span class="post-meta">· 3d</span></div>
+                                    </div>
                                 </div>
-                                <div class="post-content">深夜跟我的分身聊了一下午的人生哲学，它翻出了我三年前的焦虑日记并安慰现在的我。在那一刻，我觉得分身赋予了数字生命某种程度上的“连续性”。</div>
+                                <div class="post-content">
+                                    深夜跟我的分身聊了一下午的人生哲学，它翻出了我三年前的焦虑日记并安慰现在的我。在那一刻，我觉得分身赋予了数字生命某种程度上的“连续性”。</div>
                                 <div class="post-tags"><span class="post-tag">#日常感悟</span></div>
                                 <div class="post-actions"><span>❤️ 312</span><span>💬 45</span></div>
                             </div>
 
                             <div class="post-card">
                                 <div class="post-header">
-                                    <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 0.9rem; background: #CFD8DC;">SM</div>
-                                    <div><div class="post-user">SoulMate <span class="post-meta">· 5d</span></div></div>
+                                    <div class="avatar-circle"
+                                        style="width: 32px; height: 32px; font-size: 0.9rem; background: #CFD8DC;">SM
+                                    </div>
+                                    <div>
+                                        <div class="post-user">SoulMate <span class="post-meta">· 5d</span></div>
+                                    </div>
                                 </div>
                                 <div class="post-content">
                                     今天的数字分身又变得更懂我了。我只是提了一句“最近有点累”，它就为我列出了一份舒缓心情的书单，甚至还包括了我最喜欢的村上春树。
@@ -723,7 +820,8 @@
 
             <!-- 聊天视图 (隐藏) -->
             <div id="chat-view" style="display: none;">
-                <div style="padding: 20px; border-bottom: 2px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; background: white;">
+                <div
+                    style="padding: 20px; border-bottom: 2px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; background: white;">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div id="chat-header-avatar" class="avatar-circle" style="width: 40px; height: 40px;"></div>
                         <div>
@@ -747,7 +845,8 @@
                 <div class="chat-input-wrapper">
                     <div class="input-box">
                         <input type="text" placeholder="输入消息，开启精彩对话...">
-                        <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem; border-radius: 20px;">发送</button>
+                        <button class="btn btn-primary"
+                            style="padding: 8px 16px; font-size: 0.8rem; border-radius: 20px;">发送</button>
                     </div>
                 </div>
             </div>
@@ -759,7 +858,7 @@
         function switchMainTab(tab, el) {
             document.querySelectorAll('.main-tab-item').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
-            
+
             if (tab === 'recommend') {
                 document.getElementById('recommend-view').style.display = 'block';
                 document.getElementById('discovery-view').style.display = 'none';
@@ -782,7 +881,7 @@
             // 切换视图
             document.getElementById('community-home-view').style.display = 'none';
             document.getElementById('chat-view').style.display = 'flex';
-            
+
             // 设置聊天头部
             document.getElementById('chat-header-name').innerText = name;
             document.getElementById('chat-header-avatar').innerText = avatar;

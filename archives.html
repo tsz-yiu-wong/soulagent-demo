@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent | 智能体管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .main-tabs {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        .main-tab {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            position: relative;
+            padding: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        .main-tab.active {
+            color: var(--color-primary);
+        }
+
+        .main-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--color-primary);
+            border-radius: 3px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Skills Section Styles */
+        .skills-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .skill-card-v2 {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+            padding: 24px;
+            min-height: 260px;
+            transition: all 0.3s ease;
+        }
+
+        .skill-icon-v2 {
+            font-size: 2rem;
+            margin-bottom: 4px;
+        }
+
+        .skill-status {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Knowledge Base Section Styles */
+        .archives-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            height: calc(100vh - 250px);
+            min-height: 600px;
+        }
+
+        .archives-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .archives-card {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .archives-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .file-item:hover {
+            background: #f8f9fa;
+        }
+
+        .file-item.active {
+            background: var(--color-primary-light);
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .preview-pane {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 15px 24px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-side {
+            border-right: 1px solid var(--color-border);
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .preview-side {
+            padding: 24px;
+            overflow-y: auto;
+            background: #fff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .preview-side h1,
+        .preview-side h2,
+        .preview-side h3 {
+            margin-top: 0;
+            color: var(--color-primary);
+        }
+
+        .raw-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            outline: none;
+            font-family: 'Lexend', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.95rem;
+            color: #444;
+            background: transparent;
+            line-height: 1.6;
+        }
+
+        /* Memory Section Styles */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .memory-section {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+        }
+
+        .memory-section-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .memory-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .memory-item {
+            background: #fcfcfc;
+            padding: 18px;
+            border: 1px solid #eee;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .memory-item:hover {
+            border-color: var(--color-primary-light);
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transform: translateY(-2px);
+        }
+
+        .memory-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .tag-lts {
+            background: #e0f2f1;
+            color: #00897b;
+        }
+
+        .tag-sts {
+            background: #fff3e0;
+            color: #fb8c00;
+        }
+
+        .extract-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            border-radius: var(--radius-lg);
+        }
+
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="top-nav">
+        <div class="logo">SoulAgent</div>
+        <nav class="nav-links">
+            <a href="agent.html" class="nav-link">🎓 智能体</a>
+            <a href="archives.html" class="nav-link active">🗄️ 档案库</a>
+            <a href="metaverse.html" class="nav-link twin-link">🌌 元宇宙</a>
+        </nav>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div class="status-pill" style="border-color: var(--color-primary); color: var(--color-primary);">活跃技能: 5 /
+                8</div>
+        </div>
+    </header>
+
+    <div class="container animate-fade-in" style="padding: 40px 0;">
+        <div class="main-tabs">
+            <div class="main-tab active" data-target="skillsView">技能</div>
+            <div class="main-tab" data-target="kbView">知识库</div>
+            <div class="main-tab" data-target="memoryView">记忆</div>
+        </div>
+
+        <!-- Skills Section -->
+        <div id="skillsView" class="tab-content active">
+
+            <div class="search-bar-wrapper">
+                <input type="text" class="search-bar-v2" placeholder="搜索技能（例如：'网页搜索'、'代码助手'）...">
+            </div>
+
+            <div class="filter-tabs" id="filterTabs">
+                <div class="tab active" data-filter="all">全部</div>
+                <div class="tab" data-filter="official">官方</div>
+                <div class="tab" data-filter="community">社区</div>
+                <div class="tab" data-filter="mine">我的技能</div>
+            </div>
+
+            <div class="skills-grid-3" id="skillsGrid">
+                <div class="card skill-card-v2 card-dashed" data-category="mine" id="uploadCard"
+                    style="position: relative;">
+                    <div class="extract-overlay" id="loadingOverlay">
+                        <div class="loader"></div>
+                        <div style="font-weight: 800; color: var(--color-primary);">正在分析文档...</div>
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 5px;">沉淀中，基于 5 份报告提取模式</div>
+                    </div>
+                    <div class="skill-icon-v2">💡</div>
+                    <h3 style="color: var(--color-primary)">沉淀新技能</h3>
+                    <p style="font-size: 0.85rem; color: #777;">上传多份“竞品分析报告”或其他文档，让智能体自动沉淀出特定领域的专业能力。</p>
+                    <div id="uploadNormalState" style="width:100%; text-align:center;">
+                        <button class="btn btn-primary" style="margin-top: 15px; width:100%;"
+                            onclick="startExtraction()">上传 5 份报告</button>
+                    </div>
+                </div>
+
+                <div class="card skill-card-v2" data-category="mine" id="resultSkillCard"
+                    style="display: none; border-color: var(--color-primary); background: #FFFBF9;">
+                    <div class="skill-icon-v2">📈</div>
+                    <div class="source-badge source-mine">自有 • 刚沉淀</div>
+                    <h3>竞品分析 Expert</h3>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">已从 5 份报告中提取。擅长定位分析、竞品对标以及 SWOT 模型构建。
+                    </p>
+                    <div class="skill-status"><span
+                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
+                    </div>
+                </div>
+
+                <div class="card skill-card-v2" data-category="official">
+                    <div class="skill-icon-v2">🔍</div>
+                    <div class="source-badge source-official">官方</div>
+                    <h3>全网实时搜</h3>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">允许智能体访问实时网络，并在第一时间收集和总结信息源。</p>
+                    <div class="skill-status"><span
+                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
+                    </div>
+                </div>
+
+                <div class="card skill-card-v2" data-category="community">
+                    <div class="skill-icon-v2">📊</div>
+                    <div class="source-badge source-community">社区</div>
+                    <h3>增长分析师</h3>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">专注于 SaaS 指标和营销增长实验分析。</p>
+                    <div class="skill-status"><button class="btn btn-primary"
+                            style="padding: 8px 16px; font-size: 0.8rem;">+ 添加到智能体</button></div>
+                </div>
+
+                <div class="card skill-card-v2" data-category="mine">
+                    <div class="skill-icon-v2">💻</div>
+                    <div class="source-badge source-mine">自有</div>
+                    <h3>Ty 的代码规范</h3>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">从你的个人仓库提取，让智能体生成符合你审美的代码。</p>
+                    <div class="skill-status"><span
+                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Knowledge Base Section -->
+        <div id="kbView" class="tab-content">
+            <div class="archives-container">
+                <div class="archives-sidebar">
+                    <div class="archives-card">
+                        <div class="archives-title">
+                            <span>我的文件</span>
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;">+ 上传</button>
+                        </div>
+                        <ul class="file-list">
+                            <li class="file-item active" onclick="selectFile('soul.md')">📄 soul.md</li>
+                            <li class="file-item" onclick="selectFile('project_context.pdf')">📄 project_context.pdf
+                            </li>
+                            <li class="file-item" onclick="selectFile('user_preferences.json')">📄 user_preferences.json
+                            </li>
+                            <li class="file-item" onclick="selectFile('meeting_notes_apr12.docx')">📄
+                                meeting_notes_apr12.docx</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="preview-pane">
+                    <div class="preview-header">
+                        <div id="currentFileName" style="font-weight: 600;">soul.md</div>
+                        <div style="font-size: 0.8rem; color: #888;">最后同步: 5分钟前</div>
+                    </div>
+                    <div class="split-view">
+                        <div class="editor-side">
+                            <textarea id="markdownEditor" class="raw-input" spellcheck="false"># Agent Soul
+
+## Core Persona
+你是一个充满好奇心、逻辑严密的智能体。
+你不仅是工具，更是用户的思想延伸。
+
+## Communication Style
+- 简洁明了
+- 偶尔带有冷幽默
+- 始终以事实为基础
+
+## Knowledge Boundaries
+- 专注于编程、产品设计和前沿科技
+- 对于不确定的领域会诚实告知</textarea>
+                        </div>
+                        <div class="preview-side" id="markdownPreview">
+                            <h1>Agent Soul</h1>
+                            <h3>Core Persona</h3>
+                            <p>你是一个充满好奇心、逻辑严密的智能体。</p>
+                            <p>你不仅是工具，更是用户的思想延伸。</p>
+                            <h3>Communication Style</h3>
+                            <p>• 简洁明了<br>• 偶尔带有冷幽默<br>• 始终以事实为基础</p>
+                            <h3>Knowledge Boundaries</h3>
+                            <p>• 专注于编程、产品设计和前沿科技<br>• 对于不确定的领域会诚实告知</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memory Section -->
+        <div id="memoryView" class="tab-content">
+            <div class="memory-grid">
+                <div class="memory-section">
+                    <div class="memory-section-title">🏛️ 长期记忆 (LTS)</div>
+                    <div class="memory-list">
+                        <div class="memory-item">
+                            <span class="memory-tag tag-lts">核心喜好</span>
+                            <div>用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</div>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-lts">专业背景</span>
+                            <div>用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</div>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-lts">重要事实</span>
+                            <div>用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="memory-section">
+                    <div class="memory-section-title">⏱️ 短期记忆 (STS)</div>
+                    <div class="memory-list">
+                        <div class="memory-item">
+                            <span class="memory-tag tag-sts">当前会话</span>
+                            <div>正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</div>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-sts">近期习惯</span>
+                            <div>在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</div>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-sts">临时工作流</span>
+                            <div>用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</div>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-sts">上个指令</span>
+                            <div>要求汇总所有关于“模块化设计”的网页链接。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="navigation.js"></script>
+    <script>
+        // Main Tab Switching
+        const mainTabs = document.querySelectorAll('.main-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        mainTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-target');
+
+                mainTabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(target).classList.add('active');
+            });
+        });
+
+        // Skill Filtering
+        const filterTabs = document.querySelectorAll('.filter-tabs .tab');
+        const skillCards = document.querySelectorAll('.skill-card-v2');
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                filterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const filter = tab.getAttribute('data-filter');
+                skillCards.forEach(card => {
+                    const category = card.getAttribute('data-category');
+                    const isResultCard = card.id === 'resultSkillCard';
+                    const isUnlocked = card.dataset.unlocked === "true";
+
+                    if (filter === 'all' || category === filter) {
+                        if (isResultCard && !isUnlocked) {
+                            card.style.display = 'none';
+                        } else {
+                            card.style.display = 'flex';
+                        }
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Skill Extraction Simulation
+        function startExtraction() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                const resultCard = document.getElementById('resultSkillCard');
+                resultCard.dataset.unlocked = "true"; // Mark as unlocked
+                resultCard.style.display = 'flex';
+                resultCard.style.animation = 'fadeIn 0.5s ease-out';
+            }, 2500);
+        }
+
+        // Knowledge Base Logic
+        const editor = document.getElementById('markdownEditor');
+        const preview = document.getElementById('markdownPreview');
+
+        if (editor) {
+            editor.addEventListener('input', () => {
+                const text = editor.value;
+                // Simple markdown-to-html simulation
+                let html = text
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^\- (.*$)/gim, '<p>• $1</p>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+
+                preview.innerHTML = html;
+            });
+        }
+
+        function selectFile(fileName) {
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.textContent.includes(fileName)) {
+                    item.classList.add('active');
+                }
+            });
+            document.getElementById('currentFileName').textContent = fileName;
+
+            if (fileName !== 'soul.md') {
+                editor.value = "内容加载中...\n这是 " + fileName + " 的内容预览。对于非文本文件，系统将显示核心元数据及 AI 摘要。";
+                preview.innerHTML = "<h3>预览限制</h3><p>目前仅支持 .md 文件的实时对照编辑。其他格式文件建议下载查看，或使用 AI 总结功能。</p>";
+            } else {
+                // Restore soul.md content
+                editor.value = `# Agent Soul\n\n## Core Persona\n你是一个充满好奇心、逻辑严密的智能体。\n你不仅是工具，更是用户的思想延伸。\n\n## Communication Style\n- 简洁明了\n- 偶尔带有冷幽默\n- 始终以事实为基础\n\n## Knowledge Boundaries\n- 专注于编程、产品设计和前沿科技\n- 对于不确定的领域会诚实告知`;
+                // Manually trigger the input event to update the preview
+                const event = new Event('input', { bubbles: true, cancelable: true });
+                editor.dispatchEvent(event);
+            }
+        }
+    </script>
+</body>
+
+</html>

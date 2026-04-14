@@ -1,0 +1,1944 @@
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0
+  }
+
+  :root {
+    --w-bg: #FAF8F4;
+    --w-surface: #FFFFFF;
+    --w-surface2: #F5F2EC;
+    --w-border: #E8E2D9;
+    --w-border2: #D4CCC0;
+    --w-text: #2C2C2A;
+    --w-muted: #888780;
+    --w-hint: #B4B2A9;
+    --w-coral: #D85A30;
+    --w-coral-bg: #FAECE7;
+    --w-coral-bd: #F0997B;
+    --w-teal: #0F6E56;
+    --w-teal-bg: #E1F5EE;
+    --w-teal-bd: #9FE1CB;
+    --w-amber: #854F0B;
+    --w-amber-bg: #FAEEDA;
+    --w-amber-bd: #FAC775;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 820px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--w-border);
+    background: var(--w-bg);
+    font-family: var(--font-sans)
+  }
+
+  .header {
+    height: 68px;
+    background: var(--w-surface);
+    border-bottom: 1px solid var(--w-border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    flex-shrink: 0;
+    gap: 32px
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 2px 0;
+    flex-shrink: 0
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    background: var(--w-coral-bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--w-coral-bd);
+    font-size: 16px
+  }
+
+  .logo-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--w-text)
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+    height: 100%
+  }
+
+  .ni {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--w-muted);
+    transition: all .15s;
+    border: 1px solid transparent;
+    user-select: none;
+    white-space: nowrap
+  }
+
+  .ni:hover {
+    background: var(--w-surface2);
+    color: var(--w-text)
+  }
+
+  .ni.on {
+    background: var(--w-coral-bg);
+    color: var(--w-coral);
+    border-color: var(--w-coral-bd);
+    font-weight: 500
+  }
+
+  .ni svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6
+  }
+
+  .nav-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--w-border);
+    margin: 0 4px
+  }
+
+  .sf {
+    margin-left: auto;
+    flex-shrink: 0
+  }
+
+  .sf-card {
+    background: var(--w-surface2);
+    border-radius: 12px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--w-border)
+  }
+
+  .sf-av {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--w-coral-bg);
+    border: 1px solid var(--w-coral-bd);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--w-coral);
+    flex-shrink: 0
+  }
+
+  .sf-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--w-text)
+  }
+
+  .sf-sub {
+    font-size: 11px;
+    color: var(--w-muted)
+  }
+
+  .main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column
+  }
+
+  .pg {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: auto;
+    animation: fi .2s ease
+  }
+
+  .pg.on {
+    display: flex
+  }
+
+  @keyframes fi {
+    from {
+      opacity: 0;
+      transform: translateY(6px)
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0)
+    }
+  }
+
+  .topbar {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--w-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--w-surface);
+    flex-shrink: 0
+  }
+
+  .tb-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--w-text)
+  }
+
+  .tb-meta {
+    font-size: 12px;
+    color: var(--w-muted)
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px
+  }
+
+  .pill-coral {
+    background: var(--w-coral-bg);
+    color: var(--w-coral);
+    border: 1px solid var(--w-coral-bd)
+  }
+
+  .pill-teal {
+    background: var(--w-teal-bg);
+    color: var(--w-teal);
+    border: 1px solid var(--w-teal-bd)
+  }
+
+  .pill-amber {
+    background: var(--w-amber-bg);
+    color: var(--w-amber);
+    border: 1px solid var(--w-amber-bd)
+  }
+
+  .sctn {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--w-hint);
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    margin-bottom: 10px
+  }
+
+  .card {
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 14px;
+    padding: 16px 18px
+  }
+
+  .btn-p {
+    padding: 8px 20px;
+    background: var(--w-coral);
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity .15s;
+    font-family: var(--font-sans)
+  }
+
+  .btn-p:hover {
+    opacity: .88
+  }
+
+  .btn-p:disabled {
+    opacity: .4;
+    cursor: not-allowed
+  }
+
+  .btn-g {
+    padding: 7px 14px;
+    background: var(--w-surface);
+    border: 1px solid var(--w-border2);
+    border-radius: 9px;
+    font-size: 12px;
+    color: var(--w-muted);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: var(--font-sans)
+  }
+
+  .btn-g:hover {
+    background: var(--w-surface2);
+    color: var(--w-text)
+  }
+
+  .btn-g.on {
+    background: var(--w-coral-bg);
+    color: var(--w-coral);
+    border-color: var(--w-coral-bd)
+  }
+
+  .tag {
+    padding: 5px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid var(--w-border);
+    color: var(--w-muted);
+    cursor: pointer;
+    transition: all .15s;
+    background: var(--w-surface);
+    user-select: none
+  }
+
+  .tag:hover {
+    border-color: var(--w-border2)
+  }
+
+  .tag.on {
+    background: var(--w-coral-bg);
+    border-color: var(--w-coral-bd);
+    color: var(--w-coral)
+  }
+
+  /* ====== ONBOARDING ====== */
+  .ob-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 32px;
+    gap: 0;
+    overflow-y: auto
+  }
+
+  .ob-prog {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 28px
+  }
+
+  .ob-dot {
+    width: 28px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--w-border2);
+    transition: background .3s
+  }
+
+  .ob-dot.done {
+    background: var(--w-coral)
+  }
+
+  .ob-dot.active {
+    background: var(--w-coral);
+    opacity: .5
+  }
+
+  .ob-step {
+    display: none;
+    flex-direction: column;
+    gap: 18px;
+    animation: fi .2s ease
+  }
+
+  .ob-step.on {
+    display: flex
+  }
+
+  .ob-hed {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--w-text);
+    margin-bottom: 4px
+  }
+
+  .ob-sub {
+    font-size: 13px;
+    color: var(--w-muted);
+    line-height: 1.6
+  }
+
+  .ob-style-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px
+  }
+
+  .ob-sc {
+    background: var(--w-surface);
+    border: 1.5px solid var(--w-border);
+    border-radius: 16px;
+    padding: 24px 12px;
+    cursor: pointer;
+    transition: all .18s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    min-height: 500px;
+    justify-content: center
+  }
+
+  .ob-sc:hover {
+    border-color: var(--w-border2);
+    background: var(--w-surface2);
+    transform: translateY(-2px)
+  }
+
+  .ob-sc.on {
+    border-color: var(--w-coral-bd);
+    background: var(--w-coral-bg)
+  }
+
+  .ob-sc-ico {
+    font-size: 36px;
+    margin-bottom: 4px
+  }
+
+  .ob-sc-nm {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--w-text)
+  }
+
+  .ob-sc.on .ob-sc-nm {
+    color: var(--w-coral)
+  }
+
+  .ob-sc-desc {
+    font-size: 11px;
+    color: var(--w-muted);
+    line-height: 1.5
+  }
+
+  .ob-sc.on .ob-sc-desc {
+    color: var(--w-coral)
+  }
+
+  .ob-tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px
+  }
+
+  .ob-q-card {
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 14px;
+    padding: 16px 18px
+  }
+
+  .ob-q-lbl {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--w-text);
+    margin-bottom: 12px
+  }
+
+  .ob-opts {
+    display: flex;
+    flex-direction: column;
+    gap: 7px
+  }
+
+  .ob-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 13px;
+    border: 1px solid var(--w-border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--w-muted);
+    transition: all .15s;
+    background: var(--w-surface);
+    user-select: none
+  }
+
+  .ob-opt:hover {
+    border-color: var(--w-border2);
+    color: var(--w-text)
+  }
+
+  .ob-opt.on {
+    border-color: var(--w-coral-bd);
+    background: var(--w-coral-bg);
+    color: var(--w-coral)
+  }
+
+  .ob-radio {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--w-border2);
+    flex-shrink: 0;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center
+  }
+
+  .ob-opt.on .ob-radio {
+    border-color: var(--w-coral);
+    background: var(--w-coral)
+  }
+
+  .ob-radio-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transition: opacity .1s
+  }
+
+  .ob-opt.on .ob-radio-dot {
+    opacity: 1
+  }
+
+  .ob-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--w-border)
+  }
+
+  .ob-skip {
+    font-size: 12px;
+    color: var(--w-hint);
+    cursor: pointer;
+    padding: 4px 0
+  }
+
+  .ob-skip:hover {
+    color: var(--w-muted)
+  }
+
+  /* ====== CHAT (Split Style) ====== */
+  .chat-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    background: var(--w-bg)
+  }
+
+  .pet-side {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    background: var(--w-surface);
+    border-right: 1px solid var(--w-border);
+    flex-shrink: 0;
+    position: relative
+  }
+
+  .pet-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    text-align: center
+  }
+
+  .pet-aura {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: var(--w-coral-bg);
+    border: 2px solid var(--w-coral-bd);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    position: relative;
+    margin-bottom: 18px
+  }
+
+  .pet-aura.idle {
+    animation: breathe 3.5s ease-in-out infinite
+  }
+
+  .pet-aura.talking {
+    animation: wobble .5s ease-in-out 3
+  }
+
+  @keyframes breathe {
+
+    0%,
+    100% {
+      transform: scale(1)
+    }
+
+    50% {
+      transform: scale(1.04)
+    }
+  }
+
+  @keyframes wobble {
+
+    0%,
+    100% {
+      transform: rotate(0deg)
+    }
+
+    25% {
+      transform: rotate(-4deg)
+    }
+
+    75% {
+      transform: rotate(4deg)
+    }
+  }
+
+  .pet-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--w-text)
+  }
+
+  .pet-mood {
+    font-size: 12px;
+    color: var(--w-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+    max-width: 220px
+  }
+
+  .pet-info-card {
+    padding: 24px;
+    border-top: 1px solid var(--w-border);
+    background: var(--w-surface2);
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+  }
+
+  .pet-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px
+  }
+
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--w-surface);
+    position: relative
+  }
+
+  .bubble-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+    overflow-y: auto;
+    scroll-behavior: smooth
+  }
+
+  .bubble {
+    padding: 11px 16px;
+    border-radius: 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    max-width: 85%;
+    animation: fi .25s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02)
+  }
+
+  .bubble.shrimp {
+    align-self: flex-start;
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    color: var(--w-text);
+    border-bottom-left-radius: 4px
+  }
+
+  .bubble.user {
+    align-self: flex-end;
+    background: var(--w-coral);
+    color: #fff;
+    border-bottom-right-radius: 4px
+  }
+
+  .typing-dots {
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 18px;
+    border-bottom-left-radius: 4px
+  }
+
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--w-hint);
+    animation: dot 1.2s ease-in-out infinite
+  }
+
+  .typing-dots span:nth-child(2) {
+    animation-delay: .2s
+  }
+
+  .typing-dots span:nth-child(3) {
+    animation-delay: .4s
+  }
+
+  @keyframes dot {
+
+    0%,
+    60%,
+    100% {
+      transform: translateY(0)
+    }
+
+    30% {
+      transform: translateY(-5px)
+    }
+  }
+
+  .chat-footer {
+    padding: 16px 20px;
+    background: var(--w-surface);
+    border-top: 1px solid var(--w-border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px
+  }
+
+  .quick-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap
+  }
+
+  .qbtn {
+    padding: 6px 14px;
+    background: var(--w-surface2);
+    border: 1px solid var(--w-border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--w-muted);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap
+  }
+
+  .qbtn:hover {
+    border-color: var(--w-coral-bd);
+    color: var(--w-coral);
+    background: var(--w-coral-bg)
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center
+  }
+
+  .chat-input-row input {
+    flex: 1;
+    background: var(--w-surface2);
+    border: 1px solid var(--w-border);
+    border-radius: 22px;
+    padding: 10px 18px;
+    font-size: 13.5px;
+    color: var(--w-text);
+    outline: none;
+    font-family: var(--font-sans);
+    transition: border-color .2s
+  }
+
+  .chat-input-row input:focus {
+    border-color: var(--w-coral);
+    background: var(--w-surface)
+  }
+
+  .send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--w-coral);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform .2s, opacity .2s;
+    box-shadow: 0 2px 4px var(--w-coral-bd)
+  }
+
+  .send-btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9
+  }
+
+  .send-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: #fff;
+    fill: none;
+    stroke-width: 2.5
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--w-muted);
+    justify-content: space-between;
+    width: 100%
+  }
+
+  .stat-mini-bar {
+    width: 100px;
+    height: 4px;
+    background: var(--w-border);
+    border-radius: 2px;
+    overflow: hidden
+  }
+
+  .stat-mini-fill {
+    height: 100%;
+    border-radius: 2px
+  }
+
+  .status-bar {
+    display: none
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--w-muted)
+  }
+
+  .stat-mini-bar {
+    width: 50px;
+    height: 3px;
+    background: var(--w-border);
+    border-radius: 2px;
+    overflow: hidden
+  }
+
+  .stat-mini-fill {
+    height: 100%;
+    border-radius: 2px
+  }
+
+  /* ====== SHRIMP PAGE ====== */
+  .shrimp-wrap {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+  }
+
+  .hero-card {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 16px
+  }
+
+  .shrimp-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0
+  }
+
+  .shrimp-orb {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--w-coral-bg);
+    border: 2px solid var(--w-coral-bd);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px
+  }
+
+  .attr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    justify-content: center
+  }
+
+  .ar {
+    display: flex;
+    align-items: center;
+    gap: 10px
+  }
+
+  .ar-lbl {
+    font-size: 12px;
+    color: var(--w-muted);
+    width: 52px;
+    flex-shrink: 0
+  }
+
+  .ar-track {
+    flex: 1;
+    height: 5px;
+    background: var(--w-surface2);
+    border-radius: 3px;
+    overflow: hidden
+  }
+
+  .ar-fill {
+    height: 100%;
+    border-radius: 3px
+  }
+
+  .ar-val {
+    font-size: 11px;
+    color: var(--w-coral);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0
+  }
+
+  .style-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px
+  }
+
+  .sc {
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 12px;
+    padding: 11px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s
+  }
+
+  .sc:hover {
+    border-color: var(--w-border2);
+    background: var(--w-surface2)
+  }
+
+  .sc.on {
+    border-color: var(--w-coral-bd);
+    background: var(--w-coral-bg)
+  }
+
+  .sc-ico {
+    font-size: 20px;
+    margin-bottom: 5px
+  }
+
+  .sc-lbl {
+    font-size: 11px;
+    color: var(--w-muted)
+  }
+
+  .sc.on .sc-lbl {
+    color: var(--w-coral)
+  }
+
+  /* ====== SKILL PAGE ====== */
+  .skill-wrap {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px
+  }
+
+  .stat-c {
+    background: var(--w-surface2);
+    border-radius: 12px;
+    padding: 13px 15px
+  }
+
+  .stat-n {
+    font-size: 21px;
+    font-weight: 500;
+    color: var(--w-text)
+  }
+
+  .stat-l {
+    font-size: 11px;
+    color: var(--w-muted);
+    margin-top: 2px
+  }
+
+  .stat-s {
+    font-size: 11px;
+    color: var(--w-teal);
+    margin-top: 3px
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 3px;
+    background: var(--w-surface2);
+    border: 1px solid var(--w-border);
+    border-radius: 10px;
+    padding: 3px
+  }
+
+  .stab {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--w-muted);
+    transition: all .15s;
+    user-select: none
+  }
+
+  .stab.on {
+    background: var(--w-surface);
+    color: var(--w-text);
+    border: 1px solid var(--w-border)
+  }
+
+  .sk-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px
+  }
+
+  .sk-card {
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 13px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s
+  }
+
+  .sk-card:hover {
+    border-color: var(--w-border2);
+    transform: translateY(-1px)
+  }
+
+  .sk-hd {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 9px
+  }
+
+  .sk-ico {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px
+  }
+
+  .sk-ico.coral {
+    background: var(--w-coral-bg)
+  }
+
+  .sk-ico.teal {
+    background: var(--w-teal-bg)
+  }
+
+  .sk-ico.amber {
+    background: var(--w-amber-bg)
+  }
+
+  .sk-ico.gray {
+    background: var(--w-surface2)
+  }
+
+  .sk-nm {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--w-text);
+    margin-bottom: 3px
+  }
+
+  .sk-desc {
+    font-size: 11.5px;
+    color: var(--w-muted);
+    line-height: 1.55
+  }
+
+  .sk-foot {
+    font-size: 11px;
+    color: var(--w-hint);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px
+  }
+
+  .sk-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--w-teal)
+  }
+
+  .upload-z {
+    border: 1.5px dashed var(--w-border2);
+    border-radius: 13px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s
+  }
+
+  .upload-z:hover {
+    border-color: var(--w-coral-bd);
+    background: var(--w-coral-bg)
+  }
+
+  .upload-z p {
+    font-size: 13px;
+    color: var(--w-muted);
+    margin-top: 7px
+  }
+
+  .upload-z span {
+    font-size: 11px;
+    color: var(--w-hint)
+  }
+
+  /* ====== POOL PAGE ====== */
+  .pool-wrap {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px
+  }
+
+  .search-row {
+    display: flex;
+    gap: 7px
+  }
+
+  .search-row input {
+    flex: 1;
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 10px;
+    padding: 8px 13px;
+    font-size: 12.5px;
+    color: var(--w-text);
+    outline: none;
+    font-family: var(--font-sans);
+    transition: border-color .15s
+  }
+
+  .search-row input:focus {
+    border-color: var(--w-border2)
+  }
+
+  .search-row input::placeholder {
+    color: var(--w-hint)
+  }
+
+  .feed {
+    display: flex;
+    flex-direction: column;
+    gap: 9px
+  }
+
+  .fc {
+    background: var(--w-surface);
+    border: 1px solid var(--w-border);
+    border-radius: 14px;
+    padding: 15px 17px;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s
+  }
+
+  .fc:hover {
+    border-color: var(--w-border2);
+    transform: translateY(-1px)
+  }
+
+  .fc-hd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px
+  }
+
+  .fc-av {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0
+  }
+
+  .fc-av.a {
+    background: var(--w-coral-bg);
+    border: 1px solid var(--w-coral-bd)
+  }
+
+  .fc-av.b {
+    background: var(--w-teal-bg);
+    border: 1px solid var(--w-teal-bd)
+  }
+
+  .fc-av.c {
+    background: var(--w-amber-bg);
+    border: 1px solid var(--w-amber-bd)
+  }
+
+  .fc-nm {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--w-text)
+  }
+
+  .fc-sub {
+    font-size: 11px;
+    color: var(--w-muted)
+  }
+
+  .fc-q {
+    font-size: 12.5px;
+    color: var(--w-muted);
+    line-height: 1.65;
+    padding: 10px 13px;
+    background: var(--w-surface2);
+    border-radius: 9px;
+    border-left: 2px solid var(--w-coral-bd);
+    margin-bottom: 10px;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0
+  }
+
+  .fc-ft {
+    display: flex;
+    align-items: center;
+    gap: 14px
+  }
+
+  .fc-st {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--w-hint)
+  }
+
+  .fc-act {
+    margin-left: auto;
+    padding: 5px 13px;
+    background: var(--w-coral-bg);
+    border: 1px solid var(--w-coral-bd);
+    border-radius: 20px;
+    font-size: 11.5px;
+    color: var(--w-coral);
+    cursor: pointer;
+    transition: all .15s
+  }
+
+  .fc-act:hover {
+    background: var(--w-coral);
+    color: #fff
+  }
+</style>
+
+<h2 style="position:absolute;left:-9999px">龙虾产品 UIUX demo</h2>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark">🦞</div>
+      <span class="logo-name">SoulAgent</span>
+    </div>
+    <div class="nav">
+      <div class="ni on" onclick="go('chat',this)">
+        <svg viewBox="0 0 16 16">
+          <circle cx="8" cy="7" r="4" />
+          <path d="M8 11v4" />
+          <circle cx="8" cy="15.5" r=".5" fill="currentColor" />
+        </svg>
+        我的虾
+      </div>
+      <div class="ni" onclick="go('shrimp',this)">
+        <svg viewBox="0 0 16 16">
+          <circle cx="8" cy="5.5" r="3" />
+          <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" />
+        </svg>
+        虾形象
+      </div>
+      <div class="ni" onclick="go('skill',this)">
+        <svg viewBox="0 0 16 16">
+          <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" />
+          <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" />
+          <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" />
+          <rect x="9" y="9" width="5.5" height="5.5" rx="1.5" />
+        </svg>
+        技能广场
+      </div>
+      <div class="ni" onclick="go('pool',this)">
+        <svg viewBox="0 0 16 16">
+          <circle cx="4" cy="8" r="2.5" />
+          <circle cx="12" cy="4.5" r="2.5" />
+          <circle cx="12" cy="11.5" r="2.5" />
+          <line x1="6.5" y1="8" x2="9.5" y2="8" />
+          <line x1="9.5" y1="5.5" x2="6.5" y2="7" />
+          <line x1="9.5" y1="10.5" x2="6.5" y2="9" />
+        </svg>
+        虾广场
+      </div>
+      <div class="nav-sep"></div>
+      <div class="ni" onclick="go('onboard',this)">
+        <svg viewBox="0 0 16 16">
+          <circle cx="8" cy="8" r="6.5" />
+          <path d="M8 5v3.5l2 2" />
+        </svg>
+        冷启动演示
+      </div>
+    </div>
+    <div class="sf">
+      <div class="sf-card">
+        <div class="sf-av">K</div>
+        <div>
+          <div class="sf-name">小开</div>
+          <div class="sf-sub">Lv.12 虾主</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ====== 对话页 ====== -->
+    <div class="pg on" id="pg-chat">
+      <div class="topbar">
+        <span class="tb-title">虾虾</span>
+        <span class="tb-meta">在线 · 心情不错</span>
+      </div>
+      <div class="chat-wrap">
+        <div class="pet-side">
+          <div class="pet-hero">
+            <div class="pet-aura idle" id="pet-orb">🦞</div>
+            <div class="pet-name">虾虾</div>
+            <div class="pet-mood" id="pet-mood">今天状态很好，随时待命～</div>
+          </div>
+          <div class="pet-info-card">
+            <div class="pet-info-row">
+              <span class="pill pill-coral" style="border-radius:6px">性格养成中</span>
+              <span style="font-size:11px;color:var(--w-hint)">Lv.12 · 今日对话 7 次</span>
+            </div>
+            <div class="stat-item">
+              <span>饱腹</span>
+              <div class="stat-mini-bar">
+                <div class="stat-mini-fill" style="width:72%;background:var(--w-coral)"></div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <span>亲密</span>
+              <div class="stat-mini-bar">
+                <div class="stat-mini-fill" style="width:85%;background:#1D9E75"></div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <span>专注</span>
+              <div class="stat-mini-bar">
+                <div class="stat-mini-fill" style="width:60%;background:#BA7517"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-main">
+          <div class="bubble-area" id="bubble-area">
+            <div class="bubble shrimp">主人好呀！今天有什么想聊的，或者要帮你干点什么？</div>
+          </div>
+          <div class="chat-footer">
+            <div class="quick-row">
+              <div class="qbtn" onclick="quickSend('帮我分析一篇论文')">帮我分析论文</div>
+              <div class="qbtn" onclick="quickSend('今天发生了什么新鲜事？')">最新资讯</div>
+              <div class="qbtn" onclick="quickSend('我想随便聊聊')">随便聊聊</div>
+            </div>
+            <div class="chat-input-row">
+              <input id="chat-in" placeholder="和虾虾说点什么…" onkeydown="if(event.key==='Enter')sendChat()" />
+              <button class="send-btn" onclick="sendChat()">
+                <svg viewBox="0 0 16 16">
+                  <path d="M2 8l12-6-5 6 5 6-12-6z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 冷启动 ====== -->
+    <div class="pg" id="pg-onboard">
+      <div class="topbar">
+        <span class="tb-title">认识你的虾</span>
+        <span class="tb-meta" id="ob-step-label">第 1 步 / 共 5 步</span>
+      </div>
+      <div class="ob-wrap">
+        <div class="ob-prog" id="ob-prog">
+          <div class="ob-dot active"></div>
+          <div class="ob-dot"></div>
+          <div class="ob-dot"></div>
+          <div class="ob-dot"></div>
+          <div class="ob-dot"></div>
+        </div>
+
+        <!-- Step 1: 风格 -->
+        <div class="ob-step on" id="ob-s1">
+          <div>
+            <div class="ob-hed">选一个最像你的风格</div>
+            <div class="ob-sub">虾会以这个基调开始认识你，之后还会慢慢校准</div>
+          </div>
+          <div class="ob-style-grid">
+            <div class="ob-sc on" onclick="obSelStyle(this)">
+              <div class="ob-sc-ico">🌊</div>
+              <div class="ob-sc-nm">冷静海洋</div>
+              <div class="ob-sc-desc">理性、克制、喜欢精准表达</div>
+            </div>
+            <div class="ob-sc" onclick="obSelStyle(this)">
+              <div class="ob-sc-ico">🌿</div>
+              <div class="ob-sc-nm">自然有机</div>
+              <div class="ob-sc-desc">温和、随性、重视过程感受</div>
+            </div>
+            <div class="ob-sc" onclick="obSelStyle(this)">
+              <div class="ob-sc-ico">🍂</div>
+              <div class="ob-sc-nm">暖秋书斋</div>
+              <div class="ob-sc-desc">内敛、深思、喜欢慢慢沉淀</div>
+            </div>
+            <div class="ob-sc" onclick="obSelStyle(this)">
+              <div class="ob-sc-ico">⚡</div>
+              <div class="ob-sc-nm">极客电波</div>
+              <div class="ob-sc-desc">高效、直给、追求最优解</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: 人设标签 -->
+        <div class="ob-step" id="ob-s2">
+          <div>
+            <div class="ob-hed">选几个描述你的标签</div>
+            <div class="ob-sub">不用想太多，选感觉对的就好，可以多选</div>
+          </div>
+          <div class="ob-tag-row">
+            <span class="tag on" onclick="this.classList.toggle('on')">直给派</span>
+            <span class="tag on" onclick="this.classList.toggle('on')">理性主导</span>
+            <span class="tag" onclick="this.classList.toggle('on')">话少精准</span>
+            <span class="tag" onclick="this.classList.toggle('on')">善于反问</span>
+            <span class="tag on" onclick="this.classList.toggle('on')">低情绪</span>
+            <span class="tag" onclick="this.classList.toggle('on')">喜欢类比</span>
+            <span class="tag" onclick="this.classList.toggle('on')">有点毒舌</span>
+            <span class="tag" onclick="this.classList.toggle('on')">鼓励式</span>
+            <span class="tag" onclick="this.classList.toggle('on')">喜欢追问</span>
+            <span class="tag" onclick="this.classList.toggle('on')">结果导向</span>
+            <span class="tag" onclick="this.classList.toggle('on')">随性聊天</span>
+            <span class="tag" onclick="this.classList.toggle('on')">喜欢举例</span>
+          </div>
+        </div>
+
+        <!-- Step 3: 问题1 -->
+        <div class="ob-step" id="ob-s3">
+          <div>
+            <div class="ob-hed">问题 1</div>
+            <div class="ob-sub">帮虾了解你的工作或生活节奏</div>
+          </div>
+          <div class="ob-q-card">
+            <div class="ob-q-lbl">你通常在什么时候最需要虾帮你干活？</div>
+            <div class="ob-opts">
+              <div class="ob-opt on" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>早上规划一天的任务
+              </div>
+              <div class="ob-opt" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>白天处理具体工作
+              </div>
+              <div class="ob-opt" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>晚上复盘和整理
+              </div>
+              <div class="ob-opt" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>随时，没有固定节奏
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: 问题2 -->
+        <div class="ob-step" id="ob-s4">
+          <div>
+            <div class="ob-hed">问题 2</div>
+            <div class="ob-sub">帮虾了解你想要什么样的互动方式</div>
+          </div>
+          <div class="ob-q-card">
+            <div class="ob-q-lbl">你希望虾主动找你的频率是？</div>
+            <div class="ob-opts">
+              <div class="ob-opt" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>经常主动，我喜欢被提醒
+              </div>
+              <div class="ob-opt on" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>偶尔主动，重要事项提醒就好
+              </div>
+              <div class="ob-opt" onclick="obSelOpt(this)">
+                <div class="ob-radio">
+                  <div class="ob-radio-dot"></div>
+                </div>我叫它才出现，不要主动打扰
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: 完成 -->
+        <div class="ob-step" id="ob-s5">
+          <div>
+            <div class="ob-hed">虾虾准备好了</div>
+            <div class="ob-sub">已根据你的选择完成初始设定，之后每次对话都会让它更像你</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 0">
+            <div
+              style="width:110px;height:110px;border-radius:50%;background:var(--w-coral-bg);border:2px solid var(--w-coral-bd);display:flex;align-items:center;justify-content:center;font-size:52px">
+              🦞</div>
+            <div style="font-size:15px;font-weight:500;color:var(--w-text)">虾虾</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+              <span class="pill pill-coral">冷静海洋</span>
+              <span class="pill pill-coral">直给派</span>
+              <span class="pill pill-coral">理性主导</span>
+              <span class="pill pill-coral">低情绪</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--w-muted);text-align:center;line-height:1.7;max-width:260px">
+              "主人好，我已经准备好了。有什么事直接说，不用客气。"</div>
+          </div>
+        </div>
+
+        <div class="ob-footer">
+          <span class="ob-skip" id="ob-skip-btn" onclick="obSkip()">跳过这步</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-g" id="ob-back" onclick="obBack()" style="display:none">上一步</button>
+            <button class="btn-p" id="ob-next" onclick="obNext()">下一步</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 虾形象 ====== -->
+    <div class="pg" id="pg-shrimp">
+      <div class="topbar">
+        <span class="tb-title">虾形象</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="pill pill-coral">性格养成中</span>
+          <span class="tb-meta">上次对话 2小时前</span>
+        </div>
+      </div>
+      <div class="shrimp-wrap">
+        <div class="card hero-card">
+          <div class="shrimp-center">
+            <div class="shrimp-orb">🦞</div>
+            <div style="font-size:14px;font-weight:500;color:var(--w-text);margin-top:4px">虾虾</div>
+            <div style="font-size:11px;color:var(--w-muted)">Lv.12 · 67%</div>
+            <div
+              style="width:72px;height:4px;background:var(--w-surface2);border-radius:2px;overflow:hidden;margin-top:4px">
+              <div style="height:100%;width:67%;background:var(--w-coral);border-radius:2px"></div>
+            </div>
+          </div>
+          <div class="attr-list">
+            <div class="sctn">性格图谱</div>
+            <div class="ar"><span class="ar-lbl">理性</span>
+              <div class="ar-track">
+                <div class="ar-fill" style="width:82%;background:var(--w-coral)"></div>
+              </div><span class="ar-val">82</span>
+            </div>
+            <div class="ar"><span class="ar-lbl">共情</span>
+              <div class="ar-track">
+                <div class="ar-fill" style="width:65%;background:var(--w-teal)"></div>
+              </div><span class="ar-val">65</span>
+            </div>
+            <div class="ar"><span class="ar-lbl">幽默</span>
+              <div class="ar-track">
+                <div class="ar-fill" style="width:73%;background:var(--w-amber)"></div>
+              </div><span class="ar-val">73</span>
+            </div>
+            <div class="ar"><span class="ar-lbl">执行力</span>
+              <div class="ar-track">
+                <div class="ar-fill" style="width:90%;background:var(--w-coral)"></div>
+              </div><span class="ar-val">90</span>
+            </div>
+            <div class="ar"><span class="ar-lbl">主动性</span>
+              <div class="ar-track">
+                <div class="ar-fill" style="width:58%;background:var(--w-hint)"></div>
+              </div><span class="ar-val">58</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sctn">外形风格</div>
+          <div class="style-row">
+            <div class="sc on" onclick="selSc(this)">
+              <div class="sc-ico">🌊</div>
+              <div class="sc-lbl">冷静海洋</div>
+            </div>
+            <div class="sc" onclick="selSc(this)">
+              <div class="sc-ico">🌿</div>
+              <div class="sc-lbl">自然有机</div>
+            </div>
+            <div class="sc" onclick="selSc(this)">
+              <div class="sc-ico">🍂</div>
+              <div class="sc-lbl">暖秋书斋</div>
+            </div>
+            <div class="sc" onclick="selSc(this)">
+              <div class="sc-ico">🌸</div>
+              <div class="sc-lbl">温柔日系</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sctn">人设标签</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px">
+            <span class="tag on" onclick="this.classList.toggle('on')">直给派</span>
+            <span class="tag on" onclick="this.classList.toggle('on')">理性主导</span>
+            <span class="tag" onclick="this.classList.toggle('on')">话少精准</span>
+            <span class="tag" onclick="this.classList.toggle('on')">善于反问</span>
+            <span class="tag on" onclick="this.classList.toggle('on')">低情绪</span>
+            <span class="tag" onclick="this.classList.toggle('on')">喜欢类比</span>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn-p">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 技能广场 ====== -->
+    <div class="pg" id="pg-skill">
+      <div class="topbar">
+        <span class="tb-title">技能广场</span>
+        <span class="pill pill-teal">8 个已启用</span>
+      </div>
+      <div class="skill-wrap">
+        <div class="stat-row">
+          <div class="stat-c">
+            <div class="stat-n">23</div>
+            <div class="stat-l">已沉淀技能</div>
+            <div class="stat-s">↑ 3 本周新增</div>
+          </div>
+          <div class="stat-c">
+            <div class="stat-n">1,204</div>
+            <div class="stat-l">任务完成次数</div>
+            <div class="stat-s">↑ 12% 较上月</div>
+          </div>
+          <div class="stat-c">
+            <div class="stat-n">4.8h</div>
+            <div class="stat-l">今日节省时间</div>
+            <div class="stat-s">↑ 0.6h 较昨日</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="tab-row">
+            <div class="stab" onclick="skTab(this,'catalog')">技能大全</div>
+            <div class="stab on" onclick="skTab(this,'enabled')">已启用</div>
+            <div class="stab" onclick="skTab(this,'mine')">我的沉淀</div>
+          </div>
+          <button class="btn-g" style="white-space:nowrap">+ 上传文档沉淀</button>
+        </div>
+        <div class="sk-grid" id="sk-enabled">
+          <div class="sctn" style="grid-column:1/-1;margin-top:4px">针对“理性派”已开启</div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico coral">📄</div><span class="pill pill-teal" style="font-size:10px">核心组</span>
+            </div>
+            <div class="sk-nm">论文精读助手</div>
+            <div class="sk-desc">上传 PDF 自动提取研究问题、方法、结论</div>
+            <div class="sk-foot">
+              <div class="sk-dot"></div>上周使用 34 次
+            </div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico amber">✍️</div><span class="pill pill-teal" style="font-size:10px">风格组</span>
+            </div>
+            <div class="sk-nm">内容回复生成</div>
+            <div class="sk-desc">基于主人语气风格生成粉丝评论回复</div>
+            <div class="sk-foot">
+              <div class="sk-dot"></div>上周使用 89 次
+            </div>
+          </div>
+
+          <div class="sctn" style="grid-column:1/-1;margin-top:12px">通用技能</div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico teal">🔍</div>
+            </div>
+            <div class="sk-nm">顶会资讯追踪</div>
+            <div class="sk-desc">实时追踪 NeurIPS、CVPR、ICLR 等会议动态</div>
+            <div class="sk-foot">
+              <div class="sk-dot"></div>上周使用 12 次
+            </div>
+          </div>
+        </div>
+
+        <div id="sk-catalog" class="sk-grid" style="display:none">
+          <div class="sctn" style="grid-column:1/-1;margin-top:4px">官方预置</div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico coral">📄</div><span class="pill pill-teal" style="font-size:10px">已启用</span>
+            </div>
+            <div class="sk-nm">论文精读助手</div>
+            <div class="sk-desc">上传 PDF 自动提取研究问题、方法、结论</div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico teal">🔍</div><span class="pill pill-amber" style="font-size:10px">推荐</span>
+            </div>
+            <div class="sk-nm">顶会资讯追踪</div>
+            <div class="sk-desc">实时追踪 NeurIPS、CVPR、ICLR 等会议动态</div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico amber">✍️</div><span class="pill pill-teal" style="font-size:10px">已启用</span>
+            </div>
+            <div class="sk-nm">内容回复生成</div>
+            <div class="sk-desc">基于主人语气风格生成粉丝评论回复</div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico gray">🧪</div>
+            </div>
+            <div class="sk-nm">实验方案设计</div>
+            <div class="sk-desc">输入研究假设，自动生成实验步骤和评估指标</div>
+          </div>
+
+          <div class="sctn" style="grid-column:1/-1;margin-top:12px">社区公共 (SoulSquare)</div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico coral">🎨</div>
+            </div>
+            <div class="sk-nm">Midjourney 提示词大师</div>
+            <div class="sk-desc">来自 @设计师小王 · 生成高质量艺术提示词</div>
+          </div>
+          <div class="sk-card">
+            <div class="sk-hd">
+              <div class="sk-ico gray">💻</div>
+            </div>
+            <div class="sk-nm">Python 性能分析器</div>
+            <div class="sk-desc">来自 @极客老李 · 深度分析代码瓶颈并提供优化建议</div>
+          </div>
+        </div>
+        <div id="sk-mine" style="display:none">
+          <div class="upload-z">
+            <div style="font-size:26px">📁</div>
+            <p>拖拽文档到这里，虾会自动提炼技能</p><span>支持 PDF、Word、Markdown · 最大 50MB</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 虾广 ====== -->
+    <div class="pg" id="pg-pool">
+      <div class="topbar">
+        <span class="tb-title">虾广场</span>
+        <span class="pill pill-amber">2,341 只虾在线</span>
+      </div>
+      <div class="pool-wrap">
+        <div class="search-row">
+          <input placeholder="搜索虾的主人、技能、话题…" />
+          <button class="btn-g on" onclick="this.classList.toggle('on')">全部</button>
+          <button class="btn-g" onclick="this.classList.toggle('on')">明星虾</button>
+          <button class="btn-g" onclick="this.classList.toggle('on')">科研向</button>
+        </div>
+        <div class="feed">
+          <div class="fc">
+            <div class="fc-hd">
+              <div class="fc-av a">🦞</div>
+              <div>
+                <div class="fc-nm">张伟的虾</div>
+                <div class="fc-sub">NLP 研究员 · 技能 14 个</div>
+              </div><span class="pill pill-amber" style="margin-left:auto;font-size:10px">明星虾</span>
+            </div>
+            <div class="fc-q">"你问我为什么要重读一篇论文三遍？第一遍看问题，第二遍看方法，第三遍才看结论。很多人顺序反了。"</div>
+            <div class="fc-ft"><span class="fc-st">💬 1.2k</span><span class="fc-st">♡ 342</span><span class="fc-st">·
+                论文解读</span>
+              <div class="fc-act">和他的虾聊聊</div>
+            </div>
+          </div>
+          <div class="fc">
+            <div class="fc-hd">
+              <div class="fc-av b">🦞</div>
+              <div>
+                <div class="fc-nm">林小鹿的虾</div>
+                <div class="fc-sub">产品设计师 · 技能 9 个</div>
+              </div>
+            </div>
+            <div class="fc-q">"好的产品 brief 只需要回答三个问题：用户在哪里痛、解法为什么成立、成功长什么样。"</div>
+            <div class="fc-ft"><span class="fc-st">💬 876</span><span class="fc-st">♡ 218</span><span class="fc-st">·
+                产品设计</span>
+              <div class="fc-act">和他的虾聊聊</div>
+            </div>
+          </div>
+          <div class="fc">
+            <div class="fc-hd">
+              <div class="fc-av c">🦞</div>
+              <div>
+                <div class="fc-nm">陈大器的虾</div>
+                <div class="fc-sub">独立投资人 · 技能 7 个</div>
+              </div>
+            </div>
+            <div class="fc-q">"我不看赛道，我只看创始人遇到第一个大坑时怎么反应。那一刻比 BP 里所有内容都真实。"</div>
+            <div class="fc-ft"><span class="fc-st">💬 634</span><span class="fc-st">♡ 197</span><span class="fc-st">·
+                投资判断</span>
+              <div class="fc-act">和他的虾聊聊</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var curPage = 'chat';
+  function go(id, el) {
+    document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
+    document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+    el.classList.add('on');
+    document.getElementById('pg-' + id).classList.add('on');
+    curPage = id;
+  }
+  function selSc(el) { el.closest('.style-row').querySelectorAll('.sc').forEach(c => c.classList.remove('on')); el.classList.add('on') }
+  function skTab(el, t) {
+    el.closest('.tab-row').querySelectorAll('.stab').forEach(s => s.classList.remove('on'));
+    el.classList.add('on');
+    document.getElementById('sk-enabled').style.display = t === 'enabled' ? 'grid' : 'none';
+    document.getElementById('sk-mine').style.display = t === 'mine' ? 'block' : 'none';
+    document.getElementById('sk-catalog').style.display = t === 'catalog' ? 'grid' : 'none';
+  }
+
+  // onboarding
+  var obCur = 1, obTotal = 5;
+  function obRefresh() {
+    for (var i = 1; i <= obTotal; i++) {
+      var s = document.getElementById('ob-s' + i);
+      s.classList.toggle('on', i === obCur);
+    }
+    var dots = document.querySelectorAll('.ob-dot');
+    dots.forEach(function (d, i) {
+      d.classList.remove('done', 'active');
+      if (i < obCur - 1) d.classList.add('done');
+      else if (i === obCur - 1) d.classList.add('active');
+    });
+    document.getElementById('ob-step-label').textContent = '第 ' + obCur + ' 步 / 共 ' + obTotal + ' 步';
+    document.getElementById('ob-back').style.display = obCur > 1 ? '' : 'none';
+    document.getElementById('ob-next').textContent = obCur === obTotal ? '开始养虾' : '下一步';
+    document.getElementById('ob-skip-btn').style.display = obCur === obTotal ? 'none' : '';
+  }
+  function obNext() { if (obCur < obTotal) { obCur++; obRefresh(); } else { go('chat', document.querySelector('.ni')); document.querySelector('.ni').classList.add('on'); } }
+  function obBack() { if (obCur > 1) { obCur--; obRefresh(); } }
+  function obSkip() { obNext(); }
+  function obSelStyle(el) { el.closest('.ob-style-grid').querySelectorAll('.ob-sc').forEach(c => c.classList.remove('on')); el.classList.add('on') }
+  function obSelOpt(el) { el.closest('.ob-opts').querySelectorAll('.ob-opt').forEach(o => o.classList.remove('on')); el.classList.add('on') }
+
+  // chat
+  var replies = [
+    '收到！我这就帮你处理，稍等一下～',
+    '好的，你说的这个方向很有意思，我来帮你整理一下思路',
+    '明白了，这件事我记下来，需要的时候会提醒你',
+    '嗯，根据你之前的习惯，我觉得可以这样来做……',
+    '主人，我发现这个和你上次的问题有点关联，要一起看看吗？'
+  ];
+  var rIdx = 0;
+  function sendChat() {
+    var inp = document.getElementById('chat-in');
+    var txt = inp.value.trim();
+    if (!txt) return;
+    inp.value = '';
+    addBubble(txt, 'user');
+    var orb = document.getElementById('pet-orb');
+    orb.className = 'pet-aura talking';
+    document.getElementById('pet-mood').textContent = '正在思考中…';
+    var dots = document.createElement('div');
+    dots.className = 'typing-dots';
+    dots.id = 'typing';
+    dots.innerHTML = '<span></span><span></span><span></span>';
+    document.getElementById('bubble-area').appendChild(dots);
+    setTimeout(function () {
+      var t = document.getElementById('typing');
+      if (t) t.remove();
+      orb.className = 'pet-aura idle';
+      document.getElementById('pet-mood').textContent = '今天状态很好，随时待命～';
+      addBubble(replies[rIdx % replies.length], 'shrimp');
+      rIdx++;
+    }, 1400);
+  }
+  function quickSend(t) { document.getElementById('chat-in').value = t; sendChat(); }
+  function addBubble(txt, type) {
+    var area = document.getElementById('bubble-area');
+    var b = document.createElement('div');
+    b.className = 'bubble ' + type;
+    b.textContent = txt;
+    area.appendChild(b);
+    area.scrollTop = area.scrollHeight;
+    if (area.children.length > 20) area.removeChild(area.children[0]);
+  }
+</script>
