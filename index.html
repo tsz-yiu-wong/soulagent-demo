@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent | 初始化</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .selection-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 40px 0;
+            /* 在标题和按钮之间保持间距 */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- hero-area 现在自带居中逻辑 -->
+    <div class="hero-area animate-fade-in">
+
+        <!-- 标题与副标题：已居中 -->
+        <header style="max-width: 800px; margin-bottom: 20px;">
+            <h1 style="font-size: 3.5rem; letter-spacing: -1.5px; font-weight: 800; margin-bottom: 16px;">给Agent选一个初始性格～</h1>
+        </header>
+
+        <!-- 4 竖向并排卡片网格：已居中 -->
+        <div class="selection-grid-4">
+            <!-- 1. 战略家 -->
+            <div class="card lobster-card-v2" onclick="selectLobster(this, 'strategist')">
+                <div class="checkmark">✓</div>
+                <div
+                    style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 120px; height: 120px; margin-bottom: 30px;">
+                        <circle cx="50" cy="50" r="45" fill="#E1F5FE" />
+                        <path fill="#0288D1"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                    </svg>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 12px;">战略家</h3>
+                    <div style="display: flex; gap: 6px; margin-bottom: 20px;">
+                        <span class="trait-pill">理性</span>
+                        <span class="trait-pill">逻辑</span>
+                    </div>
+                    <p style="font-size: 0.95rem; color: #777; line-height: 1.6;">专注于高效率的日程管理和逻辑化的问题解决方案。</p>
+                </div>
+            </div>
+
+            <!-- 2. 共情者 -->
+            <div class="card lobster-card-v2 selected" onclick="selectLobster(this, 'empath')">
+                <div class="checkmark">✓</div>
+                <div
+                    style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 120px; height: 120px; margin-bottom: 30px;">
+                        <circle cx="50" cy="50" r="45" fill="#E0F5F4" />
+                        <path fill="var(--color-secondary)"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                    </svg>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 12px;">共情者</h3>
+                    <div style="display: flex; gap: 6px; margin-bottom: 20px;">
+                        <span class="trait-pill">亲和</span>
+                        <span class="trait-pill">倾听</span>
+                    </div>
+                    <p style="font-size: 0.95rem; color: #777; line-height: 1.6;">优先考虑你的情绪健康，并能敏锐察觉你的精神状态。</p>
+                </div>
+            </div>
+
+            <!-- 3. 幽默家 -->
+            <div class="card lobster-card-v2" onclick="selectLobster(this, 'joker')">
+                <div class="checkmark">✓</div>
+                <div
+                    style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 120px; height: 120px; margin-bottom: 30px;">
+                        <circle cx="50" cy="50" r="45" fill="#FFF4E0" />
+                        <path fill="#FFB347"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                    </svg>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 12px;">幽默家</h3>
+                    <div style="display: flex; gap: 6px; margin-bottom: 20px;">
+                        <span class="trait-pill">风趣</span>
+                        <span class="trait-pill">大胆</span>
+                    </div>
+                    <p style="font-size: 0.95rem; color: #777; line-height: 1.6;">在处理无聊任务时，总能用幽默感让你会心一笑。</p>
+                </div>
+            </div>
+
+            <!-- 4. 执行者 -->
+            <div class="card lobster-card-v2" onclick="selectLobster(this, 'doer')">
+                <div class="checkmark">✓</div>
+                <div
+                    style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 120px; height: 120px; margin-bottom: 30px;">
+                        <circle cx="50" cy="50" r="45" fill="#FFE5E0" />
+                        <path fill="var(--color-primary)"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                    </svg>
+                    <h3 style="font-size: 1.6rem; margin-bottom: 12px;">执行者</h3>
+                    <div style="display: flex; gap: 6px; margin-bottom: 20px;">
+                        <span class="trait-pill">极速</span>
+                        <span class="trait-pill">准确</span>
+                    </div>
+                    <p style="font-size: 0.95rem; color: #777; line-height: 1.6;">全天候待命。以极高的速度和准确率完成所有任务。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下一步按钮：已居中 -->
+        <div style="margin-top: 20px;">
+            <button class="btn btn-primary" style="padding: 20px 100px; font-size: 1.3rem; border-radius: 40px;"
+                onclick="navigateTo('setup.html')">
+                下一步
+            </button>
+        </div>
+    </div>
+
+    <script src="navigation.js"></script>
+    <script>
+        function selectLobster(element, type) {
+            document.querySelectorAll('.lobster-card-v2').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+    </script>
+</body>
+
+</html>
