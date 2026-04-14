@@ -21,6 +21,38 @@
             color: var(--color-primary);
         }
 
+        @keyframes fade-in-right {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-fade-in-right {
+            animation: fade-in-right 0.3s ease-out;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.4s ease-out forwards;
+        }
+
         .twin-text {
             color: var(--color-twin);
         }
@@ -174,23 +206,24 @@
             box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
         }
 
-        .notification-dropdown {
-            position: absolute;
-            top: calc(100% + 12px);
-            right: -80px;
-            width: 320px;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--color-border);
-            border-radius: var(--radius-md);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+        .sidebar-right {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-left: 2px solid var(--color-border);
+            padding: 25px 20px;
             display: none;
             flex-direction: column;
-            gap: 15px;
-            z-index: 1200;
-            transform-origin: top center;
-            animation: dropdown-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            gap: 20px;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .sidebar-right.show {
+            display: flex;
+        }
+
+        .dashboard-layout.with-sidebar {
+            grid-template-columns: 420px 1fr 320px !important;
         }
 
         .notification-dropdown.show {
@@ -201,7 +234,7 @@
             content: '';
             position: absolute;
             top: -8px;
-            right: 90px;
+            right: 12px;
             width: 14px;
             height: 14px;
             background: white;
@@ -210,27 +243,322 @@
             transform: rotate(45deg);
         }
 
-        .dropdown-header {
-            font-size: 0.9rem;
+        .sidebar-header {
+            font-size: 1rem;
             font-weight: 800;
             color: var(--color-text);
             padding-bottom: 12px;
-            border-bottom: 2px solid #F5F5F5;
+            border-bottom: 2px solid #F0F0F0;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .dropdown-header .badge-count {
-            font-size: 0.7rem;
+        .sidebar-header .badge-count {
+            font-size: 0.75rem;
             background: var(--color-primary);
             color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+
+        /* 总结卡片样式 */
+        .summary-card {
+            background: linear-gradient(145deg, #FFFDFD 0%, #FFF9F8 100%);
+            border: 2px solid rgba(255, 127, 102, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 5px;
+            box-shadow: 0 4px 12px rgba(255, 127, 102, 0.05);
+        }
+
+        .summary-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--color-text);
+            display: block;
+            line-height: 1.2;
+        }
+
+        .summary-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #999;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* 数字分身激活卡片 - 宇宙星空感 */
+        .twin-activation-card {
+            background: linear-gradient(135deg, #0B0A1A 0%, #1A1A3A 100%);
+            background-image:
+                radial-gradient(1px 1px at 25% 35%, white 100%, transparent),
+                radial-gradient(1px 1px at 50% 50%, white 100%, transparent),
+                radial-gradient(1.5px 1.5px at 75% 25%, rgba(255, 255, 255, 0.8) 100%, transparent),
+                radial-gradient(1px 1px at 85% 75%, white 100%, transparent),
+                radial-gradient(1px 1px at 15% 85%, white 100%, transparent),
+                linear-gradient(135deg, #0B0A1A 0%, #13132D 100%);
+            border-radius: 16px;
+            padding: 22px;
+            margin-top: 10px;
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .twin-activation-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5), 0 0 30px rgba(168, 85, 247, 0.2);
+        }
+
+        .twin-activation-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: rotate-glow 15s linear infinite;
+        }
+
+        @keyframes rotate-glow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .twin-activation-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .twin-activation-card p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 全屏遮罩 - 密集星空背景 */
+        #twin-reveal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(15px);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            animation: fade-in 0.8s ease-out forwards;
+            overflow: hidden;
+        }
+
+        #twin-reveal-overlay::before,
+        #twin-reveal-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: stars-twinkle 4s infinite ease-in-out;
+        }
+
+        /* 异步呼吸：::after 延迟 2s 启动，形成交替发光感 */
+        #twin-reveal-overlay::after {
+            animation-delay: -2s;
+            box-shadow:
+                25vw 35vh 0 rgba(255, 255, 255, 0.7), 65vw 25vh 0 rgba(255, 255, 255, 0.8),
+                50vw 85vh 0 rgba(255, 255, 255, 0.6), 80vw 90vh 0 white,
+                40vw 40vh 0 rgba(255, 255, 255, 0.9), 95vw 5vh 0 white,
+                75vw 6vh 0 white, 88vw 40vh 0 rgba(255, 255, 255, 0.5),
+                72vw 25vh 0 white, 62vw 85vh 0 white, 45vw 95vh 0 white,
+                97vw 70vh 0 white, 58vw 78vh 0 white, 78vw 88vh 0 white;
+        }
+
+        #twin-reveal-overlay::before {
+            box-shadow:
+                15vw 10vh 0 white, 45vw 15vh 0 white, 85vw 12vh 0 white,
+                10vw 45vh 0 white, 30vw 65vh 0 white, 70vw 55vh 0 white,
+                90vw 75vh 0 white, 20vw 80vh 0 white, 60vw 60vh 0 white,
+                5vw 95vh 0 white, 35vw 50vh 0 white, 12vw 20vh 0 white,
+                18vw 55vh 0 white, 28vw 90vh 0 white, 55vw 5vh 0 white,
+                3vw 30vh 0 white, 42vw 22vh 0 white, 22vw 12vh 0 white;
+        }
+
+        @keyframes stars-twinkle {
+
+            0%,
+            100% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .reveal-icon-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 40px;
+        }
+
+        .reveal-icon {
+            font-size: 100px;
+            filter: drop-shadow(0 0 20px #8B5CF6);
+            animation: twin-pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes twin-pulse {
+            0% {
+                transform: scale(1) rotate(0);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1) rotate(5deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 40px #A855F7);
+            }
+
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 0.8;
+            }
+        }
+
+        .reveal-glow-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: ring-expand 2s linear infinite;
+        }
+
+        @keyframes ring-expand {
+            from {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .reveal-text {
+            text-align: center;
+            animation: slide-up 0.8s ease-out backwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes slide-up {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .reveal-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s;
+        }
+
+        .reveal-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
+        }
+
+        .activation-btn {
+            background: linear-gradient(90deg, #A855F7 0%, #7C3AED 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .activation-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+            filter: brightness(1.1);
         }
 
         #notification-cards-container {
-            max-height: 400px;
+            flex-grow: 1;
+            max-height: calc(100vh - 280px);
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -247,9 +575,282 @@
             background: transparent;
         }
 
-        #notification-cards-container::-webkit-scrollbar-thumb {
-            background: #EEE;
-            border-radius: 2px;
+        .calibration-input-container {
+            display: none;
+            margin-top: 10px;
+        }
+
+        /* 聊天输入框增强样式 */
+        .chat-input-wrapper {
+            padding: 20px 40px 30px 40px;
+            background: white;
+            border-top: 1px solid var(--color-border);
+            position: relative;
+        }
+
+        .input-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-left: 2px;
+        }
+
+        .toolbar-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #F8F9FA;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .toolbar-btn:hover {
+            background: white;
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(255, 127, 102, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn.active {
+            background: rgba(255, 127, 102, 0.1);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .toolbar-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.5;
+        }
+
+        .input-box-v2 {
+            background: #F5F5F7;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 8px 8px 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .input-box-v2:focus-within {
+            background: white;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(255, 127, 102, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-box-v2 textarea {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            font-family: inherit;
+            padding: 8px 0;
+            resize: none;
+            max-height: 120px;
+            line-height: 1.5;
+            color: var(--color-text);
+        }
+
+        .send-btn-v2 {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 127, 102, 0.3);
+        }
+
+        .send-btn-v2:hover {
+            transform: scale(1.05) translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 15px rgba(255, 127, 102, 0.4);
+        }
+
+        .send-btn-v2:active {
+            transform: scale(0.95);
+        }
+
+        /* 浮动菜单 */
+        .toolbar-item {
+            position: relative;
+        }
+
+        .input-floating-menu {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 200px;
+            z-index: 1000;
+            animation: menu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes menu-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .input-floating-menu.show {
+            display: flex;
+        }
+
+        .menu-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #F5F5F7;
+            color: var(--color-primary);
+        }
+
+        .menu-item.active {
+            color: var(--color-primary);
+            background: rgba(255, 127, 102, 0.05);
+        }
+
+        /* 知识库按钮专属样式 */
+        .kb-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #F8F9FA;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #AAA;
+            /* 默认禁用颜色 */
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            filter: grayscale(1);
+            /* 默认显灰色 */
+            opacity: 0.6;
+        }
+
+        .kb-btn:hover {
+            border-color: #10B981;
+            color: #10B981;
+            filter: grayscale(0.5);
+            opacity: 0.8;
+        }
+
+        .kb-btn.active {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: #10B981;
+            color: #10B981;
+            filter: grayscale(0);
+            opacity: 1;
+        }
+
+        .kb-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.5;
+        }
+
+        /* 打字动画 */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 4px 8px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 127, 102, 0.4);
+            border-radius: 50%;
+            animation: typing-bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing-bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.4;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-msg {
+            animation: message-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes message-pop {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .lobster-bob {
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center center;
         }
     </style>
 </head>
@@ -265,29 +866,24 @@
         </nav>
 
         <div style="display: flex; gap: 16px; align-items: center; position: relative;">
-            <!-- 通知铃铛 -->
-            <div class="notification-bell" onclick="toggleNotificationDropdown(event)">
-                <span class="bell-icon">🔔</span>
-                <span class="bell-badge">2</span>
-                <div id="notification-dropdown" class="notification-dropdown">
-                    <div class="dropdown-header">
-                        <span>系统通知</span>
-                        <span class="badge-count">2 条未读</span>
-                    </div>
-                    <div id="notification-cards-container">
-                        <!-- Cards injected by JS -->
-                    </div>
-                </div>
-            </div>
-
             <div class="security-status" onclick="toggleSecurityDropdown(event)">
                 <span class="status-dot"></span>
                 <span class="status-text">当前环境：安全</span>
                 <div id="security-dropdown" class="security-dropdown">
                     <div class="dropdown-item">✓ 对话内容已保护</div>
-                    <div class="dropdown-item">✓ 技能skill已保护</div>
+                    <div class="dropdown-item">✓ Skill技能已保护</div>
                     <div class="dropdown-item">✓ 数据安全已保护</div>
                 </div>
+            </div>
+
+            <!-- 通知铃铛 -->
+            <div class="notification-bell" onclick="toggleNotificationSidebar(event)">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2"
+                    class="bell-icon-svg">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span class="bell-badge">2</span>
             </div>
         </div>
 
@@ -319,19 +915,30 @@
                 <div style="cursor: pointer; display: inline-block; user-select: none;" onclick="cycleNames()">
                     <h2 id="agent-name"
                         style="margin-bottom: 8px; transition: color 0.3s; font-size: 1.2rem; color: var(--color-primary);">
-                        幼年Shelly</h2>
+                        幼年Bob</h2>
                 </div>
 
-                <div id="stage-indicator-container"
-                    style="width: 40%; margin: 0 auto 12px auto; height: 12px; display: flex; flex-direction: column; justify-content: center;">
-                    <!-- initial state injected by js -->
+                <div style="width: 55%; margin: 0 auto 12px auto;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 0 2px;">
+                        <span id="form-label"
+                            style="font-size: 0.65rem; font-weight: 800; color: #999; letter-spacing: 1px;">幼年形态</span>
+                        <span id="level-label"
+                            style="font-size: 0.75rem; font-weight: 800; color: var(--color-primary); background: rgba(255,127,102,0.1); padding: 1px 6px; border-radius: 4px;">Lv.1</span>
+                    </div>
+                    <div id="stage-indicator-container"
+                        style="height: 6px; display: flex; align-items: center; gap: 4px;">
+                        <!-- initial state injected by js -->
+                    </div>
                 </div>
 
                 <div style="display: flex; gap: 6px; justify-content: center;">
                     <span
-                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">霸道</span>
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">直接且高效</span>
                     <span
-                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">急性子</span>
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">主动出击</span>
+                    <span
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">全面报告</span>
                 </div>
             </div>
 
@@ -340,7 +947,7 @@
                     <div
                         style="position: absolute; width: 140%; height: 140%; background: radial-gradient(circle, rgba(255,127,102,0.15) 0%, transparent 70%); top: -20%; left: -20%; filter: blur(20px);">
                     </div>
-                    <svg viewBox="0 0 100 100" style="width: 220px; height: 220px; position: relative;"
+                    <svg viewBox="0 0 100 100" style="position: relative;"
                         class="lobster-bob">
                         <circle cx="50" cy="50" r="45" fill="#FFE5E0" />
                         <path fill="var(--color-primary)"
@@ -380,6 +987,17 @@
                         flex-grow: 1;
                     }
 
+                    .mbti-track::after {
+                        content: '';
+                        position: absolute;
+                        left: 50%;
+                        top: -4px;
+                        bottom: -4px;
+                        width: 1px;
+                        background: rgba(0, 0, 0, 0.2);
+                        z-index: 1;
+                    }
+
                     .mbti-marker {
                         position: absolute;
                         width: 12px;
@@ -390,7 +1008,8 @@
                         top: -3px;
                         transform: translateX(-50%);
                         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                        transition: left 0.4s ease;
+                        transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        z-index: 2;
                     }
 
                     .mbti-value {
@@ -413,8 +1032,8 @@
                 <div class="mbti-stat">
                     <span class="mbti-label">理性</span>
                     <div class="mbti-track">
-                        <div class="mbti-marker" style="left: 20%;">
-                            <span class="mbti-value">62</span>
+                        <div id="mbti-marker-1" class="mbti-marker" style="left: 50%;">
+                            <span id="mbti-value-1" class="mbti-value">0</span>
                         </div>
                     </div>
                     <span class="mbti-label">感性</span>
@@ -422,8 +1041,8 @@
                 <div class="mbti-stat">
                     <span class="mbti-label">主动</span>
                     <div class="mbti-track">
-                        <div class="mbti-marker" style="left: 75%; border-color: #F48FB1;">
-                            <span class="mbti-value" style="color: #F48FB1;">55</span>
+                        <div id="mbti-marker-2" class="mbti-marker" style="left: 50%; border-color: #F48FB1;">
+                            <span id="mbti-value-2" class="mbti-value" style="color: #F48FB1;">0</span>
                         </div>
                     </div>
                     <span class="mbti-label">响应</span>
@@ -431,8 +1050,8 @@
                 <div class="mbti-stat">
                     <span class="mbti-label">精简</span>
                     <div class="mbti-track">
-                        <div class="mbti-marker" style="left: 45%; border-color: #81C784;">
-                            <span class="mbti-value" style="color: #81C784;">10</span>
+                        <div id="mbti-marker-3" class="mbti-marker" style="left: 50%; border-color: #81C784;">
+                            <span id="mbti-value-3" class="mbti-value" style="color: #81C784;">0</span>
                         </div>
                     </div>
                     <span class="mbti-label">详尽</span>
@@ -440,8 +1059,8 @@
                 <div class="mbti-stat">
                     <span class="mbti-label">专才</span>
                     <div class="mbti-track">
-                        <div class="mbti-marker" style="left: 85%; border-color: #64B5F6;">
-                            <span class="mbti-value" style="color: #64B5F6;">76</span>
+                        <div id="mbti-marker-4" class="mbti-marker" style="left: 50%; border-color: #64B5F6;">
+                            <span id="mbti-value-4" class="mbti-value" style="color: #64B5F6;">0</span>
                         </div>
                     </div>
                     <span class="mbti-label">通才</span>
@@ -452,73 +1071,218 @@
         <!-- 中间: 对话频道 -->
         <main class="main-chat">
             <div id="chat-scroller" class="chat-container">
-                <div class="chat-msg">
-                    <div class="bubble lobster">
-                        初始化完成。我是 Shelly，你的专属 Agent。检测到你今天关注的是“可持续消费”领域。需要聊聊吗？
+                <!-- 动态注入对话内容 -->
+            </div>
+            <div class="chat-input-wrapper">
+                <div class="input-toolbar">
+                    <!-- 1. 上传附件 -->
+                    <div class="toolbar-item">
+                        <div class="toolbar-btn" onclick="document.getElementById('file-upload').click()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path
+                                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
+                            <input type="file" id="file-upload" style="display: none;"
+                                onchange="handleFileUpload(this)">
+                        </div>
                     </div>
-                </div>
-                <div class="chat-msg user">
-                    <div class="bubble user">
-                        是的，帮我策划一个针对 Z 世代的可持续龙虾零食品牌推广方案。
-                    </div>
-                </div>
-                <div class="chat-msg">
-                    <div class="bubble lobster">
-                        有趣的挑战。考虑到 Z 世代对透明度的要求，我建议采用“从海洋到零食”的全程追溯故事。你想先定调：是走“环保先锋”的高冷范，还是“趣味海洋”的亲和路线？
-                    </div>
-                </div>
-                <div class="chat-msg user">
-                    <div class="bubble user">
-                        趣味海洋，但我希望有一些硬核的降碳数据支持。
-                    </div>
-                </div>
-                <div class="chat-msg">
-                    <div class="bubble lobster">
-                        明白了。我为你生成了一个初步大纲：<br>
-                        1. <b>视觉</b>：采用荧光海洋生物风，搭配数据可视化泡泡。<br>
-                        2. <b>传播</b>：发起“认领一只龙虾”的减碳众筹。<br>
-                        3. <b>渠道</b>：优先小红书和 B 站生态。<br>
-                        这是具体的降碳预估：相比传统零食减少了 42% 的物流碳足迹。你看这个方向对吗？
-                    </div>
-                </div>
-                <div class="chat-msg user">
-                    <div class="bubble user">
-                        不错，重点加强众筹环节的社交属性，尤其是让用户能展示他们的“减碳勋章”。
-                    </div>
-                </div>
-                <div class="chat-msg">
-                    <div class="bubble lobster">
-                        好的，更新已完成。众筹将包含 AR 社交滤镜和可分享的数字成就勋章。任务详情已同步至你的执行看板。<br><br>
-                        发现你非常擅长将 <b>硬核数据</b> 转化为 <b>社交货币</b>。这似乎是你常用的方法论？
 
-                        <div class="skill-suggestion">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <div>
-                                    <div class="skill-tag">智能沉淀建议</div>
-                                    <h4 style="margin: 10px 0 5px 0;">社交化数据营销 Skill</h4>
-                                    <p style="font-size: 0.8rem; line-height: 1.4; color: #666;">
-                                        自动将复杂的数据点转化为适合社交媒体传播的互动创意。</p>
+                    <!-- 2. 选技能 -->
+                    <div class="toolbar-item">
+                        <div class="toolbar-btn" id="skill-btn" onclick="toggleFloatingMenu('skill-menu', event)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                            Skill技能 <span id="skill-count-badge"
+                                style="background: var(--color-primary); color: white; padding: 0 6px; border-radius: 10px; font-size: 0.65rem; margin-left: 4px; display: none;">0</span>
+                        </div>
+
+                        <div id="skill-menu" class="input-floating-menu">
+                            <div
+                                style="font-size: 0.65rem; font-weight: 800; color: #999; padding: 4px 12px; text-transform: uppercase;">
+                                选择Skill技能</div>
+                            <div class="menu-item" onclick="toggleSkillSelection('全网实时搜', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">全网实时搜</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #10B981; font-weight: 800; background: #E1F7EF; padding: 1px 6px; border-radius: 4px;">官方</span>
                                 </div>
-                                <div style="font-size: 1.5rem;">🧠</div>
                             </div>
-                            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                                <button class="btn btn-primary"
-                                    style="padding: 8px 16px; font-size: 0.75rem; flex: 1;">立即沉淀</button>
-                                <button class="btn btn-outline"
-                                    style="padding: 8px 16px; font-size: 0.75rem; flex: 1;">暂不处理</button>
+                            <div class="menu-item" onclick="toggleSkillSelection('代码助手', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">代码助手</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #10B981; font-weight: 800; background: #E1F7EF; padding: 1px 6px; border-radius: 4px;">官方</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('知识库检索', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">知识库检索</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #10B981; font-weight: 800; background: #E1F7EF; padding: 1px 6px; border-radius: 4px;">官方</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('增长分析师', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">增长分析师</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">SKILLHUB</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('Ty的代码规范', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">Ty 的代码规范</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">自有</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('文案大师', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">文案大师</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">SKILLHUB</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('法务合规官', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">法务合规官</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">SKILLHUB</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="chat-input-wrapper">
-                <div class="input-box">
-                    <input type="text" placeholder="帮我收集最近1个月的关于可持续龙虾的社交媒体信息...">
-                    <button class="btn btn-primary">发送</button>
+                    <!-- 3. 选模型 -->
+                    <div class="toolbar-item">
+                        <div class="toolbar-btn" id="model-btn" onclick="toggleFloatingMenu('model-menu', event)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                            </svg>
+                            <span id="current-model-display">Gemini 3 Flash</span>
+                        </div>
+
+                        <div id="model-menu" class="input-floating-menu">
+                            <div
+                                style="font-size: 0.65rem; font-weight: 800; color: #999; padding: 4px 12px; text-transform: uppercase;">
+                                选择模型</div>
+                            <div class="menu-item active" onclick="selectModel('Gemini 3 Flash')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="m13 2-2 10h9L7 22l2-10H1L13 2z" />
+                                </svg>
+                                Gemini 3 Flash
+                            </div>
+                            <div class="menu-item" onclick="selectModel('Claude 4.6 Sonnet')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                </svg>
+                                Claude 4.6 Sonnet
+                            </div>
+                            <div class="menu-item" onclick="selectModel('GPT-5')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M12 2v20M2 12h20" />
+                                </svg>
+                                GPT-5
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 知识库开关 -->
+                    <div class="toolbar-item">
+                        <div class="kb-btn active" id="kb-toggle-btn" onclick="toggleKB(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                            </svg>
+                            <span id="kb-status-text">知识库已开启</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-box-v2">
+                    <textarea id="chat-input" placeholder="给智能体发送消息..." rows="1" oninput="autoResize(this)"
+                        onkeydown="if(event.keyCode==13 && !event.shiftKey){ event.preventDefault(); handleSendMessage(); }"></textarea>
+                    <button class="send-btn-v2" onclick="handleSendMessage()">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </main>
+
+        <!-- 系统 II: 右侧侧边栏 (系统通知) -->
+        <aside id="right-sidebar" class="sidebar-right animate-fade-in-right">
+            <div class="sidebar-header">
+                <span>系统通知</span>
+                <span class="badge-count">2 条待确认</span>
+            </div>
+            <div id="notification-cards-container">
+                <!-- Cards injected by JS -->
+            </div>
+
+            <!-- 数字分身硬广卡片 -->
+            <div id="twin-activation-node" class="twin-activation-card animate-fade-in" onclick="showTwinReveal()">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <h4 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        数字分身已准备就绪
+                    </h4>
+                    <button class="activation-btn">立即激活</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 数字分身全屏揭示遮罩 -->
+        <div id="twin-reveal-overlay">
+            <div class="reveal-icon-container">
+                <div class="reveal-glow-ring"></div>
+                <div class="reveal-glow-ring" style="animation-delay: 0.5s;"></div>
+                <div class="reveal-glow-ring" style="animation-delay: 1s;"></div>
+                <div class="reveal-icon"
+                    style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <svg viewBox="0 0 100 100" width="120" height="120">
+                        <defs>
+                            <linearGradient id="reveal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#93C5FD; stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#C084FC; stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="35" r="15" fill="url(#reveal-grad)" />
+                        <path d="M50 55c-15 0-25 10-25 22v8h50v-8c0-12-10-22-25-22z" fill="url(#reveal-grad)" />
+                    </svg>
+                </div>
+            </div>
+            <div class="reveal-text">
+                <h1
+                    style="font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, #93C5FD, #C084FC); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                    数字分身已激活 </h1>
+                <p style="font-size: 1.1rem; color: #AAA; max-width: 400px; line-height: 1.6;">神经网络已初步对齐，当前同步率达 87%。</p>
+            </div>
+            <button class="reveal-btn" onclick="location.href='metaverse.html'">前往元宇宙</button>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666; cursor: pointer;"
+                onclick="document.getElementById('twin-reveal-overlay').style.display='none'">暂不前往</div>
+        </div>
 
     </div>
     <script src="navigation.js"></script>
@@ -545,39 +1309,115 @@
 
         // --- Stage Cycling Logic ---
         const stages = [
-            { name: "幼年Shelly", isFinal: false, segments: [10, 0, 0] },
-            { name: "青年Shelly", isFinal: false, segments: [100, 85, 0] },
-            { name: "成熟Shelly", isFinal: false, segments: [100, 100, 40] },
-            { name: "完全体Shelly", isFinal: true, segments: [] }
+            { name: "幼年Bob", level: 1, form: "幼年形态", size: 140 },
+            { name: "青年Bob", level: 12, form: "青年形态", size: 180 },
+            { name: "成熟Bob", level: 25, form: "成熟形态", size: 220 },
+            { name: "完全体Bob", level: 30, form: "完全形态", size: 260 }
         ];
         let currentStageIdx = 0;
 
         function updateStageIndicator(stage) {
             const container = document.getElementById('stage-indicator-container');
-            if (stage.isFinal) {
-                container.style.display = 'none';
-                container.innerHTML = '';
-            } else {
-                container.style.display = 'flex';
-                let segmentsHtml = stage.segments.map(s =>
-                    `<div style="flex:1; height: 4px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; position: relative;">
-                        <div style="width: ${s}%; height: 100%; background: var(--color-primary); transition: width 0.3s ease-in-out;"></div>
-                    </div>`
-                ).join('');
+            const levelLabel = document.getElementById('level-label');
+            const formLabel = document.getElementById('form-label');
 
-                container.innerHTML = `
-                    <div style="display: flex; gap: 6px; align-items: center; justify-content: center; width: 100%;">
-                        ${segmentsHtml}
-                    </div>
-                `;
+            container.parentElement.style.display = 'block';
+            levelLabel.innerText = `Lv.${stage.level}`;
+            formLabel.innerText = stage.form;
+
+            // Calculate segments based on level (each segment is 10 levels)
+            const level = stage.level;
+            const segments = [0, 0, 0];
+            if (level <= 10) {
+                segments[0] = (level / 10) * 100;
+            } else if (level <= 20) {
+                segments[0] = 100;
+                segments[1] = ((level - 10) / 10) * 100;
+            } else if (level <= 30) {
+                segments[0] = 100;
+                segments[1] = 100;
+                segments[2] = ((level - 20) / 10) * 100;
+            } else {
+                segments[0] = 100; segments[1] = 100; segments[2] = 100;
+            }
+
+            let segmentsHtml = segments.map(s =>
+                `<div style="flex:1; height: 4px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; position: relative;">
+                    <div style="width: ${s}%; height: 100%; background: var(--color-primary); transition: width 0.3s ease-in-out;"></div>
+                </div>`
+            ).join('');
+
+            container.innerHTML = segmentsHtml;
+        }
+
+        function setStage(idx) {
+            currentStageIdx = idx;
+            const stage = stages[idx];
+            document.getElementById('agent-name').innerText = stage.name;
+            updateStageIndicator(stage);
+            updateMbtiStats(idx);
+
+            // 比例缩放 Icon
+            const icon = document.querySelector('.lobster-bob');
+            if (icon) {
+                icon.style.width = stage.size + 'px';
+                icon.style.height = stage.size + 'px';
+            }
+        }
+
+        function autoUpgradeStage() {
+            if (currentStageIdx < stages.length - 1) {
+                setStage(currentStageIdx + 1);
             }
         }
 
         function cycleNames() {
-            currentStageIdx = (currentStageIdx + 1) % stages.length;
-            const stage = stages[currentStageIdx];
-            document.getElementById('agent-name').innerText = stage.name;
-            updateStageIndicator(stage);
+            setStage((currentStageIdx + 1) % stages.length);
+        }
+
+        // --- MBTI Dynamism ---
+        const stageMbtiData = [
+            {
+                r: { val: 45, side: 'left' },
+                p: { val: 32, side: 'left' },
+                d: { val: 30, side: 'right' },
+                s: { val: 25, side: 'left' }
+            }, // 幼年
+            {
+                r: { val: 15, side: 'right' },
+                p: { val: 55, side: 'left' },
+                d: { val: 55, side: 'right' },
+                s: { val: 45, side: 'left' }
+            }, // 青年
+            {
+                r: { val: 55, side: 'right' },
+                p: { val: 72, side: 'left' },
+                d: { val: 78, side: 'right' },
+                s: { val: 62, side: 'left' }
+            }, // 成熟 (Rationality turned Sensible 55)
+            {
+                r: { val: 82, side: 'right' },
+                p: { val: 88, side: 'left' },
+                d: { val: 92, side: 'right' },
+                s: { val: 80, side: 'left' }
+            }  // 完全体
+        ];
+
+        function updateMbtiStats(stageIdx) {
+            const data = stageMbtiData[stageIdx];
+            updateStat(1, data.r.val, data.r.side);
+            updateStat(2, data.p.val, data.p.side);
+            updateStat(3, data.d.val, data.d.side);
+            updateStat(4, data.s.val, data.s.side);
+        }
+
+        function updateStat(id, val, side) {
+            const marker = document.getElementById(`mbti-marker-${id}`);
+            const valueSpan = document.getElementById(`mbti-value-${id}`);
+
+            const leftPos = side === 'left' ? (50 - val / 2) : (50 + val / 2);
+            marker.style.left = `${leftPos}%`;
+            valueSpan.innerText = val;
         }
 
         // --- Twin Management Logic ---
@@ -585,13 +1425,14 @@
         let isTwinActive = true;
 
         const trainingCards = [
-            { id: 't1', q: "关注到您近期在做“可持续消费”产品，今天有类似竞品开放测试，是否需要帮你收集相关信息？", options: ["立即收集", "暂不处理"] },
+            { id: 't1', q: "发现最近在项目决策上，您更倾向于“先验证后扩张”，我这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" },
             { id: 't2', q: "我发现您惯用的思考与拆解逻辑是：先定义核心受众，再挂钩社交货币，对吗？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
         ];
 
         const calibrationCards = [
             { id: 'c1', q: "今天有 10 名用户跟分身进行了对话，主要涉及“产品定价”与“品牌调性”方面的讨论。", button: "点击前往查看" },
-            { id: 'c2', q: "发现最近在项目决策上，您更倾向于“先验证后扩张”，我这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
+            { id: 'c2', q: "关注到您近期在做“可持续消费”产品，今天有类似竞品开放测试，是否需要帮你收集相关信息？", options: ["立即收集", "暂不处理"] }
+
         ];
 
         function handleCalibrationAction(id, option) {
@@ -627,8 +1468,33 @@
 
             if (!container) return;
 
-            container.innerHTML = cards.map(c => `
-                <div class="calibration-card" data-card-id="${c.id}" style="background: white; border: 2px solid #F0F0F0; border-radius: 12px; padding: 15px;">
+            let html = `
+                <div class="summary-card animate-fade-in">
+                    <div class="summary-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        今日运行简报
+                    </div>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-value">12</span>
+                            <span class="summary-label">会话数</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-value" style="color: #10B981;">05</span>
+                            <span class="summary-label">已完成任务</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-value" style="color: var(--color-primary);">02</span>
+                            <span class="summary-label">运行中任务</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            html += cards.map(c => `
+                <div class="calibration-card animate-fade-in" data-card-id="${c.id}" style="background: white; border: 2px solid #F0F0F0; border-radius: 12px; padding: 15px;">
                     <div class="calibration-question" style="font-size: 0.8rem; margin-bottom: 12px;">${c.q}</div>
                     
                     ${c.button ?
@@ -645,6 +1511,8 @@
                 }
                 </div>
             `).join('');
+
+            container.innerHTML = html;
         }
 
         function updateTwinUI() {
@@ -665,15 +1533,25 @@
         updateTwinUI();
 
         // Initialize other state
-        updateStageIndicator(stages[0]);
+        setStage(0);
 
-        // --- Notification Dropdown Logic ---
-        function toggleNotificationDropdown(event) {
-            event.stopPropagation();
-            const dropdown = document.getElementById('notification-dropdown');
+        // --- Notification Sidebar Logic ---
+        function toggleNotificationSidebar(event) {
+            if (event) event.stopPropagation();
+            const sidebar = document.getElementById('right-sidebar');
+            const layout = document.querySelector('.dashboard-layout');
             const securityDropdown = document.getElementById('security-dropdown');
+
             if (securityDropdown) securityDropdown.classList.remove('show');
-            dropdown.classList.toggle('show');
+
+            sidebar.classList.toggle('show');
+            layout.classList.toggle('with-sidebar');
+        }
+
+        // --- Twin Reveal Logic ---
+        function showTwinReveal() {
+            const overlay = document.getElementById('twin-reveal-overlay');
+            overlay.style.display = 'flex';
         }
 
         // --- Security Dropdown Logic ---
@@ -685,19 +1563,266 @@
             dropdown.classList.toggle('show');
         }
 
-        document.addEventListener('click', () => {
+        document.addEventListener('click', (event) => {
             const dropdown = document.getElementById('security-dropdown');
-            if (dropdown) dropdown.classList.remove('show');
-            const notifyDropdown = document.getElementById('notification-dropdown');
-            if (notifyDropdown) notifyDropdown.classList.remove('show');
+            if (dropdown && !event.target.closest('.security-status')) {
+                dropdown.classList.remove('show');
+            }
         });
 
-        // Auto-scroll chat to bottom
+        // --- Chat Input Enhancement Logic ---
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function toggleFloatingMenu(menuId, event) {
+            event.stopPropagation();
+            const menus = document.querySelectorAll('.input-floating-menu');
+            const targetMenu = document.getElementById(menuId);
+
+            // Close other menus
+            menus.forEach(m => {
+                if (m.id !== menuId) m.classList.remove('show');
+            });
+
+            targetMenu.classList.toggle('show');
+        }
+
+        function selectModel(modelName) {
+            document.getElementById('current-model-display').innerText = modelName;
+            const menuItems = document.querySelectorAll('#model-menu .menu-item');
+            menuItems.forEach(item => {
+                if (item.innerText.includes(modelName)) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            document.getElementById('model-menu').classList.remove('show');
+        }
+
+        let selectedSkills = new Set();
+        function toggleSkillSelection(skillName, element) {
+            if (selectedSkills.has(skillName)) {
+                selectedSkills.delete(skillName);
+                element.classList.remove('active');
+            } else {
+                selectedSkills.add(skillName);
+                element.classList.add('active');
+            }
+
+            const badge = document.getElementById('skill-count-badge');
+            const btn = document.getElementById('skill-btn');
+
+            if (selectedSkills.size > 0) {
+                badge.innerText = selectedSkills.size;
+                badge.style.display = 'inline-block';
+                btn.classList.add('active');
+            } else {
+                badge.style.display = 'none';
+                btn.classList.remove('active');
+            }
+        }
+
+        function toggleKB(element) {
+            element.classList.toggle('active');
+            const statusText = document.getElementById('kb-status-text');
+            if (element.classList.contains('active')) {
+                statusText.innerText = '知识库已开启';
+            } else {
+                statusText.innerText = '知识库已关闭';
+            }
+        }
+
+        // --- Core Chat Interaction Logic ---
+        // --- Core Chat Interaction Logic ---
+        let isSending = false;
+
+        function handleSettleSkill(btn) {
+            const card = btn.closest('.skill-suggestion');
+            const buttonGroup = btn.parentElement;
+
+            // 锁定状态，切换到处理 UI
+            card.style.transition = 'all 0.4s ease';
+            card.style.borderColor = 'var(--color-primary)';
+
+            buttonGroup.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 8px 0; animation: animate-fade-in 0.3s;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 800; color: var(--color-primary); letter-spacing: 0.5px;">
+                        <span id="settle-status">🔍 正在提取核心逻辑...</span>
+                        <span id="settle-pct">0%</span>
+                    </div>
+                    <div style="height: 4px; background: #F0F0F0; border-radius: 2px; overflow: hidden;">
+                        <div id="settle-progress" style="width: 0%; height: 100%; background: var(--color-primary); transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);"></div>
+                    </div>
+                </div>
+            `;
+
+            const status = document.getElementById('settle-status');
+            const pctText = document.getElementById('settle-pct');
+            const progress = document.getElementById('settle-progress');
+
+            // 模拟多阶段处理
+            setTimeout(() => {
+                status.innerText = "✨ 正在优化Skill结构...";
+                pctText.innerText = "45%";
+                progress.style.width = "45%";
+            }, 800);
+
+            setTimeout(() => {
+                status.innerText = "🚀 正在完成Skill配置...";
+                pctText.innerText = "82%";
+                progress.style.width = "82%";
+            }, 1600);
+
+            setTimeout(() => {
+                card.style.borderColor = '#10B981';
+                card.style.background = '#F0FDF4';
+                buttonGroup.style.opacity = '0';
+                setTimeout(() => {
+                    buttonGroup.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #059669; font-weight: 800; font-size: 0.8rem; width: 100%; animation: message-pop 0.4s ease-out;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Skill技能已成功沉淀
+                        </div>
+                    `;
+                    buttonGroup.style.opacity = '1';
+                }, 300);
+            }, 2500);
+        }
+
+        function handleDiscardSkill(btn) {
+            const card = btn.closest('.skill-suggestion');
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+            btn.parentElement.innerHTML = `<div style="text-align:center; width:100%; color:#999; font-size:0.8rem; font-weight:700;">已忽略建议</div>`;
+        }
+
+        const conversationSteps = [
+            {
+                bot: "我是 Bob，你的专属 Agent。检测到你近期较为关注“可持续消费”领域。需要聊聊吗？",
+                userSuggest: "是的，帮我策划一个针对 Z 世代的可持续龙虾零食品牌推广方案。"
+            },
+            {
+                bot: "有趣的挑战。考虑到 Z 世代对透明度的要求，我建议采用“从海洋到零食”的全程追溯故事。你想先定调：是走“环保先锋”的高冷范，还是“趣味海洋”的亲和路线？",
+                userSuggest: "趣味海洋，但我希望有一些硬核的降碳数据支持。"
+            },
+            {
+                bot: `明白了。我为你生成了一个初步大纲：<br>1. <b>视觉</b>：采用荧光海洋生物风，搭配数据可视化泡泡。<br>2. <b>传播</b>：发起“认领一只龙虾”的减碳众筹。<br>3. <b>渠道</b>：优先小红书和 B 站生态。<br>这是具体的降碳预估：相比传统零食减少了 42% 的物流碳足迹。你看这个方向对吗？`,
+                userSuggest: "不错，重点加强众筹环节的社交属性，尤其是让用户能展示他们的“减碳勋章”。"
+            },
+            {
+                bot: `好的，更新已完成。众筹将包含 AR 社交滤镜 and 可分享的数字成就勋章。任务详情已同步至你的执行看板。<br><br>发现你非常擅长将 <b>硬核数据</b> 转化为 <b>社交货币</b>。这似乎是你常用的方法论？<div class="skill-suggestion"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div><div class="skill-tag">智能沉淀建议</div><h4 style="margin: 10px 0 5px 0;">社交化数据营销 Skill</h4><p style="font-size: 0.8rem; line-height: 1.4; color: #666;">自动将复杂的数据点转化为适合社交媒体传播的互动创意。</p></div><div style="width: 30px; height: 30px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg></div></div><div style="display: flex; gap: 10px; margin-top: 5px;"><button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleSettleSkill(this)">立即沉淀</button><button class="btn btn-outline" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleDiscardSkill(this)">暂不处理</button></div></div>`,
+                userSuggest: null
+            }
+        ];
+
+        let currentStep = 0;
+        const chatInput = document.getElementById('chat-input');
+        const chatScroller = document.getElementById('chat-scroller');
+
+        function appendMessage(text, type) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-msg ${type === 'user' ? 'user' : ''}`;
+            msgDiv.innerHTML = `<div class="bubble ${type === 'user' ? 'user' : 'lobster'}">${text}</div>`;
+            chatScroller.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-msg';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="bubble lobster">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatScroller.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function removeTyping() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function scrollToBottom() {
+            chatScroller.scrollTop = chatScroller.scrollHeight;
+        }
+
+        function handleSendMessage() {
+            if (isSending) return; // 防重复发送锁
+
+            const text = chatInput.value.trim();
+            const hasSuggest = (currentStep < conversationSteps.length) && conversationSteps[currentStep].userSuggest;
+            const messageToSend = text || (hasSuggest ? conversationSteps[currentStep].userSuggest : "");
+
+            if (!messageToSend) return;
+
+            isSending = true; // 加锁
+            appendMessage(messageToSend, 'user');
+            chatInput.value = '';
+            chatInput.placeholder = '';
+            chatInput.style.height = 'auto';
+
+            if (currentStep + 1 < conversationSteps.length) {
+                chatInput.disabled = true;
+                setTimeout(() => {
+                    showTyping();
+                    setTimeout(() => {
+                        removeTyping();
+                        currentStep++;
+                        appendMessage(conversationSteps[currentStep].bot, 'bot');
+
+                        // 对话触发形态升级：从第一个回复开始
+                        if (currentStep >= 1) {
+                            autoUpgradeStage();
+                        }
+
+                        chatInput.placeholder = conversationSteps[currentStep].userSuggest || "给智能体发送消息...";
+                        chatInput.disabled = false;
+                        isSending = false; // 释放锁
+                        chatInput.focus();
+                    }, 1200);
+                }, 600);
+            } else {
+                chatInput.placeholder = "给智能体发送消息...";
+                isSending = false; // 释放锁
+                chatInput.focus();
+            }
+        }
+
+        function handleFileUpload(input) {
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                alert(`已上传附件: ${fileName}`);
+                // In a real app, we would show a chip or preview in the input box
+            }
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.input-floating-menu').forEach(m => m.classList.remove('show'));
+        });
+
+        // Initialize Chat
         window.onload = function () {
             const scroller = document.getElementById('chat-scroller');
-            if (scroller) {
-                scroller.scrollTop = scroller.scrollHeight;
-            }
+
+            // 初次加载显示第一条 Bot 消息
+            setTimeout(() => {
+                appendMessage(conversationSteps[0].bot, 'bot');
+                chatInput.placeholder = conversationSteps[0].userSuggest;
+            }, 500);
+
             updateTwinUI();
         };
     </script>

@@ -65,20 +65,80 @@
             gap: 12px;
             text-align: left;
             padding: 24px;
-            min-height: 260px;
+            min-height: 220px;
             transition: all 0.3s ease;
         }
 
-        .skill-icon-v2 {
-            font-size: 2rem;
-            margin-bottom: 4px;
-        }
-
-        .skill-status {
-            margin-top: auto;
+        .skill-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .skill-icon-v2 {
+            font-size: 1.8rem;
+        }
+
+        .skill-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .skill-title-row h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .skill-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-official {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .badge-community {
+            background: #F3E5F5;
+            color: #7B1FA2;
+        }
+
+        .skill-status-top {
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+
+        .btn-skill-added {
+            background: #f8f9fa;
+            color: #999;
+            border: 1px solid #eee;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            min-width: 75px;
+            transition: all 0.2s;
+        }
+
+        .btn-skill-added::before {
+            content: "✓ 已添加";
+        }
+
+        .btn-skill-added:hover {
+            background: #fff5f5;
+            color: #ff4d4f;
+            border-color: #ffccc7;
+        }
+
+        .btn-skill-added:hover::before {
+            content: "删除";
         }
 
         /* Knowledge Base Section Styles */
@@ -138,9 +198,195 @@
         }
 
         .file-item.active {
-            background: var(--color-primary-light);
+            background: #FFF5F0;
             color: var(--color-primary);
             font-weight: 600;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f5f5f5;
+            padding-bottom: 10px;
+        }
+
+        /* Upload Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .upload-modal {
+            background: white;
+            width: 500px;
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+
+        .upload-zone {
+            border: 2px dashed #eee;
+            padding: 40px;
+            border-radius: var(--radius-md);
+            margin: 20px 0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--color-primary);
+            background: #fff9f6;
+        }
+
+        .upload-progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--color-primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .success-checkmark {
+            display: none;
+            color: #4CAF50;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        /* Toggle Switch Styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--color-primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(14px);
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: help;
+            color: #bbb;
+            margin-left: 4px;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 240px;
+            background-color: rgba(33, 33, 33, 0.95);
+            color: #fff;
+            text-align: left;
+            border-radius: var(--radius-md);
+            padding: 12px;
+            position: absolute;
+            z-index: 1001;
+            top: 150%;
+            right: 0;
+            opacity: 0;
+            transition: all 0.3s;
+            font-size: 11px;
+            line-height: 1.6;
+            pointer-events: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            right: 10px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent transparent rgba(33, 33, 33, 0.95) transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+            top: 130%;
+        }
+
+        .help-icon {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .help-icon {
+            opacity: 1;
+            color: var(--color-primary);
         }
 
         .preview-pane {
@@ -240,6 +486,8 @@
             font-size: 0.95rem;
             line-height: 1.6;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .memory-item:hover {
@@ -247,6 +495,77 @@
             background: #fff;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             transform: translateY(-2px);
+        }
+
+        .memory-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .memory-item:hover .memory-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: #f5f5f5;
+            border: 1px solid #eee;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .action-btn:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .memory-edit-area {
+            width: 100%;
+            border: 1px solid var(--color-primary-light);
+            border-radius: 4px;
+            padding: 8px;
+            font-family: inherit;
+            font-size: inherit;
+            resize: vertical;
+            min-height: 80px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .memory-item.editing .memory-content {
+            display: none;
+        }
+
+        .memory-item.editing .memory-edit-area {
+            display: block;
+        }
+
+        .memory-item.editing .memory-tag {
+            display: none;
+        }
+
+        .save-btn {
+            display: none;
+            margin-top: 10px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+        }
+
+        .memory-item.editing .save-btn {
+            display: inline-block;
         }
 
         .memory-tag {
@@ -315,8 +634,8 @@
 
     <div class="container animate-fade-in" style="padding: 40px 0;">
         <div class="main-tabs">
-            <div class="main-tab active" data-target="skillsView">技能</div>
-            <div class="main-tab" data-target="kbView">知识库</div>
+            <div class="main-tab active" data-target="skillsView">Skills</div>
+            <div class="main-tab" data-target="kbView">档案</div>
             <div class="main-tab" data-target="memoryView">记忆</div>
         </div>
 
@@ -330,66 +649,198 @@
             <div class="filter-tabs" id="filterTabs">
                 <div class="tab active" data-filter="all">全部</div>
                 <div class="tab" data-filter="official">官方</div>
-                <div class="tab" data-filter="community">社区</div>
+                <div class="tab" data-filter="community">SkillHub</div>
                 <div class="tab" data-filter="mine">我的技能</div>
             </div>
 
             <div class="skills-grid-3" id="skillsGrid">
                 <div class="card skill-card-v2 card-dashed" data-category="mine" id="uploadCard"
                     style="position: relative;">
-                    <div class="extract-overlay" id="loadingOverlay">
-                        <div class="loader"></div>
-                        <div style="font-weight: 800; color: var(--color-primary);">正在分析文档...</div>
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 5px;">沉淀中，基于 5 份报告提取模式</div>
-                    </div>
                     <div class="skill-icon-v2">💡</div>
-                    <h3 style="color: var(--color-primary)">沉淀新技能</h3>
-                    <p style="font-size: 0.85rem; color: #777;">上传多份“竞品分析报告”或其他文档，让智能体自动沉淀出特定领域的专业能力。</p>
-                    <div id="uploadNormalState" style="width:100%; text-align:center;">
-                        <button class="btn btn-primary" style="margin-top: 15px; width:100%;"
-                            onclick="startExtraction()">上传 5 份报告</button>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.6;">上传相关文档，让智能体自动沉淀出特定领域的专业能力。</p>
+                    <div id="uploadNormalState" style="width:100%; text-align:center; margin-top: auto;">
+                        <button class="btn btn-primary" style="width:100%;"
+                            onclick="startSkillExtractionFlow()">沉淀新技能</button>
                     </div>
                 </div>
 
+                <!-- 刚沉淀的结果卡片 -->
                 <div class="card skill-card-v2" data-category="mine" id="resultSkillCard"
                     style="display: none; border-color: var(--color-primary); background: #FFFBF9;">
-                    <div class="skill-icon-v2">📈</div>
-                    <div class="source-badge source-mine">自有 • 刚沉淀</div>
-                    <h3>竞品分析 Expert</h3>
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">📈</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>竞品分析 Expert</h3>
+                        <span class="skill-badge badge-community">自有</span>
+                    </div>
                     <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">已从 5 份报告中提取。擅长定位分析、竞品对标以及 SWOT 模型构建。
                     </p>
-                    <div class="skill-status"><span
-                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
+                </div>
+
+                <!-- 官方技能 -->
+                <div class="card skill-card-v2" data-category="official">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">🔍</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
                     </div>
+                    <div class="skill-title-row">
+                        <h3>全网实时搜</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">允许智能体访问实时网络，并在第一时间收集和总结信息源。</p>
                 </div>
 
                 <div class="card skill-card-v2" data-category="official">
-                    <div class="skill-icon-v2">🔍</div>
-                    <div class="source-badge source-official">官方</div>
-                    <h3>全网实时搜</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">允许智能体访问实时网络，并在第一时间收集和总结信息源。</p>
-                    <div class="skill-status"><span
-                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">💻</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
                     </div>
+                    <div class="skill-title-row">
+                        <h3>代码助手</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">深度集成的 IDE 助手，支持代码补全、重构建议及单元测试自动生成。</p>
+                </div>
+
+                <div class="card skill-card-v2" data-category="official">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">🎨</div>
+                        <div class="skill-status-top">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="toggleSkill(this)">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>图像生成</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">基于最新的扩散模型，根据文字描述生成高品质的视觉内容。</p>
+                </div>
+
+                <div class="card skill-card-v2" data-category="official">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">🎙️</div>
+                        <div class="skill-status-top">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="toggleSkill(this)">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>语音交互</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">支持多语种实时语音转文字及极具情感表现力的语音合成。</p>
+                </div>
+
+                <div class="card skill-card-v2" data-category="official">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">📚</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>知识库检索</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">针对私有文档进行毫秒级语义索引，精准回答任何相关问题。</p>
+                </div>
+
+                <!-- SkillHub 技能 -->
+                <div class="card skill-card-v2" data-category="community">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">📊</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>增长分析师</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">专注于 SaaS 指标分析、留存拆解及 A/B 测试建议。</p>
                 </div>
 
                 <div class="card skill-card-v2" data-category="community">
-                    <div class="skill-icon-v2">📊</div>
-                    <div class="source-badge source-community">社区</div>
-                    <h3>增长分析师</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">专注于 SaaS 指标和营销增长实验分析。</p>
-                    <div class="skill-status"><button class="btn btn-primary"
-                            style="padding: 8px 16px; font-size: 0.8rem;">+ 添加到智能体</button></div>
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">✍️</div>
+                        <div class="skill-status-top">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="toggleSkill(this)">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>文案大师</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">从 10 万+ 热文库中深度学习，擅长撰写各类社交媒体爆款文案。</p>
+                </div>
+
+                <div class="card skill-card-v2" data-category="community">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">⚖️</div>
+                        <div class="skill-status-top">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="toggleSkill(this)">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>法务合规官</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">熟知中国民法典及劳动法，为您提供初步的法律文书审查服务。</p>
+                </div>
+
+                <div class="card skill-card-v2" data-category="community">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">💹</div>
+                        <div class="skill-status-top">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="toggleSkill(this)">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>投资周报助手</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">每日自动更新全球核心股市及大宗商品行情，生成结构化摘要。</p>
+                </div>
+
+                <div class="card skill-card-v2" data-category="community">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">🍱</div>
+                        <div class="skill-status-top">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="toggleSkill(this)">+ 添加</button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>私厨营养师</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">根据您的过敏史和身体状况，定制每日少盐少糖的健康食谱。</p>
                 </div>
 
                 <div class="card skill-card-v2" data-category="mine">
-                    <div class="skill-icon-v2">💻</div>
-                    <div class="source-badge source-mine">自有</div>
-                    <h3>Ty 的代码规范</h3>
-                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">从你的个人仓库提取，让智能体生成符合你审美的代码。</p>
-                    <div class="skill-status"><span
-                            style="font-weight: 800; color: var(--color-secondary); font-size: 0.8rem;">✓ 已添加</span>
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">💻</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
                     </div>
+                    <div class="skill-title-row">
+                        <h3>Ty 的代码规范</h3>
+                        <span class="skill-badge badge-community">自有</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">从你的个人仓库提取，让智能体生成符合你审美的代码。</p>
                 </div>
             </div>
         </div>
@@ -399,15 +850,21 @@
             <div class="archives-container">
                 <div class="archives-sidebar">
                     <div class="archives-card">
-                        <div class="archives-title">
-                            <span>我的文件</span>
-                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 0.75rem;">+ 上传</button>
-                        </div>
-                        <ul class="file-list">
+                        <div class="sidebar-section-title">核心文件</div>
+                        <ul class="file-list" id="coreFileList">
                             <li class="file-item active" onclick="selectFile('soul.md')">📄 soul.md</li>
+                            <li class="file-item" onclick="selectFile('user.md')">📄 user.md</li>
+                        </ul>
+                    </div>
+
+                    <div class="archives-card">
+                        <div class="sidebar-section-title">
+                            <span>知识库</span>
+                            <button class="btn btn-primary" style="padding: 2px 8px; font-size: 0.7rem;"
+                                onclick="openUploadModal()">+ 上传</button>
+                        </div>
+                        <ul class="file-list" id="kbFileList">
                             <li class="file-item" onclick="selectFile('project_context.pdf')">📄 project_context.pdf
-                            </li>
-                            <li class="file-item" onclick="selectFile('user_preferences.json')">📄 user_preferences.json
                             </li>
                             <li class="file-item" onclick="selectFile('meeting_notes_apr12.docx')">📄
                                 meeting_notes_apr12.docx</li>
@@ -418,7 +875,21 @@
                 <div class="preview-pane">
                     <div class="preview-header">
                         <div id="currentFileName" style="font-weight: 600;">soul.md</div>
-                        <div style="font-size: 0.8rem; color: #888;">最后同步: 5分钟前</div>
+                        <div id="privacyToggleContainer" class="toggle-container"
+                            style="display: flex; align-items: center; gap: 8px; visibility: hidden;">
+                            <div style="display: flex; align-items: center;">
+                                <span id="privacyStatusLabel" style="font-size: 0.8rem; color: #666;">🌐 全局可见</span>
+                                <div class="tooltip">
+                                    <span class="help-icon"> ⓘ</span>
+                                    <span
+                                        class="tooltiptext">开启“仅对自己可见”后，该文件仅在您本人与智能体对话时可用。当他人与您的“数字分身”互动时，此内容将被完全屏蔽，确保私密信息不泄露。</span>
+                                </div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="privacyCheckbox" onchange="togglePrivacyLabel()">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
                     </div>
                     <div class="split-view">
                         <div class="editor-side">
@@ -460,15 +931,33 @@
                     <div class="memory-list">
                         <div class="memory-item">
                             <span class="memory-tag tag-lts">核心喜好</span>
-                            <div>用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</div>
+                            <div class="memory-content">用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</div>
+                            <textarea class="memory-edit-area">用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-lts">专业背景</span>
-                            <div>用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</div>
+                            <div class="memory-content">用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</div>
+                            <textarea class="memory-edit-area">用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-lts">重要事实</span>
-                            <div>用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</div>
+                            <div class="memory-content">用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</div>
+                            <textarea class="memory-edit-area">用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                     </div>
                 </div>
@@ -478,22 +967,78 @@
                     <div class="memory-list">
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">当前会话</span>
-                            <div>正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</div>
+                            <div class="memory-content">正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</div>
+                            <textarea class="memory-edit-area">正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">近期习惯</span>
-                            <div>在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</div>
+                            <div class="memory-content">在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</div>
+                            <textarea class="memory-edit-area">在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">临时工作流</span>
-                            <div>用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</div>
+                            <div class="memory-content">用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</div>
+                            <textarea class="memory-edit-area">用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">上个指令</span>
-                            <div>要求汇总所有关于“模块化设计”的网页链接。</div>
+                            <div class="memory-content">要求汇总所有关于“模块化设计”的网页链接。</div>
+                            <textarea class="memory-edit-area">要求汇总所有关于“模块化设计”的网页链接。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="upload-modal">
+            <button onclick="closeUploadModal()"
+                style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
+            <div id="uploadInitialState">
+                <h2 style="margin-top: 0;">上传知识文件</h2>
+                <p style="color: #666;">例如可以上传5篇竞品分析报告，智能体可自行学习文档并沉淀“竞品分析”Skill。</p>
+                <div class="upload-zone" onclick="simulateFileUpload()">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">📁</div>
+                    <p style="font-weight: 600;">点击或拖拽文件至此处</p>
+                    <p style="font-size: 0.8rem; color: #999;">单个文件不超过 50MB</p>
+                </div>
+            </div>
+
+            <div id="uploadingState" class="upload-progress-container">
+                <h2 id="uploadingFileName">正在上传...</h2>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="uploadProgressBar"></div>
+                </div>
+                <p id="uploadStatusText" style="color: #666; font-size: 0.9rem;">正在解析文件内容并同步至向量数据库...</p>
+            </div>
+
+            <div id="uploadSuccessState" style="display: none;">
+                <div class="success-checkmark">✓</div>
+                <h2>同步成功</h2>
+                <p style="color: #666; margin-bottom: 30px;">文件已成功加入知识库，智能体现在可以引用其中的内容。</p>
+                <button class="btn btn-primary" style="width: 100%;" onclick="closeUploadModal()">完成</button>
             </div>
         </div>
     </div>
@@ -578,21 +1123,195 @@
         function selectFile(fileName) {
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('active');
-                if (item.textContent.includes(fileName)) {
+                if (item.textContent.trim().endsWith(fileName)) {
                     item.classList.add('active');
                 }
             });
             document.getElementById('currentFileName').textContent = fileName;
 
-            if (fileName !== 'soul.md') {
-                editor.value = "内容加载中...\n这是 " + fileName + " 的内容预览。对于非文本文件，系统将显示核心元数据及 AI 摘要。";
-                preview.innerHTML = "<h3>预览限制</h3><p>目前仅支持 .md 文件的实时对照编辑。其他格式文件建议下载查看，或使用 AI 总结功能。</p>";
+            // Handle privacy toggle visibility
+            const toggleContainer = document.getElementById('privacyToggleContainer');
+            if (fileName === 'soul.md' || fileName === 'user.md') {
+                toggleContainer.style.visibility = 'hidden';
             } else {
-                // Restore soul.md content
+                toggleContainer.style.visibility = 'visible';
+            }
+
+            if (fileName === 'soul.md') {
                 editor.value = `# Agent Soul\n\n## Core Persona\n你是一个充满好奇心、逻辑严密的智能体。\n你不仅是工具，更是用户的思想延伸。\n\n## Communication Style\n- 简洁明了\n- 偶尔带有冷幽默\n- 始终以事实为基础\n\n## Knowledge Boundaries\n- 专注于编程、产品设计和前沿科技\n- 对于不确定的领域会诚实告知`;
-                // Manually trigger the input event to update the preview
                 const event = new Event('input', { bubbles: true, cancelable: true });
                 editor.dispatchEvent(event);
+            } else if (fileName === 'user.md') {
+                editor.value = `# User Profile\n\n## Basic Info\n- Name: Ty\n- Role: Senior Product Designer\n- Location: Beijing\n\n## Preferences\n- Favorite Colors: Emerald Green, Deep Black\n- Interaction Style: Direct and efficient\n- Focus: AI Human-Computer Interaction`;
+                const event = new Event('input', { bubbles: true, cancelable: true });
+                editor.dispatchEvent(event);
+            } else {
+                editor.value = "内容加载中...\n这是 " + fileName + " 的内容预览。对于非文本文件，系统将显示核心元数据及 AI 摘要。";
+                preview.innerHTML = "<h3>预览限制</h3><p>目前仅支持 .md 文件的实时对照编辑。其他格式文件建议下载查看，或使用 AI 总结功能。</p>";
+            }
+        }
+
+        // Skill Extraction Flow
+        let isExtractionFlow = false;
+        function startSkillExtractionFlow() {
+            isExtractionFlow = true;
+            openUploadModal();
+        }
+
+        function startExtraction() {
+            // No longer used on card, but just unlocks the card
+            const resultCard = document.getElementById('resultSkillCard');
+            resultCard.dataset.unlocked = "true";
+            resultCard.style.display = 'flex';
+        }
+
+        // Upload Logic
+        function openUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+            document.getElementById('uploadInitialState').style.display = 'block';
+            document.getElementById('uploadingState').style.display = 'none';
+            document.getElementById('uploadSuccessState').style.display = 'none';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+
+        function simulateFileUpload() {
+            const fileNames = ['Q2_Financial_Report.pdf', 'Market_Analysis.docx', 'Tech_Specs_v2.md'];
+            const randomFile = fileNames[Math.floor(Math.random() * fileNames.length)];
+
+            document.getElementById('uploadInitialState').style.display = 'none';
+            document.getElementById('uploadingState').style.display = 'block';
+
+            if (isExtractionFlow) {
+                document.getElementById('uploadingFileName').textContent = "准备上传分析样本...";
+                document.getElementById('uploadStatusText').textContent = "正在建立安全加速通道...";
+            } else {
+                document.getElementById('uploadingFileName').textContent = "正在上传: " + randomFile;
+                document.getElementById('uploadStatusText').textContent = "同步准备中...";
+            }
+
+            let progress = 0;
+            const progressBar = document.getElementById('uploadProgressBar');
+            const statusText = document.getElementById('uploadStatusText');
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 8;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    showUploadSuccess(randomFile);
+                }
+                progressBar.style.width = progress + '%';
+
+                const titleText = document.getElementById('uploadingFileName');
+
+                if (isExtractionFlow) {
+                    if (progress < 30) {
+                        titleText.textContent = "正在上传分析样本...";
+                        statusText.textContent = "正在将源文档同步至智能体处理队列...";
+                    } else if (progress >= 30 && progress < 70) {
+                        titleText.textContent = "正在分析语义特征...";
+                        statusText.textContent = "正在构建特定领域知识图谱并提取核心模式...";
+                    } else {
+                        titleText.textContent = "正在沉淀专业技能...";
+                        statusText.textContent = "正在封装 Skill 节点并进行最后的逻辑验证...";
+                    }
+                } else {
+                    titleText.textContent = "正在上传: " + randomFile;
+                    if (progress > 30 && progress < 60) statusText.textContent = "正在解析文档结构...";
+                    if (progress > 60 && progress < 90) statusText.textContent = "正在生成 Embedding 并存入向量库...";
+                    if (progress > 90) statusText.textContent = "同步完成！";
+                }
+            }, 300);
+        }
+
+        function showUploadSuccess(fileName) {
+            setTimeout(() => {
+                document.getElementById('uploadingState').style.display = 'none';
+
+                if (isExtractionFlow) {
+                    document.getElementById('uploadSuccessState').style.display = 'block';
+                    document.querySelector('.success-checkmark').style.display = 'block';
+                    // Update the success text for extraction
+                    document.getElementById('uploadSuccessState').querySelector('h2').textContent = "Skill 沉淀成功";
+                    document.getElementById('uploadSuccessState').querySelector('p').textContent = "已成功从样本文档中提取专业能力，该 Skill 已添加到您的列表。";
+                    startExtraction(); // Pre-unlock
+                    isExtractionFlow = false;
+                } else {
+                    document.getElementById('uploadSuccessState').style.display = 'block';
+                    document.querySelector('.success-checkmark').style.display = 'block';
+                    // Reset text in case it was changed
+                    document.getElementById('uploadSuccessState').querySelector('h2').textContent = "同步成功";
+                    document.getElementById('uploadSuccessState').querySelector('p').textContent = "文件已成功加入知识库，智能体现在可以引用其中的内容。";
+
+                    // Add to list
+                    const kbList = document.getElementById('kbFileList');
+                    const newItem = document.createElement('li');
+                    newItem.className = 'file-item';
+                    newItem.innerHTML = `📄 ${fileName}`;
+                    newItem.onclick = () => selectFile(fileName);
+                    kbList.prepend(newItem);
+                }
+            }, 500);
+        }
+
+        function togglePrivacyLabel() {
+            const checkbox = document.getElementById('privacyCheckbox');
+            const label = document.getElementById('privacyStatusLabel');
+            label.textContent = checkbox.checked ? '🔒 仅对自己可见' : '🌐 全局可见';
+        }
+
+        // Skill Management Logic
+        function toggleSkill(btn) {
+            const isAdded = btn.classList.contains('btn-skill-added');
+            if (isAdded) {
+                // Revert to "+ 加"
+                btn.className = 'btn btn-primary';
+                btn.style.padding = '4px 12px';
+                btn.style.fontSize = '0.75rem';
+                btn.textContent = '+ 添加';
+            } else {
+                // Change to "已添加"
+                btn.className = 'btn-skill-added';
+                btn.textContent = ''; // CSS content handles text
+            }
+        }
+
+        // Memory Management Logic
+        function startEditMemory(btn) {
+            const item = btn.closest('.memory-item');
+            item.classList.add('editing');
+            const textarea = item.querySelector('.memory-edit-area');
+            textarea.focus();
+            // Put cursor at the end
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }
+
+        function saveMemory(btn) {
+            const item = btn.closest('.memory-item');
+            const textarea = item.querySelector('.memory-edit-area');
+            const content = item.querySelector('.memory-content');
+
+            content.textContent = textarea.value;
+            item.classList.remove('editing');
+
+            // Interaction feedback
+            item.style.borderColor = '#4CAF50';
+            setTimeout(() => {
+                item.style.borderColor = '';
+            }, 1000);
+        }
+
+        function deleteMemory(btn) {
+            if (confirm('确定要永久删除这条记忆吗？智能体将不再记得此信息。')) {
+                const item = btn.closest('.memory-item');
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    item.remove();
+                }, 300);
             }
         }
     </script>

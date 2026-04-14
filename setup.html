@@ -212,26 +212,293 @@
                 transform: translateY(0);
             }
         }
+
+        /* --- Naming Step --- */
+        .name-input-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .name-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-family: 'Lexend', sans-serif;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        .name-input:focus {
+            border-color: var(--color-primary);
+        }
+
+        /* --- Birth Certificate Screen --- */
+        #certificate-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            /* Darker, premium 'folder' background */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            background-image:
+                linear-gradient(45deg, #16213e 25%, transparent 25%),
+                linear-gradient(-45deg, #16213e 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #16213e 75%),
+                linear-gradient(-45deg, transparent 75%, #16213e 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        #certificate-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .cert-card {
+            width: 95%;
+            max-width: 800px;
+            background: #fff;
+            padding: 60px;
+            border-radius: 4px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+            border: 12px double #C5A059;
+            /* Golden decorative border */
+            position: relative;
+            text-align: center;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cert-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(225deg,
+                    transparent 40%,
+                    #ff3c3c 40%, #ff3c3c 43%,
+                    transparent 43%, transparent 48%,
+                    #ff3c3c 48%, #ff3c3c 51%,
+                    transparent 51%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #certificate-screen.active .cert-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .cert-header {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 40px;
+            letter-spacing: 8px;
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-primary);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .cert-body {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            text-align: left;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cert-avatar {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #FF7F66, #ff9f8a);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            box-shadow: 0 8px 24px rgba(255, 127, 102, 0.15);
+            flex-shrink: 0;
+        }
+
+        .cert-main-info {
+            flex-grow: 1;
+        }
+
+        .cert-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .info-item span {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            display: block;
+            padding-bottom: 4px;
+        }
+
+        .cert-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cert-tag {
+            padding: 5px 14px;
+            background: rgba(255, 127, 102, 0.08);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--color-primary);
+            font-weight: 700;
+        }
+
+        .cert-slogan {
+            font-size: 1.1rem;
+            color: #555;
+            font-weight: 600;
+            margin-top: 30px;
+            line-height: 1.6;
+            font-style: italic;
+            text-align: center;
+            width: 100%;
+            border-top: 1px dashed #eee;
+            padding-top: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Stamping Animation */
+        .stamp {
+            position: absolute;
+            bottom: 40px;
+            right: 60px;
+            width: 110px;
+            height: 110px;
+            border: 4px solid rgba(255, 60, 60, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 60, 60, 0.4);
+            font-weight: 800;
+            font-size: 1rem;
+            transform: scale(3) rotate(-30deg);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(1, 0, 0, 1);
+            pointer-events: none;
+            user-select: none;
+            text-align: center;
+            padding: 10px;
+            line-height: 1.2;
+            z-index: 10;
+        }
+
+        .stamp.stamped {
+            transform: scale(1) rotate(-15deg);
+            opacity: 1;
+            border-color: rgba(255, 60, 60, 0.7);
+            color: rgba(255, 60, 60, 0.7);
+        }
+
+        .cert-actions {
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+            opacity: 0;
+            transition: opacity 0.5s ease 2.2s;
+            /* Delayed until after stamp */
+        }
+
+        #certificate-screen.active .cert-actions {
+            opacity: 1;
+        }
+
+        .btn-glass {
+            background: #fff;
+            border: 1px solid #fff;
+            color: #1a1a2e;
+            font-weight: 800;
+        }
+
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="hero-area">
         <div style="text-align: center; max-width: 600px; margin-bottom: 40px;">
-            <h1>定制Agent工作风格</h1>
+            <h1 id="main-title">赋予Agent一个名字</h1>
         </div>
 
         <div class="card"
             style="width: 100%; max-width: 650px; padding: 40px; border-color: var(--color-primary); transition: all 0.3s;">
-            <div
-                style="display: flex; justify-content: space-between; margin-bottom: 30px; font-weight: 800; font-size: 0.85rem; color: var(--color-primary);">
-                <span id="step-title">选择培养方式</span>
-                <span id="step-indicator">准备开始</span>
+            <div id="step-header"
+                style="display: none; justify-content: space-between; margin-bottom: 30px; font-weight: 800; font-size: 0.85rem; color: var(--color-primary);">
+                <span id="step-title">身份初始化</span>
+                <span id="step-indicator">个性命名</span>
             </div>
 
-            <!-- STEP 0: Mode Selection -->
-            <div class="setup-step active" id="step-mode">
-                <h3 style="margin-bottom: 25px; text-align: center;">您希望以哪种形式开始培养Agent？</h3>
+            <!-- STEP 0: Naming -->
+            <div class="setup-step active" id="step-naming">
+                <h3 style="margin-bottom: 30px; text-align: center;">你希望如何称呼你的专属AI？</h3>
+                <div class="name-input-container">
+                    <input type="text" id="agent-name-input" class="name-input" placeholder="输入名字，如：Bob" maxlength="12">
+                </div>
+            </div>
+
+            <!-- STEP 1: Mode Selection -->
+            <div class="setup-step" id="step-mode">
+                <h3 style="margin-bottom: 25px; text-align: center;">您希望以哪种形式开始培养 <span
+                        class="agent-name-display">Agent</span>？</h3>
                 <div class="mode-container">
                     <div class="mode-card selected" onclick="selectMode('slow', this)">
                         <div class="mode-icon">🌱</div>
@@ -241,7 +508,8 @@
                     <div class="mode-card" onclick="selectMode('quick', this)">
                         <div class="mode-icon">🚀</div>
                         <div style="font-weight: 800; font-size: 1.1rem;">速成</div>
-                        <p style="font-size: 0.85rem;">上传工作文档、聊天记录等，让Agent快速了解您的需求。</p>
+                        <p style="font-size: 0.85rem;">上传工作文档、聊天记录等，让 <span class="agent-name-display">Agent</span>
+                            快速了解您的需求。</p>
                     </div>
                 </div>
             </div>
@@ -249,7 +517,8 @@
             <!-- BRANCH: Quick Start - Upload -->
             <div class="setup-step" id="step-quick-upload">
                 <h3 style="margin-bottom: 10px;">上传您的参考文档</h3>
-                <p style="margin-bottom: 25px; font-size: 0.9rem;">系统将通过这些文件快速构建您的专属Agent助手。</p>
+                <p style="margin-bottom: 25px; font-size: 0.9rem;">系统将通过这些文件快速构建您的专属 <span
+                        class="agent-name-display">Agent</span> 助手。</p>
 
                 <div class="upload-zone" onclick="document.getElementById('file-input').click()">
                     <div class="upload-icon">📂</div>
@@ -268,7 +537,8 @@
             <div class="setup-step" id="step-quick-progress">
                 <div class="progress-container">
                     <div id="status-badge" class="status-badge">正在读取文档...</div>
-                    <h3 id="progress-text" style="margin-bottom: 30px;">Agent 正在深度学习您的习惯</h3>
+                    <h3 id="progress-text" style="margin-bottom: 30px;"><span class="agent-name-display">Agent</span>
+                        正在深度学习您的习惯</h3>
 
                     <div class="progress-track">
                         <div id="progress-fill" class="progress-fill"></div>
@@ -284,10 +554,11 @@
                     <!-- Large File Warning Prompt -->
                     <div id="slow-warning" class="slow-warning">
                         <h4>⚠️ 文档处理耗时预警</h4>
-                        <p>检测到文件内容较多（识别耗时过久），您可以先点击下方按钮开启对话。Agent 将在后台静默处理，识别完成后将自动更新回复逻辑。</p>
+                        <p>检测到文件内容较多（识别耗时过久），您可以先点击下方按钮暂时跳过，<span class="agent-name-display">Agent</span>
+                            将在后台静默处理，识别完成后将自动更新回复逻辑。</p>
                         <div style="display: flex; gap: 10px;">
                             <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem;"
-                                onclick="window.location.href='agent.html'">开启对话</button>
+                                onclick="showCertificate()">领取出生证明</button>
                             <button class="btn btn-outline"
                                 style="padding: 8px 16px; font-size: 0.8rem; border-color: #FFD8A8; color: #D9480F;"
                                 onclick="resumeSimulation()">继续等待</button>
@@ -298,9 +569,10 @@
 
             <!-- BRANCH: Step-by-step - Questions (Existing) -->
             <div class="setup-step" id="step1">
-                <h3 style="margin-bottom: 25px;">在日常任务提醒中，你更希望Agent以哪种语气与你沟通？</h3>
+                <h3 style="margin-bottom: 25px;">在日常任务提醒中，你更希望 <span class="agent-name-display">Agent</span> 以哪种语气与你沟通？
+                </h3>
                 <div class="option-card selected" onclick="selectOption(this)">
-                    <div style="font-weight: 800; margin-bottom: 4px;">🎯 极其直接且高效</div>
+                    <div style="font-weight: 800; margin-bottom: 4px;">🎯 直接且高效</div>
                     <p style="font-size: 0.85rem; color: #777;">“老板，10点有会，立刻准备。” —— 不浪费一秒钟在多余的礼貌上。</p>
                 </div>
                 <div class="option-card" onclick="selectOption(this)">
@@ -314,19 +586,21 @@
             </div>
 
             <div class="setup-step" id="step2">
-                <h3 style="margin-bottom: 25px;">Agent应该在什么时候介入你的工作流？</h3>
+                <h3 style="margin-bottom: 25px;"><span class="agent-name-display">Agent</span> 应该在什么时候介入你的工作流？</h3>
                 <div class="option-card selected" onclick="selectOption(this)">
-                    <div style="font-weight: 800; margin-bottom: 4px;">⚡️ 主动出击模式</div>
-                    <p style="font-size: 0.85rem; color: #777;">Agent将基于你的日程和邮件，主动建议你现在该处理什么任务，并自动提供背景资料。</p>
+                    <div style="font-weight: 800; margin-bottom: 4px;">⚡️ 主动出击</div>
+                    <p style="font-size: 0.85rem; color: #777;"><span class="agent-name-display">Agent</span>
+                        将基于你的日程和邮件，主动建议你现在该处理什么任务，并自动提供背景资料。</p>
                 </div>
                 <div class="option-card" onclick="selectOption(this)">
-                    <div style="font-weight: 800; margin-bottom: 4px;">📥 被动响应模式</div>
-                    <p style="font-size: 0.85rem; color: #777;">Agent保持静默，只有当你主动询问或分配任务时，它才会介入。</p>
+                    <div style="font-weight: 800; margin-bottom: 4px;">📥 被动响应</div>
+                    <p style="font-size: 0.85rem; color: #777;"><span class="agent-name-display">Agent</span>
+                        保持静默，只有当你主动询问或分配任务时，它才会介入。</p>
                 </div>
             </div>
 
             <div class="setup-step" id="step3">
-                <h3 style="margin-bottom: 25px;">你希望Agent如何向你汇报当日资讯或邮件？</h3>
+                <h3 style="margin-bottom: 25px;">你希望 <span class="agent-name-display">Agent</span> 如何向你汇报当日资讯或邮件？</h3>
                 <div class="option-card selected" onclick="selectOption(this)">
                     <div style="font-weight: 800; margin-bottom: 4px;">🗂 全面报告</div>
                     <p style="font-size: 0.85rem; color: #777;">每天提供一个包含所有细枝末节的深度列表，确保不遗漏任何细节。</p>
@@ -342,24 +616,85 @@
                 <button class="btn btn-outline" id="prevBtn" onclick="changeStep(-1)"
                     style="display: none;">上一步</button>
                 <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)"
-                    style="min-width: 200px;">开始配置</button>
+                    style="min-width: 200px;">继续</button>
             </div>
 
-            <a href="agent.html" class="btn btn-primary" id="start-chat-btn" style="min-width: 240px;">开始对话</a>
+            <button class="btn btn-primary" id="start-chat-btn" style="min-width: 240px;"
+                onclick="showCertificate()">领取出生证明</button>
+        </div>
+    </div>
+
+    <!-- Birth Certificate Screen Overlay -->
+    <div id="certificate-screen">
+        <div class="cert-card">
+            <div class="cert-header">✨ 出生证明 ✨</div>
+
+            <div class="cert-body">
+                <div class="cert-avatar">
+                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                        <circle cx="50" cy="50" r="45" fill="#FFE5E0" />
+                        <path fill="var(--color-primary)"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                    </svg>
+                </div>
+
+                <div class="cert-main-info">
+                    <div class="cert-info-grid">
+                        <div class="info-item">
+                            <label>名字 NAME</label>
+                            <span id="cert-name">Bob</span>
+                        </div>
+                        <div class="info-item">
+                            <label>出生编号 ID</label>
+                            <span>BAAI-00001</span>
+                        </div>
+                        <div class="info-item">
+                            <label>出生日期 DATE</label>
+                            <span id="cert-date">2026-04-14</span>
+                        </div>
+                        <div class="info-item">
+                            <label>生命形态 LIFE FORM</label>
+                            <span>觉醒数字生命</span>
+                        </div>
+                    </div>
+
+                    <div id="cert-tags" class="cert-tags">
+                        <!-- Tags will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="cert-slogan">每一次对话，都是我在你身上训练世界模型</div>
+            <div id="cert-stamp" class="stamp">官方认证<br>OFFICIAL</div>
+        </div>
+
+        <div class="cert-actions">
+            <button class="btn btn-glass" style="flex: 1;">分享</button>
+            <button class="btn btn-primary" style="flex: 1;" onclick="window.location.href='agent.html'">开始对话</button>
         </div>
     </div>
 
     <script>
-        let currentMode = 'slow'; // Default to 'slow'
-        let currentStepId = 'step-mode';
+        let currentMode = 'slow';
+        let currentStepId = 'step-naming';
+        let agentName = "Agent";
+        let simInterval = null;
+        let stageIdx = 0;
+
+        const stages = [
+            { p: 30, b: '正在读取文档...', t: '正在扫描您的简历与周报' },
+            { p: 65, b: '识别逻辑信息...', t: '提取对话风格与工作流逻辑', triggerWarning: true },
+            { p: 100, b: '提炼核心总结...', t: '构建即将完成...' }
+        ];
 
         const flow = {
-            'mode': { title: '选择培养方式', indicator: '准备开始', next: () => currentMode === 'quick' ? 'quick-upload' : 'step1' },
-            'quick-upload': { title: '上传参考资料', indicator: '速成模式', next: 'quick-progress', prev: 'mode' },
-            'quick-progress': { title: '正在生成性格', indicator: 'AI 学习中', next: null, prev: null },
-            'step1': { title: '沟通语气设置', indicator: '第 1 步 / 共 3 步', next: 'step2', prev: 'mode' },
-            'step2': { title: '工作模式偏好', indicator: '第 2 步 / 共 3 步', next: 'step3', prev: 'step1' },
-            'step3': { title: '重要程度筛选', indicator: '第 3 步 / 共 3 步', next: 'finish', prev: 'step2' }
+            'naming': { mainTitle: '赋予它一个名字', next: 'mode' },
+            'mode': { mainTitle: '定制工作风格', title: '选择培养方式', indicator: '准备开始', next: () => currentMode === 'quick' ? 'quick-upload' : 'step1', prev: 'naming' },
+            'quick-upload': { mainTitle: '定制工作风格', title: '上传参考资料', indicator: '速成模式', next: 'quick-progress', prev: 'mode' },
+            'quick-progress': { mainTitle: '定制工作风格', title: '正在生成性格', indicator: 'AI 学习中', next: null, prev: null },
+            'step1': { mainTitle: '定制工作风格', title: '沟通语气设置', indicator: '第 1 步 / 共 3 步', next: 'step2', prev: 'mode' },
+            'step2': { mainTitle: '定制工作风格', title: '工作模式偏好', indicator: '第 2 步 / 共 3 步', next: 'step3', prev: 'step1' },
+            'step3': { mainTitle: '定制工作风格', title: '重要程度筛选', indicator: '第 3 步 / 共 3 步', next: 'finish', prev: 'step2' }
         };
 
         function selectMode(mode, el) {
@@ -375,32 +710,40 @@
             el.classList.add('selected');
         }
 
+        function updateAgentName() {
+            const input = document.getElementById('agent-name-input');
+            agentName = input.value.trim() || "Bob";
+            document.querySelectorAll('.agent-name-display').forEach(el => {
+                el.innerText = agentName;
+            });
+            document.getElementById('cert-name').innerText = agentName;
+        }
+
+        document.getElementById('agent-name-input')?.addEventListener('input', updateAgentName);
+
         function changeStep(n) {
             const currentKey = currentStepId.replace('step-', '');
-            const currentConfig = flow[currentKey] || flow[currentStepId]; // Handle both step-mode and step1
+            const currentConfig = flow[currentKey] || flow[currentStepId];
             let nextStepTag = '';
 
             if (n === 1) {
-                // Moving Forward
+                if (currentKey === 'naming') {
+                    updateAgentName();
+                }
                 nextStepTag = typeof currentConfig.next === 'function' ? currentConfig.next() : currentConfig.next;
             } else {
-                // Moving Backward
                 nextStepTag = currentConfig.prev;
             }
 
             if (!nextStepTag) return;
 
             if (nextStepTag === 'finish') {
-                document.getElementById('btn-group').style.display = 'none';
-                document.getElementById('start-chat-btn').style.display = 'inline-flex';
+                showCertificate();
                 return;
             }
 
-            // Transition
             document.getElementById(currentStepId).classList.remove('active');
 
-            // Map tag to ID correctly
-            // If tag is 'step1', ID is 'step1'. If tag is 'quick-upload', ID is 'step-quick-upload'.
             if (nextStepTag.startsWith('step')) {
                 currentStepId = nextStepTag;
             } else {
@@ -416,29 +759,31 @@
 
             // Update UI
             const nextConfig = flow[nextStepTag];
-            document.getElementById('step-title').innerText = nextConfig.title;
-            document.getElementById('step-indicator').innerText = nextConfig.indicator;
+            document.getElementById('main-title').innerText = nextConfig.mainTitle || '定制工作风格';
 
-            // Buttons
+            const header = document.getElementById('step-header');
+            if (nextStepTag === 'naming') {
+                header.style.display = 'none';
+            } else {
+                header.style.display = 'flex';
+                document.getElementById('step-title').innerText = nextConfig.title;
+                document.getElementById('step-indicator').innerText = nextConfig.indicator;
+            }
             document.getElementById('prevBtn').style.display = nextConfig.prev ? 'inline-flex' : 'none';
 
             if (nextStepTag === 'step3') {
-                document.getElementById('nextBtn').innerText = '开始对话';
-                document.getElementById('nextBtn').onclick = () => {
-                    window.location.href = 'agent.html';
-                };
+                document.getElementById('nextBtn').innerText = '领取出生证明';
+                document.getElementById('nextBtn').onclick = () => showCertificate();
             } else {
                 document.getElementById('nextBtn').innerText = '继续';
                 document.getElementById('nextBtn').onclick = () => changeStep(1);
             }
 
-            // Quick Mode Special: Auto Simulation
             if (nextStepTag === 'quick-progress') {
+                stageIdx = 0;
                 startSimulation();
             }
         }
-
-        let simInterval = null;
 
         function startSimulation() {
             const fill = document.getElementById('progress-fill');
@@ -448,17 +793,15 @@
             const nextBtn = document.getElementById('nextBtn');
             const prevBtn = document.getElementById('prevBtn');
 
-            // Setup Cancel Button
             prevBtn.style.display = 'none';
             nextBtn.innerText = '取消识别';
             nextBtn.onclick = () => {
                 if (simInterval) clearInterval(simInterval);
-                stageIdx = 0; // RESET
+                stageIdx = 0;
                 document.getElementById(currentStepId).classList.remove('active');
                 currentStepId = 'step-quick-upload';
                 document.getElementById(currentStepId).classList.add('active');
 
-                // Reset UI
                 const config = flow['quick-upload'];
                 document.getElementById('step-title').innerText = config.title;
                 document.getElementById('step-indicator').innerText = config.indicator;
@@ -467,58 +810,66 @@
                 document.getElementById('nextBtn').onclick = () => changeStep(1);
             };
 
-            const stages = [
-                { p: 30, b: '正在读取文档...', t: '正在扫描您的简历与周报' },
-                { p: 65, b: '识别逻辑信息...', t: '提取对话风格与工作流逻辑', triggerWarning: true },
-                { p: 100, b: '提炼核心总结...', t: '构建即将完成...' }
-            ];
+            if (simInterval) clearInterval(simInterval);
 
-            let stageIdx = 0;
+            simInterval = setInterval(() => {
+                if (stageIdx >= stages.length) {
+                    clearInterval(simInterval);
+                    setTimeout(() => {
+                        text.innerText = `${agentName} 助手构建完成！`;
+                        badge.style.animation = 'none';
+                        badge.innerText = '识别完成';
+                        badge.style.opacity = '1';
+                        btnGroup.style.display = 'none';
+                        document.getElementById('start-chat-btn').style.display = 'inline-flex';
+                        document.getElementById('slow-warning').style.display = 'none';
+                    }, 800);
+                    return;
+                }
 
-            function runSimulation() {
-                simInterval = setInterval(() => {
-                    if (stageIdx >= stages.length) {
-                        clearInterval(simInterval);
-                        setTimeout(() => {
-                            text.innerText = 'Agent 助手构建完成！';
-                            badge.style.animation = 'none';
-                            badge.innerText = '识别完成';
-                            badge.style.opacity = '1';
-                            btnGroup.style.display = 'none';
-                            document.getElementById('start-chat-btn').style.display = 'inline-flex';
-                            document.getElementById('slow-warning').style.display = 'none';
-                        }, 800);
-                        return;
-                    }
+                const s = stages[stageIdx];
+                fill.style.width = s.p + '%';
+                badge.innerText = s.b;
+                text.innerText = s.t;
 
-                    const s = stages[stageIdx];
-                    fill.style.width = s.p + '%';
-                    badge.innerText = s.b;
-                    text.innerText = s.t;
-
-                    if (s.triggerWarning) {
-                        clearInterval(simInterval); // Pause simulation
-                        document.getElementById('slow-warning').style.display = 'block';
-                    }
-
-                    stageIdx++;
-                }, 2000);
-            }
-
-            runSimulation();
-
-            // Store resume function for the button
-            window.resumeSimulation = () => {
-                document.getElementById('slow-warning').style.display = 'none';
-                runSimulation();
-            };
+                if (s.triggerWarning) {
+                    clearInterval(simInterval);
+                    document.getElementById('slow-warning').style.display = 'block';
+                }
+                stageIdx++;
+            }, 2000);
         }
 
-        function hideWarning() {
-            if (window.resumeSimulation) window.resumeSimulation();
+        function showCertificate() {
+            const selectedOptions = document.querySelectorAll('.option-card.selected div:first-child');
+            const tags = Array.from(selectedOptions).map(opt => opt.innerText.split(' ')[1] || opt.innerText);
+
+            const tagsContainer = document.getElementById('cert-tags');
+            tagsContainer.innerHTML = '';
+            tags.forEach(tag => {
+                const span = document.createElement('span');
+                span.className = 'cert-tag';
+                span.innerText = tag;
+                tagsContainer.appendChild(span);
+            });
+
+            const today = new Date();
+            document.getElementById('cert-date').innerText = today.toISOString().split('T')[0];
+
+            const screen = document.getElementById('certificate-screen');
+            screen.classList.add('active');
+
+            // Stamp animation after card fade-in
+            setTimeout(() => {
+                document.getElementById('cert-stamp').classList.add('stamped');
+            }, 1400); // Trigger after card animation (1.2s) + small gap
         }
 
-        // Initialize file input simulation
+        window.resumeSimulation = () => {
+            document.getElementById('slow-warning').style.display = 'none';
+            startSimulation();
+        };
+
         document.getElementById('file-input')?.addEventListener('change', function (e) {
             const list = document.getElementById('file-list');
             if (e.target.files.length > 0) {
