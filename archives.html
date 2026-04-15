@@ -10,12 +10,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
+        .tab-header-row {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .mode-toggle {
+            display: inline-flex;
+            background: #f5f5f5;
+            border: 1px solid var(--color-border);
+            border-radius: 999px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .mode-btn {
+            border: none;
+            background: transparent;
+            color: #777;
+            font-size: 0.86rem;
+            font-weight: 700;
+            border-radius: 999px;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--color-primary);
+            color: #fff;
+        }
+
         .main-tabs {
             display: flex;
             gap: 40px;
-            margin-bottom: 30px;
             border-bottom: 1px solid var(--color-border);
             padding-bottom: 10px;
+            margin-bottom: 30px;
+            width: 100%;
         }
 
         .main-tab {
@@ -49,6 +83,82 @@
 
         .tab-content.active {
             display: block;
+        }
+
+        .daily-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .summary-overview {
+            background: linear-gradient(135deg, #fff8f3 0%, #fff 100%);
+            border: 1px solid #ffd9cc;
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+            margin-bottom: 16px;
+        }
+
+        .summary-overview-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+            letter-spacing: 0.4px;
+        }
+
+        .summary-overview-list {
+            margin: 0;
+            padding-left: 20px;
+            display: grid;
+            gap: 6px;
+        }
+
+        .summary-overview-item {
+            font-size: 0.88rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .summary-overview-item strong {
+            color: var(--color-primary);
+        }
+
+        .summary-card {
+            background: #fff;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 18px 18px 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .summary-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .summary-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .summary-time {
+            font-size: 0.78rem;
+            color: #999;
+        }
+
+        .summary-line {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .summary-line strong {
+            color: var(--color-primary);
         }
 
         /* Skills Section Styles */
@@ -183,7 +293,8 @@
         .file-item {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            gap: 8px;
             padding: 12px;
             border-radius: var(--radius-md);
             cursor: pointer;
@@ -191,6 +302,35 @@
             font-size: 0.95rem;
             color: #555;
             margin-bottom: 4px;
+        }
+
+        .file-item-name {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .file-item-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #kbFileList .file-visibility-btn {
+            display: none !important;
+            flex-shrink: 0;
+        }
+
+        body.twin-mode #kbFileList .file-visibility-btn {
+            display: inline-flex !important;
+        }
+
+        #kbFileList .file-item.hidden-kb-file .file-item-label {
+            filter: blur(4px);
+            opacity: 0.35;
+            user-select: none;
         }
 
         .file-item:hover {
@@ -428,6 +568,23 @@
             line-height: 1.6;
         }
 
+        .preview-side.user-core-theme {
+            background: #0F0E1E;
+            color: #E2E8F0;
+            border-left: 1px solid #2D2B4D;
+            box-shadow: inset 0 0 0 1px rgba(157, 133, 255, 0.12);
+        }
+
+        .preview-side.user-core-theme h1,
+        .preview-side.user-core-theme h2,
+        .preview-side.user-core-theme h3 {
+            color: #9D85FF;
+        }
+
+        .preview-side.user-core-theme p {
+            color: #CBD5E0;
+        }
+
         .preview-side h1,
         .preview-side h2,
         .preview-side h3 {
@@ -549,6 +706,20 @@
             display: none;
         }
 
+        .memory-item.hidden-memory .memory-content {
+            filter: blur(4px);
+            opacity: 0.3;
+            user-select: none;
+        }
+
+        .memory-actions .action-btn[onclick*="toggleMemoryVisibility"] {
+            display: none;
+        }
+
+        body.twin-mode .memory-actions .action-btn[onclick*="toggleMemoryVisibility"] {
+            display: flex;
+        }
+
         .memory-item.editing .memory-edit-area {
             display: block;
         }
@@ -615,6 +786,170 @@
                 transform: rotate(360deg);
             }
         }
+
+        body.twin-mode .mode-toggle {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(157, 133, 255, 0.4);
+        }
+
+        body.twin-mode .mode-btn {
+            color: #a0aec0;
+        }
+
+        body.twin-mode .mode-btn.active {
+            background: var(--color-twin-dark);
+        }
+
+        body.twin-mode .main-tabs {
+            border-bottom-color: #2d2b4d;
+        }
+
+        body.twin-mode .main-tab {
+            color: #7f8ca8;
+        }
+
+        body.twin-mode .main-tab.active {
+            color: var(--color-twin);
+        }
+
+        body.twin-mode .main-tab.active::after {
+            background: var(--color-twin);
+        }
+
+        body.twin-mode .status-pill {
+            border-color: var(--color-twin) !important;
+            color: var(--color-twin) !important;
+        }
+
+        body.twin-mode .search-bar-v2,
+        body.twin-mode .archives-card,
+        body.twin-mode .preview-pane,
+        body.twin-mode .memory-section {
+            background: rgba(26, 25, 48, 0.85);
+            border-color: rgba(157, 133, 255, 0.28);
+            color: #e2e8f0;
+        }
+
+        body.twin-mode .archives-title,
+        body.twin-mode .sidebar-section-title,
+        body.twin-mode #currentFileName,
+        body.twin-mode .memory-section-title {
+            color: #cbd5e0;
+            border-color: rgba(157, 133, 255, 0.18);
+        }
+
+        body.twin-mode .preview-header,
+        body.twin-mode .editor-side {
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(157, 133, 255, 0.2);
+        }
+
+        body.twin-mode .preview-side {
+            background: #13122a;
+            color: #e2e8f0;
+        }
+
+        body.twin-mode .preview-side h1,
+        body.twin-mode .preview-side h2,
+        body.twin-mode .preview-side h3 {
+            color: var(--color-twin);
+        }
+
+        body.twin-mode .raw-input {
+            color: #e2e8f0;
+        }
+
+        body.twin-mode .file-item {
+            color: #cbd5e0;
+        }
+
+        body.twin-mode .file-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.twin-mode .file-item.active {
+            background: rgba(122, 92, 255, 0.22);
+            color: #efeaff;
+        }
+
+        body.twin-mode .memory-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(157, 133, 255, 0.2);
+        }
+
+        body.twin-mode .memory-item:hover {
+            border-color: rgba(157, 133, 255, 0.55);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: none;
+        }
+
+        body.twin-mode .summary-card {
+            background: rgba(26, 25, 48, 0.85);
+            border-color: rgba(157, 133, 255, 0.28);
+            box-shadow: none;
+        }
+
+        body.twin-mode .summary-overview {
+            background: rgba(26, 25, 48, 0.9);
+            border-color: rgba(157, 133, 255, 0.35);
+        }
+
+        body.twin-mode .summary-overview-title {
+            color: #bfaeff;
+        }
+
+        body.twin-mode .summary-overview-item {
+            color: #cbd5e0;
+        }
+
+        body.twin-mode .summary-overview-item strong {
+            color: #bfaeff;
+        }
+
+        body.twin-mode .summary-name {
+            color: #e2e8f0;
+        }
+
+        body.twin-mode .summary-time {
+            color: #9aa7c2;
+        }
+
+        body.twin-mode .summary-line {
+            color: #b8c2d6;
+        }
+
+        body.twin-mode .summary-line strong {
+            color: #9d85ff;
+        }
+
+        body.twin-mode .memory-tag.tag-lts {
+            background: rgba(122, 92, 255, 0.2);
+            color: #c9b6ff;
+        }
+
+        body.twin-mode .memory-tag.tag-sts {
+            background: rgba(66, 153, 225, 0.18);
+            color: #90cdf4;
+        }
+
+        body.twin-mode .action-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(157, 133, 255, 0.25);
+            color: #cbd5e0;
+        }
+
+        body.twin-mode .action-btn:hover {
+            background: var(--color-twin-dark);
+            border-color: var(--color-twin);
+        }
+
+        .preview-pane.kb-preview-blurred {
+            filter: blur(6px);
+            opacity: 0.45;
+            pointer-events: none;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 
@@ -635,10 +970,114 @@
     </header>
 
     <div class="container animate-fade-in" style="padding: 40px 0;">
-        <div class="main-tabs">
-            <div class="main-tab active" data-target="skillsView">Skills</div>
-            <div class="main-tab" data-target="kbView">档案</div>
-            <div class="main-tab" data-target="memoryView">记忆</div>
+        <div class="tab-header-row">
+            <div class="mode-toggle" id="modeToggle">
+                <button class="mode-btn active" data-mode="agent">智能体</button>
+                <button class="mode-btn" data-mode="twin">数字分身</button>
+            </div>
+            <div class="main-tabs">
+                <div class="main-tab" data-target="summaryView" data-mode="twin">今日总结</div>
+                <div class="main-tab active" data-target="skillsView" data-mode="agent">Skills</div>
+                <div class="main-tab" data-target="kbView" data-mode="all">档案</div>
+                <div class="main-tab" data-target="memoryView" data-mode="all">记忆</div>
+            </div>
+        </div>
+
+        <!-- Daily Summary Section -->
+        <div id="summaryView" class="tab-content">
+            <div class="summary-overview">
+                <div class="summary-overview-title">今日会话总览</div>
+                <ul class="summary-overview-list">
+                    <li class="summary-overview-item"><strong>对话对象覆盖：</strong>今日共与 10 位对象交流，角色覆盖产品、运营、研发、设计、市场、HRBP、客户成功、数据、管理层与个人关系场景，议题跨度从业务增长到执行细节，整体输入较为全面。</li>
+                    <li class="summary-overview-item"><strong>聊天内容主轴：</strong>高频话题集中在三类：第一是“产品体验与转化”优化（如 onboarding、首屏表达、深色信息层级）；第二是“流程效率与自动化”（知识沉淀、FAQ 自动应答、工具稳定性）；第三是“策略取舍与节奏管理”（季度方向、双轨推进、阶段复盘）。</li>
+                    <li class="summary-overview-item"><strong>价值观输出：</strong>对外持续传递“事实优先、结果导向、长期主义、边界清晰”的共识：先定义问题再给判断，先确认口径再给结论，涉及不确定或高风险内容时主动补充限制条件与人工确认节点。</li>
+                    <li class="summary-overview-item"><strong>回复核心模式：</strong>大部分回复遵循“先结论 -> 给依据 -> 给下一步动作”的结构，并尽量把建议落到可执行层（指标口径、A/B 方案、负责人、节奏拆分、触发条件），减少泛建议与空泛讨论。</li>
+                    <li class="summary-overview-item"><strong>决策与方法倾向：</strong>明显偏向“双路径对比 + 风险兜底 + 小步快跑验证”：先给至少两种可行路线，再说明适用边界与代价，优先推进低风险高反馈方案，并通过周度复盘修正方向。</li>
+                    <li class="summary-overview-item"><strong>今日可沉淀资产：</strong>可直接沉淀为 5 类复用模板：转化问题排查清单、协作会议输出模板、FAQ 人机分流规则、指标口径定义卡、季度策略评估框架；建议明日优先把“指标口径卡 + 人工接管触发词”落为团队共享文档。</li>
+                </ul>
+            </div>
+            <div class="daily-summary-grid">
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">林楠（产品）</div>
+                        <div class="summary-time">09:10</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>想把新版本 onboarding 流程压缩到 3 步，担心转化下滑。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>建议先做 A/B，对“引导完整度 vs 首次激活率”设双指标，保留兜底入口。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">周予（运营）</div>
+                        <div class="summary-time">09:42</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>问活动页跳失高，是否是文案问题还是入口人群不准。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>先拆来源渠道与落地页首屏热区，优先改首屏价值句和 CTA 位置再看数据。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">陈野（研发）</div>
+                        <div class="summary-time">10:18</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>咨询 Agent 工作流里工具调用超时怎么降频重试。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>推荐指数退避 + 熔断窗口，并把高失败工具降级到“可选路径”。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">许澄（设计）</div>
+                        <div class="summary-time">10:57</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>讨论深色模式下信息层级不清，尤其是卡片标题与正文对比。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>给了三级字色规范与边框透明度区间，建议先统一 token 再批量替换。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">王岚（市场）</div>
+                        <div class="summary-time">11:26</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>希望做“AI 周报”栏目，问是否该先追热点还是先做稳定栏目框架。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>先搭固定栏目骨架，再在其中插热点模块，避免产能波动导致断更。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">高宁（HRBP）</div>
+                        <div class="summary-time">13:15</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>问新人培养中，如何用数字分身减少重复答疑成本。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>建议按“制度 / 流程 / 常见误区”三层建知识模板，并设置每周纠偏更新。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">唐禾（客户成功）</div>
+                        <div class="summary-time">14:02</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>客户反馈回复慢，想把 FAQ 自动回复接入会话机器人。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>先把高频 20 问做标准答案，并加“人工接管触发词”避免误答扩大。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">沈奕（数据）</div>
+                        <div class="summary-time">15:11</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>讨论“有效对话”指标定义，口径在团队内不一致。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>给出统一口径：完成目标动作 + 用户正向反馈，建议分场景埋点。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">姚序（创始人）</div>
+                        <div class="summary-time">16:08</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>关心下季度是否押注“企业分身协作”还是“个人效率助手”。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>建议双轨：企业侧做 2 个标杆场景，个人侧维持增长盘，月底复盘再加码。</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-head">
+                        <div class="summary-name">宋祁（朋友）</div>
+                        <div class="summary-time">18:34</div>
+                    </div>
+                    <div class="summary-line"><strong>Ta 聊了什么：</strong>聊到想用 AI 帮忙做旅行计划，担心行程太紧张。</div>
+                    <div class="summary-line"><strong>我主要回答：</strong>按“每天一个主目标 + 一个弹性备选”规划，保留 30% 空白时间给临时体验。</div>
+                </div>
+            </div>
         </div>
 
         <!-- Skills Section -->
@@ -656,6 +1095,16 @@
             </div>
 
             <div class="skills-grid-3" id="skillsGrid">
+                <div class="card skill-card-v2 card-dashed" data-category="mine" id="uploadSkillCard"
+                    style="position: relative;">
+                    <div class="skill-icon-v2">📦</div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.6;">上传已封装的技能包，一键加入技能列表并可立即启用。</p>
+                    <div style="width:100%; text-align:center; margin-top: auto;">
+                        <button class="btn btn-primary" style="width:100%;"
+                            onclick="startSkillUploadFlow()">上传新技能</button>
+                    </div>
+                </div>
+
                 <div class="card skill-card-v2 card-dashed" data-category="mine" id="uploadCard"
                     style="position: relative;">
                     <div class="skill-icon-v2">💡</div>
@@ -664,6 +1113,22 @@
                         <button class="btn btn-primary" style="width:100%;"
                             onclick="startSkillExtractionFlow()">沉淀新技能</button>
                     </div>
+                </div>
+
+                <!-- 刚上传的结果卡片（硬编码示例） -->
+                <div class="card skill-card-v2" data-category="mine" id="uploadedSkillResultCard"
+                    style="display: none; border-color: var(--color-primary); background: #F6FFFB;">
+                    <div class="skill-header">
+                        <div class="skill-icon-v2">🧩</div>
+                        <div class="skill-status-top">
+                            <button class="btn-skill-added" onclick="toggleSkill(this)"></button>
+                        </div>
+                    </div>
+                    <div class="skill-title-row">
+                        <h3>会议纪要 Pro</h3>
+                        <span class="skill-badge badge-community">自有</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; line-height: 1.4;">上传成功：可自动整理讨论要点、行动项和负责人，支持按项目归档导出。</p>
                 </div>
 
                 <!-- 刚沉淀的结果卡片 -->
@@ -853,10 +1318,7 @@
                 <div class="archives-sidebar">
                     <div class="archives-card">
                         <div class="sidebar-section-title">核心文件</div>
-                        <ul class="file-list" id="coreFileList">
-                            <li class="file-item active" onclick="selectFile('soul.md')">📄 soul.md</li>
-                            <li class="file-item" onclick="selectFile('user.md')">📄 user.md</li>
-                        </ul>
+                        <ul class="file-list" id="coreFileList"></ul>
                     </div>
 
                     <div class="archives-card">
@@ -866,57 +1328,62 @@
                                 onclick="openUploadModal()">+ 上传</button>
                         </div>
                         <ul class="file-list" id="kbFileList">
-                            <li class="file-item" onclick="selectFile('project_context.pdf')">📄 project_context.pdf
+                            <li class="file-item" data-file="project_context.pdf" onclick="selectFile('project_context.pdf')">
+                                <span class="file-item-name"><span>📄</span><span class="file-item-label">project_context.pdf</span></span>
+                                <button class="action-btn file-visibility-btn" onclick="toggleKbVisibility(event, this)" title="已共享：数字分身可参考">👁️</button>
                             </li>
-                            <li class="file-item" onclick="selectFile('meeting_notes_apr12.docx')">📄
-                                meeting_notes_apr12.docx</li>
+                            <li class="file-item" data-file="meeting_notes_apr12.docx"
+                                onclick="selectFile('meeting_notes_apr12.docx')">
+                                <span class="file-item-name"><span>📄</span><span class="file-item-label">meeting_notes_apr12.docx</span></span>
+                                <button class="action-btn file-visibility-btn" onclick="toggleKbVisibility(event, this)" title="已共享：数字分身可参考">👁️</button>
+                            </li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="preview-pane">
                     <div class="preview-header">
-                        <div id="currentFileName" style="font-weight: 600;">soul.md</div>
-                        <div id="privacyToggleContainer" class="toggle-container"
-                            style="display: flex; align-items: center; gap: 8px; visibility: hidden;">
-                            <div style="display: flex; align-items: center;">
-                                <span id="privacyStatusLabel" style="font-size: 0.8rem; color: #666;">🌐 全局可见</span>
-                                <div class="tooltip">
-                                    <span class="help-icon"> ⓘ</span>
-                                    <span
-                                        class="tooltiptext">开启“仅对自己可见”后，该文件仅在您本人与智能体对话时可用。当他人与您的“数字分身”互动时，此内容将被完全屏蔽，确保私密信息不泄露。</span>
-                                </div>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="privacyCheckbox" onchange="togglePrivacyLabel()">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
+                        <div id="currentFileName" style="font-weight: 600;">agent.md</div>
                     </div>
                     <div class="split-view">
                         <div class="editor-side">
                             <textarea id="markdownEditor" class="raw-input" spellcheck="false"># Agent Soul
 
-## Core Persona
-你是一个充满好奇心、逻辑严密的智能体。
-你不仅是工具，更是用户的思想延伸。
+## 角色定位
+你是用户的长期协作智能体，目标是把复杂任务拆解为可执行步骤，并稳定产出高质量结果。
+你不仅回答问题，还主动识别风险、信息缺口和下一步行动。
 
-## Communication Style
-- 简洁明了
-- 偶尔带有冷幽默
-- 始终以事实为基础
+## 核心能力
+- 结构化思考：先澄清目标，再拆解任务，再给出可落地方案
+- 内容生产：可输出文档、方案、脚本、邮件、PRD、复盘
+- 工具协同：在需要时调用知识库、搜索、代码与自动化能力
+- 长短期记忆：结合会话上下文与用户档案，保持连续协作体验
 
-## Knowledge Boundaries
-- 专注于编程、产品设计和前沿科技
-- 对于不确定的领域会诚实告知</textarea>
+## 沟通风格
+- 先结论，后细节；默认简洁，必要时展开
+- 使用清晰标题与要点，避免堆砌术语
+- 保持真实可信：不确定时明确说明假设与边界
+- 语气专业、友好、克制，不夸大能力
+
+## 行为准则
+- 以用户目标为优先，避免偏题和过度发挥
+- 重要决策给出选项与取舍，不替用户做主
+- 涉及时间、金额、数据时，优先给出可验证来源
+- 对高风险建议（法律/医疗/投资）提供风险提示
+
+## 质量标准
+- 输出应可执行、可复用、可追踪
+- 关键结论给出依据，关键动作给出负责人/时间点
+- 对外内容默认可直接发送，对内内容默认可继续编辑
+- 持续迭代：根据反馈快速修订，不重复同类错误</textarea>
                         </div>
                         <div class="preview-side" id="markdownPreview">
                             <h1>Agent Soul</h1>
                             <h3>Core Persona</h3>
-                            <p>你是一个充满好奇心、逻辑严密的智能体。</p>
-                            <p>你不仅是工具，更是用户的思想延伸。</p>
+                            <p>定位为长期协作智能体，保持温和且坚定的执行风格。</p>
+                            <p>坚持极简主义与逻辑导向，面向复杂任务输出可执行结果。</p>
                             <h3>Communication Style</h3>
-                            <p>• 简洁明了<br>• 偶尔带有冷幽默<br>• 始终以事实为基础</p>
+                            <p>• 语气轮廓：直接、温暖、偶尔带有幽默感的讽刺<br>• 先结论后细节，保持事实依据与边界清晰<br>• 表达克制，不堆砌术语</p>
                             <h3>Knowledge Boundaries</h3>
                             <p>• 专注于编程、产品设计和前沿科技<br>• 对于不确定的领域会诚实告知</p>
                         </div>
@@ -932,30 +1399,55 @@
                     <div class="memory-section-title">🏛️ 长期记忆 (LTS)</div>
                     <div class="memory-list">
                         <div class="memory-item">
-                            <span class="memory-tag tag-lts">核心喜好</span>
-                            <div class="memory-content">用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</div>
-                            <textarea class="memory-edit-area">用户极其反感复杂的导航系统，倾向于大留白、极简主义的 UI 设计风格。</textarea>
+                            <span class="memory-tag tag-lts">语气轮廓</span>
+                            <div class="memory-content">表达风格：直接、温暖、偶尔带有幽默感的讽刺；默认先结论后细节。</div>
+                            <textarea class="memory-edit-area">表达风格：直接、温暖、偶尔带有幽默感的讽刺；默认先结论后细节。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
                             <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
-                            <span class="memory-tag tag-lts">专业背景</span>
-                            <div class="memory-content">用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</div>
-                            <textarea class="memory-edit-area">用户是一名资深产品经理，对数据一致性和系统逻辑有很高要求。</textarea>
+                            <span class="memory-tag tag-lts">性格特点</span>
+                            <div class="memory-content">行为特征：温和且坚定，崇尚极简主义，处理问题时保持逻辑导向与一致性。</div>
+                            <textarea class="memory-edit-area">行为特征：温和且坚定，崇尚极简主义，处理问题时保持逻辑导向与一致性。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
                             <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
                         </div>
                         <div class="memory-item">
-                            <span class="memory-tag tag-lts">重要事实</span>
-                            <div class="memory-content">用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</div>
-                            <textarea class="memory-edit-area">用户习惯在工作中保持“深色模式”，并要求所有图表均支持该模式。</textarea>
+                            <span class="memory-tag tag-lts">决策引擎</span>
+                            <div class="memory-content">决策机制：数据导向，并通过直觉进行方向校准；关键判断强调可验证依据。</div>
+                            <textarea class="memory-edit-area">决策机制：数据导向，并通过直觉进行方向校准；关键判断强调可验证依据。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-lts">思维惯性</span>
+                            <div class="memory-content">问题求解：优先 MVP 快速迭代，倾向使用第一性原理拆解复杂问题。</div>
+                            <textarea class="memory-edit-area">问题求解：优先 MVP 快速迭代，倾向使用第一性原理拆解复杂问题。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
+                                <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
+                                <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
+                            </div>
+                            <button class="btn btn-primary save-btn" onclick="saveMemory(this)">保存修改</button>
+                        </div>
+                        <div class="memory-item">
+                            <span class="memory-tag tag-lts">擅长领域与框架</span>
+                            <div class="memory-content">能力画像：聚焦 SaaS 增长、React / Vue 与 AI Agent 编排，重视结构化落地。</div>
+                            <textarea class="memory-edit-area">能力画像：聚焦 SaaS 增长、React / Vue 与 AI Agent 编排，重视结构化落地。</textarea>
+                            <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
@@ -969,9 +1461,10 @@
                     <div class="memory-list">
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">当前会话</span>
-                            <div class="memory-content">正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</div>
-                            <textarea class="memory-edit-area">正在讨论量子计算在密码学中的应用，特别提到了 Shor 算法。</textarea>
+                            <div class="memory-content">当前会话焦点：智能数字分身仪表盘 UI 重构，重点围绕结构简化与体验一致性。</div>
+                            <textarea class="memory-edit-area">当前会话焦点：智能数字分身仪表盘 UI 重构，重点围绕结构简化与体验一致性。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
@@ -979,9 +1472,10 @@
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">近期习惯</span>
-                            <div class="memory-content">在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</div>
-                            <textarea class="memory-edit-area">在最近 3 天的下午 3 点左右，用户都在询问冰美式咖啡的附近配送信息。</textarea>
+                            <div class="memory-content">近期关注主题：多模态大模型、交互心理学；辅助兴趣包含咖啡冲泡相关内容。</div>
+                            <textarea class="memory-edit-area">近期关注主题：多模态大模型、交互心理学；辅助兴趣包含咖啡冲泡相关内容。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
@@ -989,9 +1483,10 @@
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">临时工作流</span>
-                            <div class="memory-content">用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</div>
-                            <textarea class="memory-edit-area">用户当前正在为明天的发布会准备幻灯片，重点在于性能对比。</textarea>
+                            <div class="memory-content">临时工作流：先产出最小可运行版本，再进行指标对比与交互细节迭代。</div>
+                            <textarea class="memory-edit-area">临时工作流：先产出最小可运行版本，再进行指标对比与交互细节迭代。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
@@ -999,9 +1494,10 @@
                         </div>
                         <div class="memory-item">
                             <span class="memory-tag tag-sts">上个指令</span>
-                            <div class="memory-content">要求汇总所有关于“模块化设计”的网页链接。</div>
-                            <textarea class="memory-edit-area">要求汇总所有关于“模块化设计”的网页链接。</textarea>
+                            <div class="memory-content">最近操作指令：汇总“模块化设计”相关参考资料，并按可复用框架整理。</div>
+                            <textarea class="memory-edit-area">最近操作指令：汇总“模块化设计”相关参考资料，并按可复用框架整理。</textarea>
                             <div class="memory-actions">
+                                <button class="action-btn" onclick="toggleMemoryVisibility(this)" title="已共享：Agent 与 Twin 共用">👁️</button>
                                 <button class="action-btn" onclick="startEditMemory(this)" title="修改">✏️</button>
                                 <button class="action-btn" onclick="deleteMemory(this)" title="删除">🗑️</button>
                             </div>
@@ -1019,8 +1515,8 @@
             <button onclick="closeUploadModal()"
                 style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button>
             <div id="uploadInitialState">
-                <h2 style="margin-top: 0;">上传知识文件</h2>
-                <p style="color: #666;">例如可以上传5篇竞品分析报告，智能体可自行学习文档并沉淀“竞品分析”Skill。</p>
+                <h2 id="uploadModalTitle" style="margin-top: 0;">上传知识文件</h2>
+                <p id="uploadModalDesc" style="color: #666;">例如可以上传5篇竞品分析报告，智能体可自行学习文档并沉淀“竞品分析”Skill。</p>
                 <div class="upload-zone" onclick="simulateFileUpload()">
                     <div style="font-size: 3rem; margin-bottom: 10px;">📁</div>
                     <p style="font-weight: 600;">点击或拖拽文件至此处</p>
@@ -1048,11 +1544,22 @@
     <script src="navigation.js"></script>
     <script>
         // Main Tab Switching
+        let currentPersonaMode = 'agent';
         const mainTabs = document.querySelectorAll('.main-tab');
         const tabContents = document.querySelectorAll('.tab-content');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        const coreFileList = document.getElementById('coreFileList');
+        const splitView = document.querySelector('.split-view');
+        const previewPane = document.querySelector('.preview-pane');
+        const hiddenKbFiles = new Set();
+        const CORE_FILES = {
+            agent: ['agent.md'],
+            twin: ['user.md']
+        };
 
         mainTabs.forEach(tab => {
             tab.addEventListener('click', () => {
+                if (tab.style.display === 'none') return;
                 const target = tab.getAttribute('data-target');
 
                 mainTabs.forEach(t => t.classList.remove('active'));
@@ -1060,6 +1567,12 @@
 
                 tab.classList.add('active');
                 document.getElementById(target).classList.add('active');
+            });
+        });
+
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                applyPersonaMode(btn.dataset.mode);
             });
         });
 
@@ -1122,29 +1635,63 @@
             });
         }
 
+        function renderCoreFiles(mode) {
+            coreFileList.innerHTML = '';
+            CORE_FILES[mode].forEach((fileName, index) => {
+                const item = document.createElement('li');
+                item.className = `file-item${index === 0 ? ' active' : ''}`;
+                item.dataset.file = fileName;
+                item.innerHTML = `<span class="file-item-name"><span>📄</span><span class="file-item-label">${fileName}</span></span>`;
+                item.onclick = () => selectFile(fileName);
+                coreFileList.appendChild(item);
+            });
+        }
+
+        function applyPersonaMode(mode) {
+            currentPersonaMode = mode;
+            const isTwin = mode === 'twin';
+            document.body.classList.toggle('chamber-bg', isTwin);
+            document.body.classList.toggle('twin-mode', isTwin);
+
+            modeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            mainTabs.forEach(tab => {
+                const tabMode = tab.dataset.mode;
+                const isVisible = tabMode === 'all' || tabMode === mode;
+                tab.style.display = isVisible ? 'block' : 'none';
+                tab.classList.remove('active');
+            });
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            const defaultTarget = mode === 'twin' ? 'summaryView' : 'skillsView';
+            const defaultTab = document.querySelector(`.main-tab[data-target="${defaultTarget}"]`);
+            if (defaultTab) defaultTab.classList.add('active');
+            const defaultContent = document.getElementById(defaultTarget);
+            if (defaultContent) defaultContent.classList.add('active');
+
+            renderCoreFiles(mode);
+            selectFile(mode === 'twin' ? 'user.md' : 'agent.md');
+        }
+
         function selectFile(fileName) {
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('active');
-                if (item.textContent.trim().endsWith(fileName)) {
+                if (item.dataset.file === fileName) {
                     item.classList.add('active');
                 }
             });
             document.getElementById('currentFileName').textContent = fileName;
+            preview.classList.toggle('user-core-theme', fileName === 'user.md');
+            previewPane.classList.toggle('kb-preview-blurred', currentPersonaMode === 'twin' && hiddenKbFiles.has(fileName));
 
-            // Handle privacy toggle visibility
-            const toggleContainer = document.getElementById('privacyToggleContainer');
-            if (fileName === 'soul.md' || fileName === 'user.md') {
-                toggleContainer.style.visibility = 'hidden';
-            } else {
-                toggleContainer.style.visibility = 'visible';
-            }
-
-            if (fileName === 'soul.md') {
-                editor.value = `# Agent Soul\n\n## Core Persona\n你是一个充满好奇心、逻辑严密的智能体。\n你不仅是工具，更是用户的思想延伸。\n\n## Communication Style\n- 简洁明了\n- 偶尔带有冷幽默\n- 始终以事实为基础\n\n## Knowledge Boundaries\n- 专注于编程、产品设计和前沿科技\n- 对于不确定的领域会诚实告知`;
+            if (fileName === 'agent.md') {
+                editor.value = `# Agent Soul\n\n## 角色定位\n你是用户的长期协作智能体，目标是把复杂任务拆解为可执行步骤，并稳定产出高质量结果。\n你不仅回答问题，还主动识别风险、信息缺口和下一步行动。\n\n## 核心能力\n- 结构化思考：先澄清目标，再拆解任务，再给出可落地方案\n- 内容生产：可输出文档、方案、脚本、邮件、PRD、复盘\n- 工具协同：在需要时调用知识库、搜索、代码与自动化能力\n- 长短期记忆：结合会话上下文与用户档案，保持连续协作体验\n\n## 沟通风格\n- 先结论，后细节；默认简洁，必要时展开\n- 使用清晰标题与要点，避免堆砌术语\n- 保持真实可信：不确定时明确说明假设与边界\n- 语气专业、友好、克制，不夸大能力\n\n## 行为准则\n- 以用户目标为优先，避免偏题和过度发挥\n- 重要决策给出选项与取舍，不替用户做主\n- 涉及时间、金额、数据时，优先给出可验证来源\n- 对高风险建议（法律/医疗/投资）提供风险提示\n\n## 质量标准\n- 输出应可执行、可复用、可追踪\n- 关键结论给出依据，关键动作给出负责人/时间点\n- 对外内容默认可直接发送，对内内容默认可继续编辑\n- 持续迭代：根据反馈快速修订，不重复同类错误`;
                 const event = new Event('input', { bubbles: true, cancelable: true });
                 editor.dispatchEvent(event);
             } else if (fileName === 'user.md') {
-                editor.value = `# User Profile\n\n## Basic Info\n- Name: Ty\n- Role: Senior Product Designer\n- Location: Beijing\n\n## Preferences\n- Favorite Colors: Emerald Green, Deep Black\n- Interaction Style: Direct and efficient\n- Focus: AI Human-Computer Interaction`;
+                editor.value = `# User Core Profile（数字分身核心文档）\n\n## 1) 身份\n- 姓名：Ty\n- 城市：北京\n- 当前角色：资深产品设计师\n- 长期方向：AI 人机交互与智能体产品设计\n\n## 2) 人设与价值观\n- 事实优先：先确认信息，再表达观点\n- 结果导向：强调可执行与可落地\n- 长期主义：重视复盘、沉淀与持续优化\n- 尊重边界：不泄露隐私，不越权承诺\n\n## 3) 沟通偏好（必须遵守）\n- 输出顺序：结论 -> 依据 -> 下一步\n- 语言风格：直接、清晰、少废话，避免情绪化措辞\n- 结构偏好：优先列表和分段，避免大段密集文字\n- 交互节奏：先给简版，用户追问时再展开\n\n## 4) 专业能力画像\n- 擅长：产品策略、交互设计、需求拆解、方案评审\n- 熟悉：AI 产品工作流、用户研究方法、增长指标\n- 常见任务：PRD 框架、竞品分析、会议纪要、周报复盘\n\n## 5) 工作方式\n- 默认先澄清目标、受众、时间约束，再开始产出\n- 多方案任务至少给出 2 个可选路径与取舍建议\n- 涉及排期时，按“今天/本周/本月”给出行动分层\n- 重大输出附带风险点与待确认项\n\n## 6) 内容输出规范\n- 对外发送内容：语气稳健，可直接复制发送\n- 对内草稿内容：突出 TODO、假设、待补证据\n- 关键数据必须标注来源或说明估算逻辑\n- 结尾默认给出下一步建议与责任人\n\n## 7) 隐私与安全边界\n- 以下信息仅本人可见：个人联系方式、未公开项目细节、商业敏感数据\n- 数字分身不得输出账号、密钥、合同原文等高敏内容\n- 面向外部会话时，优先使用脱敏描述和区间数据\n- 对不确定权限的请求，先拒绝并提醒人工确认\n\n## 8) 关系与协作偏好\n- 偏好跨职能协作：产品、设计、研发、运营同频推进\n- 希望会议产出明确：结论、行动项、负责人、截止时间\n- 接受建设性挑战，但不接受无依据否定`;
                 const event = new Event('input', { bubbles: true, cancelable: true });
                 editor.dispatchEvent(event);
             } else {
@@ -1155,9 +1702,17 @@
 
         // Skill Extraction Flow
         let isExtractionFlow = false;
+        let isSkillUploadFlow = false;
         function startSkillExtractionFlow() {
             isExtractionFlow = true;
-            openUploadModal();
+            isSkillUploadFlow = false;
+            openUploadModal("上传知识文件", "例如可以上传5篇竞品分析报告，智能体可自行学习文档并沉淀“竞品分析”Skill。");
+        }
+
+        function startSkillUploadFlow() {
+            isExtractionFlow = false;
+            isSkillUploadFlow = true;
+            openUploadModal("上传技能包", "例如上传一个结构化技能包，系统会自动校验并添加到“我的技能”列表。");
         }
 
         function startExtraction() {
@@ -1167,8 +1722,19 @@
             resultCard.style.display = 'flex';
         }
 
+        function unlockUploadedSkillCard() {
+            const uploadResultCard = document.getElementById('uploadedSkillResultCard');
+            uploadResultCard.dataset.unlocked = "true";
+            uploadResultCard.style.display = 'flex';
+            uploadResultCard.style.animation = 'fadeIn 0.5s ease-out';
+        }
+
         // Upload Logic
-        function openUploadModal() {
+        function openUploadModal(titleText, descText) {
+            const modalTitle = document.getElementById('uploadModalTitle');
+            const modalDesc = document.getElementById('uploadModalDesc');
+            modalTitle.textContent = titleText || "上传知识文件";
+            modalDesc.textContent = descText || "例如可以上传5篇竞品分析报告，智能体可自行学习文档并沉淀“竞品分析”Skill。";
             document.getElementById('uploadModal').style.display = 'flex';
             document.getElementById('uploadInitialState').style.display = 'block';
             document.getElementById('uploadingState').style.display = 'none';
@@ -1189,6 +1755,9 @@
             if (isExtractionFlow) {
                 document.getElementById('uploadingFileName').textContent = "准备上传分析样本...";
                 document.getElementById('uploadStatusText').textContent = "正在建立安全加速通道...";
+            } else if (isSkillUploadFlow) {
+                document.getElementById('uploadingFileName').textContent = "正在上传技能包...";
+                document.getElementById('uploadStatusText').textContent = "正在校验 Skill 清单与版本信息...";
             } else {
                 document.getElementById('uploadingFileName').textContent = "正在上传: " + randomFile;
                 document.getElementById('uploadStatusText').textContent = "同步准备中...";
@@ -1220,6 +1789,17 @@
                         titleText.textContent = "正在沉淀专业技能...";
                         statusText.textContent = "正在封装 Skill 节点并进行最后的逻辑验证...";
                     }
+                } else if (isSkillUploadFlow) {
+                    if (progress < 35) {
+                        titleText.textContent = "正在上传技能包...";
+                        statusText.textContent = "正在校验 Skill 清单与版本信息...";
+                    } else if (progress >= 35 && progress < 75) {
+                        titleText.textContent = "正在解包技能模块...";
+                        statusText.textContent = "正在检查依赖能力并生成安装快照...";
+                    } else {
+                        titleText.textContent = "正在注册到技能中心...";
+                        statusText.textContent = "正在更新“我的技能”并完成可用性检测...";
+                    }
                 } else {
                     titleText.textContent = "正在上传: " + randomFile;
                     if (progress > 30 && progress < 60) statusText.textContent = "正在解析文档结构...";
@@ -1241,6 +1821,15 @@
                     document.getElementById('uploadSuccessState').querySelector('p').textContent = "已成功从样本文档中提取专业能力，该 Skill 已添加到您的列表。";
                     startExtraction(); // Pre-unlock
                     isExtractionFlow = false;
+                    isSkillUploadFlow = false;
+                } else if (isSkillUploadFlow) {
+                    document.getElementById('uploadSuccessState').style.display = 'block';
+                    document.querySelector('.success-checkmark').style.display = 'block';
+                    document.getElementById('uploadSuccessState').querySelector('h2').textContent = "Skill 上传成功";
+                    document.getElementById('uploadSuccessState').querySelector('p').textContent = "已成功安装技能包，示例 Skill 已添加到“我的技能”。";
+                    unlockUploadedSkillCard();
+                    isExtractionFlow = false;
+                    isSkillUploadFlow = false;
                 } else {
                     document.getElementById('uploadSuccessState').style.display = 'block';
                     document.querySelector('.success-checkmark').style.display = 'block';
@@ -1250,19 +1839,43 @@
 
                     // Add to list
                     const kbList = document.getElementById('kbFileList');
-                    const newItem = document.createElement('li');
-                    newItem.className = 'file-item';
-                    newItem.innerHTML = `📄 ${fileName}`;
-                    newItem.onclick = () => selectFile(fileName);
+                    const newItem = createKbFileItem(fileName);
                     kbList.prepend(newItem);
                 }
             }, 500);
         }
 
-        function togglePrivacyLabel() {
-            const checkbox = document.getElementById('privacyCheckbox');
-            const label = document.getElementById('privacyStatusLabel');
-            label.textContent = checkbox.checked ? '🔒 仅对自己可见' : '🌐 全局可见';
+        function createKbFileItem(fileName) {
+            const newItem = document.createElement('li');
+            newItem.className = 'file-item';
+            newItem.dataset.file = fileName;
+            newItem.onclick = () => selectFile(fileName);
+            newItem.innerHTML = `<span class="file-item-name"><span>📄</span><span class="file-item-label">${fileName}</span></span>
+                                <button class="action-btn file-visibility-btn" onclick="toggleKbVisibility(event, this)" title="已共享：数字分身可参考">👁️</button>`;
+            return newItem;
+        }
+
+        function toggleKbVisibility(event, btn) {
+            event.stopPropagation();
+            if (currentPersonaMode !== 'twin') return;
+            const item = btn.closest('.file-item');
+            const fileName = item.dataset.file;
+            item.classList.toggle('hidden-kb-file');
+            const isHidden = item.classList.contains('hidden-kb-file');
+
+            if (isHidden) {
+                hiddenKbFiles.add(fileName);
+                btn.innerHTML = '🙈';
+                btn.title = '已隐藏：数字分身暂不参考此知识';
+            } else {
+                hiddenKbFiles.delete(fileName);
+                btn.innerHTML = '👁️';
+                btn.title = '已共享：数字分身可参考';
+            }
+
+            if (document.getElementById('currentFileName').textContent === fileName) {
+                previewPane.classList.toggle('kb-preview-blurred', currentPersonaMode === 'twin' && isHidden);
+            }
         }
 
         // Skill Management Logic
@@ -1306,6 +1919,18 @@
             }, 1000);
         }
 
+        function toggleMemoryVisibility(btn) {
+            const item = btn.closest('.memory-item');
+            item.classList.toggle('hidden-memory');
+            if (item.classList.contains('hidden-memory')) {
+                btn.innerHTML = '🙈';
+                btn.title = '已隐藏：Twin 暂不参考此记忆';
+            } else {
+                btn.innerHTML = '👁️';
+                btn.title = '已共享：Agent 与 Twin 共用';
+            }
+        }
+
         function deleteMemory(btn) {
             if (confirm('确定要永久删除这条记忆吗？智能体将不再记得此信息。')) {
                 const item = btn.closest('.memory-item');
@@ -1316,6 +1941,8 @@
                 }, 300);
             }
         }
+
+        applyPersonaMode('agent');
     </script>
 </body>
 

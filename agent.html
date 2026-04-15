@@ -285,12 +285,17 @@
 
         .summary-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
+            align-items: center;
         }
 
         .summary-item {
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .summary-value {
@@ -586,6 +591,148 @@
             background: white;
             border-top: 1px solid var(--color-border);
             position: relative;
+        }
+
+        .chat-history-bar {
+            padding: 16px 40px 10px 40px;
+            border-bottom: 1px solid #F3F4F6;
+            background: #FFFEFD;
+            position: relative;
+            z-index: 10;
+        }
+
+        .history-title-btn {
+            width: 100%;
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            background: white;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .history-title-btn:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(255, 127, 102, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .history-title-main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .history-title-text {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .history-title-arrow {
+            width: 16px;
+            height: 16px;
+            color: #9CA3AF;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .history-title-btn.open .history-title-arrow {
+            transform: rotate(180deg);
+        }
+
+        .history-session-menu {
+            position: absolute;
+            left: 40px;
+            right: 40px;
+            top: calc(100% - 2px);
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            padding: 10px;
+            z-index: 30;
+        }
+
+        .history-session-menu.show {
+            display: flex;
+        }
+
+        .history-session-item {
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-session-item:hover {
+            background: #FFF7F5;
+            border-color: #FED7CC;
+        }
+
+        .history-session-item.active {
+            background: rgba(255, 127, 102, 0.08);
+            border-color: rgba(255, 127, 102, 0.28);
+        }
+
+        .history-session-item-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 3px;
+        }
+
+        .history-session-item-desc {
+            font-size: 0.68rem;
+            color: #6B7280;
+            line-height: 1.35;
+        }
+
+        .report-task-row {
+            border: 1px solid #EFEFEF;
+            border-radius: 8px;
+            background: white;
+            padding: 8px 10px;
+            font-size: 0.72rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .report-task-row:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            transform: translateX(2px);
+        }
+
+        .report-task-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .report-task-arrow {
+            flex-shrink: 0;
+            opacity: 0.6;
+            font-weight: 700;
         }
 
         .input-toolbar {
@@ -1387,6 +1534,17 @@
 
         <!-- 中间: 对话频道 -->
         <main class="main-chat">
+            <div class="chat-history-bar">
+                <button id="history-title-btn" class="history-title-btn" onclick="toggleHistoryMenu(event)">
+                    <span class="history-title-main">
+                        <span id="history-title-text" class="history-title-text"></span>
+                    </span>
+                    <svg class="history-title-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="history-session-menu" class="history-session-menu"></div>
+            </div>
             <div id="chat-scroller" class="chat-container">
                 <!-- 动态注入对话内容 -->
             </div>
@@ -1748,6 +1906,7 @@
         // --- Twin Management Logic ---
         let isTwinUnlocked = false;
         let isTwinActive = true;
+        let reportTaskTab = 'running';
 
         const trainingCards = [
             { id: 't1', q: "发现最近在项目决策上，您更倾向于“先验证后扩张”，我这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" },
@@ -1759,6 +1918,39 @@
             { id: 'c2', q: "关注到您近期在做“可持续消费”产品，今天有类似竞品开放测试，是否需要帮你收集相关信息？", options: ["立即收集", "暂不处理"] }
 
         ];
+
+        const reportTasks = {
+            running: [
+                { title: "Z 世代可持续零食推广方案 - 社交玩法补全", sessionId: "session-current" }
+            ],
+            completed: [
+                { title: "增长漏斗诊断 - 流失节点拆解与优化建议", sessionId: "session-growth" },
+                { title: "内容日历规划 - 双周节奏和平台分工落地", sessionId: "session-content" },
+                { title: "品牌定位校准 - 语气模板与表达边界确认", sessionId: "session-brand" }
+            ]
+        };
+
+        function setReportTaskTab(tab) {
+            reportTaskTab = tab;
+            renderCalibrationCards();
+        }
+
+        function openTaskConversation(sessionId) {
+            selectConversationSession(sessionId);
+        }
+
+        function renderReportTaskRows() {
+            const targetTasks = reportTasks[reportTaskTab] || [];
+            if (targetTasks.length === 0) {
+                return `<div class="report-task-row" style="cursor: default; color: #9CA3AF;">暂无任务</div>`;
+            }
+            return targetTasks.map(task => `
+                <div class="report-task-row" onclick="openTaskConversation('${task.sessionId}')">
+                    <span class="report-task-name">${task.title}</span>
+                    <span class="report-task-arrow">查看</span>
+                </div>
+            `).join('');
+        }
 
         function handleCalibrationAction(id, option) {
             const cardElement = document.querySelector(`[data-card-id="${id}"]`);
@@ -1802,18 +1994,17 @@
                         今日运行简报
                     </div>
                     <div class="summary-grid">
-                        <div class="summary-item">
-                            <span class="summary-value">12</span>
-                            <span class="summary-label">会话数</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-value" style="color: #10B981;">05</span>
+                        <div class="summary-item" style="cursor: pointer;" onclick="setReportTaskTab('completed')">
+                            <span class="summary-value" style="color: #10B981; text-decoration: ${reportTaskTab === 'completed' ? 'underline' : 'none'};">${String(reportTasks.completed.length).padStart(2, '0')}</span>
                             <span class="summary-label">已完成任务</span>
                         </div>
-                        <div class="summary-item">
-                            <span class="summary-value" style="color: var(--color-primary);">02</span>
+                        <div class="summary-item" style="cursor: pointer;" onclick="setReportTaskTab('running')">
+                            <span class="summary-value" style="color: var(--color-primary); text-decoration: ${reportTaskTab === 'running' ? 'underline' : 'none'};">${String(reportTasks.running.length).padStart(2, '0')}</span>
                             <span class="summary-label">运行中任务</span>
                         </div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+                        ${renderReportTaskRows()}
                     </div>
                 </div>
             `;
@@ -2026,7 +2217,7 @@
             btn.parentElement.innerHTML = `<div style="text-align:center; width:100%; color:#999; font-size:0.8rem; font-weight:700;">已忽略建议</div>`;
         }
 
-        const conversationSteps = [
+        const currentConversationSteps = [
             {
                 bot: "我是 Bob，你的专属 Agent。检测到你近期较为关注“可持续消费”领域。需要聊聊吗？",
                 userSuggest: "是的，帮我策划一个针对 Z 世代的可持续龙虾零食品牌推广方案。"
@@ -2045,9 +2236,63 @@
             }
         ];
 
-        let currentStep = 0;
+        const conversationSessions = [
+            {
+                id: 'session-current',
+                title: '当前会话｜可持续消费领域',
+                summary: '你和 Bob 正在共创一套面向 Z 世代的可持续品牌方案。',
+                mode: 'interactive'
+            },
+            {
+                id: 'session-growth',
+                title: '历史会话｜增长漏斗诊断',
+                summary: '定位了试用转付费阶段的核心流失点，并输出优化路径。',
+                mode: 'readonly',
+                messages: [
+                    { type: 'user', text: '我们最近新增用户很多，但订阅率一直上不去，先帮我定位最大问题。' },
+                    { type: 'bot', text: '先看漏斗：注册 -> 首次任务 -> 7日留存 -> 首次订阅。你当前最大损耗发生在“首次任务完成后 24 小时”，说明价值感未被快速放大。' },
+                    { type: 'user', text: '那应该怎么改？要尽量轻量，不想大改产品。' },
+                    { type: 'bot', text: '建议先做三件事：1) 首任务结束即弹出成果卡；2) 给出“一键复制到真实工作流”的 CTA；3) 次日推送个性化复盘摘要。先做这三条，通常就能显著抬高订阅意愿。' }
+                ]
+            },
+            {
+                id: 'session-content',
+                title: '历史会话｜内容日历规划',
+                summary: '按平台拆分 2 周内容节奏，并补齐选题结构。',
+                mode: 'readonly',
+                messages: [
+                    { type: 'user', text: '我要做 2 周内容冲刺，目标是提高品牌讨论度。' },
+                    { type: 'bot', text: '建议你按“认知 -> 兴趣 -> 参与”三层推进：前 4 天做观点锚定，中 6 天做案例拆解，后 4 天做用户共创。这样能持续抬升讨论热度。' },
+                    { type: 'user', text: '平台怎么分配更合理？' },
+                    { type: 'bot', text: '小红书主打“视觉+情绪共鸣”，B 站主打“深度过程”，微博做热点联动。每条内容末尾都挂同一个互动问题，方便沉淀连续讨论链路。' }
+                ]
+            },
+            {
+                id: 'session-brand',
+                title: '历史会话｜品牌定位校准',
+                summary: '明确了“专业但不高冷”的品牌语气和表达边界。',
+                mode: 'readonly',
+                messages: [
+                    { type: 'user', text: '我们现在的品牌声音太像“教程号”，缺少人格感。' },
+                    { type: 'bot', text: '可以把语气改成“可靠的队友”，不是“高高在上的专家”。表达原则是：结论先行、术语降噪、每段给一个可执行动作。' },
+                    { type: 'user', text: '我担心太口语会显得不专业。' },
+                    { type: 'bot', text: '可以用“轻口语 + 强结构”平衡专业感：标题口语，正文结构化。你会得到“容易读懂”与“值得信任”两种感受的叠加。' }
+                ]
+            }
+        ];
+
+        const currentConversationState = {
+            step: 0,
+            initialized: false,
+            messages: []
+        };
+
+        let activeSessionId = 'session-current';
         const chatInput = document.getElementById('chat-input');
         const chatScroller = document.getElementById('chat-scroller');
+        const historyTitleText = document.getElementById('history-title-text');
+        const historyTitleBtn = document.getElementById('history-title-btn');
+        const historySessionMenu = document.getElementById('history-session-menu');
 
         function appendMessage(text, type) {
             const msgDiv = document.createElement('div');
@@ -2142,36 +2387,113 @@
             chatScroller.scrollTop = chatScroller.scrollHeight;
         }
 
+        function getActiveSession() {
+            return conversationSessions.find(session => session.id === activeSessionId);
+        }
+
+        function updateCurrentInputStatus() {
+            if (activeSessionId !== 'session-current') {
+                chatInput.value = '';
+                chatInput.disabled = true;
+                chatInput.placeholder = '历史会话为只读，切换到当前会话继续对话...';
+                chatInput.style.height = 'auto';
+                return;
+            }
+
+            chatInput.disabled = false;
+            chatInput.placeholder = currentConversationSteps[currentConversationState.step].userSuggest || "给智能体发送消息...";
+        }
+
+        function renderSessionMenu() {
+            historySessionMenu.innerHTML = conversationSessions.map(session => `
+                <div class="history-session-item ${session.id === activeSessionId ? 'active' : ''}" onclick="selectConversationSession('${session.id}')">
+                    <div class="history-session-item-title">${session.title}</div>
+                    <div class="history-session-item-desc">${session.summary}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateSessionTitle() {
+            const session = getActiveSession();
+            if (session) historyTitleText.textContent = session.title;
+        }
+
+        function toggleHistoryMenu(event) {
+            event.stopPropagation();
+            historyTitleBtn.classList.toggle('open');
+            historySessionMenu.classList.toggle('show');
+        }
+
+        function renderCurrentConversation() {
+            chatScroller.innerHTML = '';
+            currentConversationState.messages.forEach(msg => {
+                appendMessage(msg.text, msg.type);
+            });
+            scrollToBottom();
+        }
+
+        function renderReadonlyConversation(session) {
+            chatScroller.innerHTML = '';
+            session.messages.forEach(msg => {
+                appendMessage(msg.text, msg.type);
+            });
+            scrollToBottom();
+        }
+
+        function selectConversationSession(sessionId) {
+            activeSessionId = sessionId;
+            isSending = false;
+            removeTyping();
+
+            historyTitleBtn.classList.remove('open');
+            historySessionMenu.classList.remove('show');
+            updateSessionTitle();
+            renderSessionMenu();
+
+            if (sessionId === 'session-current') {
+                renderCurrentConversation();
+            } else {
+                const session = getActiveSession();
+                renderReadonlyConversation(session);
+            }
+
+            updateCurrentInputStatus();
+        }
+
         function handleSendMessage() {
+            if (activeSessionId !== 'session-current') return;
             if (isSending) return; // 防重复发送锁
 
             const text = chatInput.value.trim();
-            const hasSuggest = (currentStep < conversationSteps.length) && conversationSteps[currentStep].userSuggest;
-            const messageToSend = text || (hasSuggest ? conversationSteps[currentStep].userSuggest : "");
+            const hasSuggest = (currentConversationState.step < currentConversationSteps.length) && currentConversationSteps[currentConversationState.step].userSuggest;
+            const messageToSend = text || (hasSuggest ? currentConversationSteps[currentConversationState.step].userSuggest : "");
 
             if (!messageToSend) return;
 
             isSending = true; // 加锁
             appendMessage(messageToSend, 'user');
+            currentConversationState.messages.push({ type: 'user', text: messageToSend });
             chatInput.value = '';
             chatInput.placeholder = '';
             chatInput.style.height = 'auto';
 
-            if (currentStep + 1 < conversationSteps.length) {
+            if (currentConversationState.step + 1 < currentConversationSteps.length) {
                 chatInput.disabled = true;
                 setTimeout(() => {
                     showTyping();
                     setTimeout(() => {
                         removeTyping();
-                        currentStep++;
-                        appendMessage(conversationSteps[currentStep].bot, 'bot');
+                        currentConversationState.step++;
+                        const botReply = currentConversationSteps[currentConversationState.step].bot;
+                        appendMessage(botReply, 'bot');
+                        currentConversationState.messages.push({ type: 'bot', text: botReply });
 
                         // 对话触发形态升级：从第一个回复开始
-                        if (currentStep >= 1) {
+                        if (currentConversationState.step >= 1) {
                             autoUpgradeStage();
                         }
 
-                        chatInput.placeholder = conversationSteps[currentStep].userSuggest || "给智能体发送消息...";
+                        chatInput.placeholder = currentConversationSteps[currentConversationState.step].userSuggest || "给智能体发送消息...";
                         chatInput.disabled = false;
                         isSending = false; // 释放锁
                         chatInput.focus();
@@ -2196,6 +2518,8 @@
         document.addEventListener('click', () => {
             document.querySelectorAll('.input-floating-menu').forEach(m => m.classList.remove('show'));
             document.querySelectorAll('.msg-more-dropdown').forEach(d => d.classList.remove('show'));
+            historyTitleBtn.classList.remove('open');
+            historySessionMenu.classList.remove('show');
         });
 
         // ===== 消息操作函数 =====
@@ -2381,13 +2705,15 @@
 
         // Initialize Chat
         window.onload = function () {
-            const scroller = document.getElementById('chat-scroller');
+            if (!currentConversationState.initialized) {
+                currentConversationState.messages.push({ type: 'bot', text: currentConversationSteps[0].bot });
+                currentConversationState.initialized = true;
+            }
 
-            // 初次加载显示第一条 Bot 消息
-            setTimeout(() => {
-                appendMessage(conversationSteps[0].bot, 'bot');
-                chatInput.placeholder = conversationSteps[0].userSuggest;
-            }, 500);
+            updateSessionTitle();
+            renderSessionMenu();
+            renderCurrentConversation();
+            updateCurrentInputStatus();
 
             updateTwinUI();
         };
