@@ -852,13 +852,330 @@
             transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
             transform-origin: center center;
         }
+
+        /* ===== 消息操作栏 ===== */
+        .msg-bot-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 4px 0 4px;
+            margin-bottom: -12px;
+        }
+
+        .msg-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #C8C8C8;
+            transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .msg-action-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #777;
+            transform: scale(1.12);
+        }
+
+        .msg-action-btn.liked {
+            color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.12) !important;
+        }
+
+        .msg-action-btn.disliked {
+            color: #EF4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
+
+        .msg-action-btn.copied {
+            color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        @keyframes btn-spring {
+            0%   { transform: scale(1); }
+            30%  { transform: scale(1.42); }
+            60%  { transform: scale(0.86); }
+            80%  { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+
+        .msg-action-btn.spring {
+            animation: btn-spring 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+        }
+
+        /* 复制提示气泡 */
+        .copy-tip {
+            position: absolute;
+            bottom: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 200;
+            animation: copy-tip-anim 1.6s ease forwards;
+        }
+
+        @keyframes copy-tip-anim {
+            0%   { opacity: 0; transform: translateX(-50%) translateY(4px); }
+            18%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            72%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+        }
+
+        /* 三点更多菜单 */
+        .msg-more-wrap {
+            position: relative;
+        }
+
+        .msg-more-dropdown {
+            position: absolute;
+            top: 0;
+            left: calc(100% + 8px);
+            background: white;
+            border: 1.5px solid var(--color-border);
+            border-radius: 11px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 5px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 140px;
+            z-index: 700;
+            transform-origin: top left;
+            animation: menu-in 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .msg-more-dropdown.show {
+            display: flex;
+        }
+
+        .msg-dropdown-item {
+            padding: 8px 12px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s, color 0.15s;
+            user-select: none;
+        }
+
+        .msg-dropdown-item:hover {
+            background: #F5F5F7;
+            color: var(--color-primary);
+        }
+
+        @keyframes icon-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        .icon-spin {
+            animation: icon-spin 0.8s linear infinite;
+            display: block;
+        }
+
+        /* ===== 操作进度弹窗 ===== */
+        .action-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes modal-slide-up {
+            from { opacity: 0; transform: translateY(24px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .action-modal-card {
+            background: white;
+            border-radius: 20px;
+            padding: 36px 40px 32px 40px;
+            width: 380px;
+            max-width: calc(100vw - 40px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: modal-slide-up 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .action-modal-icon-wrap {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            position: relative;
+        }
+
+        .action-modal-icon-wrap.memory-theme {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .action-modal-icon-wrap.skill-theme {
+            background: rgba(255, 127, 102, 0.1);
+        }
+
+        .action-modal-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--color-text);
+            text-align: center;
+        }
+
+        .action-modal-subtitle {
+            font-size: 0.8rem;
+            color: #999;
+            text-align: center;
+            line-height: 1.5;
+            min-height: 1.2em;
+        }
+
+        .action-modal-bar-wrap {
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        .action-modal-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #F0F0F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .action-modal-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 0%;
+        }
+
+        .action-modal-bar-fill.memory-theme {
+            background: linear-gradient(90deg, #A855F7, #7C3AED);
+        }
+
+        .action-modal-bar-fill.skill-theme {
+            background: linear-gradient(90deg, var(--color-primary), #FF5733);
+        }
+
+        .action-modal-bar-pct {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #AAA;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        /* 成功状态 */
+        @keyframes success-pop {
+            0%   { transform: scale(0.4); opacity: 0; }
+            60%  { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .action-modal-success-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .action-modal-success-icon.memory-theme {
+            background: rgba(168, 85, 247, 0.12);
+            color: #A855F7;
+        }
+
+        .action-modal-success-icon.skill-theme {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10B981;
+        }
+
+        .action-modal-success-title {
+            font-size: 1rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .action-modal-success-title.memory-theme { color: #7C3AED; }
+        .action-modal-success-title.skill-theme  { color: #059669; }
+
+        .action-modal-close-btn {
+            margin-top: 8px;
+            padding: 10px 32px;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-modal-close-btn.memory-theme {
+            background: linear-gradient(135deg, #A855F7, #7C3AED);
+            color: white;
+            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
+        }
+
+        .action-modal-close-btn.skill-theme {
+            background: linear-gradient(135deg, var(--color-primary), #E66A52);
+            color: white;
+            box-shadow: 0 4px 16px rgba(255, 127, 102, 0.3);
+        }
+
+        .action-modal-close-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.08);
+        }
     </style>
 </head>
 
 <body>
     <!-- 顶部导航栏 -->
     <header class="top-nav">
-        <div class="logo">SoulAgent</div>
+        <a href="index.html" style="text-decoration: none;">
+            <div class="logo">SoulAgent</div>
+        </a>
         <nav class="nav-links">
             <a href="agent.html" class="nav-link active">🎓 智能体</a>
             <a href="archives.html" class="nav-link">🗄️ 档案库</a>
@@ -1285,6 +1602,14 @@
         </div>
 
     </div>
+
+    <!-- 操作进度弹窗 -->
+    <div id="action-modal" class="action-modal-overlay" onclick="closeActionModal(event)">
+        <div class="action-modal-card" onclick="event.stopPropagation()">
+            <div id="action-modal-body"></div>
+        </div>
+    </div>
+
     <script src="navigation.js"></script>
     <script>
         // --- Task Cycling Logic ---
@@ -1727,7 +2052,66 @@
         function appendMessage(text, type) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `chat-msg ${type === 'user' ? 'user' : ''}`;
-            msgDiv.innerHTML = `<div class="bubble ${type === 'user' ? 'user' : 'lobster'}">${text}</div>`;
+
+            if (type === 'user') {
+                msgDiv.innerHTML = `<div class="bubble user">${text}</div>`;
+            } else {
+                const msgId = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                msgDiv.innerHTML = `
+                    <div class="msg-bot-col">
+                        <div class="bubble lobster">${text}</div>
+                        <div class="msg-actions">
+                            <!-- 复制 -->
+                            <button class="msg-action-btn" onclick="msgCopy(this)" title="复制" data-msg-id="${msgId}">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                            <!-- 点赞 -->
+                            <button class="msg-action-btn msg-like-btn" onclick="msgLike(this)" title="点赞">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
+                                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                                </svg>
+                            </button>
+                            <!-- 点踩 -->
+                            <button class="msg-action-btn msg-dislike-btn" onclick="msgDislike(this)" title="点踩">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"></path>
+                                    <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                                </svg>
+                            </button>
+                            <!-- 三点更多菜单 -->
+                            <div class="msg-more-wrap">
+                                <button class="msg-action-btn" onclick="toggleMsgMoreMenu('${msgId}', event)" title="更多">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                        <circle cx="5" cy="12" r="1.5"></circle>
+                                        <circle cx="12" cy="12" r="1.5"></circle>
+                                        <circle cx="19" cy="12" r="1.5"></circle>
+                                    </svg>
+                                </button>
+                                <div class="msg-more-dropdown" id="${msgId}-dropdown">
+                                    <div class="msg-dropdown-item" id="${msgId}-mem-item" onclick="msgSaveMemory(this, '${msgId}')">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"></path>
+                                            <path d="M12 6v6l4 2"></path>
+                                        </svg>
+                                        保存到记忆
+                                    </div>
+                                    <div class="msg-dropdown-item" id="${msgId}-skill-item" onclick="msgGenSkill(this, '${msgId}')">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                                        </svg>
+                                        生成Skill
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             chatScroller.appendChild(msgDiv);
             scrollToBottom();
         }
@@ -1811,7 +2195,189 @@
         // Close menus when clicking outside
         document.addEventListener('click', () => {
             document.querySelectorAll('.input-floating-menu').forEach(m => m.classList.remove('show'));
+            document.querySelectorAll('.msg-more-dropdown').forEach(d => d.classList.remove('show'));
         });
+
+        // ===== 消息操作函数 =====
+
+        function msgCopy(btn) {
+            const bubble = btn.closest('.msg-bot-col').querySelector('.bubble');
+            const text = bubble.innerText;
+
+            const doFeedback = () => {
+                const svgCopy = btn.innerHTML;
+                btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                btn.classList.add('copied', 'spring');
+
+                const tip = document.createElement('span');
+                tip.className = 'copy-tip';
+                tip.textContent = '已复制';
+                btn.appendChild(tip);
+
+                setTimeout(() => {
+                    btn.innerHTML = svgCopy;
+                    btn.classList.remove('copied', 'spring');
+                }, 1600);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(doFeedback).catch(doFeedback);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                doFeedback();
+            }
+        }
+
+        function msgLike(btn) {
+            const dislikeBtn = btn.closest('.msg-actions').querySelector('.msg-dislike-btn');
+            if (btn.classList.contains('liked')) {
+                btn.classList.remove('liked');
+            } else {
+                btn.classList.add('liked', 'spring');
+                dislikeBtn.classList.remove('disliked');
+                setTimeout(() => btn.classList.remove('spring'), 500);
+            }
+        }
+
+        function msgDislike(btn) {
+            const likeBtn = btn.closest('.msg-actions').querySelector('.msg-like-btn');
+            if (btn.classList.contains('disliked')) {
+                btn.classList.remove('disliked');
+            } else {
+                btn.classList.add('disliked', 'spring');
+                likeBtn.classList.remove('liked');
+                setTimeout(() => btn.classList.remove('spring'), 500);
+            }
+        }
+
+        function toggleMsgMoreMenu(msgId, event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById(msgId + '-dropdown');
+            document.querySelectorAll('.msg-more-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('show');
+            });
+            dropdown.classList.toggle('show');
+        }
+
+        // ===== 操作弹窗系统 =====
+
+        function closeActionModal(event) {
+            const overlay = document.getElementById('action-modal');
+            overlay.classList.remove('show');
+        }
+
+        function showActionModal(config) {
+            // config: { theme, icon (svg), title, steps[], successTitle, successDesc }
+            const overlay = document.getElementById('action-modal');
+            const body = document.getElementById('action-modal-body');
+
+            // 初始化进度态
+            body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;">
+                    <div class="action-modal-icon-wrap ${config.theme}-theme">
+                        ${config.icon}
+                    </div>
+                    <div class="action-modal-title">${config.title}</div>
+                    <div class="action-modal-subtitle" id="am-subtitle">${config.steps[0].label}</div>
+                    <div class="action-modal-bar-wrap">
+                        <div class="action-modal-bar-track">
+                            <div class="action-modal-bar-fill ${config.theme}-theme" id="am-bar"></div>
+                        </div>
+                        <div class="action-modal-bar-pct" id="am-pct">0%</div>
+                    </div>
+                </div>
+            `;
+
+            overlay.classList.add('show');
+
+            const bar = document.getElementById('am-bar');
+            const subtitle = document.getElementById('am-subtitle');
+            const pct = document.getElementById('am-pct');
+
+            // 逐步推进进度
+            config.steps.forEach((step, i) => {
+                setTimeout(() => {
+                    bar.style.width = step.pct + '%';
+                    pct.textContent = step.pct + '%';
+                    subtitle.textContent = step.label;
+                }, step.delay);
+            });
+
+            // 最后一步完成后切换为成功态
+            const lastStep = config.steps[config.steps.length - 1];
+            setTimeout(() => {
+                body.style.opacity = '0';
+                body.style.transition = 'opacity 0.25s';
+                setTimeout(() => {
+                    body.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
+                            <div class="action-modal-success-icon ${config.theme}-theme">
+                                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.8">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="action-modal-success-title ${config.theme}-theme">${config.successTitle}</div>
+                            <div class="action-modal-subtitle">${config.successDesc}</div>
+                            <button class="action-modal-close-btn ${config.theme}-theme" onclick="closeActionModal()">完成</button>
+                        </div>
+                    `;
+                    body.style.opacity = '1';
+                }, 260);
+            }, lastStep.delay + 600);
+        }
+
+        function msgSaveMemory(item, msgId) {
+            // 关闭下拉菜单
+            const d = document.getElementById(msgId + '-dropdown');
+            if (d) d.classList.remove('show');
+
+            showActionModal({
+                theme: 'memory',
+                title: '保存到记忆',
+                icon: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#A855F7" stroke-width="1.8">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                    <path d="M12 6v6l4 2" stroke-linecap="round"/>
+                </svg>`,
+                steps: [
+                    { pct: 0,   delay: 80,   label: '🔍 正在分析对话内容...' },
+                    { pct: 32,  delay: 500,  label: '🧩 正在提取关键信息...' },
+                    { pct: 65,  delay: 1100, label: '🧠 正在写入记忆库...' },
+                    { pct: 92,  delay: 1700, label: '✅ 即将完成...' },
+                    { pct: 100, delay: 2200, label: '✅ 即将完成...' },
+                ],
+                successTitle: '已成功保存到记忆',
+                successDesc: 'Bob 会在未来的对话中参考这段记忆',
+            });
+        }
+
+        function msgGenSkill(item, msgId) {
+            const d = document.getElementById(msgId + '-dropdown');
+            if (d) d.classList.remove('show');
+
+            showActionModal({
+                theme: 'skill',
+                title: '生成 Skill',
+                icon: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--color-primary)" stroke-width="1.8">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>`,
+                steps: [
+                    { pct: 0,   delay: 80,   label: '🔍 正在提取核心逻辑...' },
+                    { pct: 28,  delay: 500,  label: '✨ 正在优化 Skill 结构...' },
+                    { pct: 58,  delay: 1100, label: '⚙️ 正在配置参数...' },
+                    { pct: 85,  delay: 1700, label: '🚀 正在完成 Skill 打包...' },
+                    { pct: 100, delay: 2300, label: '🚀 正在完成 Skill 打包...' },
+                ],
+                successTitle: 'Skill 已成功生成',
+                successDesc: '新 Skill 已存入你的技能库，可在下次对话中直接调用',
+            });
+        }
 
         // Initialize Chat
         window.onload = function () {
