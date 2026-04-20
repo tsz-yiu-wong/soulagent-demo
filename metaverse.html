@@ -19,7 +19,7 @@
         <nav class="nav-links">
             <a href="agent.html" class="nav-link">🎓 智能体</a>
             <a href="archives.html" class="nav-link">🗄️ 档案库</a>
-            <a href="metaverse.html" class="nav-link twin-link active">🌌 元宇宙</a>
+            <a href="metaverse.html" class="nav-link twin-link active">🌌 数字世界</a>
         </nav>
         <div style="display: flex; gap: 12px; align-items: center;">
             <div class="status-pill" style="border-color: var(--color-twin); color: var(--color-twin);">分身系统运行中</div>
@@ -35,7 +35,8 @@
                     <svg class="connection-lines-svg" id="connection-lines-svg"></svg>
 
                     <!-- Main user avatar (ME) -->
-                    <div class="twin-avatar center-me active is-private" id="center-me-avatar" title="我的分身" data-type="me">
+                    <div class="twin-avatar center-me active is-private" id="center-me-avatar" title="我的分身"
+                        data-type="me">
                         <svg viewBox="0 0 100 100">
                             <defs>
                                 <linearGradient id="grad-main" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -198,7 +199,7 @@
 
         <section class="member-directory">
             <div class="member-directory-head">
-                <span id="member-directory-summary">元宇宙中共有0个智能体，0个数字分身。</span>
+                <span id="member-directory-summary">数字世界中共有0个智能体，0个数字分身。</span>
             </div>
             <div id="member-directory-grid" class="member-directory-grid"></div>
         </section>
@@ -1174,7 +1175,7 @@
             if (summary) {
                 const agentCount = filteredMembers.filter(([, data]) => data.type === 'agent').length;
                 const twinCount = filteredMembers.filter(([, data]) => data.type === 'twin').length;
-                summary.textContent = `元宇宙中共有${agentCount}个智能体，${twinCount}个数字分身。`;
+                summary.textContent = `数字世界中共有${agentCount}个智能体，${twinCount}个数字分身。`;
             }
 
             const listHTML = filteredMembers.map(([name, data]) => {

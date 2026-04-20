@@ -1053,11 +1053,25 @@
         }
 
         @keyframes btn-spring {
-            0%   { transform: scale(1); }
-            30%  { transform: scale(1.42); }
-            60%  { transform: scale(0.86); }
-            80%  { transform: scale(1.12); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            30% {
+                transform: scale(1.42);
+            }
+
+            60% {
+                transform: scale(0.86);
+            }
+
+            80% {
+                transform: scale(1.12);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .msg-action-btn.spring {
@@ -1083,10 +1097,25 @@
         }
 
         @keyframes copy-tip-anim {
-            0%   { opacity: 0; transform: translateX(-50%) translateY(4px); }
-            18%  { opacity: 1; transform: translateX(-50%) translateY(0); }
-            72%  { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(4px);
+            }
+
+            18% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            72% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-6px);
+            }
         }
 
         /* 三点更多菜单 */
@@ -1136,8 +1165,13 @@
         }
 
         @keyframes icon-spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .icon-spin {
@@ -1163,8 +1197,15 @@
         }
 
         @keyframes modal-slide-up {
-            from { opacity: 0; transform: translateY(24px) scale(0.96); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .action-modal-card {
@@ -1253,9 +1294,19 @@
 
         /* 成功状态 */
         @keyframes success-pop {
-            0%   { transform: scale(0.4); opacity: 0; }
-            60%  { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(0.4);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .action-modal-success-icon {
@@ -1284,8 +1335,13 @@
             text-align: center;
         }
 
-        .action-modal-success-title.memory-theme { color: #7C3AED; }
-        .action-modal-success-title.skill-theme  { color: #059669; }
+        .action-modal-success-title.memory-theme {
+            color: #7C3AED;
+        }
+
+        .action-modal-success-title.skill-theme {
+            color: #059669;
+        }
 
         .action-modal-close-btn {
             margin-top: 8px;
@@ -1326,7 +1382,7 @@
         <nav class="nav-links">
             <a href="agent.html" class="nav-link active">🎓 智能体</a>
             <a href="archives.html" class="nav-link">🗄️ 档案库</a>
-            <a href="metaverse.html" class="nav-link twin-link">🌌 元宇宙</a>
+            <a href="metaverse.html" class="nav-link twin-link">🌌 数字世界</a>
         </nav>
 
         <div style="display: flex; gap: 16px; align-items: center; position: relative;">
@@ -1411,8 +1467,7 @@
                     <div
                         style="position: absolute; width: 140%; height: 140%; background: radial-gradient(circle, rgba(255,127,102,0.15) 0%, transparent 70%); top: -20%; left: -20%; filter: blur(20px);">
                     </div>
-                    <svg viewBox="0 0 100 100" style="position: relative;"
-                        class="lobster-bob">
+                    <svg viewBox="0 0 100 100" style="position: relative;" class="lobster-bob">
                         <circle cx="50" cy="50" r="45" fill="#FFE5E0" />
                         <path fill="var(--color-primary)"
                             d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
@@ -1539,7 +1594,8 @@
                     <span class="history-title-main">
                         <span id="history-title-text" class="history-title-text"></span>
                     </span>
-                    <svg class="history-title-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg class="history-title-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
                         <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 </button>
@@ -1754,7 +1810,7 @@
                     数字分身已激活 </h1>
                 <p style="font-size: 1.1rem; color: #AAA; max-width: 400px; line-height: 1.6;">神经网络已初步对齐，当前同步率达 87%。</p>
             </div>
-            <button class="reveal-btn" onclick="location.href='metaverse.html'">前往元宇宙</button>
+            <button class="reveal-btn" onclick="location.href='metaverse.html'">前往数字世界</button>
             <div style="margin-top: 20px; font-size: 0.8rem; color: #666; cursor: pointer;"
                 onclick="document.getElementById('twin-reveal-overlay').style.display='none'">暂不前往</div>
         </div>
@@ -2670,10 +2726,10 @@
                     <path d="M12 6v6l4 2" stroke-linecap="round"/>
                 </svg>`,
                 steps: [
-                    { pct: 0,   delay: 80,   label: '🔍 正在分析对话内容...' },
-                    { pct: 32,  delay: 500,  label: '🧩 正在提取关键信息...' },
-                    { pct: 65,  delay: 1100, label: '🧠 正在写入记忆库...' },
-                    { pct: 92,  delay: 1700, label: '✅ 即将完成...' },
+                    { pct: 0, delay: 80, label: '🔍 正在分析对话内容...' },
+                    { pct: 32, delay: 500, label: '🧩 正在提取关键信息...' },
+                    { pct: 65, delay: 1100, label: '🧠 正在写入记忆库...' },
+                    { pct: 92, delay: 1700, label: '✅ 即将完成...' },
                     { pct: 100, delay: 2200, label: '✅ 即将完成...' },
                 ],
                 successTitle: '已成功保存到记忆',
@@ -2692,10 +2748,10 @@
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>`,
                 steps: [
-                    { pct: 0,   delay: 80,   label: '🔍 正在提取核心逻辑...' },
-                    { pct: 28,  delay: 500,  label: '✨ 正在优化 Skill 结构...' },
-                    { pct: 58,  delay: 1100, label: '⚙️ 正在配置参数...' },
-                    { pct: 85,  delay: 1700, label: '🚀 正在完成 Skill 打包...' },
+                    { pct: 0, delay: 80, label: '🔍 正在提取核心逻辑...' },
+                    { pct: 28, delay: 500, label: '✨ 正在优化 Skill 结构...' },
+                    { pct: 58, delay: 1100, label: '⚙️ 正在配置参数...' },
+                    { pct: 85, delay: 1700, label: '🚀 正在完成 Skill 打包...' },
                     { pct: 100, delay: 2300, label: '🚀 正在完成 Skill 打包...' },
                 ],
                 successTitle: 'Skill 已成功生成',
