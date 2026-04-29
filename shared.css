@@ -112,11 +112,13 @@ p { color: var(--color-text-light); }
     padding: 0 40px; position: sticky; top: 0; z-index: 1000;
 }
 .logo { font-size: 1.5rem; font-weight: 800; color: var(--color-primary); letter-spacing: 1px; }
+.twin-theme .logo, .twin-mode .logo { color: var(--color-twin); }
+
 .nav-links { display: flex; gap: 32px; justify-self: center; }
 .top-nav > *:last-child { justify-self: end; }
 .nav-link { text-decoration: none; color: var(--color-text-light); font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; transition: color var(--transition-fast); }
 .nav-link:hover, .nav-link.active { color: var(--color-primary); }
-.nav-link.twin-link { color: var(--color-twin); }
+.nav-link.twin-link:hover, .nav-link.twin-link.active { color: var(--color-twin); }
 .status-pill { padding: 6px 14px; border-radius: 20px; border: 2px solid var(--color-border); font-size: 0.85rem; font-weight: 800; }
 
 /* --- Dashboard Specifics --- */

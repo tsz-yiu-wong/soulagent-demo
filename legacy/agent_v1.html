@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="zh-CN" class="layout-fixed">
 
 <head>
@@ -286,17 +285,12 @@
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 12px;
-            align-items: center;
         }
 
         .summary-item {
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
 
         .summary-value {
@@ -594,148 +588,6 @@
             position: relative;
         }
 
-        .chat-history-bar {
-            padding: 16px 40px 10px 40px;
-            border-bottom: 1px solid #F3F4F6;
-            background: #FFFEFD;
-            position: relative;
-            z-index: 10;
-        }
-
-        .history-title-btn {
-            width: 100%;
-            border: 1px solid var(--color-border);
-            border-radius: 12px;
-            background: white;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-
-        .history-title-btn:hover {
-            border-color: var(--color-primary);
-            box-shadow: 0 4px 12px rgba(255, 127, 102, 0.12);
-            transform: translateY(-1px);
-        }
-
-        .history-title-main {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .history-title-text {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: #374151;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-
-        .history-title-arrow {
-            width: 16px;
-            height: 16px;
-            color: #9CA3AF;
-            flex-shrink: 0;
-            transition: transform 0.2s ease;
-        }
-
-        .history-title-btn.open .history-title-arrow {
-            transform: rotate(180deg);
-        }
-
-        .history-session-menu {
-            position: absolute;
-            left: 40px;
-            right: 40px;
-            top: calc(100% - 2px);
-            display: none;
-            flex-direction: column;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--color-border);
-            border-radius: 12px;
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-            padding: 10px;
-            z-index: 30;
-        }
-
-        .history-session-menu.show {
-            display: flex;
-        }
-
-        .history-session-item {
-            border: 1px solid transparent;
-            border-radius: 10px;
-            padding: 10px 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .history-session-item:hover {
-            background: #FFF7F5;
-            border-color: #FED7CC;
-        }
-
-        .history-session-item.active {
-            background: rgba(255, 127, 102, 0.08);
-            border-color: rgba(255, 127, 102, 0.28);
-        }
-
-        .history-session-item-title {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #1F2937;
-            margin-bottom: 3px;
-        }
-
-        .history-session-item-desc {
-            font-size: 0.68rem;
-            color: #6B7280;
-            line-height: 1.35;
-        }
-
-        .report-task-row {
-            border: 1px solid #EFEFEF;
-            border-radius: 8px;
-            background: white;
-            padding: 8px 10px;
-            font-size: 0.72rem;
-            color: #374151;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .report-task-row:hover {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-            transform: translateX(2px);
-        }
-
-        .report-task-name {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .report-task-arrow {
-            flex-shrink: 0;
-            opacity: 0.6;
-            font-weight: 700;
-        }
-
         .input-toolbar {
             display: flex;
             align-items: center;
@@ -1000,386 +852,13 @@
             transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
             transform-origin: center center;
         }
-
-        /* ===== 消息操作栏 ===== */
-        .msg-bot-col {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .msg-actions {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            padding: 2px 4px 0 4px;
-            margin-bottom: -12px;
-        }
-
-        .msg-action-btn {
-            width: 28px;
-            height: 28px;
-            border: none;
-            background: transparent;
-            border-radius: 7px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #C8C8C8;
-            transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
-            position: relative;
-            flex-shrink: 0;
-        }
-
-        .msg-action-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: #777;
-            transform: scale(1.12);
-        }
-
-        .msg-action-btn.liked {
-            color: #10B981 !important;
-            background: rgba(16, 185, 129, 0.12) !important;
-        }
-
-        .msg-action-btn.disliked {
-            color: #EF4444 !important;
-            background: rgba(239, 68, 68, 0.1) !important;
-        }
-
-        .msg-action-btn.copied {
-            color: #10B981 !important;
-            background: rgba(16, 185, 129, 0.1) !important;
-        }
-
-        @keyframes btn-spring {
-            0% {
-                transform: scale(1);
-            }
-
-            30% {
-                transform: scale(1.42);
-            }
-
-            60% {
-                transform: scale(0.86);
-            }
-
-            80% {
-                transform: scale(1.12);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .msg-action-btn.spring {
-            animation: btn-spring 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-        }
-
-        /* 复制提示气泡 */
-        .copy-tip {
-            position: absolute;
-            bottom: calc(100% + 5px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            font-size: 0.62rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 200;
-            animation: copy-tip-anim 1.6s ease forwards;
-        }
-
-        @keyframes copy-tip-anim {
-            0% {
-                opacity: 0;
-                transform: translateX(-50%) translateY(4px);
-            }
-
-            18% {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
-
-            72% {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translateX(-50%) translateY(-6px);
-            }
-        }
-
-        /* 三点更多菜单 */
-        .msg-more-wrap {
-            position: relative;
-        }
-
-        .msg-more-dropdown {
-            position: absolute;
-            top: 0;
-            left: calc(100% + 8px);
-            background: white;
-            border: 1.5px solid var(--color-border);
-            border-radius: 11px;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
-            padding: 5px;
-            display: none;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 140px;
-            z-index: 700;
-            transform-origin: top left;
-            animation: menu-in 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .msg-more-dropdown.show {
-            display: flex;
-        }
-
-        .msg-dropdown-item {
-            padding: 8px 12px;
-            border-radius: 7px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #555;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.15s, color 0.15s;
-            user-select: none;
-        }
-
-        .msg-dropdown-item:hover {
-            background: #F5F5F7;
-            color: var(--color-primary);
-        }
-
-        @keyframes icon-spin {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .icon-spin {
-            animation: icon-spin 0.8s linear infinite;
-            display: block;
-        }
-
-        /* ===== 操作进度弹窗 ===== */
-        .action-modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            z-index: 8000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .action-modal-overlay.show {
-            display: flex;
-        }
-
-        @keyframes modal-slide-up {
-            from {
-                opacity: 0;
-                transform: translateY(24px) scale(0.96);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .action-modal-card {
-            background: white;
-            border-radius: 20px;
-            padding: 36px 40px 32px 40px;
-            width: 380px;
-            max-width: calc(100vw - 40px);
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            animation: modal-slide-up 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        .action-modal-icon-wrap {
-            width: 64px;
-            height: 64px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 4px;
-            position: relative;
-        }
-
-        .action-modal-icon-wrap.memory-theme {
-            background: rgba(168, 85, 247, 0.1);
-        }
-
-        .action-modal-icon-wrap.skill-theme {
-            background: rgba(255, 127, 102, 0.1);
-        }
-
-        .action-modal-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--color-text);
-            text-align: center;
-        }
-
-        .action-modal-subtitle {
-            font-size: 0.8rem;
-            color: #999;
-            text-align: center;
-            line-height: 1.5;
-            min-height: 1.2em;
-        }
-
-        .action-modal-bar-wrap {
-            width: 100%;
-            margin-top: 6px;
-        }
-
-        .action-modal-bar-track {
-            width: 100%;
-            height: 8px;
-            background: #F0F0F0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .action-modal-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-            width: 0%;
-        }
-
-        .action-modal-bar-fill.memory-theme {
-            background: linear-gradient(90deg, #A855F7, #7C3AED);
-        }
-
-        .action-modal-bar-fill.skill-theme {
-            background: linear-gradient(90deg, var(--color-primary), #FF5733);
-        }
-
-        .action-modal-bar-pct {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: #AAA;
-            text-align: right;
-            margin-top: 5px;
-        }
-
-        /* 成功状态 */
-        @keyframes success-pop {
-            0% {
-                transform: scale(0.4);
-                opacity: 0;
-            }
-
-            60% {
-                transform: scale(1.2);
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .action-modal-success-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-
-        .action-modal-success-icon.memory-theme {
-            background: rgba(168, 85, 247, 0.12);
-            color: #A855F7;
-        }
-
-        .action-modal-success-icon.skill-theme {
-            background: rgba(16, 185, 129, 0.12);
-            color: #10B981;
-        }
-
-        .action-modal-success-title {
-            font-size: 1rem;
-            font-weight: 800;
-            text-align: center;
-        }
-
-        .action-modal-success-title.memory-theme {
-            color: #7C3AED;
-        }
-
-        .action-modal-success-title.skill-theme {
-            color: #059669;
-        }
-
-        .action-modal-close-btn {
-            margin-top: 8px;
-            padding: 10px 32px;
-            border: none;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action-modal-close-btn.memory-theme {
-            background: linear-gradient(135deg, #A855F7, #7C3AED);
-            color: white;
-            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
-        }
-
-        .action-modal-close-btn.skill-theme {
-            background: linear-gradient(135deg, var(--color-primary), #E66A52);
-            color: white;
-            box-shadow: 0 4px 16px rgba(255, 127, 102, 0.3);
-        }
-
-        .action-modal-close-btn:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.08);
-        }
     </style>
 </head>
 
 <body>
     <!-- 顶部导航栏 -->
     <header class="top-nav">
-        <a href="index.html" style="text-decoration: none;">
-            <div class="logo">SoulAgent</div>
-        </a>
+        <div class="logo">SoulAgent</div>
         <nav class="nav-links">
             <a href="agent.html" class="nav-link active">🎓 智能体</a>
             <a href="archives.html" class="nav-link">🗄️ 档案库</a>
@@ -1415,7 +894,7 @@
         <!-- 系统 I: Agent (左) -->
         <aside class="sidebar-left system-panel lobster-theme">
 
-            <!-- <div id="task-card-container"
+            <div id="task-card-container"
                 style="background: rgba(255,255,255,0.6); border-radius: 12px; padding: 12px 15px; cursor: pointer; margin-bottom: 20px; transition: transform 0.2s;"
                 onclick="cycleTasks()" onmouseover="this.style.transform='scale(1.02)'"
                 onmouseout="this.style.transform='scale(1)'">
@@ -1430,7 +909,7 @@
                     </div>
                     <span id="task-progress-text" style="font-size: 0.8rem; font-weight: 600;">3/10</span>
                 </div>
-            </div> -->
+            </div>
 
             <div style="text-align: center; margin-bottom: 25px;">
                 <div style="cursor: pointer; display: inline-block; user-select: none;" onclick="cycleNames()">
@@ -1590,18 +1069,6 @@
 
         <!-- 中间: 对话频道 -->
         <main class="main-chat">
-            <div class="chat-history-bar">
-                <button id="history-title-btn" class="history-title-btn" onclick="toggleHistoryMenu(event)">
-                    <span class="history-title-main">
-                        <span id="history-title-text" class="history-title-text"></span>
-                    </span>
-                    <svg class="history-title-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </button>
-                <div id="history-session-menu" class="history-session-menu"></div>
-            </div>
             <div id="chat-scroller" class="chat-container">
                 <!-- 动态注入对话内容 -->
             </div>
@@ -1817,14 +1284,6 @@
         </div>
 
     </div>
-
-    <!-- 操作进度弹窗 -->
-    <div id="action-modal" class="action-modal-overlay" onclick="closeActionModal(event)">
-        <div class="action-modal-card" onclick="event.stopPropagation()">
-            <div id="action-modal-body"></div>
-        </div>
-    </div>
-
     <script src="navigation.js"></script>
     <script>
         // --- Task Cycling Logic ---
@@ -1963,51 +1422,17 @@
         // --- Twin Management Logic ---
         let isTwinUnlocked = false;
         let isTwinActive = true;
-        let reportTaskTab = 'running';
 
         const trainingCards = [
-            { id: 't1', q: "发现您在课程设计时，更倾向于以“学生能力产出”而非“知识点覆盖率”作为核心目标，这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" },
-            { id: 't2', q: "我注意到您处理学生反馈的惯用逻辑是：先识别知识盲点，再设计定向练习，对吗？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
+            { id: 't1', q: "发现最近在项目决策上，您更倾向于“先验证后扩张”，我这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" },
+            { id: 't2', q: "我发现您惯用的思考与拆解逻辑是：先定义核心受众，再挂钩社交货币，对吗？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
         ];
 
         const calibrationCards = [
-            { id: 'c1', q: "今日有 3 名同学通过数字分身预约了论文指导，主要涉及“研究方法”与“文献综述”方面的问题。", button: "点击前往查看" },
-            { id: 'c2', q: "关注到您近期在申报国自然项目，今日有相关领域最新资助指南发布，是否需要帮您整理关键变化点？", options: ["立即整理", "暂不处理"] }
+            { id: 'c1', q: "今天有 10 名用户跟分身进行了对话，主要涉及“产品定价”与“品牌调性”方面的讨论。", button: "点击前往查看" },
+            { id: 'c2', q: "关注到您近期在做“可持续消费”产品，今天有类似竞品开放测试，是否需要帮你收集相关信息？", options: ["立即收集", "暂不处理"] }
 
         ];
-
-        const reportTasks = {
-            running: [
-                { title: "《数据科学导论》下学期课程大纲完善 - 实战案例补充中", sessionId: "session-current" }
-            ],
-            completed: [
-                { title: "毕业论文开题批阅 - 研究方法修改建议已反馈", sessionId: "session-growth" },
-                { title: "期末成绩分析 - 薄弱模块与下学期补强方案", sessionId: "session-content" },
-                { title: "国自然申请书 - 研究意义部分论证逻辑优化", sessionId: "session-brand" }
-            ]
-        };
-
-        function setReportTaskTab(tab) {
-            reportTaskTab = tab;
-            renderCalibrationCards();
-        }
-
-        function openTaskConversation(sessionId) {
-            selectConversationSession(sessionId);
-        }
-
-        function renderReportTaskRows() {
-            const targetTasks = reportTasks[reportTaskTab] || [];
-            if (targetTasks.length === 0) {
-                return `<div class="report-task-row" style="cursor: default; color: #9CA3AF;">暂无任务</div>`;
-            }
-            return targetTasks.map(task => `
-                <div class="report-task-row" onclick="openTaskConversation('${task.sessionId}')">
-                    <span class="report-task-name">${task.title}</span>
-                    <span class="report-task-arrow">查看</span>
-                </div>
-            `).join('');
-        }
 
         function handleCalibrationAction(id, option) {
             const cardElement = document.querySelector(`[data-card-id="${id}"]`);
@@ -2051,17 +1476,18 @@
                         今日运行简报
                     </div>
                     <div class="summary-grid">
-                        <div class="summary-item" style="cursor: pointer;" onclick="setReportTaskTab('completed')">
-                            <span class="summary-value" style="color: #10B981; text-decoration: ${reportTaskTab === 'completed' ? 'underline' : 'none'};">${String(reportTasks.completed.length).padStart(2, '0')}</span>
+                        <div class="summary-item">
+                            <span class="summary-value">12</span>
+                            <span class="summary-label">会话数</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-value" style="color: #10B981;">05</span>
                             <span class="summary-label">已完成任务</span>
                         </div>
-                        <div class="summary-item" style="cursor: pointer;" onclick="setReportTaskTab('running')">
-                            <span class="summary-value" style="color: var(--color-primary); text-decoration: ${reportTaskTab === 'running' ? 'underline' : 'none'};">${String(reportTasks.running.length).padStart(2, '0')}</span>
+                        <div class="summary-item">
+                            <span class="summary-value" style="color: var(--color-primary);">02</span>
                             <span class="summary-label">运行中任务</span>
                         </div>
-                    </div>
-                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
-                        ${renderReportTaskRows()}
                     </div>
                 </div>
             `;
@@ -2274,146 +1700,33 @@
             btn.parentElement.innerHTML = `<div style="text-align:center; width:100%; color:#999; font-size:0.8rem; font-weight:700;">已忽略建议</div>`;
         }
 
-        const currentConversationSteps = [
+        const conversationSteps = [
             {
-                bot: "我是 Bob，你的专属 Agent。检测到你近期在准备下学期的《数据科学导论》课程。需要聊聊课程设计吗？",
-                userSuggest: "是的，帮我设计一份适合大二学生的数据科学课程大纲。"
+                bot: "我是 Bob，你的专属 Agent。检测到你近期较为关注“可持续消费”领域。需要聊聊吗？",
+                userSuggest: "是的，帮我策划一个针对 Z 世代的可持续龙虾零食品牌推广方案。"
             },
             {
-                bot: "好的挑战。考虑到大二学生的数学基础参差不齐，我建议采用“案例驱动 + 逐步深入”的教学路线。你想先定调：是侧重实践动手能力，还是理论体系构建？",
-                userSuggest: "实践为主，但核心统计和机器学习原理也不能缺。"
+                bot: "有趣的挑战。考虑到 Z 世代对透明度的要求，我建议采用“从海洋到零食”的全程追溯故事。你想先定调：是走“环保先锋”的高冷范，还是“趣味海洋”的亲和路线？",
+                userSuggest: "趣味海洋，但我希望有一些硬核的降碳数据支持。"
             },
             {
-                bot: `明白了。我为你生成了初步大纲：<br>1. <b>模块一</b>：Python 数据处理基础（4周）<br>2. <b>模块二</b>：统计分析与可视化（5周）<br>3. <b>模块三</b>：机器学习入门实战（5周）<br>每模块含 2 次课堂实验和 1 次小组项目，总学时 48 课时。你看这个节奏合适吗？`,
-                userSuggest: "不错，在每个模块末尾加一个真实数据集的综合案例分析，增加学生的实战感。"
+                bot: `明白了。我为你生成了一个初步大纲：<br>1. <b>视觉</b>：采用荧光海洋生物风，搭配数据可视化泡泡。<br>2. <b>传播</b>：发起“认领一只龙虾”的减碳众筹。<br>3. <b>渠道</b>：优先小红书和 B 站生态。<br>这是具体的降碳预估：相比传统零食减少了 42% 的物流碳足迹。你看这个方向对吗？`,
+                userSuggest: "不错，重点加强众筹环节的社交属性，尤其是让用户能展示他们的“减碳勋章”。"
             },
             {
-                bot: `好的，更新已完成。每模块末尾增加了真实数据集综合分析项目，并配有详细评分标准。课程大纲已同步到你的教学资料库。<br><br>发现你非常擅长将 <b>理论知识点</b> 转化为 <b>可落地的教学案例</b>。这似乎是你的核心教学方法论？<div class="skill-suggestion"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div><div class="skill-tag">智能沉淀建议</div><h4 style="margin: 10px 0 5px 0;">案例驱动课程设计 Skill</h4><p style="font-size: 0.8rem; line-height: 1.4; color: #666;">自动将知识点分解为可操作的真实案例教学模块，并配套评分标准。</p></div><div style="width: 30px; height: 30px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg></div></div><div style="display: flex; gap: 10px; margin-top: 5px;"><button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleSettleSkill(this)">立即沉淀</button><button class="btn btn-outline" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleDiscardSkill(this)">暂不处理</button></div></div>`,
+                bot: `好的，更新已完成。众筹将包含 AR 社交滤镜 and 可分享的数字成就勋章。任务详情已同步至你的执行看板。<br><br>发现你非常擅长将 <b>硬核数据</b> 转化为 <b>社交货币</b>。这似乎是你常用的方法论？<div class="skill-suggestion"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div><div class="skill-tag">智能沉淀建议</div><h4 style="margin: 10px 0 5px 0;">社交化数据营销 Skill</h4><p style="font-size: 0.8rem; line-height: 1.4; color: #666;">自动将复杂的数据点转化为适合社交媒体传播的互动创意。</p></div><div style="width: 30px; height: 30px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg></div></div><div style="display: flex; gap: 10px; margin-top: 5px;"><button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleSettleSkill(this)">立即沉淀</button><button class="btn btn-outline" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleDiscardSkill(this)">暂不处理</button></div></div>`,
                 userSuggest: null
             }
         ];
 
-        const conversationSessions = [
-            {
-                id: 'session-current',
-                title: '当前会话｜《数据科学导论》课程设计',
-                summary: '你和 Bob 正在共创下学期数据科学课程的完整大纲与教学方案。',
-                mode: 'interactive'
-            },
-            {
-                id: 'session-growth',
-                title: '历史会话｜毕业论文开题指导',
-                summary: '针对研究方法问题给出了具体修改建议，学生已按要求补充说明。',
-                mode: 'readonly',
-                messages: [
-                    { type: 'user', text: '帮我批阅这份本科毕业论文开题报告，重点看研究方法是否合适。' },
-                    { type: 'bot', text: '研究问题定义清晰，但研究方法部分存在两个问题：1) 样本量偏小（n=30），建议扩充到 60 以上；2) 问卷缺乏信效度说明。建议在方法论部分补充 Cronbach’s α 检验计划。' },
-                    { type: 'user', text: '学生说样本来源受限，怎么给他一个可行的建议？' },
-                    { type: 'bot', text: '可以建议采用“便利抽样 + 滚雪球”的组合策略，同时在论文中明确标注样本局限性，并在结论部分讨论推广性边界。这样既实际可行，又学术规范。' }
-                ]
-            },
-            {
-                id: 'session-content',
-                title: '历史会话｜期末考试成绩分析',
-                summary: '找出回归分析模块的教学薄弱点，制定下学期针对性补强方案。',
-                mode: 'readonly',
-                messages: [
-                    { type: 'user', text: '帮我分析一下这次期末考试的成绩分布，找出教学薄弱点。' },
-                    { type: 'bot', text: '成绩呈轻微左偏，均分 72.4 分。失分集中在第三大题（回归分析应用），正确率仅 41%。建议下学期在回归模型的实际解读部分增加 2~3 节习题课。' },
-                    { type: 'user', text: '有什么方法能帮助后进学生补齐这块短板？' },
-                    { type: 'bot', text: '建议设置“课后答疑时间表”配合“同伴学习小组”：将高分学生与低分学生分组配对，每周一次互助练习。研究表明这种同伴教学法可提升薄弱学生成绩约 15%。' }
-                ]
-            },
-            {
-                id: 'session-brand',
-                title: '历史会话｜国自然申请书打磨',
-                summary: '优化了研究意义部分的论证逻辑，突出立项迫切性与可行性。',
-                mode: 'readonly',
-                messages: [
-                    { type: 'user', text: '我在写国家自然科学基金申请书，研究方向是多模态学习，帮我打磨研究意义部分。' },
-                    { type: 'bot', text: '当前写法偏罗列文献，缺乏“非做不可”的迫切感。建议结构改为：现实问题 → 现有方法的核心局限 → 你的方案带来的突破 → 预期影响力。把“为什么是你、为什么是现在”说清楚。' },
-                    { type: 'user', text: '现有局限部分怎么写得更有力度？' },
-                    { type: 'bot', text: '可以用“三段对比法”：先引一篇近期顶会成果说明现有最优水平，再指出其在特定场景下的失效原因，最后引出你的预研数据作为可行性支撑。逻辑链完整，评审专家看完会觉得立题扎实。' }
-                ]
-            }
-        ];
-
-        const currentConversationState = {
-            step: 0,
-            initialized: false,
-            messages: []
-        };
-
-        let activeSessionId = 'session-current';
+        let currentStep = 0;
         const chatInput = document.getElementById('chat-input');
         const chatScroller = document.getElementById('chat-scroller');
-        const historyTitleText = document.getElementById('history-title-text');
-        const historyTitleBtn = document.getElementById('history-title-btn');
-        const historySessionMenu = document.getElementById('history-session-menu');
 
         function appendMessage(text, type) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `chat-msg ${type === 'user' ? 'user' : ''}`;
-
-            if (type === 'user') {
-                msgDiv.innerHTML = `<div class="bubble user">${text}</div>`;
-            } else {
-                const msgId = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-                msgDiv.innerHTML = `
-                    <div class="msg-bot-col">
-                        <div class="bubble lobster">${text}</div>
-                        <div class="msg-actions">
-                            <!-- 复制 -->
-                            <button class="msg-action-btn" onclick="msgCopy(this)" title="复制" data-msg-id="${msgId}">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                            <!-- 点赞 -->
-                            <button class="msg-action-btn msg-like-btn" onclick="msgLike(this)" title="点赞">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
-                                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                                </svg>
-                            </button>
-                            <!-- 点踩 -->
-                            <button class="msg-action-btn msg-dislike-btn" onclick="msgDislike(this)" title="点踩">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-                                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"></path>
-                                    <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
-                                </svg>
-                            </button>
-                            <!-- 三点更多菜单 -->
-                            <div class="msg-more-wrap">
-                                <button class="msg-action-btn" onclick="toggleMsgMoreMenu('${msgId}', event)" title="更多">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                                        <circle cx="5" cy="12" r="1.5"></circle>
-                                        <circle cx="12" cy="12" r="1.5"></circle>
-                                        <circle cx="19" cy="12" r="1.5"></circle>
-                                    </svg>
-                                </button>
-                                <div class="msg-more-dropdown" id="${msgId}-dropdown">
-                                    <div class="msg-dropdown-item" id="${msgId}-mem-item" onclick="msgSaveMemory(this, '${msgId}')">
-                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"></path>
-                                            <path d="M12 6v6l4 2"></path>
-                                        </svg>
-                                        保存到记忆
-                                    </div>
-                                    <div class="msg-dropdown-item" id="${msgId}-skill-item" onclick="msgGenSkill(this, '${msgId}')">
-                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                                        </svg>
-                                        生成Skill
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
+            msgDiv.innerHTML = `<div class="bubble ${type === 'user' ? 'user' : 'lobster'}">${text}</div>`;
             chatScroller.appendChild(msgDiv);
             scrollToBottom();
         }
@@ -2444,113 +1757,36 @@
             chatScroller.scrollTop = chatScroller.scrollHeight;
         }
 
-        function getActiveSession() {
-            return conversationSessions.find(session => session.id === activeSessionId);
-        }
-
-        function updateCurrentInputStatus() {
-            if (activeSessionId !== 'session-current') {
-                chatInput.value = '';
-                chatInput.disabled = true;
-                chatInput.placeholder = '历史会话为只读，切换到当前会话继续对话...';
-                chatInput.style.height = 'auto';
-                return;
-            }
-
-            chatInput.disabled = false;
-            chatInput.placeholder = currentConversationSteps[currentConversationState.step].userSuggest || "给智能体发送消息...";
-        }
-
-        function renderSessionMenu() {
-            historySessionMenu.innerHTML = conversationSessions.map(session => `
-                <div class="history-session-item ${session.id === activeSessionId ? 'active' : ''}" onclick="selectConversationSession('${session.id}')">
-                    <div class="history-session-item-title">${session.title}</div>
-                    <div class="history-session-item-desc">${session.summary}</div>
-                </div>
-            `).join('');
-        }
-
-        function updateSessionTitle() {
-            const session = getActiveSession();
-            if (session) historyTitleText.textContent = session.title;
-        }
-
-        function toggleHistoryMenu(event) {
-            event.stopPropagation();
-            historyTitleBtn.classList.toggle('open');
-            historySessionMenu.classList.toggle('show');
-        }
-
-        function renderCurrentConversation() {
-            chatScroller.innerHTML = '';
-            currentConversationState.messages.forEach(msg => {
-                appendMessage(msg.text, msg.type);
-            });
-            scrollToBottom();
-        }
-
-        function renderReadonlyConversation(session) {
-            chatScroller.innerHTML = '';
-            session.messages.forEach(msg => {
-                appendMessage(msg.text, msg.type);
-            });
-            scrollToBottom();
-        }
-
-        function selectConversationSession(sessionId) {
-            activeSessionId = sessionId;
-            isSending = false;
-            removeTyping();
-
-            historyTitleBtn.classList.remove('open');
-            historySessionMenu.classList.remove('show');
-            updateSessionTitle();
-            renderSessionMenu();
-
-            if (sessionId === 'session-current') {
-                renderCurrentConversation();
-            } else {
-                const session = getActiveSession();
-                renderReadonlyConversation(session);
-            }
-
-            updateCurrentInputStatus();
-        }
-
         function handleSendMessage() {
-            if (activeSessionId !== 'session-current') return;
             if (isSending) return; // 防重复发送锁
 
             const text = chatInput.value.trim();
-            const hasSuggest = (currentConversationState.step < currentConversationSteps.length) && currentConversationSteps[currentConversationState.step].userSuggest;
-            const messageToSend = text || (hasSuggest ? currentConversationSteps[currentConversationState.step].userSuggest : "");
+            const hasSuggest = (currentStep < conversationSteps.length) && conversationSteps[currentStep].userSuggest;
+            const messageToSend = text || (hasSuggest ? conversationSteps[currentStep].userSuggest : "");
 
             if (!messageToSend) return;
 
             isSending = true; // 加锁
             appendMessage(messageToSend, 'user');
-            currentConversationState.messages.push({ type: 'user', text: messageToSend });
             chatInput.value = '';
             chatInput.placeholder = '';
             chatInput.style.height = 'auto';
 
-            if (currentConversationState.step + 1 < currentConversationSteps.length) {
+            if (currentStep + 1 < conversationSteps.length) {
                 chatInput.disabled = true;
                 setTimeout(() => {
                     showTyping();
                     setTimeout(() => {
                         removeTyping();
-                        currentConversationState.step++;
-                        const botReply = currentConversationSteps[currentConversationState.step].bot;
-                        appendMessage(botReply, 'bot');
-                        currentConversationState.messages.push({ type: 'bot', text: botReply });
+                        currentStep++;
+                        appendMessage(conversationSteps[currentStep].bot, 'bot');
 
                         // 对话触发形态升级：从第一个回复开始
-                        if (currentConversationState.step >= 1) {
+                        if (currentStep >= 1) {
                             autoUpgradeStage();
                         }
 
-                        chatInput.placeholder = currentConversationSteps[currentConversationState.step].userSuggest || "给智能体发送消息...";
+                        chatInput.placeholder = conversationSteps[currentStep].userSuggest || "给智能体发送消息...";
                         chatInput.disabled = false;
                         isSending = false; // 释放锁
                         chatInput.focus();
@@ -2574,203 +1810,17 @@
         // Close menus when clicking outside
         document.addEventListener('click', () => {
             document.querySelectorAll('.input-floating-menu').forEach(m => m.classList.remove('show'));
-            document.querySelectorAll('.msg-more-dropdown').forEach(d => d.classList.remove('show'));
-            historyTitleBtn.classList.remove('open');
-            historySessionMenu.classList.remove('show');
         });
-
-        // ===== 消息操作函数 =====
-
-        function msgCopy(btn) {
-            const bubble = btn.closest('.msg-bot-col').querySelector('.bubble');
-            const text = bubble.innerText;
-
-            const doFeedback = () => {
-                const svgCopy = btn.innerHTML;
-                btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                btn.classList.add('copied', 'spring');
-
-                const tip = document.createElement('span');
-                tip.className = 'copy-tip';
-                tip.textContent = '已复制';
-                btn.appendChild(tip);
-
-                setTimeout(() => {
-                    btn.innerHTML = svgCopy;
-                    btn.classList.remove('copied', 'spring');
-                }, 1600);
-            };
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(doFeedback).catch(doFeedback);
-            } else {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.style.position = 'fixed';
-                ta.style.opacity = '0';
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                doFeedback();
-            }
-        }
-
-        function msgLike(btn) {
-            const dislikeBtn = btn.closest('.msg-actions').querySelector('.msg-dislike-btn');
-            if (btn.classList.contains('liked')) {
-                btn.classList.remove('liked');
-            } else {
-                btn.classList.add('liked', 'spring');
-                dislikeBtn.classList.remove('disliked');
-                setTimeout(() => btn.classList.remove('spring'), 500);
-            }
-        }
-
-        function msgDislike(btn) {
-            const likeBtn = btn.closest('.msg-actions').querySelector('.msg-like-btn');
-            if (btn.classList.contains('disliked')) {
-                btn.classList.remove('disliked');
-            } else {
-                btn.classList.add('disliked', 'spring');
-                likeBtn.classList.remove('liked');
-                setTimeout(() => btn.classList.remove('spring'), 500);
-            }
-        }
-
-        function toggleMsgMoreMenu(msgId, event) {
-            event.stopPropagation();
-            const dropdown = document.getElementById(msgId + '-dropdown');
-            document.querySelectorAll('.msg-more-dropdown').forEach(d => {
-                if (d !== dropdown) d.classList.remove('show');
-            });
-            dropdown.classList.toggle('show');
-        }
-
-        // ===== 操作弹窗系统 =====
-
-        function closeActionModal(event) {
-            const overlay = document.getElementById('action-modal');
-            overlay.classList.remove('show');
-        }
-
-        function showActionModal(config) {
-            // config: { theme, icon (svg), title, steps[], successTitle, successDesc }
-            const overlay = document.getElementById('action-modal');
-            const body = document.getElementById('action-modal-body');
-
-            // 初始化进度态
-            body.innerHTML = `
-                <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;">
-                    <div class="action-modal-icon-wrap ${config.theme}-theme">
-                        ${config.icon}
-                    </div>
-                    <div class="action-modal-title">${config.title}</div>
-                    <div class="action-modal-subtitle" id="am-subtitle">${config.steps[0].label}</div>
-                    <div class="action-modal-bar-wrap">
-                        <div class="action-modal-bar-track">
-                            <div class="action-modal-bar-fill ${config.theme}-theme" id="am-bar"></div>
-                        </div>
-                        <div class="action-modal-bar-pct" id="am-pct">0%</div>
-                    </div>
-                </div>
-            `;
-
-            overlay.classList.add('show');
-
-            const bar = document.getElementById('am-bar');
-            const subtitle = document.getElementById('am-subtitle');
-            const pct = document.getElementById('am-pct');
-
-            // 逐步推进进度
-            config.steps.forEach((step, i) => {
-                setTimeout(() => {
-                    bar.style.width = step.pct + '%';
-                    pct.textContent = step.pct + '%';
-                    subtitle.textContent = step.label;
-                }, step.delay);
-            });
-
-            // 最后一步完成后切换为成功态
-            const lastStep = config.steps[config.steps.length - 1];
-            setTimeout(() => {
-                body.style.opacity = '0';
-                body.style.transition = 'opacity 0.25s';
-                setTimeout(() => {
-                    body.innerHTML = `
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
-                            <div class="action-modal-success-icon ${config.theme}-theme">
-                                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.8">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </div>
-                            <div class="action-modal-success-title ${config.theme}-theme">${config.successTitle}</div>
-                            <div class="action-modal-subtitle">${config.successDesc}</div>
-                            <button class="action-modal-close-btn ${config.theme}-theme" onclick="closeActionModal()">完成</button>
-                        </div>
-                    `;
-                    body.style.opacity = '1';
-                }, 260);
-            }, lastStep.delay + 600);
-        }
-
-        function msgSaveMemory(item, msgId) {
-            // 关闭下拉菜单
-            const d = document.getElementById(msgId + '-dropdown');
-            if (d) d.classList.remove('show');
-
-            showActionModal({
-                theme: 'memory',
-                title: '保存到记忆',
-                icon: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#A855F7" stroke-width="1.8">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-                    <path d="M12 6v6l4 2" stroke-linecap="round"/>
-                </svg>`,
-                steps: [
-                    { pct: 0, delay: 80, label: '🔍 正在分析对话内容...' },
-                    { pct: 32, delay: 500, label: '🧩 正在提取关键信息...' },
-                    { pct: 65, delay: 1100, label: '🧠 正在写入记忆库...' },
-                    { pct: 92, delay: 1700, label: '✅ 即将完成...' },
-                    { pct: 100, delay: 2200, label: '✅ 即将完成...' },
-                ],
-                successTitle: '已成功保存到记忆',
-                successDesc: 'Bob 会在未来的对话中参考这段记忆',
-            });
-        }
-
-        function msgGenSkill(item, msgId) {
-            const d = document.getElementById(msgId + '-dropdown');
-            if (d) d.classList.remove('show');
-
-            showActionModal({
-                theme: 'skill',
-                title: '生成 Skill',
-                icon: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--color-primary)" stroke-width="1.8">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>`,
-                steps: [
-                    { pct: 0, delay: 80, label: '🔍 正在提取核心逻辑...' },
-                    { pct: 28, delay: 500, label: '✨ 正在优化 Skill 结构...' },
-                    { pct: 58, delay: 1100, label: '⚙️ 正在配置参数...' },
-                    { pct: 85, delay: 1700, label: '🚀 正在完成 Skill 打包...' },
-                    { pct: 100, delay: 2300, label: '🚀 正在完成 Skill 打包...' },
-                ],
-                successTitle: 'Skill 已成功生成',
-                successDesc: '新 Skill 已存入你的技能库，可在下次对话中直接调用',
-            });
-        }
 
         // Initialize Chat
         window.onload = function () {
-            if (!currentConversationState.initialized) {
-                currentConversationState.messages.push({ type: 'bot', text: currentConversationSteps[0].bot });
-                currentConversationState.initialized = true;
-            }
+            const scroller = document.getElementById('chat-scroller');
 
-            updateSessionTitle();
-            renderSessionMenu();
-            renderCurrentConversation();
-            updateCurrentInputStatus();
+            // 初次加载显示第一条 Bot 消息
+            setTimeout(() => {
+                appendMessage(conversationSteps[0].bot, 'bot');
+                chatInput.placeholder = conversationSteps[0].userSuggest;
+            }, 500);
 
             updateTwinUI();
         };

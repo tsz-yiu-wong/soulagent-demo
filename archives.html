@@ -10,13 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared.css">
     <style>
-        .tab-header-row {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
         .mode-toggle {
             display: inline-flex;
             background: #f5f5f5;
@@ -85,10 +78,10 @@
             display: block;
         }
 
-        .daily-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
+        .chat-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .summary-overview {
@@ -124,41 +117,157 @@
             color: var(--color-primary);
         }
 
-        .summary-card {
+        .chat-list-item {
             background: #fff;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
-            padding: 18px 18px 16px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.03);
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .summary-head {
+        .chat-list-item:hover {
+            border-color: var(--color-primary);
+            background: #F5F3FF;
+        }
+
+        .chat-list-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
         }
 
-        .summary-name {
+        .chat-list-name {
             font-size: 1rem;
             font-weight: 700;
             color: var(--color-text);
         }
 
-        .summary-time {
-            font-size: 0.78rem;
+        .chat-list-time {
+            font-size: 0.85rem;
             color: #999;
         }
 
-        .summary-line {
+        .chat-list-preview {
             font-size: 0.9rem;
             color: #666;
-            line-height: 1.6;
-            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .summary-line strong {
-            color: var(--color-primary);
+        /* Inline Chat Styles */
+        .chat-view {
+            display: none;
+            flex-direction: column;
+            height: 600px;
+        }
+        .chat-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 15px 24px;
+            background: #fafafa;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--color-text);
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            background: white;
+            border: 1px solid var(--color-border);
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--color-twin);
+            color: var(--color-twin);
+            background: #F5F3FF;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #fcfcfc;
+        }
+
+        .chat-input-wrapper {
+            padding: 20px 24px;
+            background: white;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .input-box {
+            background: #F8F9FA;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .input-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--color-text);
+        }
+
+        .chat-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .chat-bubble.user {
+            background: white;
+            border: 1px solid #eee;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-bubble.ai {
+            background: #F5F3FF;
+            border: 1px solid #E9E6FF;
+            color: var(--color-twin-dark);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
         }
 
         /* Skills Section Styles */
@@ -569,20 +678,19 @@
         }
 
         .preview-side.user-core-theme {
-            background: #0F0E1E;
-            color: #E2E8F0;
-            border-left: 1px solid #2D2B4D;
-            box-shadow: inset 0 0 0 1px rgba(157, 133, 255, 0.12);
+            background: #fff;
+            color: var(--color-text);
+            border-left: 1px solid var(--color-border);
         }
 
         .preview-side.user-core-theme h1,
         .preview-side.user-core-theme h2,
         .preview-side.user-core-theme h3 {
-            color: #9D85FF;
+            color: var(--color-twin);
         }
 
         .preview-side.user-core-theme p {
-            color: #CBD5E0;
+            color: var(--color-text);
         }
 
         .preview-side h1,
@@ -788,24 +896,25 @@
         }
 
         body.twin-mode .mode-toggle {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(157, 133, 255, 0.4);
+            background: #f5f5f5;
+            border-color: var(--color-twin);
         }
 
         body.twin-mode .mode-btn {
-            color: #a0aec0;
+            color: #777;
         }
 
         body.twin-mode .mode-btn.active {
-            background: var(--color-twin-dark);
+            background: var(--color-twin);
+            color: #fff;
         }
 
         body.twin-mode .main-tabs {
-            border-bottom-color: #2d2b4d;
+            border-bottom-color: var(--color-border);
         }
 
         body.twin-mode .main-tab {
-            color: #7f8ca8;
+            color: #999;
         }
 
         body.twin-mode .main-tab.active {
@@ -821,32 +930,55 @@
             color: var(--color-twin) !important;
         }
 
+        body.twin-mode .nav-link.active {
+            color: var(--color-twin);
+        }
+
+        body.twin-mode .logo {
+            color: var(--color-twin);
+        }
+
         body.twin-mode .search-bar-v2,
         body.twin-mode .archives-card,
         body.twin-mode .preview-pane,
         body.twin-mode .memory-section {
-            background: rgba(26, 25, 48, 0.85);
-            border-color: rgba(157, 133, 255, 0.28);
-            color: #e2e8f0;
+            background: white;
+            border-color: #E9E6FF;
+            color: var(--color-text);
+            box-shadow: 0 4px 20px rgba(157, 133, 255, 0.05);
         }
 
         body.twin-mode .archives-title,
         body.twin-mode .sidebar-section-title,
         body.twin-mode #currentFileName,
         body.twin-mode .memory-section-title {
-            color: #cbd5e0;
-            border-color: rgba(157, 133, 255, 0.18);
+            border-color: #F5F3FF;
+        }
+
+        body.twin-mode #currentFileName,
+        body.twin-mode .memory-section-title {
+            color: var(--color-twin);
+        }
+
+        body.twin-mode .btn-primary {
+            background-color: var(--color-twin);
+            box-shadow: 0 4px 0 var(--color-twin-dark);
+        }
+
+        body.twin-mode .btn-primary:active {
+            box-shadow: 0 0 0 var(--color-twin-dark);
+            transform: translateY(4px);
         }
 
         body.twin-mode .preview-header,
         body.twin-mode .editor-side {
-            background: rgba(255, 255, 255, 0.02);
-            border-color: rgba(157, 133, 255, 0.2);
+            background: #FAF9FF;
+            border-color: #E9E6FF;
         }
 
         body.twin-mode .preview-side {
-            background: #13122a;
-            color: #e2e8f0;
+            background: white;
+            color: var(--color-text);
         }
 
         body.twin-mode .preview-side h1,
@@ -856,91 +988,109 @@
         }
 
         body.twin-mode .raw-input {
-            color: #e2e8f0;
+            color: var(--color-text);
         }
 
         body.twin-mode .file-item {
-            color: #cbd5e0;
+            color: #666;
         }
 
         body.twin-mode .file-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: #F5F3FF;
         }
 
         body.twin-mode .file-item.active {
-            background: rgba(122, 92, 255, 0.22);
-            color: #efeaff;
+            background: #F5F3FF;
+            color: var(--color-twin);
+            border-color: var(--color-twin);
         }
 
         body.twin-mode .memory-item {
-            background: rgba(255, 255, 255, 0.03);
-            border-color: rgba(157, 133, 255, 0.2);
+            background: white;
+            border-color: #E9E6FF;
         }
 
         body.twin-mode .memory-item:hover {
-            border-color: rgba(157, 133, 255, 0.55);
-            background: rgba(255, 255, 255, 0.06);
-            box-shadow: none;
+            border-color: var(--color-twin);
+            background: #F5F3FF;
+            box-shadow: 0 4px 12px rgba(157, 133, 255, 0.08);
         }
 
-        body.twin-mode .summary-card {
-            background: rgba(26, 25, 48, 0.85);
-            border-color: rgba(157, 133, 255, 0.28);
-            box-shadow: none;
+        body.twin-mode .chat-list-item {
+            border-color: #E9E6FF;
+            box-shadow: 0 4px 20px rgba(157, 133, 255, 0.05);
+        }
+
+        body.twin-mode .chat-list-item:hover {
+            border-color: var(--color-twin);
+            background: #F5F3FF;
         }
 
         body.twin-mode .summary-overview {
-            background: rgba(26, 25, 48, 0.9);
-            border-color: rgba(157, 133, 255, 0.35);
+            background: #F5F3FF;
+            border-color: #E9E6FF;
         }
 
         body.twin-mode .summary-overview-title {
-            color: #bfaeff;
+            color: var(--color-twin-dark);
         }
 
         body.twin-mode .summary-overview-item {
-            color: #cbd5e0;
+            color: #666;
         }
 
         body.twin-mode .summary-overview-item strong {
-            color: #bfaeff;
+            color: var(--color-twin);
         }
 
-        body.twin-mode .summary-name {
-            color: #e2e8f0;
+        body.twin-mode .chat-list-name {
+            color: var(--color-text);
         }
 
-        body.twin-mode .summary-time {
-            color: #9aa7c2;
+        body.twin-mode .chat-box {
+            border-color: #E9E6FF;
+            box-shadow: 0 4px 20px rgba(157, 133, 255, 0.05);
         }
 
-        body.twin-mode .summary-line {
-            color: #b8c2d6;
+        body.twin-mode .chat-header {
+            background: #FAF9FF;
+            border-color: #E9E6FF;
         }
 
-        body.twin-mode .summary-line strong {
-            color: #9d85ff;
+        body.twin-mode .chat-input-wrapper {
+            border-color: #E9E6FF;
+        }
+
+        body.twin-mode .input-box {
+            border-color: #E9E6FF;
+        }
+
+        body.twin-mode .chat-bubble.ai {
+            background: var(--color-twin);
+            color: white;
+            border-color: var(--color-twin);
         }
 
         body.twin-mode .memory-tag.tag-lts {
-            background: rgba(122, 92, 255, 0.2);
-            color: #c9b6ff;
+            background: #E9E6FF;
+            color: var(--color-twin-dark);
         }
 
         body.twin-mode .memory-tag.tag-sts {
-            background: rgba(66, 153, 225, 0.18);
-            color: #90cdf4;
+            background: #E0F5F4;
+            color: var(--color-secondary-dark);
         }
 
         body.twin-mode .action-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(157, 133, 255, 0.25);
-            color: #cbd5e0;
+            background: #f5f5f5;
+            border-color: #eee;
+            color: #666;
         }
 
         body.twin-mode .action-btn:hover {
-            background: var(--color-twin-dark);
+            background: var(--color-twin);
             border-color: var(--color-twin);
+            color: white;
         }
 
         .preview-pane.kb-preview-blurred {
@@ -970,119 +1120,171 @@
     </header>
 
     <div class="container animate-fade-in" style="padding: 40px 0;">
-        <div class="tab-header-row">
+        <div class="main-tabs" style="align-items: center;">
             <div class="mode-toggle" id="modeToggle">
                 <button class="mode-btn active" data-mode="agent">智能体</button>
                 <button class="mode-btn" data-mode="twin">数字分身</button>
             </div>
-            <div class="main-tabs">
-                <div class="main-tab" data-target="summaryView" data-mode="twin">今日总结</div>
-                <div class="main-tab active" data-target="skillsView" data-mode="agent">Skills</div>
-                <div class="main-tab" data-target="kbView" data-mode="all">档案</div>
-                <div class="main-tab" data-target="memoryView" data-mode="all">记忆</div>
-            </div>
+            <div class="main-tab" data-target="summaryView" data-mode="twin">今日总结</div>
+            <div class="main-tab active" data-target="skillsView" data-mode="agent">Skills</div>
+            <div class="main-tab" data-target="kbView" data-mode="all">档案</div>
+            <div class="main-tab" data-target="memoryView" data-mode="agent">记忆</div>
         </div>
 
         <!-- Daily Summary Section -->
         <div id="summaryView" class="tab-content">
             <div class="summary-overview">
-                <div class="summary-overview-title">今日会话总览</div>
-                <ul class="summary-overview-list">
-                    <li class="summary-overview-item"><strong>对话对象覆盖：</strong>今日共与 10
-                        位对象交流，角色覆盖产品、运营、研发、设计、市场、HRBP、客户成功、数据、管理层与个人关系场景，议题跨度从业务增长到执行细节，整体输入较为全面。</li>
-                    <li class="summary-overview-item"><strong>聊天内容主轴：</strong>高频话题集中在三类：第一是“产品体验与转化”优化（如
-                        onboarding、首屏表达、深色信息层级）；第二是“流程效率与自动化”（知识沉淀、FAQ 自动应答、工具稳定性）；第三是“策略取舍与节奏管理”（季度方向、双轨推进、阶段复盘）。</li>
-                    <li class="summary-overview-item">
-                        <strong>价值观输出：</strong>对外持续传递“事实优先、结果导向、长期主义、边界清晰”的共识：先定义问题再给判断，先确认口径再给结论，涉及不确定或高风险内容时主动补充限制条件与人工确认节点。
-                    </li>
-                    <li class="summary-overview-item"><strong>回复核心模式：</strong>大部分回复遵循“先结论 -> 给依据 ->
-                        给下一步动作”的结构，并尽量把建议落到可执行层（指标口径、A/B 方案、负责人、节奏拆分、触发条件），减少泛建议与空泛讨论。</li>
-                    <li class="summary-overview-item"><strong>决策与方法倾向：</strong>明显偏向“双路径对比 + 风险兜底 +
-                        小步快跑验证”：先给至少两种可行路线，再说明适用边界与代价，优先推进低风险高反馈方案，并通过周度复盘修正方向。</li>
-                    <li class="summary-overview-item"><strong>今日可沉淀资产：</strong>可直接沉淀为 5 类复用模板：转化问题排查清单、协作会议输出模板、FAQ
-                        人机分流规则、指标口径定义卡、季度策略评估框架；建议明日优先把“指标口径卡 + 人工接管触发词”落为团队共享文档。</li>
-                </ul>
+                <div class="summary-overview-title" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; position: relative;" onclick="toggleSummaryOverview()">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span style="font-weight: 600;">会话总览</span>
+                        
+                        <!-- Segmented Date Control -->
+                        <div class="date-segment-control" style="display: flex; background: rgba(0,0,0,0.04); border-radius: 8px; padding: 4px; gap: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);" onclick="event.stopPropagation()">
+                            <button class="segment-btn active" style="border:none; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 6px; padding: 4px 14px; font-size: 0.85rem; color: var(--color-twin, #7A5CFF); font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);" onclick="selectSegment('今日', this)">今日</button>
+                            <button class="segment-btn" style="border:none; background: transparent; padding: 4px 14px; border-radius: 6px; font-size: 0.85rem; color: #666; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="if(!this.classList.contains('active')) this.style.color='#333'" onmouseout="if(!this.classList.contains('active')) this.style.color='#666'" onclick="selectSegment('本周', this)">本周</button>
+                            <button class="segment-btn" style="border:none; background: transparent; padding: 4px 14px; border-radius: 6px; font-size: 0.85rem; color: #666; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="if(!this.classList.contains('active')) this.style.color='#333'" onmouseout="if(!this.classList.contains('active')) this.style.color='#666'" onclick="selectSegment('上周', this)">上周</button>
+                            
+                            <div style="width: 1px; background: rgba(0,0,0,0.08); margin: 4px 2px;"></div>
+                            
+                            <div class="custom-date-wrapper" style="position: relative; display: flex; align-items: center;">
+                                <button class="segment-btn custom-date-btn" style="border:none; background: transparent; padding: 4px 12px 4px 14px; border-radius: 6px; font-size: 0.85rem; color: #666; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="if(!this.classList.contains('active')) this.style.color='#333'" onmouseout="if(!this.classList.contains('active')) this.style.color='#666'" onclick="toggleCustomDatePicker()">
+                                    <span id="customDateLabel">自定义</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                </button>
+                                
+                                <div id="customDatePickerPanel" style="display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 16px; z-index: 30; width: 280px; cursor: default; backdrop-filter: blur(10px);" onclick="event.stopPropagation()">
+                                    <!-- Arrow for popover -->
+                                    <div style="position: absolute; top: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 10px; height: 10px; background: white; border-top: 1px solid rgba(0,0,0,0.08); border-left: 1px solid rgba(0,0,0,0.08);"></div>
+                                    
+                                    <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 16px; color: #333; text-align: left;">选择日期范围</div>
+                                    <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #666; margin-bottom: 6px; font-weight: 500;">开始日期</label>
+                                            <input type="date" id="startDate" style="width: 100%; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.85rem; outline: none; transition: border 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='var(--color-twin, #7A5CFF)'; this.style.boxShadow='0 0 0 2px rgba(122,92,255,0.1)'" onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
+                                        </div>
+                                        <div>
+                                            <label style="display: block; font-size: 0.75rem; color: #666; margin-bottom: 6px; font-weight: 500;">结束日期</label>
+                                            <input type="date" id="endDate" style="width: 100%; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 0.85rem; outline: none; transition: border 0.2s, box-shadow 0.2s; box-sizing: border-box; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='var(--color-twin, #7A5CFF)'; this.style.boxShadow='0 0 0 2px rgba(122,92,255,0.1)'" onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                                            <button style="background: #f5f5f5; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 500; cursor: pointer; color: #555; transition: background 0.2s;" onmouseover="this.style.background='#ebebeb'" onmouseout="this.style.background='#f5f5f5'" onclick="closeCustomDatePicker()">取消</button>
+                                            <button style="background: var(--color-twin, #7A5CFF); border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(122,92,255,0.25); transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(122,92,255,0.3)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(122,92,255,0.25)'" onclick="applyCustomDate()">确定</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <svg id="summaryToggleIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: #888; background: #f0f0f0; padding: 4px; border-radius: 50%;">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </div>
+                <div id="summaryOverviewContent" style="display: block;">
+                    <ul class="summary-overview-list">
+                        <li class="summary-overview-item"><strong>对话对象覆盖：</strong>今日共与 10
+                            位对象交流，角色覆盖产品、运营、研发、设计、市场、HRBP、客户成功、数据、管理层与个人关系场景，议题跨度从业务增长到执行细节，整体输入较为全面。</li>
+                        <li class="summary-overview-item"><strong>聊天内容主轴：</strong>高频话题集中在三类：第一是“产品体验与转化”优化（如
+                            onboarding、首屏表达、深色信息层级）；第二是“流程效率与自动化”（知识沉淀、FAQ 自动应答、工具稳定性）；第三是“策略取舍与节奏管理”（季度方向、双轨推进、阶段复盘）。</li>
+                        <li class="summary-overview-item">
+                            <strong>价值观输出：</strong>对外持续传递“事实优先、结果导向、长期主义、边界清晰”的共识：先定义问题再给判断，先确认口径再给结论，涉及不确定或高风险内容时主动补充限制条件与人工确认节点。
+                        </li>
+                        <li class="summary-overview-item"><strong>回复核心模式：</strong>大部分回复遵循“先结论 -> 给依据 ->
+                            给下一步动作”的结构，并尽量把建议落到可执行层（指标口径、A/B 方案、负责人、节奏拆分、触发条件），减少泛建议与空泛讨论。</li>
+                        <li class="summary-overview-item"><strong>决策与方法倾向：</strong>明显偏向“双路径对比 + 风险兜底 +
+                            小步快跑验证”：先给至少两种可行路线，再说明适用边界与代价，优先推进低风险高反馈方案，并通过周度复盘修正方向。</li>
+                    </ul>
+                </div>
             </div>
-            <div class="daily-summary-grid">
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">林楠（产品）</div>
-                        <div class="summary-time">09:10</div>
+            
+            <div class="summary-split-layout" style="display: flex; gap: 24px; height: 620px; margin-top: 24px; border-top: 1px solid #eee; padding-top: 24px;">
+                <!-- Left List -->
+                <div class="chat-history-list" style="width: 320px; overflow-y: auto; padding-right: 10px; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="chat-list-item active" onclick="openChatModal(this, '宋祁')" style="cursor: pointer; padding: 12px; border: 1px solid #7A5CFF; border-radius: 8px; background: #F5F3FF; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">宋祁</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">18:34</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">聊到想用 AI 帮忙做旅行计划，担心行程太紧张。</div>
                     </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>想把新版本 onboarding 流程压缩到 3 步，担心转化下滑。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>建议先做 A/B，对“引导完整度 vs 首次激活率”设双指标，保留兜底入口。</div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '姚序')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">姚序</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">16:08</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">关心下季度是否押注“企业分身协作”还是“个人效率助手”。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '沈奕')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">沈奕</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">15:11</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">讨论“有效对话”指标定义，口径在团队内不一致。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '唐禾')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">唐禾</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">14:02</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">客户反馈回复慢，想把 FAQ 自动回复接入会话机器人。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '高宁')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">高宁</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">13:15</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">问新人培养中，如何用数字分身减少重复答疑成本。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '王岚')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">王岚</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">11:26</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">希望做“AI 周报”栏目，问是否该先追热点还是先做稳定栏目框架。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '许澄')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">许澄</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">10:57</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">讨论深色模式下信息层级不清，尤其是卡片标题与正文对比。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '陈野')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">陈野</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">10:18</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">咨询 Agent 工作流里工具调用超时怎么降频重试。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '周予')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">周予</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">09:42</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">问活动页跳失高，是否是文案问题还是入口人群不准。</div>
+                    </div>
+                    <div class="chat-list-item" onclick="openChatModal(this, '林楠')" style="cursor: pointer; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s;">
+                        <div class="chat-list-info" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <div class="chat-list-name" style="font-weight: 600;">林楠</div>
+                            <div class="chat-list-time" style="color: #999; font-size: 0.8rem;">09:10</div>
+                        </div>
+                        <div class="chat-list-preview" style="color: #666; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">想把新版本 onboarding 流程压缩到 3 步，担心转化下滑。</div>
+                    </div>
                 </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">周予（运营）</div>
-                        <div class="summary-time">09:42</div>
+
+                <!-- Right Chat -->
+                <div class="chat-box" style="flex: 1; display: flex; flex-direction: column; background: #fafafa; border-radius: 12px; border: 1px solid #eee; overflow: hidden;">
+                    <div class="chat-header" style="padding: 16px 24px; background: white; border-bottom: 1px solid #eee;">
+                        <h3 id="chatModalTitle" style="margin: 0; font-size: 1.1rem; font-weight: 800;">与 宋祁 的对话</h3>
                     </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>问活动页跳失高，是否是文案问题还是入口人群不准。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>先拆来源渠道与落地页首屏热区，优先改首屏价值句和 CTA 位置再看数据。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">陈野（研发）</div>
-                        <div class="summary-time">10:18</div>
+                    <div class="chat-area" id="chatModalBody" style="flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--color-bg, #fcfcfc);">
+                        <!-- Messages will be injected here -->
                     </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>咨询 Agent 工作流里工具调用超时怎么降频重试。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>推荐指数退避 + 熔断窗口，并把高失败工具降级到“可选路径”。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">许澄（设计）</div>
-                        <div class="summary-time">10:57</div>
+                    <div class="chat-input-wrapper" style="padding: 16px 24px; background: white; border-top: 1px solid #eee;">
+                        <div class="input-box" style="display: flex; align-items: center; background: #F8F9FA; border: 2px solid transparent; border-radius: 20px; padding: 8px 12px 8px 20px;">
+                            <input type="text" placeholder="回复... (数字专家可在此介入)" style="flex: 1; background: none; border: none; outline: none; font-size: 0.95rem; color: #333;">
+                            <button class="btn btn-primary" style="padding: 8px 20px; border-radius: 14px; font-weight: 600;">发送</button>
+                        </div>
                     </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>讨论深色模式下信息层级不清，尤其是卡片标题与正文对比。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>给了三级字色规范与边框透明度区间，建议先统一 token 再批量替换。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">王岚（市场）</div>
-                        <div class="summary-time">11:26</div>
-                    </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>希望做“AI 周报”栏目，问是否该先追热点还是先做稳定栏目框架。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>先搭固定栏目骨架，再在其中插热点模块，避免产能波动导致断更。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">高宁（HRBP）</div>
-                        <div class="summary-time">13:15</div>
-                    </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>问新人培养中，如何用数字分身减少重复答疑成本。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>建议按“制度 / 流程 / 常见误区”三层建知识模板，并设置每周纠偏更新。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">唐禾（客户成功）</div>
-                        <div class="summary-time">14:02</div>
-                    </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>客户反馈回复慢，想把 FAQ 自动回复接入会话机器人。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>先把高频 20 问做标准答案，并加“人工接管触发词”避免误答扩大。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">沈奕（数据）</div>
-                        <div class="summary-time">15:11</div>
-                    </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>讨论“有效对话”指标定义，口径在团队内不一致。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>给出统一口径：完成目标动作 + 用户正向反馈，建议分场景埋点。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">姚序（创始人）</div>
-                        <div class="summary-time">16:08</div>
-                    </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>关心下季度是否押注“企业分身协作”还是“个人效率助手”。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>建议双轨：企业侧做 2 个标杆场景，个人侧维持增长盘，月底复盘再加码。</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-head">
-                        <div class="summary-name">宋祁（朋友）</div>
-                        <div class="summary-time">18:34</div>
-                    </div>
-                    <div class="summary-line"><strong>Ta 聊了什么：</strong>聊到想用 AI 帮忙做旅行计划，担心行程太紧张。</div>
-                    <div class="summary-line"><strong>我主要回答：</strong>按“每天一个主目标 + 一个弹性备选”规划，保留 30% 空白时间给临时体验。</div>
                 </div>
             </div>
         </div>
@@ -1579,6 +1781,90 @@
             twin: ['user.md']
         };
 
+        const chatData = {
+            '林楠': [
+                { role: 'user', text: '想把新版本 onboarding 流程压缩到 3 步，担心转化下滑。' },
+                { role: 'ai', text: '建议先做 A/B，对“引导完整度 vs 首次激活率”设双指标，保留兜底入口。' },
+                { role: 'user', text: '兜底入口放在哪里比较好？' },
+                { role: 'ai', text: '可以放在首页右上角或者个人中心，用“新手引导”或“帮助”作为文案。' }
+            ],
+            '周予': [
+                { role: 'user', text: '问活动页跳失高，是否是文案问题还是入口人群不准。' },
+                { role: 'ai', text: '先拆来源渠道与落地页首屏热区，优先改首屏价值句和 CTA 位置再看数据。' }
+            ],
+            '陈野': [
+                { role: 'user', text: '咨询 Agent 工作流里工具调用超时怎么降频重试。' },
+                { role: 'ai', text: '推荐指数退避 + 熔断窗口，并把高失败工具降级到“可选路径”。' }
+            ],
+            '许澄': [
+                { role: 'user', text: '讨论深色模式下信息层级不清，尤其是卡片标题与正文对比。' },
+                { role: 'ai', text: '给了三级字色规范与边框透明度区间，建议先统一 token 再批量替换。' }
+            ],
+            '王岚': [
+                { role: 'user', text: '希望做“AI 周报”栏目，问是否该先追热点还是先做稳定栏目框架。' },
+                { role: 'ai', text: '先搭固定栏目骨架，再在其中插热点模块，避免产能波动导致断更。' }
+            ],
+            '高宁': [
+                { role: 'user', text: '问新人培养中，如何用数字分身减少重复答疑成本。' },
+                { role: 'ai', text: '建议按“制度 / 流程 / 常见误区”三层建知识模板，并设置每周纠偏更新。' }
+            ],
+            '唐禾': [
+                { role: 'user', text: '客户反馈回复慢，想把 FAQ 自动回复接入会话机器人。' },
+                { role: 'ai', text: '先把高频 20 问做标准答案，并加“人工接管触发词”避免误答扩大。' }
+            ],
+            '沈奕': [
+                { role: 'user', text: '讨论“有效对话”指标定义，口径在团队内不一致。' },
+                { role: 'ai', text: '给出统一口径：完成目标动作 + 用户正向反馈，建议分场景埋点。' }
+            ],
+            '姚序': [
+                { role: 'user', text: '关心下季度是否押注“企业分身协作”还是“个人效率助手”。' },
+                { role: 'ai', text: '建议双轨：企业侧做 2 个标杆场景，个人侧维持增长盘，月底复盘再加码。' }
+            ],
+            '宋祁': [
+                { role: 'user', text: '聊到想用 AI 帮忙做旅行计划，担心行程太紧张。' },
+                { role: 'ai', text: '按“每天一个主目标 + 一个弹性备选”规划，保留 30% 空白时间给临时体验。' }
+            ]
+        };
+
+        function openChatModal(element, name) {
+            const data = chatData[name] || chatData['林楠'];
+            document.getElementById('chatModalTitle').innerText = `与 ${name} 的对话`;
+            const body = document.getElementById('chatModalBody');
+            body.innerHTML = '';
+            data.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = `chat-bubble ${msg.role}`;
+                bubble.innerText = msg.text;
+                body.appendChild(bubble);
+            });
+            
+            if (element) {
+                document.querySelectorAll('.chat-list-item').forEach(el => {
+                    el.style.backgroundColor = '#fff';
+                    el.style.borderColor = '#eee';
+                });
+                element.style.backgroundColor = '#F5F3FF';
+                element.style.borderColor = '#7A5CFF';
+            }
+        }
+
+        setTimeout(() => {
+            const firstItem = document.querySelector('.chat-list-item');
+            if (firstItem) openChatModal(firstItem, '宋祁');
+        }, 50);
+
+        function toggleSummaryOverview() {
+            const content = document.getElementById('summaryOverviewContent');
+            const icon = document.getElementById('summaryToggleIcon');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+
         mainTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 if (tab.style.display === 'none') return;
@@ -1672,7 +1958,6 @@
         function applyPersonaMode(mode) {
             currentPersonaMode = mode;
             const isTwin = mode === 'twin';
-            document.body.classList.toggle('chamber-bg', isTwin);
             document.body.classList.toggle('twin-mode', isTwin);
 
             modeButtons.forEach(btn => {
@@ -1963,6 +2248,99 @@
                 }, 300);
             }
         }
+
+        function setSegmentActive(btn) {
+            const control = btn.closest('.date-segment-control');
+            const btns = control.querySelectorAll('.segment-btn');
+            btns.forEach(b => {
+                b.classList.remove('active');
+                b.style.background = 'transparent';
+                b.style.boxShadow = 'none';
+                b.style.color = '#666';
+                b.style.fontWeight = '500';
+            });
+            
+            btn.classList.add('active');
+            btn.style.background = '#fff';
+            btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+            btn.style.color = 'var(--color-twin, #7A5CFF)';
+            btn.style.fontWeight = '600';
+        }
+
+        function selectSegment(label, element) {
+            setSegmentActive(element);
+            document.getElementById('customDateLabel').textContent = '自定义';
+            closeCustomDatePicker();
+            
+            // In a real app, trigger data filtering here based on 'label'
+        }
+
+        function toggleCustomDatePicker() {
+            const panel = document.getElementById('customDatePickerPanel');
+            const customBtn = document.querySelector('.custom-date-btn');
+            
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+                // Only style as active while panel is open, if not already active
+                if (!customBtn.classList.contains('active')) {
+                    customBtn.style.color = 'var(--color-twin, #7A5CFF)';
+                }
+            } else {
+                closeCustomDatePicker();
+            }
+        }
+
+        function closeCustomDatePicker() {
+            const panel = document.getElementById('customDatePickerPanel');
+            const customBtn = document.querySelector('.custom-date-btn');
+            panel.style.display = 'none';
+            if (!customBtn.classList.contains('active')) {
+                customBtn.style.color = '#666';
+            }
+        }
+
+        function applyCustomDate() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            if (!start && !end) {
+                alert('请至少选择一个日期');
+                return;
+            }
+            
+            let label = '自定义';
+            if (start && end) {
+                // If both selected, format as MM/DD - MM/DD
+                const s = new Date(start);
+                const e = new Date(end);
+                label = `${s.getMonth()+1}/${s.getDate()} - ${e.getMonth()+1}/${e.getDate()}`;
+            } else if (start) {
+                const s = new Date(start);
+                label = `${s.getMonth()+1}/${s.getDate()} 起`;
+            } else if (end) {
+                const e = new Date(end);
+                label = `至 ${e.getMonth()+1}/${e.getDate()}`;
+            }
+            
+            const customBtn = document.querySelector('.custom-date-btn');
+            document.getElementById('customDateLabel').textContent = label;
+            
+            setSegmentActive(customBtn);
+            closeCustomDatePicker();
+            
+            // In a real app, trigger data filtering here
+        }
+
+        // Close panel when clicking outside
+        document.addEventListener('click', function(event) {
+            const panel = document.getElementById('customDatePickerPanel');
+            if (panel && panel.style.display === 'block') {
+                const wrapper = document.querySelector('.custom-date-wrapper');
+                if (!wrapper.contains(event.target)) {
+                    closeCustomDatePicker();
+                }
+            }
+        });
 
         applyPersonaMode('agent');
     </script>

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="layout-fixed">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家广场 | 广场</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .twin-theme .sidebar-left {
+            background: #FAF9FF;
+            border-right: 2px solid #E9E6FF;
+        }
+
+        .dashboard-layout {
+            grid-template-columns: 320px 1fr !important;
+        }
+
+        /* --- 左侧历史对话列表 --- */
+        .conversation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .conv-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .conv-item:hover {
+            border-color: #E9E6FF;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(157, 133, 255, 0.08);
+        }
+
+        .conv-item.active {
+            background: #F5F3FF;
+            border-color: var(--color-twin);
+            box-shadow: 0 4px 12px rgba(157, 133, 255, 0.15);
+        }
+
+        .conv-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .bg-1 {
+            background: linear-gradient(135deg, #FF7F66 0%, #E66A52 100%);
+        }
+
+        .bg-2 {
+            background: linear-gradient(135deg, #48C0B9 0%, #3AA19B 100%);
+        }
+
+        .bg-3 {
+            background: linear-gradient(135deg, #9D85FF 0%, #7A5CFF 100%);
+        }
+
+        .conv-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conv-name {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .conv-preview {
+            font-size: 0.75rem;
+            color: var(--color-text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conv-time {
+            font-size: 0.65rem;
+            color: #AAA;
+            margin-top: 4px;
+        }
+
+        /* --- 专家广场卡片网格 --- */
+        .expert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            padding: 24px 40px;
+            overflow-y: auto;
+            flex: 1;
+            align-content: start;
+        }
+
+        .expert-card {
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .expert-card:hover {
+            border-color: var(--color-twin);
+            transform: translateY(-6px);
+            box-shadow: 0 15px 35px rgba(157, 133, 255, 0.12);
+        }
+
+        .expert-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .expert-avatar-wrapper {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(157, 133, 255, 0.15);
+            border: 2px solid white;
+        }
+
+        .expert-icon {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #F5F3FF 0%, #E9E6FF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            padding-bottom: 4px;
+            /* Shift icon up */
+        }
+
+        .ai-badge {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(122, 92, 255, 0.95);
+            color: white;
+            font-size: 0.45rem;
+            font-weight: 800;
+            padding: 1px 0;
+            text-align: center;
+            letter-spacing: 0;
+            line-height: 1.2;
+            backdrop-filter: blur(2px);
+            white-space: nowrap;
+        }
+
+        .expert-name-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .expert-title-sub {
+            font-size: 0.75rem;
+            color: var(--color-text-light);
+            font-weight: 600;
+        }
+
+        .expert-labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .expert-tag {
+            padding: 4px 12px;
+            background: #F5F3FF;
+            color: var(--color-twin-dark);
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+
+        .expert-tag.institution {
+            background: #E0F5F4;
+            color: var(--color-secondary-dark);
+        }
+
+        .expert-desc {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        /* --- 顶部过滤区域 --- */
+        .square-header {
+            padding: 25px 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #F0F0F0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #888;
+            min-width: 40px;
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 16px;
+            border: 2px solid transparent;
+            background: #F5F5F5;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #E9E6FF;
+            color: var(--color-twin);
+        }
+
+        .filter-btn.active {
+            background: var(--color-twin);
+            color: white;
+            box-shadow: 0 4px 10px rgba(157, 133, 255, 0.2);
+        }
+
+        /* --- 自定义下拉菜单 --- */
+        .custom-dropdown {
+            position: relative;
+            font-size: 0.9rem;
+            color: #666;
+            min-width: 140px;
+        }
+
+        .dropdown-selected {
+            background: #F8F9FA;
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .dropdown-selected:hover {
+            border-color: #E9E6FF;
+            background: white;
+        }
+
+        .dropdown-selected::after {
+            content: "";
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 8px;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid #888;
+            transition: transform 0.2s;
+        }
+
+        .custom-dropdown.open .dropdown-selected::after {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+        }
+
+        .custom-dropdown.open .dropdown-menu {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .dropdown-item:hover {
+            background: #F5F3FF;
+            color: var(--color-twin);
+        }
+
+        .dropdown-search-wrapper {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--color-border);
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 2;
+        }
+
+        .dropdown-search {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #E5E5E5;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .dropdown-search:focus {
+            border-color: var(--color-twin);
+            box-shadow: 0 0 0 2px rgba(157, 133, 255, 0.1);
+        }
+
+        .dropdown-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        /* --- 聊天区域 --- */
+        .chat-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background: white;
+        }
+
+        .chat-header {
+            padding: 15px 40px;
+            background: white;
+            border-bottom: 1px solid #F0F0F0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            z-index: 5;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: white;
+            border: 2px solid var(--color-border);
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--color-twin);
+            color: var(--color-twin);
+            background: #F5F3FF;
+            transform: translateX(-2px);
+        }
+
+        .chat-expert-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: var(--color-bg);
+        }
+
+        .chat-input-wrapper-twin {
+            padding: 24px 40px 30px;
+            background: white;
+            border-top: 1px solid #F0F0F0;
+        }
+
+        .input-box-twin {
+            background: #F8F9FA;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            padding: 10px 10px 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .input-box-twin:focus-within {
+            background: white;
+            border-color: var(--color-twin);
+            box-shadow: 0 0 0 4px rgba(157, 133, 255, 0.1);
+        }
+
+        .input-box-twin input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            font-family: inherit;
+            color: var(--color-text);
+        }
+    </style>
+</head>
+
+<body class="twin-theme">
+    <!-- Top Nav -->
+    <nav class="top-nav">
+        <div class="logo">SoulAgent</div>
+        <nav class="nav-links">
+            <a href="agent.html" class="nav-link">智能伙伴</a>
+            <a href="archives.html" class="nav-link">档案室</a>
+            <a href="twin.html" class="nav-link active twin-link">专家广场</a>
+            <a href="metaverse.html" class="nav-link twin-link">数字世界</a>
+        </nav>
+        <div class="status-pill">系统在线</div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="system-panel sidebar-left">
+            <h2
+                style="font-size: 1.25rem; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+                历史对话
+                <!--
+                <button onclick="showSquare()" class="back-btn" style="padding: 6px 12px; font-size:0.75rem; background: var(--color-twin); color: white; border:none;">
+                    + 新对话
+                </button>
+                -->
+            </h2>
+            <div class="search-bar-wrapper" style="margin-bottom: 15px;">
+                <input type="text" class="search-bar-v2" placeholder="搜索对话记录..."
+                    style="padding: 12px 16px; font-size: 0.85rem; border-radius: 12px; border-color: #E5E5E5;">
+            </div>
+
+            <div class="conversation-list">
+                <div class="conv-item" onclick="showChat('张建国', '👨‍🏫', '清华大学 · 计算机系教授')">
+                    <div class="conv-avatar bg-1">张</div>
+                    <div class="conv-info">
+                        <div class="conv-name">张建国</div>
+                        <div class="conv-preview">关于机械臂的Sim2Real训练有什么建议吗？</div>
+                        <div class="conv-time">今天 10:30</div>
+                    </div>
+                </div>
+                <div class="conv-item" onclick="showChat('李雪娇', '👩‍🔬', '智源研究院 · 核心架构师')">
+                    <div class="conv-avatar bg-2">李</div>
+                    <div class="conv-info">
+                        <div class="conv-name">李雪娇</div>
+                        <div class="conv-preview">Sora的扩散Transformer架构是否可以用于3D生成？</div>
+                        <div class="conv-time">昨天 16:45</div>
+                    </div>
+                </div>
+                <div class="conv-item" onclick="showChat('王博文', '👨‍💻', '北京大学 · 博士后研究员')">
+                    <div class="conv-avatar bg-3">王</div>
+                    <div class="conv-info">
+                        <div class="conv-name">王博文</div>
+                        <div class="conv-preview">如何解决长上下文的注意力衰减问题？感谢！</div>
+                        <div class="conv-time">周一 09:15</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-chat" style="position: relative;">
+            <!-- Square View -->
+            <div id="square-view" style="display: flex; flex-direction: column; height: 100%; background: white;">
+                <div class="square-header">
+                    <div>
+                        <p style="font-size: 0.95rem; color: #777;">与全球顶尖专家的数字分身对话，获取权威的专业领域解答。</p>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 15px; align-items: center; width: 100%;">
+                        <div class="custom-dropdown" id="inst-dropdown">
+                            <div class="dropdown-selected" onclick="toggleDropdown('inst-dropdown')">全部机构</div>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-search-wrapper">
+                                    <input type="text" class="dropdown-search" placeholder="搜索机构..."
+                                        onclick="event.stopPropagation()" oninput="filterDropdown(this, 'inst')">
+                                </div>
+                                <div class="dropdown-list">
+                                    <div class="dropdown-item" onclick="selectFilter('inst', '全部')">全部机构</div>
+                                    <div class="dropdown-item" onclick="selectFilter('inst', '智源研究院')">智源研究院</div>
+                                    <div class="dropdown-item" onclick="selectFilter('inst', '清华大学')">清华大学</div>
+                                    <div class="dropdown-item" onclick="selectFilter('inst', '北京大学')">北京大学</div>
+                                    <div class="dropdown-item" onclick="selectFilter('inst', '斯坦福大学')">斯坦福大学</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="custom-dropdown" id="domain-dropdown">
+                            <div class="dropdown-selected" onclick="toggleDropdown('domain-dropdown')">全部领域</div>
+                            <div class="dropdown-menu">
+                                <div class="dropdown-search-wrapper">
+                                    <input type="text" class="dropdown-search" placeholder="搜索领域..."
+                                        onclick="event.stopPropagation()" oninput="filterDropdown(this, 'domain')">
+                                </div>
+                                <div class="dropdown-list">
+                                    <div class="dropdown-item" onclick="selectFilter('domain', '全部')">全部领域</div>
+                                    <div class="dropdown-item" onclick="selectFilter('domain', '具身智能')">具身智能</div>
+                                    <div class="dropdown-item" onclick="selectFilter('domain', '世界模型')">世界模型</div>
+                                    <div class="dropdown-item" onclick="selectFilter('domain', '大语言模型')">大语言模型</div>
+                                    <div class="dropdown-item" onclick="selectFilter('domain', '多模态')">多模态</div>
+                                    <div class="dropdown-item" onclick="selectFilter('domain', 'AI安全')">AI安全</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="search-bar-wrapper" style="flex: 1; margin: 0; max-width: none;">
+                            <input type="text" id="expert-search" class="search-bar-v2" placeholder="搜索专家名称、领域或机构..."
+                                style="border-radius: 12px; padding: 12px 16px; font-size: 0.9rem;"
+                                oninput="applyFilters()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expert-grid">
+                    <!-- Cards -->
+                    <div class="expert-card" onclick="showChat('张建国', '👨‍🏫', '清华大学 · 计算机系教授')">
+                        <div class="expert-header">
+                            <div class="expert-avatar-wrapper">
+                                <div class="expert-icon">👨‍🏫</div>
+                                <span class="ai-badge">AI分身</span>
+                            </div>
+                            <div>
+                                <div class="expert-name-title">张建国</div>
+                                <div class="expert-title-sub">清华大学 · 计算机系教授</div>
+                            </div>
+                        </div>
+                        <div class="expert-labels">
+                            <span class="expert-tag">具身智能</span>
+                            <span class="expert-tag">强化学习</span>
+                        </div>
+                        <p class="expert-desc">长期专注于具身智能与机器人学习研究。可解答相关领域的前沿理论问题，以及Sim2Real迁移等工程技术细节。</p>
+                        <button class="btn btn-twin" style="width:100%; padding: 12px;">与ta交流</button>
+                    </div>
+
+                    <div class="expert-card" onclick="showChat('李雪娇', '👩‍🔬', '智源研究院 · 核心架构师')">
+                        <div class="expert-header">
+                            <div class="expert-avatar-wrapper">
+                                <div class="expert-icon">👩‍🔬</div>
+                                <span class="ai-badge">AI分身</span>
+                            </div>
+                            <div>
+                                <div class="expert-name-title">李雪娇</div>
+                                <div class="expert-title-sub">智源研究院 · 核心架构师</div>
+                            </div>
+                        </div>
+                        <div class="expert-labels">
+                            <span class="expert-tag">世界模型</span>
+                            <span class="expert-tag">视频生成</span>
+                        </div>
+                        <p class="expert-desc">主导开发新一代视频生成与物理世界模型。对Diffusion与Transformer架构结合有深刻见解与丰富的实战经验。</p>
+                        <button class="btn btn-twin" style="width:100%; padding: 12px;">与ta交流</button>
+                    </div>
+
+                    <div class="expert-card" onclick="showChat('王博文', '👨‍💻', '北京大学 · 博士后研究员')">
+                        <div class="expert-header">
+                            <div class="expert-avatar-wrapper">
+                                <div class="expert-icon">👨‍💻</div>
+                                <span class="ai-badge">AI分身</span>
+                            </div>
+                            <div>
+                                <div class="expert-name-title">王博文</div>
+                                <div class="expert-title-sub">北京大学 · 博士后研究员</div>
+                            </div>
+                        </div>
+                        <div class="expert-labels">
+                            <span class="expert-tag">大语言模型</span>
+                            <span class="expert-tag">对齐技术</span>
+                        </div>
+                        <p class="expert-desc">专注大语言模型对齐(Alignment)、RLHF以及长上下文推理技术。可深入交流预训练策略与高效微调(PEFT)方法。</p>
+                        <button class="btn btn-twin" style="width:100%; padding: 12px;">与ta交流</button>
+                    </div>
+
+                    <div class="expert-card" onclick="showChat('吴长青', '🧓', '清华大学 · 首席科学家')">
+                        <div class="expert-header">
+                            <div class="expert-avatar-wrapper">
+                                <div class="expert-icon">🧓</div>
+                                <span class="ai-badge">AI分身</span>
+                            </div>
+                            <div>
+                                <div class="expert-name-title">吴长青</div>
+                                <div class="expert-title-sub">清华大学 · 首席科学家</div>
+                            </div>
+                        </div>
+                        <div class="expert-labels">
+                            <span class="expert-tag">AI安全</span>
+                            <span class="expert-tag">伦理规范</span>
+                        </div>
+                        <p class="expert-desc">长期从事人工智能安全与伦理研究，参与制定多项AI安全标准。可探讨模型对抗攻击、可解释性与价值观对齐等宏观与技术问题。</p>
+                        <button class="btn btn-twin" style="width:100%; padding: 12px;">与ta交流</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat View -->
+            <div id="chat-view" class="chat-view">
+                <div class="chat-header">
+                    <div class="chat-expert-info">
+                        <div class="expert-avatar-wrapper">
+                            <div id="chat-header-icon" class="expert-icon">👨‍🏫</div>
+                            <span class="ai-badge">AI分身</span>
+                        </div>
+                        <div style="margin-left: 10px;">
+                            <h3 id="current-expert-name" style="font-size: 1.1rem; margin: 0; font-weight: 800;">专家名称
+                            </h3>
+                            <div id="current-expert-title" style="font-size: 0.75rem; color: #888; font-weight: 600;">
+                                领域专家</div>
+                        </div>
+                    </div>
+                    <button class="back-btn" onclick="showSquare()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7" />
+                        </svg>
+                        返回专家广场
+                    </button>
+                </div>
+
+                <div class="chat-area">
+                    <div
+                        style="text-align: center; color: #AAA; font-size: 0.8rem; margin-bottom: 10px; font-weight: 600;">
+                        —— 已连接到 <span style="color: var(--color-twin); font-weight: 800;">AI
+                            专家广场</span>，所有回答由数字大脑基于专家知识库生成 ——
+                    </div>
+
+                    <div class="chat-msg">
+                        <div class="bubble lobster" style="border-color: var(--color-twin); max-width: 600px;">
+                            你好！我是相关的领域专家。请问有什么我可以帮你的吗？无论是前沿理论探讨还是具体的工程实践，我都可以为你解答。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-wrapper-twin">
+                    <div class="input-box-twin">
+                        <input type="text" placeholder="向专家提问... (按 Enter 发送)">
+                        <button class="btn btn-twin"
+                            style="padding: 10px 24px; border-radius: 14px; font-size: 0.9rem;">
+                            发送
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function showChat(name, icon, title) {
+            // Show Chat View
+            document.getElementById('square-view').style.display = 'none';
+            document.getElementById('chat-view').style.display = 'flex';
+
+            // Update Header Info
+            document.getElementById('current-expert-name').innerText = name;
+            document.getElementById('chat-header-icon').innerText = icon;
+            document.getElementById('current-expert-title').innerText = title;
+
+            // Update Active State in Sidebar
+            document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+            // Highlight matching item
+            document.querySelectorAll('.conv-item').forEach(el => {
+                const convName = el.querySelector('.conv-name').innerText;
+                if (convName === name) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        function showSquare() {
+            document.getElementById('square-view').style.display = 'flex';
+            document.getElementById('chat-view').style.display = 'none';
+
+            // Clear Active State
+            document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+        }
+
+        // --- 过滤与搜索逻辑 ---
+        let currentInst = '全部';
+        let currentDomain = '全部';
+
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            const isOpen = dropdown.classList.contains('open');
+
+            document.querySelectorAll('.custom-dropdown').forEach(d => {
+                d.classList.remove('open');
+            });
+
+            if (!isOpen) {
+                dropdown.classList.add('open');
+                // Focus the search input when opened
+                const searchInput = dropdown.querySelector('.dropdown-search');
+                if (searchInput) {
+                    searchInput.value = ''; // Clear search when opening
+                    filterDropdown(searchInput, id === 'inst-dropdown' ? 'inst' : 'domain');
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            }
+        }
+
+        function filterDropdown(input, type) {
+            const query = input.value.toLowerCase();
+            const items = input.closest('.dropdown-menu').querySelectorAll('.dropdown-item');
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        }
+
+        function selectFilter(type, value) {
+            if (type === 'inst') {
+                currentInst = value;
+                document.querySelector('#inst-dropdown .dropdown-selected').innerText = value === '全部' ? '全部机构' : value;
+                document.getElementById('inst-dropdown').classList.remove('open');
+            } else {
+                currentDomain = value;
+                document.querySelector('#domain-dropdown .dropdown-selected').innerText = value === '全部' ? '全部领域' : value;
+                document.getElementById('domain-dropdown').classList.remove('open');
+            }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = (document.getElementById('expert-search').value || '').toLowerCase();
+            document.querySelectorAll('.expert-card').forEach(card => {
+                const subTitle = card.querySelector('.expert-title-sub').innerText;
+                const labels = Array.from(card.querySelectorAll('.expert-tag')).map(el => el.innerText);
+                const desc = card.querySelector('.expert-desc').innerText;
+                const name = card.querySelector('.expert-name-title').innerText;
+                const fullText = (subTitle + ' ' + labels.join(' ') + ' ' + desc + ' ' + name).toLowerCase();
+
+                let matchInst = currentInst === '全部' || subTitle.includes(currentInst) || labels.includes(currentInst);
+                let matchDomain = currentDomain === '全部' || labels.includes(currentDomain);
+                let matchSearch = !query || fullText.includes(query);
+
+                if (matchInst && matchDomain && matchSearch) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('open'));
+            }
+        });
+    </script>
+</body>
+
+</html>
