@@ -14,6 +14,59 @@
             max-width: 800px;
             margin: 0 auto;
             background-color: #FDFBFA;
+            scroll-behavior: smooth;
+        }
+
+        /* --- 侧边目录 --- */
+        .side-toc {
+            position: fixed;
+            right: calc(50% + 440px);
+            top: 150px;
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-right: 20px;
+            border-right: 2px solid #F3F4F6;
+            text-align: right;
+            z-index: 100;
+        }
+
+        @media (max-width: 1200px) {
+            .side-toc {
+                display: none;
+            }
+        }
+
+        .toc-item {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #9CA3AF;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .toc-item:hover {
+            color: var(--color-primary);
+        }
+
+        .toc-item.active {
+            color: var(--color-primary);
+            font-weight: 800;
+        }
+
+        .toc-item.active::before {
+            content: '';
+            position: absolute;
+            right: -22px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 16px;
+            background: var(--color-primary);
+            border-radius: 2px;
         }
 
         @keyframes fade-in {
@@ -244,10 +297,18 @@
         </div>
     </div>
 
+    <!-- 侧边目录 -->
+    <div class="side-toc">
+        <a href="#section-tokens" class="toc-item active">01 Token 消耗</a>
+        <a href="#section-security" class="toc-item">02 安全监控</a>
+        <a href="#section-memory-skill" class="toc-item">03 记忆与技能</a>
+        <a href="#section-avatar-collaboration" class="toc-item">05 分身协作</a>
+    </div>
+
     <div class="component-section">
         <div class="section-header">
             <div class="status-pill" style="background:#FFF1F2; border-color:#FF7F66; color:#FF7F66;">01</div>
-            <h2>Token 消耗情况</h2>
+            <h2 id="section-tokens">Token 消耗情况</h2>
         </div>
 
         <div class="style-container">
@@ -299,7 +360,7 @@
     <div class="component-section">
         <div class="section-header">
             <div class="status-pill" style="background:#ECFDF5; border-color:#10B981; color:#10B981;">02</div>
-            <h2>安全监控</h2>
+            <h2 id="section-security">安全监控</h2>
         </div>
 
         <div class="style-container" style="gap: 40px;">
@@ -399,7 +460,7 @@
     <div class="component-section">
         <div class="section-header">
             <div class="status-pill" style="background:#EEF2FF; border-color:#6366F1; color:#6366F1;">03</div>
-            <h2>手动保存记忆 / 生成 Skill</h2>
+            <h2 id="section-memory-skill">手动保存记忆 / 生成 Skill</h2>
         </div>
 
         <div class="style-container">
@@ -483,7 +544,7 @@
     <div class="component-section">
         <div class="section-header">
             <div class="status-pill" style="background:#EEF2FF; border-color:#6366F1; color:#6366F1;">05</div>
-            <h2>数字分身协作</h2>
+            <h2 id="section-avatar-collaboration">数字分身协作</h2>
         </div>
 
         <div class="style-container" style="gap: 40px;">
@@ -615,6 +676,27 @@
         // 点击空白处关闭菜单
         document.addEventListener('click', () => {
             document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+        });
+
+        // TOC ScrollSpy
+        const sections = document.querySelectorAll('h2[id]');
+        const tocItems = document.querySelectorAll('.toc-item');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (window.pageYOffset >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === `#${current}`) {
+                    item.classList.add('active');
+                }
+            });
         });
     </script>
 
