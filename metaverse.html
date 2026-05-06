@@ -663,6 +663,65 @@
             z-index: 100;
         }
 
+        .intro-input-container {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 50px;
+            padding: 0 40px;
+            animation: fade-in-up 1s ease 0.6s both;
+        }
+
+        .intro-glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 12px 12px 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .intro-glass-input:focus-within {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .intro-glass-input input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 1.1rem;
+            font-family: inherit;
+        }
+
+        .intro-send-btn {
+            background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%);
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);
+        }
+
+        .intro-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(122, 92, 255, 0.6);
+        }
+
     </style>
 </head>
 <body class="twin-theme">
@@ -753,6 +812,16 @@
                     <div class="intro-recommendations" id="intro-recommendations-container">
                         <!-- Dynamic Chips -->
                     </div>
+                    <div class="intro-input-container">
+                        <div class="intro-glass-input">
+                            <input type="text" id="intro-chat-input" placeholder="输入你想聊的话题..." onkeydown="if(event.key==='Enter') startChatFromIntro()">
+                            <button class="intro-send-btn" onclick="startChatFromIntro()">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Chat View -->
@@ -777,9 +846,7 @@
                     </div>
                 
                     <div class="dark-chat-area" style="flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
-                        <div style="text-align: center; color: #A0AEC0; font-size: 0.8rem; margin-bottom: 10px;">
-                            —— 已连接至专家数字分身，回复内容由 AI 模型生成，不代表专家本人的真实意见与立场，亦不构成专业建议。 ——
-                        </div>
+
                         <div class="chat-msg" style="display: flex;">
                             <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                                 你好！我是相关的领域专家。请问有什么我可以帮你的吗？无论是前沿理论探讨还是具体的工程实践，我都可以为你解答。
@@ -792,10 +859,13 @@
                             <!-- Dynamic Chips -->
                         </div>
                         <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 10px 10px 10px 20px; display: flex; align-items: center; gap: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); transition: border-color 0.3s;">
-                            <input type="text" id="chat-input" placeholder="向专家提问... (按 Enter 发送)" style="flex: 1; background: none; border: none; outline: none; color: #fff; font-size: 1rem; font-family: inherit;">
+                            <input type="text" id="chat-input" placeholder="向专家的AI分身提问... (按 Enter 发送)" style="flex: 1; background: none; border: none; outline: none; color: #fff; font-size: 1rem; font-family: inherit;">
                             <button onclick="sendMessage()" style="background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%); color: white; border: none; padding: 10px 24px; border-radius: 14px; font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);">
                                 发送
                             </button>
+                        </div>
+                        <div style="text-align: center; color: #A0AEC0; font-size: 0.75rem; margin-top: 12px; opacity: 0.7;">
+                            —— 已连接至专家数字分身，回复内容由 AI 模型生成，不代表专家本人的真实意见与立场，亦不构成专业建议。 ——
                         </div>
                     </div>
                 </div>
@@ -1011,14 +1081,20 @@
             }, 1200);
         }
 
+        let currentIntroExpert = null;
+
         // Show Intro Interface
         function showIntro(expert) {
+            currentIntroExpert = expert;
             document.getElementById('dark-square-view').style.display = 'none';
             document.getElementById('dark-chat-view').style.display = 'none';
             const introView = document.getElementById('dark-intro-view');
             introView.style.display = 'flex';
             void introView.offsetWidth;
             introView.classList.add('fade-in');
+
+            // Reset Intro Input
+            document.getElementById('intro-chat-input').value = '';
 
             // Update Intro Content
             document.getElementById('intro-avatar-icon').innerText = expert.icon;
@@ -1054,17 +1130,24 @@
         }
 
         async function startChatFromIntro(expert, question) {
+            const exp = expert || currentIntroExpert;
+            if (!exp) return;
+
+            const input = document.getElementById('intro-chat-input');
+            const q = question || input.value.trim();
+            if (!q) return;
+
             const introView = document.getElementById('dark-intro-view');
             introView.style.opacity = '0';
             
             setTimeout(async () => {
                 introView.style.display = 'none';
-                showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                showChat(exp.name, exp.icon, exp.sub, exp.bg);
                 
                 // Wait for showChat to finish resetting
                 setTimeout(async () => {
                     // Send the initial question
-                    sendMessage(question);
+                    sendMessage(q);
                     
                     // Show typing indicator
                     const chatArea = document.querySelector('.dark-chat-area');
@@ -1145,9 +1228,6 @@
             }
 
             chatArea.innerHTML = `
-                <div style="text-align: center; color: #A0AEC0; font-size: 0.8rem; margin-bottom: 10px;">
-                    —— 已连接至专家数字分身，回复内容由 AI 模型生成，不代表专家本人的真实意见与立场，亦不构成专业建议。 ——
-                </div>
                 <div class="chat-msg" style="display: flex; flex-direction: column; align-items: flex-start;">
                     <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                         ${greeting}
