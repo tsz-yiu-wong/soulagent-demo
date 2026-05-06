@@ -117,6 +117,119 @@
             color: var(--color-primary);
         }
 
+        /* Premium Summary Stats & Cards */
+        .summary-stats-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-stat-card {
+            background: linear-gradient(to bottom right, #fff, #fafafa);
+            border: 1px solid rgba(122, 92, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--color-twin);
+            opacity: 0.8;
+        }
+
+        .summary-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(122, 92, 255, 0.08);
+            border-color: rgba(122, 92, 255, 0.2);
+        }
+
+        .stat-card-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--color-text);
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .stat-card-unit {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #bbb;
+        }
+
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .insight-card {
+            background: rgba(122, 92, 255, 0.02);
+            border: 1px solid rgba(122, 92, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .insight-card:hover {
+            background: #fff;
+            border-color: var(--color-twin);
+            box-shadow: 0 4px 12px rgba(122, 92, 255, 0.05);
+        }
+
+        .insight-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .insight-icon {
+            font-size: 1rem;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .insight-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--color-twin-dark);
+        }
+
+        .insight-body {
+            font-size: 0.88rem;
+            color: #666;
+            line-height: 1.6;
+        }
+
         .chat-list-item {
             background: #fff;
             border: 1px solid var(--color-border);
@@ -594,13 +707,14 @@
             width: 240px;
             background-color: rgba(33, 33, 33, 0.95);
             color: #fff;
-            text-align: left;
+            text-align: center;
             border-radius: var(--radius-md);
             padding: 12px;
             position: absolute;
             z-index: 1001;
             top: 150%;
-            right: 0;
+            left: 50%;
+            transform: translateX(-50%);
             opacity: 0;
             transition: all 0.3s;
             font-size: 11px;
@@ -615,7 +729,8 @@
             content: "";
             position: absolute;
             bottom: 100%;
-            right: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             border-width: 5px;
             border-style: solid;
             border-color: transparent transparent rgba(33, 33, 33, 0.95) transparent;
@@ -1179,20 +1294,71 @@
                         <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 </div>
-                <div id="summaryOverviewContent" style="display: block;">
-                    <ul class="summary-overview-list">
-                        <li class="summary-overview-item"><strong>对话对象覆盖：</strong>今日共与 10
-                            位对象交流，角色覆盖产品、运营、研发、设计、市场、HRBP、客户成功、数据、管理层与个人关系场景，议题跨度从业务增长到执行细节，整体输入较为全面。</li>
-                        <li class="summary-overview-item"><strong>聊天内容主轴：</strong>高频话题集中在三类：第一是“产品体验与转化”优化（如
-                            onboarding、首屏表达、深色信息层级）；第二是“流程效率与自动化”（知识沉淀、FAQ 自动应答、工具稳定性）；第三是“策略取舍与节奏管理”（季度方向、双轨推进、阶段复盘）。</li>
-                        <li class="summary-overview-item">
-                            <strong>价值观输出：</strong>对外持续传递“事实优先、结果导向、长期主义、边界清晰”的共识：先定义问题再给判断，先确认口径再给结论，涉及不确定或高风险内容时主动补充限制条件与人工确认节点。
-                        </li>
-                        <li class="summary-overview-item"><strong>回复核心模式：</strong>大部分回复遵循“先结论 -> 给依据 ->
-                            给下一步动作”的结构，并尽量把建议落到可执行层（指标口径、A/B 方案、负责人、节奏拆分、触发条件），减少泛建议与空泛讨论。</li>
-                        <li class="summary-overview-item"><strong>决策与方法倾向：</strong>明显偏向“双路径对比 + 风险兜底 +
-                            小步快跑验证”：先给至少两种可行路线，再说明适用边界与代价，优先推进低风险高反馈方案，并通过周度复盘修正方向。</li>
-                    </ul>
+                <div id="summaryOverviewContent" style="display: block; padding-top: 20px;">
+                    <!-- Stats Row -->
+                    <div class="summary-stats-row">
+                        <div class="summary-stat-card">
+                            <div class="stat-card-label">对话人数</div>
+                            <div class="stat-card-value">10 <span class="stat-card-unit">人</span></div>
+                        </div>
+                        <div class="summary-stat-card">
+                            <div class="stat-card-label">消息轮次</div>
+                            <div class="stat-card-value">84 <span class="stat-card-unit">轮</span></div>
+                        </div>
+                        <div class="summary-stat-card">
+                            <div class="stat-card-label">人均会话轮次</div>
+                            <div class="stat-card-value">8.4 <span class="stat-card-unit">轮/人</span></div>
+                        </div>
+                        <div class="summary-stat-card">
+                            <div class="stat-card-label" style="display: flex; align-items: center; gap: 4px;">
+                                节省沟通时长
+                                <span class="tooltip">
+                                    <span class="help-icon" style="font-family: var(--font-main); font-style: normal; font-weight: 800; width: 14px; height: 14px; border: 1.5px solid currentColor; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; opacity: 0.6; cursor: help; text-transform: none;">i</span>
+                                    <span class="tooltiptext" style="width: 150px; text-transform: none; font-weight: 500;">用户对话的总时长</span>
+                                </span>
+                            </div>
+                            <div class="stat-card-value">5.2 <span class="stat-card-unit">小时</span></div>
+                        </div>
+                        <div class="summary-stat-card">
+                            <div class="stat-card-label" style="display: flex; align-items: center; gap: 4px;">
+                                沟通满意度
+                                <span class="tooltip">
+                                    <span class="help-icon" style="font-family: var(--font-main); font-style: normal; font-weight: 800; width: 14px; height: 14px; border: 1.5px solid currentColor; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; opacity: 0.6; cursor: help; text-transform: none;">i</span>
+                                    <span class="tooltiptext" style="width: 180px; text-transform: none; font-weight: 500;">点赞数 / (点赞数 + 点踩数)</span>
+                                </span>
+                            </div>
+                            <div class="stat-card-value">98 <span class="stat-card-unit">%</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Insight Grid -->
+                    <div class="insight-grid">
+                        <div class="insight-card">
+                            <div class="insight-card-header">
+                                <div class="insight-icon">👥</div>
+                                <div class="insight-title">对象分析</div>
+                            </div>
+                            <div class="insight-body">学生群体为主，主要来自 CS/AI 方向；少部分为同行研究者咨询，关注方法论细节。</div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-card-header">
+                                <div class="insight-icon">🎯</div>
+                                <div class="insight-title">问题总结</div>
+                            </div>
+                            <div class="insight-body">对《SoulAgent: Agentic Intelligence》论文的核心方法解读、智能体协同技术的实际应用场景的问题较多。</div>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-card-header">
+                                <div class="insight-icon">⚡</div>
+                                <div class="insight-title">回复总结</div>
+                            </div>
+                            <div class="insight-body">
+                                <div style="margin-bottom: 4px;">• 高赞回复集中在论文解读类问题</div>
+                                <div style="margin-bottom: 4px;">• 关于“私有部署”的回复被踩 <strong>3</strong> 次，建议 review</div>
+                                <div>• 兜底拒答 <strong>8</strong> 次，主要涉及 ZZ 领域（超出边界）</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1784,7 +1950,7 @@
         const chatData = {
             '林楠': [
                 { role: 'user', text: '想把新版本 onboarding 流程压缩到 3 步，担心转化下滑。' },
-                { role: 'ai', text: '建议先做 A/B，对“引导完整度 vs 首次激活率”设双指标，保留兜底入口。' },
+                { role: 'ai', text: '建议先做 A/B，对“引导完整度 vs 首次激活率”设双指标，保留兜底入口。', feedback: 'up' },
                 { role: 'user', text: '兜底入口放在哪里比较好？' },
                 { role: 'ai', text: '可以放在首页右上角或者个人中心，用“新手引导”或“帮助”作为文案。' }
             ],
@@ -1810,7 +1976,7 @@
             ],
             '唐禾': [
                 { role: 'user', text: '客户反馈回复慢，想把 FAQ 自动回复接入会话机器人。' },
-                { role: 'ai', text: '先把高频 20 问做标准答案，并加“人工接管触发词”避免误答扩大。' }
+                { role: 'ai', text: '先把高频 20 问做标准答案，并加“人工接管触发词”避免误答扩大。', feedback: 'down' }
             ],
             '沈奕': [
                 { role: 'user', text: '讨论“有效对话”指标定义，口径在团队内不一致。' },
@@ -1818,13 +1984,48 @@
             ],
             '姚序': [
                 { role: 'user', text: '关心下季度是否押注“企业分身协作”还是“个人效率助手”。' },
-                { role: 'ai', text: '建议双轨：企业侧做 2 个标杆场景，个人侧维持增长盘，月底复盘再加码。' }
+                { role: 'ai', text: '建议双轨：企业侧做 2 个标杆场景，个人侧维持增长盘，月底复盘再加码。', feedback: 'up' },
+                { role: 'user', text: '那如果企业侧反馈不达标呢？' },
+                { role: 'ai', text: '那就需要及时止损，或者转向更垂直的行业解决方案。', feedback: 'down' }
             ],
             '宋祁': [
                 { role: 'user', text: '聊到想用 AI 帮忙做旅行计划，担心行程太紧张。' },
-                { role: 'ai', text: '按“每天一个主目标 + 一个弹性备选”规划，保留 30% 空白时间给临时体验。' }
+                { role: 'ai', text: '按“每天一个主目标 + 一个弹性备选”规划，保留 30% 空白时间给临时体验。', feedback: 'up' }
             ]
         };
+
+        const ICON_UP = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>`;
+        const ICON_DOWN = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>`;
+
+        function initChatFeedback() {
+            Object.keys(chatData).forEach(name => {
+                let hasUp = false;
+                let hasDown = false;
+                
+                chatData[name].forEach(msg => {
+                    if (msg.role === 'ai') {
+                        if (msg.feedback === 'up') hasUp = true;
+                        if (msg.feedback === 'down') hasDown = true;
+                    }
+                });
+                
+                // Update left list
+                const listItems = document.querySelectorAll('.chat-list-item');
+                listItems.forEach(item => {
+                    const nameDiv = item.querySelector('.chat-list-name');
+                    if (nameDiv && nameDiv.innerText.trim().startsWith(name)) {
+                        let iconsHtml = '<div class="feedback-icons" style="display: flex; gap: 4px; margin-left: 8px; align-items: center; opacity: 0.8;">';
+                        if (hasUp) iconsHtml += ICON_UP;
+                        if (hasDown) iconsHtml += ICON_DOWN;
+                        iconsHtml += '</div>';
+                        
+                        nameDiv.style.display = 'flex';
+                        nameDiv.style.alignItems = 'center';
+                        nameDiv.innerHTML = `<span>${name}</span>${iconsHtml}`;
+                    }
+                });
+            });
+        }
 
         function openChatModal(element, name) {
             const data = chatData[name] || chatData['林楠'];
@@ -1832,10 +2033,27 @@
             const body = document.getElementById('chatModalBody');
             body.innerHTML = '';
             data.forEach(msg => {
+                const turnWrapper = document.createElement('div');
+                turnWrapper.style.display = 'flex';
+                turnWrapper.style.flexDirection = 'row';
+                turnWrapper.style.width = '100%';
+                turnWrapper.style.justifyContent = msg.role === 'ai' ? 'flex-end' : 'flex-start';
+                turnWrapper.style.alignItems = 'center';
+                turnWrapper.style.gap = '8px';
+
+                if (msg.role === 'ai' && msg.feedback) {
+                    const feedbackDiv = document.createElement('div');
+                    feedbackDiv.style.opacity = '0.7';
+                    feedbackDiv.innerHTML = msg.feedback === 'up' ? ICON_UP : ICON_DOWN;
+                    turnWrapper.appendChild(feedbackDiv);
+                }
+
                 const bubble = document.createElement('div');
                 bubble.className = `chat-bubble ${msg.role}`;
                 bubble.innerText = msg.text;
-                body.appendChild(bubble);
+                turnWrapper.appendChild(bubble);
+
+                body.appendChild(turnWrapper);
             });
             
             if (element) {
@@ -1849,6 +2067,7 @@
         }
 
         setTimeout(() => {
+            initChatFeedback();
             const firstItem = document.querySelector('.chat-list-item');
             if (firstItem) openChatModal(firstItem, '宋祁');
         }, 50);

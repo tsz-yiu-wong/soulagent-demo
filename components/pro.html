@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent | 亮点功能</title>
+    <link rel="stylesheet" href="../shared.css">
+    <link rel="stylesheet" href="components.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #FDFBFA;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 100px 40px;
+            background: white;
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-md);
+            color: #9CA3AF;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* ── 数字分身协作 ── */
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .spin { animation: spin 1s linear infinite; }
+
+        /* 容器：复用 thought-bubble 风格 */
+        .avatar-bubble {
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            max-width: 650px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            border-bottom: 4px solid var(--color-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .avatar-bubble.active {
+            border-color: rgba(99, 102, 241, 0.25);
+            border-bottom-color: rgba(99, 102, 241, 0.35);
+        }
+
+        .avatar-bubble.done {
+            border-bottom-width: 2px;
+        }
+
+        .avatar-bubble .bubble-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .avatar-status-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--color-text);
+        }
+
+        .avatar-status-info .avatar-name-inline {
+            margin-left: -6px;
+        }
+
+        .avatar-meta {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #9CA3AF;
+        }
+
+        /* 折叠状态 */
+        .avatar-bubble.collapsed .toggle-arrow { transform: rotate(-90deg); }
+        .avatar-bubble.collapsed .bubble-body { display: none; }
+
+        .toggle-arrow {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-arrow svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .avatar-bubble .bubble-body {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed var(--color-border);
+        }
+
+        /* 对话容器 */
+        .avatar-dialogue {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .dialogue-turn {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dialogue-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 0.83rem;
+            line-height: 1.6;
+            font-style: italic;
+            color: var(--color-text-light);
+        }
+
+        /* 发言者信息区（名字 + 可选 AI badge） */
+        .speaker-info {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            margin-top: 1px;
+        }
+
+        .speaker-name {
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-style: normal;
+            white-space: nowrap;
+        }
+
+        .agent-speaker-name {
+            color: #9CA3AF;
+        }
+
+        .avatar-speaker-name {
+            color: #6366F1;
+        }
+
+        /* AI badge 跟标题保持一致 */
+        .dialogue-ai-badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #818CF8;
+            background: #EEF2FF;
+            border-radius: 4px;
+            padding: 1px 5px;
+            letter-spacing: 0.02em;
+            font-style: normal;
+        }
+
+        /* 两侧内容都加左边框 */
+        .agent-line .dialogue-text {
+            padding-left: 10px;
+            border-left: 2px solid #E5E7EB;
+        }
+
+        .avatar-line .dialogue-text {
+            padding-left: 10px;
+            border-left: 2px solid rgba(99,102,241,0.3);
+        }
+
+        /* header 里的分身名字（无气泡） */
+        .avatar-name-inline {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #6366F1;
+        }
+
+        .header-ai-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #818CF8;
+            background: #EEF2FF;
+            border-radius: 4px;
+            padding: 1px 5px;
+            margin-left: -6px;
+            vertical-align: middle;
+            letter-spacing: 0.02em;
+        }
+
+        .dialogue-text {
+            flex: 1;
+        }
+
+        /* 打字光标（小版本） */
+        @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
+        .typing-cursor-sm {
+            display: inline-block;
+            width: 1.5px;
+            height: 0.85em;
+            background: #6366F1;
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+            opacity: 0.7;
+        }
+
+        .timestamp {
+            color: #9CA3AF;
+            font-weight: 400;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-header-switcher">
+        <div class="switcher-container">
+            <a href="basic.html" class="switcher-tab">基础功能</a>
+            <a href="pro.html" class="switcher-tab active">亮点功能</a>
+        </div>
+    </div>
+
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#FFF1F2; border-color:#FF7F66; color:#FF7F66;">01</div>
+            <h2>Token 消耗情况</h2>
+        </div>
+
+        <div class="style-container">
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. Message Token 消耗</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">
+                        根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约
+                        35%。这些进展主要得益于新型超导材料的应用以及纠错算法的优化。最后，我会寻找是否有针对“逻辑量子比特”在超导量子芯片上的最新实验数据，以支撑我的最终结论。
+                    </div>
+                </div>
+                <div class="reply-actions">
+                    <div class="reply-action-btn copy-btn" title="复制">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn like-btn" title="点赞">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn dislike-btn" title="点踩">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h3a2 2 0 012 2v7a2 2 0 01-2 2h-3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn regen-btn" title="重新生成">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path>
+                        </svg>
+                    </div>
+                    <div class="token-usage">Token消耗: 12k</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#ECFDF5; border-color:#10B981; color:#10B981;">02</div>
+            <h2>安全监控</h2>
+        </div>
+
+        <div class="style-container" style="gap: 40px;">
+            <!-- 1. 安全状态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. 安全</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">
+                        根据您的要求，我已经生成了相关的技术文档。内容已通过系统安全扫描，未发现敏感信息。
+                    </div>
+                </div>
+                <div class="reply-actions">
+                    <div class="reply-action-btn copy-btn" title="复制">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn like-btn" title="点赞">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn dislike-btn" title="点踩">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h3a2 2 0 012 2v7a2 2 0 01-2 2h-3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn regen-btn" title="重新生成">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 风险拦截 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">2. 风险拦截</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">
+                        针对您提到的服务器配置问题，建议检查以下环境变量：
+                        <code>DB_PASSWORD=********</code>
+                        <code>API_KEY=********</code>
+                        (部分内容因安全原因已脱敏)
+                    </div>
+                </div>
+                <div class="reply-actions">
+                    <div class="reply-action-btn copy-btn" title="复制">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn like-btn" title="点赞">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn dislike-btn" title="点踩">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h3a2 2 0 012 2v7a2 2 0 01-2 2h-3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn regen-btn" title="重新生成">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path>
+                        </svg>
+                    </div>
+                    <div class="security-status" data-tooltip="检测到 api key 明文泄露，已拦截并脱敏">
+                        <div class="security-dot"></div>
+                        <span class="security-text">风险已拦截</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#EEF2FF; border-color:#6366F1; color:#6366F1;">03</div>
+            <h2>手动保存记忆 / 生成 Skill</h2>
+        </div>
+
+        <div class="style-container">
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">默认</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">
+                        根据您的分析，这次量子纠缠实验的误差来源主要在于环境噪声的干扰。我已经将相关的参数偏差整理成了表格。如果您觉得这个分析过程很有用，可以将其保存为长期记忆，或者直接转化为一个通用的分析
+                        Skill。
+                    </div>
+                </div>
+                <div class="reply-actions">
+                    <div class="reply-action-btn copy-btn" title="复制">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn like-btn" title="点赞">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn dislike-btn" title="点踩">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h3a2 2 0 012 2v7a2 2 0 01-2 2h-3">
+                            </path>
+                        </svg>
+                    </div>
+                    <div class="reply-action-btn regen-btn" title="重新生成">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path>
+                        </svg>
+                    </div>
+
+                    <!-- 扩展菜单 -->
+                    <div class="popover-container">
+                        <div class="reply-action-btn more-btn" onclick="toggleMenu('more-menu-1', event)" title="更多操作">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="19" cy="12" r="1"></circle>
+                                <circle cx="5" cy="12" r="1"></circle>
+                            </svg>
+                        </div>
+                        <div class="dropdown-menu" id="more-menu-1">
+                            <div class="menu-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
+                                <span>保存到记忆</span>
+                            </div>
+                            <div class="menu-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                                    </path>
+                                </svg>
+                                <span>生成 Skill</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 05 数字分身协作 -->
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#EEF2FF; border-color:#6366F1; color:#6366F1;">05</div>
+            <h2>数字分身协作</h2>
+        </div>
+
+        <div class="style-container" style="gap: 40px;">
+
+            <!-- 1. 进行中 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. 进行中</h3>
+                <div class="avatar-bubble active" id="av1">
+                    <div class="bubble-header" onclick="toggleAvatar('av1')">
+                        <div class="avatar-status-info">
+                            <svg class="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                            <span>正在咨询</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path><circle cx="12" cy="8" r="4" stroke-dasharray="2 2"></circle></svg>
+                            <span class="avatar-name-inline">小明博士</span><span class="header-ai-badge">AI</span>
+                        </div>
+                        <div class="toggle-arrow" style="color:#9CA3AF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                    </div>
+                    <div class="bubble-body">
+                        <div class="avatar-dialogue">
+                            <!-- 第 1 轮 -->
+                            <div class="dialogue-turn">
+                                <div class="dialogue-line agent-line">
+                                    <div class="speaker-info"><span class="speaker-name agent-speaker-name">我</span></div>
+                                    <span class="dialogue-text">关于量子纠错算法的最新趋势，结合当前硬件限制，你有什么判断？</span>
+                                </div>
+                                <div class="dialogue-line avatar-line">
+                                    <div class="speaker-info"><span class="speaker-name avatar-speaker-name">小明</span><span class="dialogue-ai-badge">AI</span></div>
+                                    <span class="dialogue-text">目前最具潜力的方向是表面码（Surface Code）。Google 和 IBM 的实验数据都显示，当物理量子比特达到 1000+ 规模时，逻辑错误率可以稳定压低至 10⁻⁶。关键瓶颈不在算法本身，而在于室温控制电路与低温芯片之间的互联带宽。</span>
+                                </div>
+                            </div>
+                            <!-- 第 2 轮 -->
+                            <div class="dialogue-turn">
+                                <div class="dialogue-line agent-line">
+                                    <div class="speaker-info"><span class="speaker-name agent-speaker-name">我</span></div>
+                                    <span class="dialogue-text">互联带宽问题有哪些工程路径正在被探索？</span>
+                                </div>
+                                <div class="dialogue-line avatar-line typing-avatar">
+                                    <div class="speaker-info"><span class="speaker-name avatar-speaker-name">小明</span><span class="dialogue-ai-badge">AI</span></div>
+                                    <span class="dialogue-text">主要有三条路径：一是光互联，将信号从低温段以光子形式传输……<span class="typing-cursor-sm"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 完成（默认收起） -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">2. 完成</h3>
+                <div class="avatar-bubble done collapsed" id="av2">
+                    <div class="bubble-header" onclick="toggleAvatar('av2')">
+                        <div class="avatar-status-info">
+                            <svg style="color:#10B981" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>咨询完成</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path></svg>
+                            <span class="avatar-name-inline">小明博士</span><span class="header-ai-badge">AI</span>
+                            <span class="avatar-meta">· 4 轮 · <span class="timestamp">1m 32s</span></span>
+                        </div>
+                        <div class="toggle-arrow" style="color:#9CA3AF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                    </div>
+                    <div class="bubble-body">
+                        <div class="avatar-dialogue">
+                            <div class="dialogue-turn">
+                                <div class="dialogue-line agent-line">
+                                    <div class="speaker-info"><span class="speaker-name agent-speaker-name">我</span></div>
+                                    <span class="dialogue-text">关于量子纠错算法的最新趋势，结合当前硬件限制，你有什么判断？</span>
+                                </div>
+                                <div class="dialogue-line avatar-line">
+                                    <div class="speaker-info"><span class="speaker-name avatar-speaker-name">小明</span><span class="dialogue-ai-badge">AI</span></div>
+                                    <span class="dialogue-text">目前最具潜力的方向是表面码（Surface Code）。Google 和 IBM 的实验数据都显示，当物理量子比特达到 1000+ 规模时，逻辑错误率可以稳定压低至 10⁻⁶。</span>
+                                </div>
+                            </div>
+                            <div class="dialogue-turn">
+                                <div class="dialogue-line agent-line">
+                                    <div class="speaker-info"><span class="speaker-name agent-speaker-name">我</span></div>
+                                    <span class="dialogue-text">互联带宽问题有哪些工程路径正在被探索？</span>
+                                </div>
+                                <div class="dialogue-line avatar-line">
+                                    <div class="speaker-info"><span class="speaker-name avatar-speaker-name">小明</span><span class="dialogue-ai-badge">AI</span></div>
+                                    <span class="dialogue-text">主要有三条路径：一是光互联；二是射频频分复用（FDM）；三是专用 ASIC 控制芯片。目前 Intel 的 Horse Ridge II 走的是第三条路，已量产验证。</span>
+                                </div>
+                            </div>
+                            <div class="dialogue-turn">
+                                <div class="dialogue-line agent-line">
+                                    <div class="speaker-info"><span class="speaker-name agent-speaker-name">我</span></div>
+                                    <span class="dialogue-text">从投资和产业化节奏看，哪条路最可能率先商用？</span>
+                                </div>
+                                <div class="dialogue-line avatar-line">
+                                    <div class="speaker-info"><span class="speaker-name avatar-speaker-name">小明</span><span class="dialogue-ai-badge">AI</span></div>
+                                    <span class="dialogue-text">短期（3 年内）最可能商用的是 ASIC 方案，成熟度最高，供应链已具备。光互联代表未来，但距工程落地还有 5-8 年。</span>
+                                </div>
+                            </div>
+                            <div class="dialogue-turn">
+                                <div class="dialogue-line agent-line">
+                                    <div class="speaker-info"><span class="speaker-name agent-speaker-name">我</span></div>
+                                    <span class="dialogue-text">好的，这些信息足够了，谢谢。</span>
+                                </div>
+                                <div class="dialogue-line avatar-line">
+                                    <div class="speaker-info"><span class="speaker-name avatar-speaker-name">小明</span><span class="dialogue-ai-badge">AI</span></div>
+                                    <span class="dialogue-text">如果后续需要更细化的技术路线图或投资者级别的报告框架，可以继续咨询。</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function toggleAvatar(id) {
+            document.getElementById(id).classList.toggle('collapsed');
+        }
+
+        function toggleMenu(menuId, event) {
+            event.stopPropagation();
+            const menu = document.getElementById(menuId);
+            const isActive = menu.classList.contains('active');
+
+            // 关闭所有其他菜单
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+
+            if (!isActive) {
+                menu.classList.add('active');
+            }
+        }
+
+        // 点击空白处关闭菜单
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
+        });
+    </script>
+
+</body>
+
+</html>

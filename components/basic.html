@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent | 交互组件</title>
+    <link rel="stylesheet" href="../shared.css">
+    <link rel="stylesheet" href="components.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #FDFBFA;
+        }
+
+
+
+        /* --- 气泡核心样式 --- */
+        .thought-bubble {
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            border-bottom: 4px solid var(--color-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .thought-bubble.active { border-color: rgba(255, 127, 102, 0.3); }
+        .thought-bubble.done { border-bottom-width: 2px; }
+
+        .bubble-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--color-text);
+        }
+
+        .timestamp {
+            color: #9CA3AF;
+            font-weight: 400;
+            font-size: 0.75rem;
+            margin-left: 4px;
+        }
+
+        .toggle-arrow {
+            width: 14px;
+            height: 14px;
+            color: #9CA3AF;
+            transition: transform 0.3s ease;
+        }
+
+        .collapsed .toggle-arrow { transform: rotate(-90deg); }
+        .collapsed .bubble-body { display: none; }
+
+        .bubble-body {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed var(--color-border);
+        }
+
+        /* --- 灰色斜体通用样式 --- */
+        .gray-italic-text {
+            color: var(--color-text-light);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            font-style: italic;
+            white-space: pre-wrap;
+        }
+
+        .code-inline {
+            font-family: 'JetBrains Mono', 'Menlo', monospace;
+            font-weight: 600;
+            color: #6B7280;
+            font-style: normal;
+            display: block;
+            margin-top: 2px;
+            padding-left: 12px;
+            border-left: 2px solid #E5E7EB;
+            line-height: 1.4;
+        }
+
+        /* --- 任务清单样式 --- */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .task-item {
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .task-item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .task-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--color-text);
+            flex: 1;
+        }
+
+        .task-item.done { opacity: 0.7; }
+        .task-item.active { opacity: 1; }
+
+        .task-dot { width: 6px; height: 6px; border-radius: 50%; background: #D1D5DB; flex-shrink: 0; }
+        .task-item.done .task-dot { background: #10B981; }
+        .task-item.active .task-dot { background: var(--color-primary); box-shadow: 0 0 8px var(--color-primary); }
+
+        .task-detail {
+            padding: 4px 4px 12px 24px;
+            display: none;
+        }
+
+        .task-item.expanded .task-detail { display: block; }
+        .task-item.expanded .task-toggle { transform: rotate(0deg); }
+        .task-toggle { transform: rotate(-90deg); transition: transform 0.2s; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .spin { animation: spin 1s linear infinite; }
+
+
+        /* --- 多模态内容 --- */
+        .multimodal-separator {
+            border-top: 1px dashed var(--color-border);
+            margin: 16px 0;
+            width: 100%;
+        }
+
+        .multimodal-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        /* 媒体项通用样式 */
+        .media-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+            background: #F9FAFB;
+            transition: all 0.2s;
+        }
+
+        /* 图片项 */
+        .media-image {
+            width: 200px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 文件项 */
+        .media-file {
+            width: 240px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            color: var(--color-primary);
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--color-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 0.75rem;
+            color: var(--color-text-light);
+            margin-top: 2px;
+        }
+
+        /* 状态覆盖层 */
+        .media-status-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(2px);
+        }
+
+        .status-text {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .retry-link, .stop-link {
+            font-size: 0.75rem;
+            color: var(--color-primary);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 800;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .retry-link { margin-top: 4px; }
+        .stop-link { color: #6B7280; } /* 停止通常用灰色或次要色 */
+        .stop-link:hover { color: var(--color-text); }
+
+        .media-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 16px;
+        }
+
+        .media-action-btn {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            background: white;
+            border: 1px solid var(--color-primary);
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .media-action-btn:hover {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .state-processing .spin { color: var(--color-primary); }
+        
+        .state-failed { border-color: #FEE2E2; background: #FEF2F2; }
+        .state-failed .file-icon, .state-failed .image-placeholder-icon { color: #EF4444; }
+        .state-failed .status-text { color: #EF4444; }
+
+        .image-placeholder-icon {
+            color: #D1D5DB;
+        }
+
+        /* --- 操作区 (如果还需要容器但没按钮) --- */
+        .bubble-actions {
+            display: none; /* 用户说不需要重新生成了 */
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            color: #9CA3AF;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            background: transparent;
+        }
+
+        .action-btn:hover {
+            background: #F9FAFB;
+            color: var(--color-text);
+            border-color: var(--color-border);
+        }
+
+        .action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .action-btn.active {
+            color: var(--color-primary);
+            background: #FFF7F5;
+        }
+
+        /* --- 中断状态 (Interrupted) --- */
+        .thought-bubble.interrupted {
+            border-color: #E5E7EB;
+            border-bottom-color: #E5E7EB;
+            background-color: #F9FAFB;
+        }
+
+        .thought-bubble.interrupted .status-info {
+            color: #9CA3AF;
+        }
+
+        .thought-bubble.interrupted .spin {
+            animation: none;
+            color: #9CA3AF;
+        }
+
+        .task-item.interrupted {
+            opacity: 0.6;
+        }
+
+        .task-item.interrupted .task-dot {
+            background: #9CA3AF;
+            border-radius: 2px; /* 方形表示停止 */
+        }
+
+        .stop-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+            color: #9CA3AF;
+            background: #F3F4F6;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+
+        .reply-action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 点赞激活：绿色 */
+        .reply-action-btn.active-like {
+            color: #10B981;
+            background: #ECFDF5;
+        }
+        .reply-action-btn.active-like svg {
+            fill: currentColor;
+        }
+
+        /* 点踩激活：红色 */
+        .reply-action-btn.active-dislike {
+            color: #EF4444;
+            background: #FEF2F2;
+        }
+        .reply-action-btn.active-dislike svg {
+            fill: currentColor;
+        }
+
+        /* 复制成功：绿色且变大一点点提示 */
+        .reply-action-btn.copied {
+            color: #10B981;
+            background: #ECFDF5;
+        }
+
+
+        /* 内容生成中的光标效果 */
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--color-primary);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* --- 用户气泡及操作区 --- */
+        .user-reply-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* 用户气泡右对齐 */
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .user-reply {
+            background: #F3F4F6;
+            border: 2px solid var(--color-border);
+            border-radius: 18px;
+            border-bottom-right-radius: 4px;
+            padding: 12px 18px;
+            color: var(--color-text);
+            line-height: 1.6;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+            position: relative;
+            max-width: 85%;
+            transition: all 0.3s ease;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+            padding-right: 4px;
+        }
+
+        .user-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+        }
+
+        .user-action-btn:hover {
+            background: #F3F4F6;
+            color: var(--color-text);
+        }
+
+        .user-action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .user-action-btn.copied {
+            color: #10B981;
+            background: #ECFDF5;
+        }
+
+        .user-timestamp {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            margin-right: 8px; /* 修改为右间距 */
+            font-weight: 400;
+        }
+
+        /* 版本切换 */
+        .version-nav {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 0.75rem;
+            font-weight: 400; /* 去掉加粗 */
+            color: #9CA3AF; /* 降低对比度 */
+            margin-left: 4px;
+            user-select: none;
+            background: transparent; /* 去掉背景 */
+            padding: 0; /* 去掉内边距 */
+        }
+
+        .version-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #9CA3AF;
+            transition: all 0.2s;
+        }
+
+        .version-btn:hover {
+            background: #E5E7EB;
+            color: var(--color-text);
+        }
+
+        .version-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .version-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* 编辑状态 */
+        .edit-container {
+            width: 100%;
+            background: white;
+            border: 2px solid var(--color-primary);
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(255, 127, 102, 0.1);
+            margin-top: 4px;
+        }
+
+        .edit-textarea {
+            width: 100%;
+            min-height: 80px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--color-text);
+            margin-bottom: 8px;
+            padding: 0;
+        }
+
+        .edit-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .edit-btn-save {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .edit-btn-save:hover { transform: scale(1.05); }
+
+        .edit-btn-cancel {
+            background: #F3F4F6;
+            color: var(--color-text);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* --- 错误/系统消息气泡 --- */
+        .error-bubble {
+            background: white;
+            border: 2px solid var(--color-border);
+            border-bottom: 4px solid var(--color-border);
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            padding: 14px 18px;
+            max-width: 650px;
+            color: var(--color-text-light);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .error-bubble svg {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            color: #9CA3AF;
+        }
+
+        /* --- 样式 5：输入框操作区 --- */
+        .input-container-bubble {
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: 20px;
+            padding: 12px 16px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-container-bubble:focus-within {
+            border-color: var(--color-primary);
+            box-shadow: 0 8px 32px rgba(255, 127, 102, 0.08);
+        }
+
+        .input-main-area {
+            width: 100%;
+            min-height: 40px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--color-text);
+            padding: 0;
+            background: transparent;
+        }
+
+        .input-bottom-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 1px solid #F3F4F6;
+        }
+
+        .actions-left, .actions-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 10px;
+            color: #6B7280;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #F9FAFB;
+            border: 1px solid transparent;
+            user-select: none;
+            position: relative;
+        }
+
+        .input-action-btn:hover {
+            background: #F3F4F6;
+            color: var(--color-text);
+        }
+
+        .input-action-btn.active {
+            color: var(--color-primary);
+            background: #FFF7F5;
+            border-color: rgba(255, 127, 102, 0.2);
+        }
+
+        .input-action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .send-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            border: none;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            margin-left: 2px;
+        }
+
+        /* 附件区域 */
+        .attachment-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 4px;
+        }
+
+        .attach-item {
+            position: relative;
+            height: 64px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+            background: #F9FAFB;
+            display: flex;
+            align-items: center;
+        }
+
+        .attach-img {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+        }
+
+        .attach-file {
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+            height: 100%;
+        }
+
+        .attach-file-icon {
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .attach-file-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .attach-file-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--color-text);
+            max-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .attach-file-size {
+            font-size: 0.7rem;
+            color: #9CA3AF;
+        }
+
+        .attach-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .attach-item:hover .attach-remove {
+            display: flex;
+        }
+
+        .attach-remove svg { width: 12px; height: 12px; }
+
+        .attach-uploading {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(1px);
+        }
+
+        /* 弹出框模拟 */
+        .popover-mock {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 0;
+            width: 200px;
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+            padding: 8px;
+            display: none;
+            z-index: 100;
+            animation: pop-up 0.2s ease-out;
+        }
+
+        .popover-mock.active { display: block; }
+        
+        /* 阻止弹出框内部点击冒泡 */
+        .popover-mock * { pointer-events: auto; }
+
+        @keyframes pop-up {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .popover-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .popover-item:hover { background: #F9FAFB; }
+        .popover-item.selected { color: var(--color-primary); background: #FFF7F5; }
+
+        .search-box {
+            padding: 8px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .search-input:focus { border-color: var(--color-primary); }
+
+        /* --- 6. 回复内容引用 --- */
+        .selection-quote-trigger {
+            position: absolute;
+            background: white;
+            color: var(--color-text);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.04);
+            border: 1px solid var(--color-border);
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .selection-quote-trigger::before {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 7px solid var(--color-border);
+        }
+        .selection-quote-trigger::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid white;
+        }
+        .selection-quote-trigger:hover {
+            background: #F9FAFB;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+        }
+
+        .selection-quote-trigger svg {
+            color: var(--color-primary);
+        }
+
+        .input-quote-container {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--color-primary);
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quote-content {
+            font-size: 0.85rem;
+            color: var(--color-text-light);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .quote-remove {
+            color: #9CA3AF;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quote-remove:hover {
+            color: var(--color-text);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header-switcher">
+        <div class="switcher-container">
+            <a href="basic.html" class="switcher-tab active">基础功能</a>
+            <a href="pro.html" class="switcher-tab">亮点功能</a>
+        </div>
+    </div>
+
+    <!-- 样式 1：回复生成过程 -->
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#FFF7F5; border-color:#FF7F66; color:#FF7F66;">01</div>
+            <h2>回复生成过程</h2>
+        </div>
+        <div class="style-container" style="gap: 40px;">
+            
+            <!-- 1. 思考中 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. 思考中</h3>
+                <div class="thought-bubble active" id="s1">
+                    <div class="bubble-header" onclick="toggle('s1')">
+                        <div class="status-info">
+                            <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                            <span>正在思考中... <span class="timestamp">8s</span></span>
+                        </div>
+                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                    </div>
+                    <div class="bubble-body">
+                        <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势。
+我需要先通过 arXiv API 检索过去 24 个月内包含 "Quantum Computing" 和 "Error Correction" 关键字的所有预印本。</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 工具调用 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">2. 工具调用</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- 思考已完成 -->
+                    <div class="thought-bubble done collapsed" id="s2-1">
+                        <div class="bubble-header" onclick="toggle('s2-1')">
+                            <div class="status-info">
+                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>思考完成 <span class="timestamp">12s</span></span>
+                            </div>
+                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="bubble-body">
+                            <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势。
+我需要先通过 arXiv API 检索过去 24 个月内包含 "Quantum Computing" 和 "Error Correction" 关键字的所有预印本。
+检索完成后，我需要对论文的摘要进行聚类分析，提取出技术演进的核心指标，例如量子比特的相干时间（Coherence Time）和保真度（Fidelity）。
+最后，我会寻找是否有针对“逻辑量子比特”在超导量子芯片上的最新实验数据，以支撑我的最终结论。</div>
+                        </div>
+                    </div>
+                    <!-- 工具正在执行 -->
+                    <div class="thought-bubble active" id="s2-2">
+                        <div class="bubble-header" onclick="toggle('s2-2')">
+                            <div class="status-info">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span>正在执行操作... <span class="timestamp">45s</span></span>
+                            </div>
+                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="bubble-body">
+                            <div class="task-list">
+                                <!-- 任务 1 -->
+                                <div class="task-item done">
+                                    <div class="task-item-header" onclick="toggleTask(this)">
+                                        <div class="task-dot"></div>
+                                        <div class="task-label">网络搜索：arXiv Quantum Computing 2024</div>
+                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="task-detail gray-italic-text">通过 arXiv API 检索近一年的学术预印本数据...<span class="code-inline">exec curl "https://export.arxiv.org/api/query?search_query=all:quantum+computing+2024"</span></div>
+                                </div>
+                                <!-- 任务 2 (正在进行) -->
+                                <div class="task-item active expanded">
+                                    <div class="task-item-header" onclick="toggleTask(this)">
+                                        <div class="task-dot"></div>
+                                        <div class="task-label">正在读取：research_trends.pdf</div>
+                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="task-detail gray-italic-text">使用引擎解析本地 PDF 文档中的技术指标...<span class="code-inline">exec pdf-parser --extract-table 14 ./data/research_trends.pdf</span></div>
+                                </div>
+                                <!-- 任务 3 (未开始) -->
+                                <div class="task-item">
+                                    <div class="task-item-header">
+                                        <div class="task-dot"></div>
+                                        <div class="task-label">统计分析：生成趋势图表</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 最终回复 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">3. 最终回复</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="thought-bubble done collapsed" id="s3-1">
+                        <div class="bubble-header" onclick="toggle('s3-1')">
+                            <div class="status-info">
+                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>思考完成 <span class="timestamp">12s</span></span>
+                            </div>
+                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="bubble-body">
+                            <div class="gray-italic-text">（完整思考内容...）</div>
+                        </div>
+                    </div>
+                    <div class="thought-bubble done collapsed" id="s3-2">
+                        <div class="bubble-header" onclick="toggle('s3-2')">
+                            <div class="status-info">
+                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="20 10 20 4 14 4"></polyline><path d="M20 4L13 11"></path></svg>
+                                <span>操作执行完毕 <span class="timestamp">1m 5s</span></span>
+                            </div>
+                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="bubble-body">
+                            <div class="task-list">
+                                <!-- 任务 1 -->
+                                <div class="task-item done">
+                                    <div class="task-item-header" onclick="toggleTask(this)">
+                                        <div class="task-dot"></div>
+                                        <div class="task-label">网络搜索：arXiv Quantum Computing 2024</div>
+                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="task-detail gray-italic-text">通过 arXiv API 检索近一年的学术预印本数据...<span class="code-inline">exec curl "https://export.arxiv.org/api/query?search_query=all:quantum+computing+2024"</span></div>
+                                </div>
+                                <!-- 任务 2 -->
+                                <div class="task-item done">
+                                    <div class="task-item-header" onclick="toggleTask(this)">
+                                        <div class="task-dot"></div>
+                                        <div class="task-label">读取文件：research_trends.pdf</div>
+                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="task-detail gray-italic-text">使用引擎解析本地 PDF 文档中的技术指标...<span class="code-inline">exec pdf-parser --extract-table 14 ./data/research_trends.pdf</span></div>
+                                </div>
+                                <!-- 任务 3 -->
+                                <div class="task-item done">
+                                    <div class="task-item-header" onclick="toggleTask(this)">
+                                        <div class="task-dot"></div>
+                                        <div class="task-label">统计分析：生成趋势图表</div>
+                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </div>
+                                    <div class="task-detail gray-italic-text">执行数据归一化处理脚本...<span class="code-inline">exec python3 ./scripts/analyze_trends.py --input ./results.json</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="final-reply">
+                        <div class="final-reply-content">
+                            基于 2023-2024 年的数据分析，量子纠错技术在超导电路上的保真度已从 99.4% 提升至 99.91%...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 错误处理 -->
+
+
+            <!-- 4. 用户终止 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">4. 用户终止</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- 思考中断 -->
+                    <div class="thought-bubble interrupted" id="stop-thinking">
+                        <div class="bubble-header" onclick="toggle('stop-thinking')">
+                            <div class="status-info">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                                <span>思考已终止 <span class="timestamp">3s</span></span>
+                            </div>
+                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="bubble-body">
+                            <div class="gray-italic-text" style="opacity: 0.6;">我需要先通过 arXiv API 检索过去 24 个月内包含 "Quantum Computing"...</div>
+                        </div>
+                    </div>
+                    <!-- 操作中断 -->
+                    <div class="thought-bubble interrupted" id="stop-tools">
+                        <div class="bubble-header" onclick="toggle('stop-tools')">
+                            <div class="status-info">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"></rect></svg>
+                                <span>操作已终止 <span class="timestamp">18s</span></span>
+                            </div>
+                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                        </div>
+                        <div class="bubble-body">
+                            <div class="task-list">
+                                <div class="task-item done">
+                                    <div class="task-item-header"><div class="task-dot"></div><div class="task-label">网络搜索：arXiv 2024</div></div>
+                                </div>
+                                <div class="task-item interrupted">
+                                    <div class="task-item-header"><div class="task-dot"></div><div class="task-label">已取消：research_trends.pdf</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 系统错误 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">5. 系统错误 (含敏感拦截)</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- 错误气泡 -->
+                    <div class="error-bubble">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <span>抱歉，系统遇到错误，请重试。</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 样式 2：回复内容含多模态 -->
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#F0F9FF; border-color:#0EA5E9; color:#0EA5E9;">02</div>
+            <h2>回复内容含多模态</h2>
+        </div>
+        
+        <div class="style-container" style="gap: 32px;">
+            
+            <!-- 1. 文件处理态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 8px;">1. 文件处理态</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。</div>
+                    <div class="multimodal-separator"></div>
+                    <div class="multimodal-container" style="align-items: center;">
+                        <div class="media-item media-file state-processing">
+                            <div class="file-icon">
+                                <svg class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">analyzing_report.pdf</div>
+                                <div class="file-meta">处理中...</div>
+                            </div>
+                        </div>
+                        <div class="media-actions">
+                            <span class="stop-link">停止</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 文件完成态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 8px;">2. 文件完成态</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。</div>
+                    <div class="multimodal-separator"></div>
+                    <div class="multimodal-container" style="align-items: center;">
+                        <div class="media-item media-file">
+                            <div class="file-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">final_report_v2.pdf</div>
+                                <div class="file-meta">3.8 MB · PDF</div>
+                            </div>
+                        </div>
+                        <div class="media-actions">
+                            <button class="media-action-btn">预览</button>
+                            <button class="media-action-btn">下载</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 文件失败态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 8px;">3. 文件失败态</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。</div>
+                    <div class="multimodal-separator"></div>
+                    <div class="multimodal-container" style="align-items: center;">
+                        <div class="media-item media-file state-failed">
+                            <div class="file-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">failed_data_export.csv</div>
+                                <div class="file-meta">处理失败</div>
+                            </div>
+                        </div>
+                        <div class="media-actions">
+                            <span class="retry-link" style="margin: 0;">重试</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 图片处理态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 8px;">4. 图片处理态</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。</div>
+                    <div class="multimodal-separator"></div>
+                    <div class="multimodal-container" style="align-items: center;">
+                        <div class="media-item media-image state-processing">
+                            <div class="media-status-overlay">
+                                <svg class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                                <span class="status-text">绘制中...</span>
+                            </div>
+                        </div>
+                        <div class="media-actions">
+                            <span class="stop-link">停止</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. 图片完成态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 8px;">5. 图片完成态</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。</div>
+                    <div class="multimodal-separator"></div>
+                    <div class="multimodal-container" style="align-items: center;">
+                        <div class="media-item media-image">
+                            <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=400" alt="Quantum Graph">
+                        </div>
+                        <div class="media-actions">
+                            <button class="media-action-btn">预览</button>
+                            <button class="media-action-btn">下载</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. 图片失败态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 8px;">6. 图片失败态</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。</div>
+                    <div class="multimodal-separator"></div>
+                    <div class="multimodal-container" style="align-items: center;">
+                        <div class="media-item media-image state-failed">
+                            <div class="media-status-overlay">
+                                <svg class="image-placeholder-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <span class="status-text">绘制失败</span>
+                            </div>
+                        </div>
+                        <div class="media-actions">
+                            <span class="retry-link" style="margin: 0;">重试</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 样式 3：回复气泡操作区 -->
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#FFF1F2; border-color:#F43F5E; color:#F43F5E;">03</div>
+            <h2>回复气泡操作区</h2>
+        </div>
+        
+        <div class="style-container" style="gap: 40px;">
+            
+            <!-- 1. 内容生成中 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. 内容生成中</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content" style="margin-bottom: 0;">
+                        根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。这些进展主要得益于新型超导材料的应用以及纠错算法的优化。目前实验室正在对...<span class="typing-cursor"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 内容生成完毕 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">2. 内容生成完毕</h3>
+                <div class="final-reply">
+                    <div class="final-reply-content">
+                        根据最新的研究数据，2024 年量子计算的核心突破在于相干时间的稳定性提升了约 35%。这些进展主要得益于新型超导材料的应用以及纠错算法的优化。最后，我会寻找是否有针对“逻辑量子比特”在超导量子芯片上的最新实验数据，以支撑我的最终结论。
+                    </div>
+                </div>
+                <div class="reply-actions">
+                    <div class="reply-action-btn copy-btn" onclick="handleCopy(this)" title="复制">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+                    </div>
+                    <div class="reply-action-btn like-btn" onclick="toggleReaction(this, 'like')" title="点赞">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"></path></svg>
+                    </div>
+                    <div class="reply-action-btn dislike-btn" onclick="toggleReaction(this, 'dislike')" title="点踩">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h3a2 2 0 012 2v7a2 2 0 01-2 2h-3"></path></svg>
+                    </div>
+                    <div class="reply-action-btn regen-btn" title="重新生成">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 样式 4：用户气泡操作区 -->
+    <div class="component-section">
+        <div class="section-header">
+            <div class="status-pill" style="background:#F0FDF4; border-color:#22C55E; color:#22C55E;">04</div>
+            <h2>用户气泡操作区</h2>
+        </div>
+        
+        <div class="style-container" style="gap: 40px;">
+            
+            <!-- 1. 默认态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. 默认态</h3>
+                <div class="user-reply-container" id="user-1-container">
+                    <div class="user-reply" id="user-1-text">帮我写一段关于量子计算的科普介绍，要求通俗易懂，适合小学生阅读。</div>
+                    <div class="user-actions" id="user-1-actions">
+                        <span class="user-timestamp">17:04</span>
+                        <div class="user-action-btn" onclick="handleUserCopy(this)" title="复制">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+                        </div>
+                        <div class="user-action-btn" onclick="enterUserEdit('user-1')" title="编辑">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 编辑态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">2. 编辑态</h3>
+                <div class="user-reply-container">
+                    <div class="edit-container">
+                        <textarea class="edit-textarea">帮我写一段关于量子计算的科普介绍，要求通俗易懂，适合小学生阅读。</textarea>
+                        <div class="edit-footer">
+                            <button class="edit-btn-cancel">取消</button>
+                            <button class="edit-btn-save">发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 多版本切换 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">3. 编辑后</h3>
+                <div class="user-reply-container">
+                    <div class="user-reply">帮我写一段关于量子纠缠的介绍，要用比喻的手法，并且加上一些科幻色彩。</div>
+                    <div class="user-actions">
+                        <span class="user-timestamp">17:08</span>
+                        <div class="user-action-btn" onclick="handleUserCopy(this)" title="复制">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+                        </div>
+                        <div class="user-action-btn" title="编辑">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </div>
+                        <div class="version-nav">
+                            <div class="version-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></div>
+                            <span>3 / 3</span>
+                            <div class="version-btn disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 样式 5：输入框操作区 -->
+    <div class="component-section" style="margin-bottom: 160px;">
+        <div class="section-header">
+            <div class="status-pill" style="background:#FFF7ED; border-color:#F97316; color:#F97316;">05</div>
+            <h2>输入框操作区</h2>
+        </div>
+        
+        <div class="style-container" style="gap: 60px;">
+            
+            <!-- 1. 默认态 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">1. 默认态</h3>
+                
+                <!-- 交互式气泡 -->
+                <div class="input-container-bubble" style="margin-bottom: 24px;">
+                    <textarea class="input-main-area" placeholder="输入消息，或输入 / 触发技能..."></textarea>
+                    <div class="input-bottom-actions">
+                        <div class="actions-left">
+                            <div class="input-action-btn" title="添加附件">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
+                            </div>
+                            <div class="input-action-btn" onclick="togglePopover('model-pop-1', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <span>DeepSeek V4 pro</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                
+                                <div class="popover-mock" id="model-pop-1" onclick="event.stopPropagation()">
+                                    <div class="popover-item selected">DeepSeek V4 pro</div>
+                                    <div class="popover-item">GPT-4o Mini</div>
+                                    <div class="popover-item">Claude 3.5 Sonnet</div>
+                                    <div class="popover-item">Gemini 1.5 Pro</div>
+                                </div>
+                            </div>
+                            <div class="input-action-btn" onclick="togglePopover('skill-pop-1', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <span>Skill技能</span>
+                                <div class="popover-mock" id="skill-pop-1" style="width: 240px;" onclick="event.stopPropagation()">
+                                    <div class="search-box">
+                                        <input type="text" class="search-input" placeholder="搜索技能...">
+                                    </div>
+                                    <div class="popover-item">🔍 网页搜索</div>
+                                    <div class="popover-item">📊 数据分析</div>
+                                    <div class="popover-item">🎨 图像生成</div>
+                                    <div class="popover-item">📅 日历管理</div>
+                                </div>
+                            </div>
+                            <div class="input-action-btn" onclick="toggleKnowledge(this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <span>知识库已关闭</span>
+                            </div>
+                        </div>
+                        <div class="actions-right">
+                            <button class="send-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 静态展示区 -->
+                <div style="display: flex; gap: 30px; align-items: flex-start; padding-left: 10px;">
+                    <!-- 模型菜单演示 -->
+                    <div style="position: relative; width: 200px;">
+                        <div style="font-size: 12px; color: #9CA3AF; margin-bottom: 8px;">1. 模型选择样式：</div>
+                        <div class="popover-mock" style="display: block; position: static; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                            <div class="popover-item selected">DeepSeek V4 pro</div>
+                            <div class="popover-item">GPT-4o Mini</div>
+                            <div class="popover-item">Claude 3.5 Sonnet</div>
+                            <div class="popover-item">Gemini 1.5 Pro</div>
+                        </div>
+                    </div>
+                    <!-- 技能菜单演示 -->
+                    <div style="position: relative; width: 240px;">
+                        <div style="font-size: 12px; color: #9CA3AF; margin-bottom: 8px;">2. 技能搜索框样式：</div>
+                        <div class="popover-mock" style="display: block; position: static; box-shadow: 0 4px 12px rgba(0,0,0,0.08); width: 240px;">
+                            <div class="search-box">
+                                <input type="text" class="search-input" placeholder="搜索技能...">
+                            </div>
+                            <div class="popover-item">🔍 网页搜索</div>
+                            <div class="popover-item">📊 数据分析</div>
+                            <div class="popover-item">🎨 图像生成</div>
+                            <div class="popover-item">📅 日历管理</div>
+                        </div>
+                    </div>
+                    <!-- 知识库状态演示 -->
+                    <div style="position: relative; width: 200px;">
+                        <div style="font-size: 12px; color: #9CA3AF; margin-bottom: 8px;">3. 知识库切换样式：</div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="input-action-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <span>知识库已关闭</span>
+                            </div>
+                            <div class="input-action-btn active">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <span>知识库已开启</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 添加附件 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">2. 添加图片/附件</h3>
+                <div class="input-container-bubble">
+                    <div class="attachment-area">
+                        <!-- 图片项 -->
+                        <div class="attach-item">
+                            <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=100" class="attach-img">
+                            <div class="attach-remove">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </div>
+                        </div>
+                        <!-- 文件项 -->
+                        <div class="attach-item">
+                            <div class="attach-file">
+                                <div class="attach-file-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                </div>
+                                <div class="attach-file-info">
+                                    <div class="attach-file-name">data.xlsx</div>
+                                    <div class="attach-file-size">1.2 MB</div>
+                                </div>
+                            </div>
+                            <div class="attach-remove">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </div>
+                        </div>
+                        <!-- 上传中 -->
+                        <div class="attach-item">
+                            <div class="attach-file">
+                                <div class="attach-file-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                </div>
+                                <div class="attach-file-info">
+                                    <div class="attach-file-name">data.xlsx</div>
+                                    <div class="attach-file-size">45%</div>
+                                </div>
+                            </div>
+                            <div class="attach-uploading">
+                                <svg class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="input-main-area" style="min-height: 60px;">请帮我分析一下这个文件中的趋势，并结合图片中的结构图进行说明。</textarea>
+                    <div class="input-bottom-actions">
+                        <div class="actions-left">
+                            <div class="input-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg></div>
+                            <div class="input-action-btn" onclick="togglePopover('model-pop-2', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <span>DeepSeek V4 pro</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <div class="popover-mock" id="model-pop-2" onclick="event.stopPropagation()">
+                                    <div class="popover-item selected">DeepSeek V4 pro</div>
+                                    <div class="popover-item">GPT-4o Mini</div>
+                                    <div class="popover-item">Claude 3.5 Sonnet</div>
+                                    <div class="popover-item">Gemini 1.5 Pro</div>
+                                </div>
+                            </div>
+                            <div class="input-action-btn" onclick="togglePopover('skill-pop-2', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <span>Skill技能</span>
+                                <div class="popover-mock" id="skill-pop-2" style="width: 240px;" onclick="event.stopPropagation()">
+                                    <div class="search-box">
+                                        <input type="text" class="search-input" placeholder="搜索技能...">
+                                    </div>
+                                    <div class="popover-item">🔍 网页搜索</div>
+                                    <div class="popover-item">📊 数据分析</div>
+                                    <div class="popover-item">🎨 图像生成</div>
+                                    <div class="popover-item">📅 日历管理</div>
+                                </div>
+                            </div>
+                            <div class="input-action-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <span>知识库已关闭</span>
+                            </div>
+                        </div>
+                        <div class="actions-right">
+                            <button class="send-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 隐藏知识库 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">3. 隐藏知识库</h3>
+                <div class="input-container-bubble">
+                    <textarea class="input-main-area" placeholder="在此变体中，仅隐藏了知识库按钮，保留了技能。"></textarea>
+                    <div class="input-bottom-actions">
+                        <div class="actions-left">
+                            <div class="input-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg></div>
+                            <div class="input-action-btn" onclick="togglePopover('model-pop-3', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <span>DeepSeek V4 pro</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <div class="popover-mock" id="model-pop-3" onclick="event.stopPropagation()">
+                                    <div class="popover-item selected">DeepSeek V4 pro</div>
+                                    <div class="popover-item">GPT-4o Mini</div>
+                                    <div class="popover-item">Claude 3.5 Sonnet</div>
+                                    <div class="popover-item">Gemini 1.5 Pro</div>
+                                </div>
+                            </div>
+                            <div class="input-action-btn" onclick="togglePopover('skill-pop-3', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <span>Skill技能</span>
+                                <div class="popover-mock" id="skill-pop-3" style="width: 240px;" onclick="event.stopPropagation()">
+                                    <div class="search-box">
+                                        <input type="text" class="search-input" placeholder="搜索技能...">
+                                    </div>
+                                    <div class="popover-item">🔍 网页搜索</div>
+                                    <div class="popover-item">📊 数据分析</div>
+                                    <div class="popover-item">🎨 图像生成</div>
+                                    <div class="popover-item">📅 日历管理</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="actions-right">
+                            <button class="send-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 模型选择置右 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">4. 模型选择置右</h3>
+                <div class="input-container-bubble">
+                    <textarea class="input-main-area" placeholder="模型选择按钮现在放到了发送按钮左侧。"></textarea>
+                    <div class="input-bottom-actions">
+                        <div class="actions-left">
+                            <div class="input-action-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg></div>
+                            <div class="input-action-btn" onclick="togglePopover('skill-pop-4', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <span>Skill技能</span>
+                                <div class="popover-mock" id="skill-pop-4" style="width: 240px;" onclick="event.stopPropagation()">
+                                    <div class="search-box">
+                                        <input type="text" class="search-input" placeholder="搜索技能...">
+                                    </div>
+                                    <div class="popover-item">🔍 网页搜索</div>
+                                    <div class="popover-item">📊 数据分析</div>
+                                    <div class="popover-item">🎨 图像生成</div>
+                                    <div class="popover-item">📅 日历管理</div>
+                                </div>
+                            </div>
+                            <div class="input-action-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <span>知识库已关闭</span>
+                            </div>
+                        </div>
+                        <div class="actions-right">
+                            <div class="input-action-btn" onclick="togglePopover('model-pop-4', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <span>DeepSeek V4 pro</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <div class="popover-mock" id="model-pop-4" style="left: auto; right: 0;" onclick="event.stopPropagation()">
+                                    <div class="popover-item selected">DeepSeek V4 pro</div>
+                                    <div class="popover-item">GPT-4o Mini</div>
+                                    <div class="popover-item">Claude 3.5 Sonnet</div>
+                                    <div class="popover-item">Gemini 1.5 Pro</div>
+                                </div>
+                            </div>
+                            <button class="send-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 样式 6：回复内容引用 -->
+    <div class="component-section" style="margin-bottom: 160px;">
+        <div class="section-header">
+            <div class="status-pill" style="background:#FDF2F8; border-color:#DB2777; color:#DB2777;">06</div>
+            <h2>回复内容引用</h2>
+        </div>
+        
+        <div class="style-container" style="gap: 60px;">
+            
+            <!-- 1. 选中文字弹出引用 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">1. 选中文字弹出“引用”按钮</h3>
+                <div class="final-reply" style="position: relative;" id="quote-demo-area">
+                    <div class="final-reply-content" id="selectable-text">
+                        量子计算利用量子力学的特性（如叠加和纠缠）来处理信息。与传统计算机使用比特（0或1）不同，量子计算机使用量子比特（qubit），它可以同时处于多种状态。这种能力使得量子计算机在处理复杂数学问题、药物开发和材料科学等领域具有巨大的潜力。
+                    </div>
+                    <!-- 引用触发按钮 -->
+                    <div id="quote-trigger" class="selection-quote-trigger">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h4c0 3.5-3.5 4.5-3.5 4.5"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2h-3c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h4c0 3.5-3.5 4.5-3.5 4.5"></path></svg>
+                        <span>引用</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 输入框带引用内容-->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">2. 输入框带引用内容</h3>
+                <div class="input-container-bubble">
+                    <!-- 引用内容区 -->
+                    <div class="input-quote-container">
+                        <div class="quote-content">
+                            “这量子计算利用量子力学的特性（如叠加和纠缠）来处理信息。与传统计算机使用比特（0或1）不同，量子计算机使用量子比特（qubit），它可以同时处于多种状态。这种能力使得量子计算机在处理复杂数学问题、药物开发和材料科学等领域具有巨大的潜力。”
+                        </div>
+                        <div class="quote-remove">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </div>
+                    </div>
+                    <textarea class="input-main-area" placeholder="针对引用内容进行追问..."></textarea>
+                    <div class="input-bottom-actions">
+                        <div class="actions-left">
+                            <div class="input-action-btn" title="添加附件">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
+                            </div>
+                            <div class="input-action-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <span>Skill技能</span>
+                            </div>
+                        </div>
+                        <div class="actions-right">
+                            <div class="input-action-btn" onclick="togglePopover('model-pop-quote-1', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <span>DeepSeek V4 pro</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <div class="popover-mock" id="model-pop-quote-1" style="left: auto; right: 0;" onclick="event.stopPropagation()">
+                                    <div class="popover-item selected">DeepSeek V4 pro</div>
+                                    <div class="popover-item">GPT-4o Mini</div>
+                                    <div class="popover-item">Claude 3.5 Sonnet</div>
+                                    <div class="popover-item">Gemini 1.5 Pro</div>
+                                </div>
+                            </div>
+                            <button class="send-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 输入框带引用及附件 -->
+            <div class="variant-group">
+                <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 16px;">3. 输入框带引用内容及附件</h3>
+                <div class="input-container-bubble">
+                    <!-- 引用内容区 -->
+                    <div class="input-quote-container">
+                        <div class="quote-content">
+                            “量子计算利用量子力学的特性（如叠加和纠缠）来处理信息。”
+                        </div>
+                        <div class="quote-remove">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </div>
+                    </div>
+                    <!-- 附件区 -->
+                    <div class="attachment-area">
+                        <div class="attach-item">
+                            <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=100" class="attach-img">
+                            <div class="attach-remove">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="input-main-area" placeholder="针对引用内容并结合附件进行追问..."></textarea>
+                    <div class="input-bottom-actions">
+                        <div class="actions-left">
+                            <div class="input-action-btn" title="添加附件">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
+                            </div>
+                            <div class="input-action-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <span>Skill技能</span>
+                            </div>
+                        </div>
+                        <div class="actions-right">
+                            <div class="input-action-btn" onclick="togglePopover('model-pop-quote-2', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <span>DeepSeek V4 pro</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <div class="popover-mock" id="model-pop-quote-2" style="left: auto; right: 0;" onclick="event.stopPropagation()">
+                                    <div class="popover-item selected">DeepSeek V4 pro</div>
+                                    <div class="popover-item">GPT-4o Mini</div>
+                                    <div class="popover-item">Claude 3.5 Sonnet</div>
+                                    <div class="popover-item">Gemini 1.5 Pro</div>
+                                </div>
+                            </div>
+                            <button class="send-btn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggle(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('collapsed');
+        }
+        function toggleTask(header) {
+            const item = header.parentElement;
+            item.classList.toggle('expanded');
+        }
+
+        function handleCopy(btn) {
+            const originalIcon = btn.innerHTML;
+            const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            
+            btn.classList.add('copied');
+            btn.innerHTML = checkIcon;
+            
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalIcon;
+            }, 2000);
+        }
+
+        function toggleReaction(btn, type) {
+            const parent = btn.parentElement;
+            const likeBtn = parent.querySelector('.like-btn');
+            const dislikeBtn = parent.querySelector('.dislike-btn');
+            
+            if (type === 'like') {
+                btn.classList.toggle('active-like');
+                dislikeBtn.classList.remove('active-dislike');
+            } else {
+                btn.classList.toggle('active-dislike');
+                likeBtn.classList.remove('active-like');
+            }
+        }
+
+        /* 用户相关逻辑 */
+        function handleUserCopy(btn) {
+            const originalIcon = btn.innerHTML;
+            const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            
+            btn.classList.add('copied');
+            btn.innerHTML = checkIcon;
+            
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalIcon;
+            }, 2000);
+        }
+
+        function enterUserEdit(id) {
+            const container = document.getElementById(id + '-container');
+            const textEl = document.getElementById(id + '-text');
+            const actionsEl = document.getElementById(id + '-actions');
+            const originalText = textEl.innerText;
+
+            const editHtml = `
+                <div class="edit-container" id="${id}-edit-box">
+                    <textarea class="edit-textarea" id="${id}-textarea">${originalText}</textarea>
+                    <div class="edit-footer">
+                        <button class="edit-btn-cancel" onclick="exitUserEdit('${id}')">取消</button>
+                        <button class="edit-btn-save" onclick="saveUserEdit('${id}')">发送</button>
+                    </div>
+                </div>
+            `;
+
+            textEl.style.display = 'none';
+            actionsEl.style.display = 'none';
+            container.insertAdjacentHTML('afterbegin', editHtml);
+            
+            // 聚焦并移动光标到末尾
+            const textarea = document.getElementById(id + '-textarea');
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }
+
+        function exitUserEdit(id) {
+            const editBox = document.getElementById(id + '-edit-box');
+            const textEl = document.getElementById(id + '-text');
+            const actionsEl = document.getElementById(id + '-actions');
+
+            if (editBox) editBox.remove();
+            textEl.style.display = 'block';
+            actionsEl.style.display = 'flex';
+        }
+
+        function saveUserEdit(id) {
+            const textarea = document.getElementById(id + '-textarea');
+            const newText = textarea.value;
+            const textEl = document.getElementById(id + '-text');
+            
+            // 模拟保存并增加版本
+            textEl.innerText = newText;
+            exitUserEdit(id);
+
+            // 如果没有版本导航，添加一个
+            const actionsEl = document.getElementById(id + '-actions');
+            if (!actionsEl.querySelector('.version-nav')) {
+                const versionHtml = `
+                    <div class="version-nav">
+                        <div class="version-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></div>
+                        <span>2 / 2</span>
+                        <div class="version-btn disabled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                `;
+                actionsEl.insertAdjacentHTML('beforeend', versionHtml);
+            }
+        }
+
+        /* 输入框操作区逻辑 */
+        function togglePopover(id, event) {
+            if (event) event.stopPropagation();
+            const pop = document.getElementById(id);
+            const isActive = pop.classList.contains('active');
+            
+            // 关闭所有其它的
+            document.querySelectorAll('.popover-mock').forEach(p => {
+                if (p.id !== id) p.classList.remove('active');
+            });
+            
+            pop.classList.toggle('active');
+        }
+
+        function toggleKnowledge(btn) {
+            const isActive = btn.classList.toggle('active');
+            const span = btn.querySelector('span');
+            if (isActive) {
+                span.innerText = '知识库已开启';
+            } else {
+                span.innerText = '知识库已关闭';
+            }
+        }
+
+        // 点击外部关闭弹出框
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.input-action-btn')) {
+                document.querySelectorAll('.popover-mock').forEach(p => p.classList.remove('active'));
+            }
+        });
+
+        /* 文字选中引用逻辑 */
+        const selectableText = document.getElementById('selectable-text');
+        const quoteTrigger = document.getElementById('quote-trigger');
+
+        document.addEventListener('mouseup', function(e) {
+            const selection = window.getSelection();
+            const text = selection.toString().trim();
+            
+            if (text && isSelectionInside(selection, selectableText)) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                const containerRect = document.getElementById('quote-demo-area').getBoundingClientRect();
+                
+                // 相对于父容器定位 (考虑滚动)
+                const top = rect.top - containerRect.top - 45;
+                const left = rect.left - containerRect.left + (rect.width / 2) - (quoteTrigger.offsetWidth / 2);
+                
+                quoteTrigger.style.top = top + 'px';
+                quoteTrigger.style.left = left + 'px';
+                quoteTrigger.style.display = 'flex';
+            } else {
+                if (!e.target.closest('#quote-trigger')) {
+                    quoteTrigger.style.display = 'none';
+                }
+            }
+        });
+
+        function isSelectionInside(selection, container) {
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                return container.contains(range.commonAncestorContainer);
+            }
+            return false;
+        }
+
+        quoteTrigger.addEventListener('click', function() {
+            // 这里可以添加逻辑：将选中的文字填入下方输入框的引用区域
+            const selection = window.getSelection();
+            const text = selection.toString().trim();
+            console.log('引用内容:', text);
+            
+            quoteTrigger.style.display = 'none';
+            window.getSelection().removeAllRanges();
+        });
+    </script>
+</body>
+</html>

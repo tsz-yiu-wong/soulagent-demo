@@ -1,0 +1,245 @@
+/* --- Page Level Tab Switcher --- */
+.page-header-switcher {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 60px;
+    margin-top: 20px;
+}
+
+.component-section {
+    margin-bottom: 80px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #F3F4F6;
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-primary);
+}
+
+.style-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.variant-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.switcher-container {
+    background: #F3F4F6;
+    padding: 6px;
+    border-radius: 40px;
+    display: inline-flex;
+    gap: 4px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.switcher-tab {
+    padding: 12px 48px;
+    border-radius: 34px;
+    font-size: 1rem;
+    font-weight: 800;
+    text-decoration: none;
+    color: #6B7280;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.switcher-tab:hover {
+    color: var(--color-text);
+}
+
+.switcher-tab.active {
+    background: white;
+    color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* --- Final Reply Bubble --- */
+.final-reply {
+    background: white;
+    border: 2px solid var(--color-border);
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    padding: 18px 22px;
+    max-width: 650px;
+    color: var(--color-text);
+    line-height: 1.6;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    margin-top: 4px;
+    border-bottom: 4px solid var(--color-border);
+    position: relative;
+}
+
+.final-reply-content {
+    margin-bottom: 12px;
+}
+
+/* --- Reply Actions Area --- */
+.reply-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding-left: 4px;
+}
+
+.reply-action-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: #9CA3AF;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    background: transparent;
+    user-select: none;
+}
+
+.reply-action-btn:hover {
+    background: #F3F4F6;
+    color: var(--color-text);
+}
+
+.reply-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.reply-action-btn.active-regen {
+    color: var(--color-primary);
+    background: #FFF7F5;
+}
+
+/* Token Usage Text */
+.token-usage {
+    margin-left: 12px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #9CA3AF;
+    user-select: none;
+}
+
+/* Security Status Indicator */
+.security-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+    position: relative;
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+.security-status:hover {
+    transform: scale(1.02);
+}
+
+.security-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #10B981; /* Green */
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.security-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #10B981; /* Green */
+}
+
+/* Tooltip for Security Status */
+.security-status::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    transform: translateY(-4px);
+    background: rgba(31, 41, 55, 0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.security-status:hover::after {
+    opacity: 1;
+    transform: translateY(-10px);
+}
+
+/* --- Dropdown Menu & Popover --- */
+.popover-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 8px);
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    min-width: 140px;
+    display: none;
+    z-index: 1000;
+    animation: pop-in-right 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+@keyframes pop-in-right {
+    from { opacity: 0; transform: translateX(-10px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.menu-item:hover {
+    background: #F3F4F6;
+    color: var(--color-primary);
+}
+
+.menu-item svg {
+    width: 14px;
+    height: 14px;
+}

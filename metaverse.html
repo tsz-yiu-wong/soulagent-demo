@@ -428,6 +428,240 @@
             color: #fff;
             transform: translateY(-2px);
         }
+        /* --- Expert Intro View --- */
+        #dark-intro-view {
+            display: none;
+            opacity: 0;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding-bottom: 80px;
+            transition: opacity 0.6s ease;
+        }
+
+        .intro-ip-wrap {
+            position: relative;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .intro-avatar-large {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            box-shadow: 0 0 50px rgba(157, 133, 255, 0.3);
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            z-index: 2;
+            animation: float-slow 4s infinite ease-in-out;
+            position: relative;
+        }
+
+        .avatar-ai-tag {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--color-twin);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 999px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(122, 92, 255, 0.5);
+            pointer-events: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            line-height: 1;
+        }
+
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .intro-msg-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 24px 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            width: 420px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 50px;
+            position: relative;
+            animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .intro-msg-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 15px solid transparent;
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .intro-recommendations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 800px;
+            padding: 0 40px;
+            animation: fade-in-up 1s ease 0.4s both;
+        }
+
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .intro-recommendation-chip {
+            background: rgba(157, 133, 255, 0.15);
+            color: #E9E6FF;
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(157, 133, 255, 0.3);
+            white-space: nowrap;
+        }
+
+        .intro-recommendation-chip:hover {
+            background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%);
+            color: white;
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(122, 92, 255, 0.4);
+            border-color: transparent;
+        }
+
+        /* Typing indicator for dark mode */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            width: fit-content;
+            margin-top: 10px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Message Actions */
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 4px 0 4px;
+            margin-top: -4px; /* Reduced spacing */
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .chat-msg:hover .msg-actions {
+            opacity: 1;
+        }
+
+        .msg-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #A0AEC0;
+            transition: all 0.2s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .msg-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .msg-action-btn.liked {
+            color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.2) !important;
+        }
+
+        .msg-action-btn.disliked {
+            color: #EF4444 !important;
+            background: rgba(239, 68, 68, 0.2) !important;
+        }
+
+        .msg-action-btn.copied {
+            color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.2) !important;
+        }
+
+        @keyframes btn-spring {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.4); }
+            60% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        .msg-action-btn.spring {
+            animation: btn-spring 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+        }
+
+        .copy-tip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            white-space: nowrap;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
 
     </style>
 </head>
@@ -464,7 +698,9 @@
         <div class="dark-dashboard">
             <!-- Sidebar -->
             <aside class="dark-sidebar">
+                <!--
                 <h2 style="font-size: 1.25rem; margin-bottom: 20px; color: #fff;">历史对话</h2>
+                -->
                 <input type="text" class="dark-search-bar" placeholder="搜索对话记录..." style="margin-bottom: 20px;">
                 
                 <div class="conv-list" id="conv-list-container">
@@ -503,6 +739,22 @@
                     </div>
                 </div>
 
+                <!-- Expert Intro View -->
+                <div id="dark-intro-view">
+                    <div class="intro-ip-wrap">
+                        <div class="intro-msg-bubble" id="intro-self-intro">
+                            你好！我是张建国。我最近在研究具身智能的长时程规划问题，也关注到你对该领域的兴趣。我们可以聊聊多模态大模型如何提升机器人的理解能力，或者探讨强化学习在复杂环境下的泛化挑战。
+                        </div>
+                        <div class="intro-avatar-large bg-gradient-1" id="intro-avatar">
+                            <span id="intro-avatar-icon">👨‍🏫</span>
+                            <span class="avatar-ai-tag">AI</span>
+                        </div>
+                    </div>
+                    <div class="intro-recommendations" id="intro-recommendations-container">
+                        <!-- Dynamic Chips -->
+                    </div>
+                </div>
+
                 <!-- Chat View -->
                 <div id="dark-chat-view" style="display: none; flex-direction: column; height: 100%; position: relative;">
                     <div class="dark-chat-header" style="padding: 15px 40px; background: rgba(15, 15, 25, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; z-index: 5;">
@@ -526,7 +778,7 @@
                 
                     <div class="dark-chat-area" style="flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
                         <div style="text-align: center; color: #A0AEC0; font-size: 0.8rem; margin-bottom: 10px;">
-                            —— 已连接到 <span style="color: #fff; font-weight: 800;">AI 专家广场</span>，所有回答由数字大脑基于专家知识库生成 ——
+                            —— 已连接至专家数字分身，回复内容由 AI 模型生成，不代表专家本人的真实意见与立场，亦不构成专业建议。 ——
                         </div>
                         <div class="chat-msg" style="display: flex;">
                             <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
@@ -555,7 +807,7 @@
     <script>
         // Define fixed positions instead of random
         const experts = [
-            { name: "张建国", sub: "清华大学 · 教授", desc: "长期专注于具身智能与机器人学习研究。可解答相关领域的前沿理论问题。", icon: "👨‍🏫", tags: ["具身智能", "强化学习"], bg: "bg-gradient-1", left: "6vw", top: "12vh", delay: "-2s", dur: "12s", questions: ["如何实现多模态具身智能？", "强化学习在机器人控制中的瓶颈是什么？", "如何看待端到端学习与模块化设计？"] },
+            { name: "张建国", sub: "清华大学 · 教授", desc: "长期专注于具身智能与机器人学习研究。可解答相关领域的前沿理论问题。", icon: "👨‍🏫", tags: ["具身智能", "强化学习"], bg: "bg-gradient-1", left: "6vw", top: "12vh", delay: "-2s", dur: "12s", questions: ["具身智能到底和传统 AI 有什么本质区别？", "强化学习在机器人控制中的瓶颈是什么？", "如何看待端到端学习与模块化设计？"] },
             { name: "李雪娇", sub: "智源研究院 · 架构师", desc: "主导开发新一代视频生成与物理世界模型。对Diffusion与Transformer架构结合有深刻见解与丰富的实战经验。", icon: "👩‍🔬", tags: ["世界模型", "视频生成"], bg: "bg-gradient-2", left: "75vw", top: "10vh", delay: "-5s", dur: "14s", questions: ["Sora等模型的核心架构是什么？", "物理世界模型如何处理遮挡信息？", "Diffusion模型如何保持长视频一致性？"] },
             { name: "王博文", sub: "北京大学 · 研究员", desc: "专注大语言模型对齐(Alignment)、RLHF以及长上下文推理技术。可深入交流预训练策略与高效微调(PEFT)方法。", icon: "👨‍💻", tags: ["大语言模型", "对齐技术"], bg: "bg-gradient-3", left: "10vw", top: "72vh", delay: "-1s", dur: "11s", questions: ["DPO算法相比RLHF有哪些优势？", "大模型如何处理超长上下文？", "目前最前沿的模型对齐技术有哪些？"] },
             { name: "吴长青", sub: "清华大学 · 科学家", desc: "长期从事人工智能安全与伦理研究，参与制定多项AI安全标准。可探讨模型对抗攻击、可解释性与价值观对齐等宏观与技术问题。", icon: "🧓", tags: ["AI安全", "伦理规范"], bg: "bg-gradient-4", left: "70vw", top: "75vh", delay: "-8s", dur: "15s", questions: ["如何量化大模型的安全风险？", "红队测试的最佳实践是什么？", "价值观对齐是否会损害推理能力？"] },
@@ -663,7 +915,11 @@
                 
                 card.onclick = () => {
                     enterMetaverse();
-                    showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                    if (expert.name === "张建国") {
+                        showIntro(expert);
+                    } else {
+                        showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                    }
                 };
                 container.appendChild(card);
             });
@@ -677,7 +933,13 @@
             experts.forEach((expert) => {
                 const card = document.createElement('div');
                 card.className = 'dark-expert-card';
-                card.onclick = () => showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                card.onclick = () => {
+                    if (expert.name === "张建国") {
+                        showIntro(expert);
+                    } else {
+                        showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                    }
+                };
 
                 card.innerHTML = `
                     <div class="card-header">
@@ -694,7 +956,7 @@
                         ${expert.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}
                     </div>
                     <p class="card-desc">${expert.desc}</p>
-                    <button class="btn-talk" onclick="event.stopPropagation(); showChat('${expert.name}', '${expert.icon}', '${expert.sub}', '${expert.bg}')">与ta交流</button>
+                    <button class="btn-talk" onclick="event.stopPropagation(); if('${expert.name}' === '张建国') { showIntro(experts.find(e=>e.name==='张建国')); } else { showChat('${expert.name}', '${expert.icon}', '${expert.sub}', '${expert.bg}'); }">与ta交流</button>
                 `;
                 
                 grid.appendChild(card);
@@ -712,7 +974,13 @@
             experts.slice(0, 4).forEach((expert, i) => {
                 const item = document.createElement('div');
                 item.className = 'dark-conv-item' + (i === 0 ? ' active' : '');
-                item.onclick = () => showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                item.onclick = () => {
+                    if (expert.name === "张建国") {
+                        showIntro(expert);
+                    } else {
+                        showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                    }
+                };
                 
                 item.innerHTML = `
                     <div class="dark-conv-avatar ${expert.bg}">${expert.name.charAt(0)}</div>
@@ -743,6 +1011,119 @@
             }, 1200);
         }
 
+        // Show Intro Interface
+        function showIntro(expert) {
+            document.getElementById('dark-square-view').style.display = 'none';
+            document.getElementById('dark-chat-view').style.display = 'none';
+            const introView = document.getElementById('dark-intro-view');
+            introView.style.display = 'flex';
+            void introView.offsetWidth;
+            introView.classList.add('fade-in');
+
+            // Update Intro Content
+            document.getElementById('intro-avatar-icon').innerText = expert.icon;
+            document.getElementById('intro-avatar').className = 'intro-avatar-large ' + expert.bg;
+            
+            const recommendationContainer = document.getElementById('intro-recommendations-container');
+            recommendationContainer.innerHTML = '';
+            expert.questions.forEach(q => {
+                const chip = document.createElement('div');
+                chip.className = 'intro-recommendation-chip';
+                chip.innerText = q;
+                chip.onclick = () => startChatFromIntro(expert, q);
+                recommendationContainer.appendChild(chip);
+            });
+
+            // Update Active State in Sidebar
+            document.querySelectorAll('.dark-conv-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.querySelector('.conv-name').innerText === expert.name) {
+                    el.classList.add('active');
+                }
+            });
+
+            // Add actions to intro bubble if not already there
+            const introBubble = document.getElementById('intro-self-intro');
+            if (!introBubble.querySelector('.msg-actions')) {
+                const actionsWrapper = document.createElement('div');
+                actionsWrapper.innerHTML = getExpertActionsHtml();
+                const actions = actionsWrapper.firstElementChild;
+                actions.style.marginTop = '10px'; // More space for the intro bubble which is larger
+                introBubble.appendChild(actions);
+            }
+        }
+
+        async function startChatFromIntro(expert, question) {
+            const introView = document.getElementById('dark-intro-view');
+            introView.style.opacity = '0';
+            
+            setTimeout(async () => {
+                introView.style.display = 'none';
+                showChat(expert.name, expert.icon, expert.sub, expert.bg);
+                
+                // Wait for showChat to finish resetting
+                setTimeout(async () => {
+                    // Send the initial question
+                    sendMessage(question);
+                    
+                    // Show typing indicator
+                    const chatArea = document.querySelector('.dark-chat-area');
+                    const typing = document.createElement('div');
+                    typing.className = 'typing-indicator';
+                    typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                    chatArea.appendChild(typing);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                    
+                    // Wait 1 second
+                    await new Promise(r => setTimeout(r, 1000));
+                    
+                    // Remove typing and add AI response
+                    if (chatArea.contains(typing)) {
+                        chatArea.removeChild(typing);
+                    }
+                    
+                    const aiMsg = document.createElement('div');
+                    aiMsg.className = 'chat-msg';
+                    aiMsg.style.display = 'flex';
+                    aiMsg.style.flexDirection = 'column';
+                    aiMsg.style.alignItems = 'flex-start';
+                    
+                    let aiText = `这是一个非常深刻的问题。针对“${question}”，我认为核心在于如何通过层级化的架构将高层感知与底层控制解耦。目前我们的研究表明，结合大规模视觉语言模型与层级强化学习是一个极具前景的方向。`;
+                    let nextQuestions = [
+                        "具身智能在家庭场景有哪些落地挑战？",
+                        "如何评价大模型在控制任务中的表现？",
+                        "未来五年具身智能的突破口在哪里？"
+                    ];
+
+                    if (expert.name === "张建国") {
+                        aiText = `很高兴你关注到具身智能这个方向。\n一句话概括的话，具身智能要解决的核心问题是：如何让 AI 拥有物理身体，在真实世界中感知、决策并执行动作。\n这里面最关键的挑战在于：真实物理世界是连续的、不确定的、部分可观测的。你在仿真里训练好的策略，放到真实机器人上往往直接失效——光照变了、物体材质不同、机械臂有误差，这些都会导致策略崩溃。这就是我们常说的 Sim-to-Real Gap。\n你是刚开始接触具身智能，还是已经有一些机器人或强化学习的基础了？如果你有具体感兴趣的场景（比如抓取、导航、家务），我可以帮你梳理一下切入点。`;
+                        nextQuestions = [
+                            "抓取、导航、家务这几个场景，哪个对新手更友好、上手门槛更低？",
+                            "如果我对灵巧抓取感兴趣，需要提前补哪些基础知识？",
+                            "您刚提到的 Sim-to-Real 是什么，可以更具体一些么？"
+                        ];
+                    }
+
+                    aiMsg.innerHTML = `
+                        <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3); white-space: pre-wrap;">${aiText}</div>
+                        ${getExpertActionsHtml()}
+                    `;
+                    chatArea.appendChild(aiMsg);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                    
+                    const suggestionContainer = document.getElementById('suggestion-container');
+                    suggestionContainer.innerHTML = '';
+                    nextQuestions.forEach(q => {
+                        const chip = document.createElement('div');
+                        chip.className = 'suggestion-chip';
+                        chip.innerText = q;
+                        chip.onclick = () => useSuggestion(q);
+                        suggestionContainer.appendChild(chip);
+                    });
+                }, 100);
+            }, 600);
+        }
+
         // Show Chat Interface
         function showChat(name, icon, title, bgClass) {
             document.getElementById('dark-square-view').style.display = 'none';
@@ -757,14 +1138,21 @@
 
             // Reset Chat Area
             const chatArea = document.querySelector('.dark-chat-area');
+            let greeting = `你好！我是${name}。请问关于${title.split('·')[1]?.trim() || '相关领域'}有什么我可以帮你的吗？`;
+            
+            if (name === "张建国") {
+                greeting = "你好！我是张建国。我最近在研究具身智能的长时程规划问题，也关注到你对该领域的兴趣。我们可以聊聊多模态大模型如何提升机器人的理解能力，或者探讨强化学习在复杂环境下的泛化挑战。";
+            }
+
             chatArea.innerHTML = `
                 <div style="text-align: center; color: #A0AEC0; font-size: 0.8rem; margin-bottom: 10px;">
-                    —— 已连接到 <span style="color: #fff; font-weight: 800;">AI 专家广场</span>，所有回答由数字大脑基于专家知识库生成 ——
+                    —— 已连接至专家数字分身，回复内容由 AI 模型生成，不代表专家本人的真实意见与立场，亦不构成专业建议。 ——
                 </div>
-                <div class="chat-msg" style="display: flex;">
-                    <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        你好！我是${name}。请问关于${title.split('·')[1] || '相关领域'}有什么我可以帮你的吗？
+                <div class="chat-msg" style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        ${greeting}
                     </div>
+                    ${getExpertActionsHtml()}
                 </div>
             `;
 
@@ -791,8 +1179,78 @@
             });
         }
 
-        function useSuggestion(text) {
+        async function useSuggestion(text) {
+            const currentExpert = document.getElementById('current-expert-name').innerText;
+            
+            // Turn 3 questions - no reaction
+            const turn3Questions = [
+                "我有一些强化学习基础，做抓取任务可以直接用上吗？",
+                "MuJoCo 和 Isaac Sim 各自的优缺点是什么？新手选哪个好？",
+                "老师能推荐几篇具身智能方向的必读论文吗？"
+            ];
+            if (currentExpert === "张建国" && turn3Questions.includes(text)) {
+                return;
+            }
+
             sendMessage(text);
+
+            // Handle Turn 2 to Turn 3 transition for 张建国
+            const turn2Questions = [
+                "抓取、导航、家务这几个场景，哪个对新手更友好、上手门槛更低？",
+                "如果我对灵巧抓取感兴趣，需要提前补哪些基础知识？",
+                "您刚提到的 Sim-to-Real 是什么，可以更具体一些么？"
+            ];
+
+            if (currentExpert === "张建国" && turn2Questions.includes(text)) {
+                const chatArea = document.querySelector('.dark-chat-area');
+                
+                // Show typing indicator
+                const typing = document.createElement('div');
+                typing.className = 'typing-indicator';
+                typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                chatArea.appendChild(typing);
+                chatArea.scrollTop = chatArea.scrollHeight;
+                
+                // Wait 1 second
+                await new Promise(r => setTimeout(r, 1000));
+                
+                // Remove typing
+                if (chatArea.contains(typing)) {
+                    chatArea.removeChild(typing);
+                }
+                
+                // Expert Bubble 3
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'chat-msg';
+                aiMsg.style.display = 'flex';
+                aiMsg.style.flexDirection = 'column';
+                aiMsg.style.alignItems = 'flex-start';
+                const aiText = `好问题，我帮你逐个对比一下：\n家务（如叠衣服、整理桌面）：门槛最高。这类任务是长时序、多步骤的，需要任务规划、多模态感知、精细操作的综合能力，目前学术界也还在攻坚，不建议新手直接上手。\n导航（如室内移动、避障）：门槛适中。问题定义比较清晰，但涉及 SLAM、路径规划、动态障碍物处理等一整套技术栈，前置知识量不小，而且实验往往需要真实场景或高保真 3D 环境，调试周期偏长。\n桌面级物体抓取（Tabletop Grasping）：对新手最友好，我推荐从这里切入。`;
+                
+                aiMsg.innerHTML = `
+                    <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3); white-space: pre-wrap;">${aiText}</div>
+                    ${getExpertActionsHtml()}
+                `;
+                chatArea.appendChild(aiMsg);
+                chatArea.scrollTop = chatArea.scrollHeight;
+                
+                // Turn 3 suggestions
+                const nextQuestions = [
+                    "我有一些强化学习基础，做抓取任务可以直接用上吗？",
+                    "MuJoCo 和 Isaac Sim 各自的优缺点是什么？新手选哪个好？",
+                    "老师能推荐几篇具身智能方向的必读论文吗？"
+                ];
+                
+                const suggestionContainer = document.getElementById('suggestion-container');
+                suggestionContainer.innerHTML = '';
+                nextQuestions.forEach(q => {
+                    const chip = document.createElement('div');
+                    chip.className = 'suggestion-chip';
+                    chip.innerText = q;
+                    chip.onclick = () => useSuggestion(q);
+                    suggestionContainer.appendChild(chip);
+                });
+            }
         }
 
         function sendMessage(explicitText) {
@@ -837,6 +1295,106 @@
             document.getElementById('dark-chat-view').style.display = 'none';
             
             document.querySelectorAll('.dark-conv-item').forEach(el => el.classList.remove('active'));
+        }
+
+        // --- Message Actions ---
+        function getExpertActionsHtml() {
+            return `
+                <div class="msg-actions">
+                    <button class="msg-action-btn" onclick="msgCopy(this)" title="复制">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                    <button class="msg-action-btn msg-like-btn" onclick="msgLike(this)" title="点赞">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
+                            <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                        </svg>
+                    </button>
+                    <button class="msg-action-btn msg-dislike-btn" onclick="msgDislike(this)" title="点踩">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"></path>
+                            <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                        </svg>
+                    </button>
+                    <button class="msg-action-btn" title="重新生成">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+
+        function msgCopy(btn) {
+            let bubble = null;
+            const chatMsg = btn.closest('.chat-msg');
+            if (chatMsg) {
+                bubble = chatMsg.querySelector('.expert-bubble');
+            } else {
+                const introBubble = btn.closest('.intro-msg-bubble');
+                if (introBubble) bubble = introBubble;
+            }
+            
+            if (!bubble) return;
+            
+            // Get text, excluding the actions HTML
+            const text = bubble.innerText.replace(/复制|重新生成|点赞|点踩/g, '').trim();
+
+            const doFeedback = () => {
+                const svgCopy = btn.innerHTML;
+                btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                btn.classList.add('copied', 'spring');
+
+                const tip = document.createElement('span');
+                tip.className = 'copy-tip';
+                tip.textContent = '已复制';
+                btn.appendChild(tip);
+
+                setTimeout(() => {
+                    btn.innerHTML = svgCopy;
+                    btn.classList.remove('copied', 'spring');
+                }, 1600);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(doFeedback).catch(doFeedback);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                doFeedback();
+            }
+        }
+
+        function msgLike(btn) {
+            const dislikeBtn = btn.closest('.msg-actions').querySelector('.msg-dislike-btn');
+            if (btn.classList.contains('liked')) {
+                btn.classList.remove('liked');
+            } else {
+                btn.classList.add('liked', 'spring');
+                dislikeBtn.classList.remove('disliked');
+                setTimeout(() => btn.classList.remove('spring'), 500);
+            }
+        }
+
+        function msgDislike(btn) {
+            const likeBtn = btn.closest('.msg-actions').querySelector('.msg-like-btn');
+            if (btn.classList.contains('disliked')) {
+                btn.classList.remove('disliked');
+            } else {
+                btn.classList.add('disliked', 'spring');
+                likeBtn.classList.remove('liked');
+                setTimeout(() => btn.classList.remove('spring'), 500);
+            }
         }
     </script>
 </body>
