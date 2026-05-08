@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoulAgent | 交互组件</title>
-    <link rel="stylesheet" href="../shared.css">
+    <link rel="stylesheet" href="../legacy_v0.5/shared.css">
     <link rel="stylesheet" href="components.css">
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -89,8 +89,8 @@
 
         .bubble-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
             cursor: pointer;
             user-select: none;
         }
@@ -99,9 +99,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-weight: 800;
+            font-weight: 500;
             font-size: 0.85rem;
-            color: var(--color-text);
+            color: #9CA3AF;
         }
 
         .timestamp {
@@ -109,6 +109,9 @@
             font-weight: 400;
             font-size: 0.75rem;
             margin-left: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .toggle-arrow {
@@ -119,40 +122,60 @@
         }
 
         .collapsed .toggle-arrow { transform: rotate(-90deg); }
-        .collapsed .bubble-body { display: none; }
+        .collapsed .bubble-body { 
+            display: none; 
+        }
+
+        /* 统一气泡内的过程部分 */
+        .process-container {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+        }
+
+        .process-container.collapsed .bubble-body {
+            display: none;
+        }
+        
+        .process-container.collapsed {
+            border-bottom: none;
+            margin-bottom: 8px;
+            padding-bottom: 0;
+        }
 
         .bubble-body {
-            margin-top: 14px;
-            padding-top: 14px;
-            border-top: 1px dashed var(--color-border);
+            margin-top: 4px;
+            padding-top: 0;
+            border-left: 2px solid #E5E7EB;
+            margin-left: 11px;
+            padding-left: 16px;
         }
 
         /* --- 灰色斜体通用样式 --- */
         .gray-italic-text {
-            color: var(--color-text-light);
+            color: #9CA3AF;
             font-size: 0.85rem;
-            line-height: 1.6;
+            line-height: 1.5;
             font-style: italic;
             white-space: pre-wrap;
         }
 
         .code-inline {
             font-family: 'JetBrains Mono', 'Menlo', monospace;
-            font-weight: 600;
-            color: #6B7280;
-            font-style: normal;
+            font-weight: 400;
+            color: #9CA3AF;
+            font-style: italic;
             display: block;
-            margin-top: 2px;
-            padding-left: 12px;
-            border-left: 2px solid #E5E7EB;
             line-height: 1.4;
+            padding: 0 0 0 12px;
+            margin: 4px 0 4px 2px;
+            border-left: 2px solid #E5E7EB;
         }
 
         /* --- 任务清单样式 --- */
         .task-list {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
         }
 
         .task-item {
@@ -164,33 +187,33 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 4px;
+            padding: 4px 4px;
             cursor: pointer;
             user-select: none;
         }
 
         .task-label {
             font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--color-text);
-            flex: 1;
+            font-weight: 500;
+            color: #9CA3AF;
         }
 
-        .task-item.done { opacity: 0.7; }
-        .task-item.active { opacity: 1; }
+        .task-item.done, .task-item.active { opacity: 1; }
 
-        .task-dot { width: 6px; height: 6px; border-radius: 50%; background: #D1D5DB; flex-shrink: 0; }
-        .task-item.done .task-dot { background: #10B981; }
-        .task-item.active .task-dot { background: var(--color-primary); box-shadow: 0 0 8px var(--color-primary); }
+        .task-dot { display: none; }
 
         .task-detail {
-            padding: 4px 4px 12px 24px;
+            padding: 2px 0 4px 0;
             display: none;
         }
 
         .task-item.expanded .task-detail { display: block; }
         .task-item.expanded .task-toggle { transform: rotate(0deg); }
-        .task-toggle { transform: rotate(-90deg); transition: transform 0.2s; }
+        .task-toggle { 
+            color: #9CA3AF;
+            transform: rotate(-90deg); 
+            transition: transform 0.2s; 
+        }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -1038,16 +1061,21 @@
             <div class="variant-group">
                 <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">1. 思考中</h3>
                 <div class="thought-bubble active" id="s1">
-                    <div class="bubble-header" onclick="toggle('s1')">
-                        <div class="status-info">
-                            <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
-                            <span>正在思考中... <span class="timestamp">8s</span></span>
+                    <div class="process-container">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <div class="status-info">
+                                <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                                <span>正在思考中... 
+                                    <span class="timestamp">8s 
+                                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                                    </span>
+                                </span>
+                            </div>
                         </div>
-                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
-                    </div>
-                    <div class="bubble-body">
-                        <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势。
+                        <div class="bubble-body">
+                            <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势。
 我需要先通过 arXiv API 检索过去 24 个月内包含 "Quantum Computing" 和 "Error Correction" 关键字的所有预印本。</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1055,58 +1083,50 @@
             <!-- 2. 工具调用 -->
             <div class="variant-group">
                 <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">2. 工具调用</h3>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <!-- 思考已完成 -->
-                    <div class="thought-bubble done collapsed" id="s2-1">
-                        <div class="bubble-header" onclick="toggle('s2-1')">
+                <div class="thought-bubble active">
+                    <!-- 思考部分 (已完成) -->
+                    <div class="process-container collapsed">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
                             <div class="status-info">
                                 <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span>思考完成 <span class="timestamp">12s</span></span>
+                                <span>思考完成 
+                                    <span class="timestamp">12s 
+                                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                                    </span>
+                                </span>
                             </div>
-                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                         </div>
                         <div class="bubble-body">
-                            <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势。
-我需要先通过 arXiv API 检索过去 24 个月内包含 "Quantum Computing" 和 "Error Correction" 关键字的所有预印本。
-检索完成后，我需要对论文的摘要进行聚类分析，提取出技术演进的核心指标，例如量子比特的相干时间（Coherence Time）和保真度（Fidelity）。
-最后，我会寻找是否有针对“逻辑量子比特”在超导量子芯片上的最新实验数据，以支撑我的最终结论。</div>
+                            <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势...</div>
                         </div>
                     </div>
-                    <!-- 工具正在执行 -->
-                    <div class="thought-bubble active" id="s2-2">
-                        <div class="bubble-header" onclick="toggle('s2-2')">
+                    <!-- 工具执行部分 (进行中) -->
+                    <div class="process-container" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
                             <div class="status-info">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                <span>正在执行操作... <span class="timestamp">45s</span></span>
+                                <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg>
+                                <span>正在执行操作... 
+                                    <span class="timestamp">45s 
+                                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                                    </span>
+                                </span>
                             </div>
-                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                         </div>
                         <div class="bubble-body">
                             <div class="task-list">
-                                <!-- 任务 1 -->
                                 <div class="task-item done">
                                     <div class="task-item-header" onclick="toggleTask(this)">
-                                        <div class="task-dot"></div>
                                         <div class="task-label">网络搜索：arXiv Quantum Computing 2024</div>
                                         <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                     </div>
-                                    <div class="task-detail gray-italic-text">通过 arXiv API 检索近一年的学术预印本数据...<span class="code-inline">exec curl "https://export.arxiv.org/api/query?search_query=all:quantum+computing+2024"</span></div>
+                                    <div class="task-detail gray-italic-text"><span class="code-inline">exec curl "https://export.arxiv.org/api/query?search_query=all:quantum+computing+2024"</span></div>
                                 </div>
-                                <!-- 任务 2 (正在进行) -->
                                 <div class="task-item active expanded">
                                     <div class="task-item-header" onclick="toggleTask(this)">
-                                        <div class="task-dot"></div>
                                         <div class="task-label">正在读取：research_trends.pdf</div>
                                         <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                     </div>
-                                    <div class="task-detail gray-italic-text">使用引擎解析本地 PDF 文档中的技术指标...<span class="code-inline">exec pdf-parser --extract-table 14 ./data/research_trends.pdf</span></div>
-                                </div>
-                                <!-- 任务 3 (未开始) -->
-                                <div class="task-item">
-                                    <div class="task-item-header">
-                                        <div class="task-dot"></div>
-                                        <div class="task-label">统计分析：生成趋势图表</div>
-                                    </div>
+                                    <div class="task-detail gray-italic-text"><span class="code-inline">exec pdf-parser --extract-table 14 ./data/research_trends.pdf</span></div>
                                 </div>
                             </div>
                         </div>
@@ -1117,103 +1137,95 @@
             <!-- 3. 最终回复 -->
             <div class="variant-group">
                 <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">3. 最终回复</h3>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <div class="thought-bubble done collapsed" id="s3-1">
-                        <div class="bubble-header" onclick="toggle('s3-1')">
+                <div class="final-reply">
+                    <!-- 过程 1: 初始思考 (已折叠) -->
+                    <div class="process-container collapsed">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
                             <div class="status-info">
                                 <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span>思考完成 <span class="timestamp">12s</span></span>
+                                <span>思考完成 <span class="timestamp">12s <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div></span></span>
                             </div>
-                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                         </div>
                         <div class="bubble-body">
-                            <div class="gray-italic-text">（完整思考内容...）</div>
+                            <div class="gray-italic-text">用户需要对比分析 2023 年和 2024 年的量子计算论文趋势...</div>
                         </div>
                     </div>
-                    <div class="thought-bubble done collapsed" id="s3-2">
-                        <div class="bubble-header" onclick="toggle('s3-2')">
+                    <!-- 过程 2: 工具执行 (已折叠) -->
+                    <div class="process-container collapsed">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
                             <div class="status-info">
-                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><polyline points="20 10 20 4 14 4"></polyline><path d="M20 4L13 11"></path></svg>
-                                <span>操作执行完毕 <span class="timestamp">1m 5s</span></span>
+                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>执行完毕 <span class="timestamp">1m 5s <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div></span></span>
                             </div>
-                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                         </div>
                         <div class="bubble-body">
                             <div class="task-list">
-                                <!-- 任务 1 -->
                                 <div class="task-item done">
                                     <div class="task-item-header" onclick="toggleTask(this)">
-                                        <div class="task-dot"></div>
                                         <div class="task-label">网络搜索：arXiv Quantum Computing 2024</div>
                                         <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
                                     </div>
-                                    <div class="task-detail gray-italic-text">通过 arXiv API 检索近一年的学术预印本数据...<span class="code-inline">exec curl "https://export.arxiv.org/api/query?search_query=all:quantum+computing+2024"</span></div>
-                                </div>
-                                <!-- 任务 2 -->
-                                <div class="task-item done">
-                                    <div class="task-item-header" onclick="toggleTask(this)">
-                                        <div class="task-dot"></div>
-                                        <div class="task-label">读取文件：research_trends.pdf</div>
-                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                    </div>
-                                    <div class="task-detail gray-italic-text">使用引擎解析本地 PDF 文档中的技术指标...<span class="code-inline">exec pdf-parser --extract-table 14 ./data/research_trends.pdf</span></div>
-                                </div>
-                                <!-- 任务 3 -->
-                                <div class="task-item done">
-                                    <div class="task-item-header" onclick="toggleTask(this)">
-                                        <div class="task-dot"></div>
-                                        <div class="task-label">统计分析：生成趋势图表</div>
-                                        <svg class="task-toggle" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                    </div>
-                                    <div class="task-detail gray-italic-text">执行数据归一化处理脚本...<span class="code-inline">exec python3 ./scripts/analyze_trends.py --input ./results.json</span></div>
+                                    <div class="task-detail gray-italic-text"><span class="code-inline">exec curl "https://export.arxiv.org/api/query?search_query=all:quantum+computing+2024"</span></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="final-reply">
-                        <div class="final-reply-content">
-                            基于 2023-2024 年的数据分析，量子纠错技术在超导电路上的保真度已从 99.4% 提升至 99.91%...
+                    <!-- 过程 3: 总结思考 (已折叠) -->
+                    <div class="process-container collapsed">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                            <div class="status-info">
+                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>思考完成 <span class="timestamp">13s <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div></span></span>
+                            </div>
                         </div>
+                        <div class="bubble-body">
+                            <div class="gray-italic-text">基于检索到的 arXiv 数据和 PDF 技术指标，我发现量子纠错保真度在 2024 年有显著提升。现在我将汇总这些发现，给出最终的对比结论。</div>
+                        </div>
+                    </div>
+                    <!-- 正文回复 -->
+                    <div class="final-reply-content">
+                        基于 2023-2024 年的数据分析，量子纠错技术在超导电路上的保真度已从 99.4% 提升至 99.91%，这意味着我们离“容错量子计算”又近了一步。
                     </div>
                 </div>
             </div>
 
-            <!-- 4. 错误处理 -->
-
-
             <!-- 4. 用户终止 -->
             <div class="variant-group">
                 <h3 style="font-size: 0.9rem; color: #6B7280; margin-bottom: 12px;">4. 用户终止</h3>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <!-- 思考中断 -->
-                    <div class="thought-bubble interrupted" id="stop-thinking">
-                        <div class="bubble-header" onclick="toggle('stop-thinking')">
+                <div class="thought-bubble interrupted">
+                    <div class="process-container collapsed">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
                             <div class="status-info">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"></rect></svg>
-                                <span>思考已终止 <span class="timestamp">3s</span></span>
+                                <svg style="color:#10B981" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>思考完成 
+                                    <span class="timestamp">3s 
+                                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                                    </span>
+                                </span>
                             </div>
-                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                         </div>
                         <div class="bubble-body">
-                            <div class="gray-italic-text" style="opacity: 0.6;">我需要先通过 arXiv API 检索过去 24 个月内包含 "Quantum Computing"...</div>
+                            <div class="gray-italic-text">我需要先通过 arXiv API 检索过去 24 个月内的数据...</div>
                         </div>
                     </div>
-                    <!-- 操作中断 -->
-                    <div class="thought-bubble interrupted" id="stop-tools">
-                        <div class="bubble-header" onclick="toggle('stop-tools')">
+                    <div class="process-container" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                        <div class="bubble-header" onclick="this.parentElement.classList.toggle('collapsed')">
                             <div class="status-info">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"></rect></svg>
-                                <span>操作已终止 <span class="timestamp">18s</span></span>
+                                <span>操作已终止 
+                                    <span class="timestamp">18s 
+                                        <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                                    </span>
+                                </span>
                             </div>
-                            <div class="toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
                         </div>
                         <div class="bubble-body">
                             <div class="task-list">
                                 <div class="task-item done">
-                                    <div class="task-item-header"><div class="task-dot"></div><div class="task-label">网络搜索：arXiv 2024</div></div>
+                                    <div class="task-item-header"><div class="task-label">网络搜索：arXiv 2024</div></div>
                                 </div>
                                 <div class="task-item interrupted">
-                                    <div class="task-item-header"><div class="task-dot"></div><div class="task-label">已取消：research_trends.pdf</div></div>
+                                    <div class="task-item-header"><div class="task-label">已取消：research_trends.pdf</div></div>
                                 </div>
                             </div>
                         </div>
