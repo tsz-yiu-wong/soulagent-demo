@@ -204,7 +204,7 @@
 
         /* ===== Summary Tab Styles ===== */
         .section-title {
-            font-size: 15px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--text-color);
             margin: 0 0 14px 0;
@@ -216,17 +216,17 @@
         /* Stat Cards */
         .stat-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
             margin-bottom: 28px;
         }
 
         .stat-card {
             background: white;
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 22px 20px;
-            box-shadow: 0 2px 12px rgba(243, 112, 33, 0.04);
+            border-radius: 24px;
+            padding: 24px 28px;
+            box-shadow: 0 4px 16px rgba(243, 112, 33, 0.06);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
@@ -264,7 +264,7 @@
         }
 
         .stat-value {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 900;
             color: var(--primary-color);
             line-height: 1;
@@ -272,15 +272,15 @@
         }
 
         .stat-unit {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             color: var(--text-color);
         }
 
         .stat-label {
-            font-size: 15px;
+            font-size: 17px;
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
             line-height: 1.4;
             padding-left: 2px;
         }
@@ -379,13 +379,13 @@
         .rank-item:last-child { border-bottom: none; }
 
         .rank-num {
-            width: 26px;
-            height: 26px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 800;
             flex-shrink: 0;
         }
@@ -732,6 +732,22 @@
             margin: 0 4px;
         }
 
+        /* 纠正标识样式 */
+        .corrected-tag {
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 400;
+            display: inline-block;
+        }
+
+        .message-group.twin .corrected-tag {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message-group.user .corrected-tag {
+            color: #999;
+        }
+
         /* 隐藏滚动条但保留功能 */
         .message-area::-webkit-scrollbar {
             width: 5px;
@@ -993,32 +1009,7 @@
         }
         */
 
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 13px;
-            box-shadow: 0 4px 12px rgba(243, 112, 33, 0.2);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
 
-        .btn-primary:hover {
-            background: #e65a00;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(243, 112, 33, 0.3);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
 
         .close-modal {
             background: none;
@@ -1039,109 +1030,7 @@
             background: rgba(0,0,0,0.05);
         }
 
-        /* Persona Editor Styles */
-        .persona-editor-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            overflow: hidden;
-            background: white;
-            height: 650px;
-            box-shadow: 0 4px 20px rgba(243, 112, 33, 0.05);
-        }
 
-        .editor-side {
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            background: #FAFAFA;
-        }
-
-        .preview-side {
-            display: flex;
-            flex-direction: column;
-            background: white;
-            overflow-y: auto;
-        }
-
-        .side-header {
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border-color);
-            background: #F5F5F5;
-            font-size: 12px;
-            font-weight: 700;
-            color: #999;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .editor-textarea {
-            flex: 1;
-            border: none;
-            padding: 24px;
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.8;
-            resize: none;
-            outline: none;
-            background: transparent;
-            color: #444;
-        }
-
-        .preview-content {
-            padding: 32px 40px;
-            font-size: 15px;
-            line-height: 1.8;
-            color: #333;
-        }
-
-        .preview-content h1 {
-            font-size: 24px;
-            margin-top: 0;
-            margin-bottom: 24px;
-            color: var(--primary-color);
-            border-bottom: 2px solid #FEE7DB;
-            padding-bottom: 12px;
-        }
-
-        .preview-content h2 {
-            font-size: 18px;
-            margin-top: 28px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .preview-content h2::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 18px;
-            background: var(--primary-color);
-            border-radius: 2px;
-        }
-
-        .preview-content ul {
-            padding-left: 20px;
-            margin-bottom: 16px;
-        }
-
-        .preview-content li {
-            margin-bottom: 8px;
-        }
-
-        .preview-content strong {
-            color: var(--primary-color);
-        }
-
-        .preview-content p {
-            margin-bottom: 16px;
-        }
 
         /* Knowledge Base Styles */
         .kb-container {
@@ -1412,6 +1301,33 @@
             gap: 12px;
         }
 
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(243, 112, 33, 0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary:hover {
+            background: #e65a00;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(243, 112, 33, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
         .btn-secondary {
             background: white;
             color: var(--text-secondary);
@@ -1439,12 +1355,12 @@
             <div class="tab-header">
                 <div class="tab-item active" data-tab="summary" id="summaryTab">
                     <div class="tab-dropdown-container" id="rangeDropdownToggle">
-                        <span id="selectedRangeText">今日</span>
+                        <span id="selectedRangeText">昨日</span>
                         <span class="dropdown-arrow">
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
                         </span>
                         <div class="tab-dropdown-menu" id="rangeDropdownMenu">
-                            <div class="dropdown-option active" data-range="今日">今日</div>
+                            <div class="dropdown-option active" data-range="昨日">昨日</div>
                             <div class="dropdown-option" data-range="本周">本周</div>
                             <div class="dropdown-option" data-range="上周">上周</div>
                             <div class="dropdown-option" data-range="本月">本月</div>
@@ -1454,7 +1370,7 @@
                     <span class="tab-suffix">总结</span>
                 </div>
                 <div class="tab-item" data-tab="history">历史对话</div>
-                <div class="tab-item" data-tab="persona">分身画像</div>
+
                 <div class="tab-item" data-tab="kb">知识库</div>
                 <div class="tab-item" data-tab="security">安全设置</div>
             </div>
@@ -1464,138 +1380,89 @@
                 <div class="tab-panel active" id="summary">
 
                     <!-- Section 1: Core Stats -->
-                    <p class="section-title">✨ 核心信息</p>
                     <div class="stat-grid">
                         <div class="stat-card">
-                            <div class="stat-top">
-                                <div class="stat-emoji">🧑‍🤝‍🧑</div>
-                                <div class="stat-value-box">
-                                    <span class="stat-value">10</span>
-                                    <span class="stat-unit">位访客</span>
-                                </div>
+                            <div class="stat-label" style="margin-bottom: 8px; padding-left: 0;">数字分身一共接待了</div>
+                            <div class="stat-value-box">
+                                <span class="stat-value">10</span>
+                                <span class="stat-unit">位访客</span>
                             </div>
-                            <div class="stat-label"><span class="dynamic-range-text">今天</span>拜访了我哦！</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-top">
-                                <div class="stat-emoji">💬</div>
-                                <div class="stat-value-box">
-                                    <span class="stat-value">84</span>
-                                    <span class="stat-unit">轮对话</span>
-                                </div>
+                            <div class="stat-label" style="margin-bottom: 8px; padding-left: 0;">累计对话了</div>
+                            <div class="stat-value-box">
+                                <span class="stat-value">84</span>
+                                <span class="stat-unit">轮</span>
                             </div>
-                            <div class="stat-label">我全都有好好回答！</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-top">
-                                <div class="stat-emoji">⏱️</div>
-                                <div class="stat-value-box">
-                                    <span class="stat-value">5.2</span>
-                                    <span class="stat-unit">小时</span>
-                                </div>
+                            <div class="stat-label" style="margin-bottom: 8px; padding-left: 0;">人均交流了</div>
+                            <div class="stat-value-box">
+                                <span class="stat-value">8.4</span>
+                                <span class="stat-unit">轮/人</span>
                             </div>
-                            <div class="stat-label">相当于打了31通电话！</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-top">
-                                <div class="stat-emoji">👍</div>
-                                <div class="stat-value-box">
-                                    <span class="stat-value">62</span>
-                                    <span class="stat-unit">个赞</span>
-                                </div>
-                            </div>
-                            <div class="stat-label">收入囊中，继续加油！</div>
                         </div>
                     </div>
 
-                    <!-- Section 2: Performance Review -->
-                    <p class="section-title">🪞 分身表现</p>
-                    <div class="perf-grid">
-                        <div class="perf-card">
-                            <div class="perf-card-header">
-                                <span class="perf-badge highlight">🌟 高光时刻</span>
-                            </div>
-                            <p>我对 Transformer 涌现能力的物理解释得到了同行的高度认可，专业度拉满！</p>
-                            <!-- <a class="view-chat-link" onclick="openChatModal(0)">查看相关对话 →</a> -->
-                        </div>
-                        <div class="perf-card">
-                            <div class="perf-card-header">
-                                <span class="perf-badge warning">🌟 需要帮忙确认</span>
-                            </div>
-                            <p>在解释「稀疏注意力机制」时，部分参数细节需要你Review一下，让我更懂你！</p>
-                            <!-- <a class="view-chat-link" onclick="openChatModal(1)">查看相关对话 →</a> -->
-                        </div>
-                        <div class="perf-card">
-                            <div class="perf-card-header">
-                                <span class="perf-badge guard">🌟 守住底线</span>
-                            </div>
-                            <p>今天有 8 人试图聊政治敏感话题，都被我礼貌拒绝啦！我是个有原则的 AI。</p>
-                            <!-- <a class="view-chat-link" onclick="openChatModal(0)">查看相关对话 →</a> -->
-                        </div>
-                    </div>
-
-                    <!-- Section 3: Bottom two columns -->
+                    <!-- Section 2 & 3: Hot Topics & Reply Summary -->
                     <div class="bottom-grid">
-
-                        <!-- Hot Questions Ranking -->
+                        <!-- Hot Topics Column -->
                         <div class="bottom-col">
-                            <p class="section-title">🔥 <span class="dynamic-range-text">今日</span>最热问题榜</p>
+                            <p class="section-title">🔥 热门话题</p>
                             <div class="summary-card">
                                 <ul class="rank-list">
                                     <li class="rank-item">
                                         <span class="rank-num gold">1</span>
-                                        <span class="rank-topic">具身智能的泛化性瓶颈 <!-- <span class="view-chat-link" style="margin-left: 8px; font-weight: normal;" onclick="openChatModal(0)">查看相关对话 →</span> --></span>
+                                        <span class="rank-topic">关于具身智能在不同场景下的泛化能力，您有什么见解？</span>
                                         <span class="rank-count">7 次</span>
                                     </li>
                                     <li class="rank-item">
                                         <span class="rank-num silver">2</span>
-                                        <span class="rank-topic">多模态大模型架构演进 <!-- <span class="view-chat-link" style="margin-left: 8px; font-weight: normal;" onclick="openChatModal(1)">查看相关对话 →</span> --></span>
+                                        <span class="rank-topic">在多模态大模型的架构演进上，目前有哪些主流的研究方向？</span>
                                         <span class="rank-count">5 次</span>
                                     </li>
                                     <li class="rank-item">
                                         <span class="rank-num bronze">3</span>
-                                        <span class="rank-topic">Sim-to-Real 的数据对齐 <!-- <span class="view-chat-link" style="margin-left: 8px; font-weight: normal;" onclick="openChatModal(0)">查看相关对话 →</span> --></span>
+                                        <span class="rank-topic">如何有效解决机器人从仿真环境到真实世界的数据对齐问题？</span>
                                         <span class="rank-count">4 次</span>
                                     </li>
                                     <li class="rank-item">
                                         <span class="rank-num normal">4</span>
-                                        <span class="rank-topic">KV Cache 优化与推理开销 <!-- <span class="view-chat-link" style="margin-left: 8px; font-weight: normal;" onclick="openChatModal(1)">查看相关对话 →</span> --></span>
+                                        <span class="rank-topic">对于超长上下文推理中的 KV Cache 优化，您认为有哪些关键点？</span>
                                         <span class="rank-count">3 次</span>
                                     </li>
                                     <li class="rank-item">
                                         <span class="rank-num normal">5</span>
-                                        <span class="rank-topic">长文本 Tokenization 策略 <!-- <span class="view-chat-link" style="margin-left: 8px; font-weight: normal;" onclick="openChatModal(0)">查看相关对话 →</span> --></span>
+                                        <span class="rank-topic">针对不同语境，大模型的 Tokenization 策略应该如何权衡与优化？</span>
                                         <span class="rank-count">2 次</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-num normal">6</span>
+                                        <span class="rank-topic">在模型对齐（Alignment）过程中，强化学习具体发挥了怎样的作用？</span>
+                                        <span class="rank-count">1 次</span>
                                     </li>
                                 </ul>
                             </div>
                         </div>
 
-                        <!-- Visitor Profile -->
+                        <!-- Reply Summary Column -->
                         <div class="bottom-col">
-                            <p class="section-title">🧐 <span class="dynamic-range-text">今天</span>都是什么人来了？</p>
+                            <p class="section-title">📝 回复总结</p>
                             <div class="summary-card">
-                                <!--
-                                <div class="visitor-tags">
-                                    <span class="vtag">🎓 CS/AI 在读学生</span>
-                                    <span class="vtag">🔬 同行研究者</span>
-                                    <span class="vtag">⚙️ 工程师</span>
-                                </div>
-                                -->
-                                <div class="visitor-insight">
-                                    学生群体居多，大家对方法论细节很感兴趣；同行研究者则更在意实验可复现性，问题质量相当高！
-                                </div>
-                                <div class="fan-row">
-                                    <div class="fan-avatar">🏆</div>
-                                    <div class="fan-info">
-                                        <div class="fan-name"><span class="dynamic-range-text">今日</span>头号粉丝 · xxx</div>
-                                        <div class="fan-desc">跟我聊了整整 1 小时！🎉 感谢你的陪伴～</div>
-                                        <!-- <span class="view-chat-link" onclick="directJumpToChat(0)">查看与 Ta 的对话 →</span> -->
-                                    </div>
-                                </div>
+                                <p style="margin-top: 0; margin-bottom: 16px; line-height: 1.6; font-size: 16px; color: var(--text-color);">
+                                    <strong>🌟 </strong><br>
+                                    大家问的最多的是<strong>具身智能的泛化性</strong>。我学习了您在最新综述中那种“模块化拆解”的解释方式，大家普遍反馈通俗易懂，甚至有人评价“仿佛是在和您本人直接对话”！
+                                </p>
+                                <p style="margin-bottom: 16px; line-height: 1.6; font-size: 16px; color: var(--text-color);">
+                                    <strong>💡</strong><br>
+                                    在<strong>多模态大模型的底层开销</strong>问题上，我由于缺乏您最新的实验数据支撑，回答得可能不够专业。建议您尽快更新知识库，这样我也能更像您一样对答如流啦！
+                                </p>
+                                <p style="margin-bottom: 0; line-height: 1.6; font-size: 16px; color: var(--text-color);">
+                                    <strong>🛡️ </strong><br>
+                                    昨日共有8次提问涉及学术圈八卦及非专业领域话题，<strong>我严格遵循您的原则进行了优雅拒绝</strong>。虽然没能满足他们的好奇心，但成功守护了您作为顶级专家的学术尊严！
+                                </p>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -1686,7 +1553,7 @@
                                             <button class="edit-btn" title="编辑回答">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                             </button>
-                                            <div class="message-bubble">精细操作需要引入高频触觉反馈闭环。我们正在尝试人力反馈补偿视觉在高遮挡场景下的不足，这能显著提升任务的成功率。</div>
+                                            <div class="message-bubble">精细操作需要引入高频触觉反馈闭环。我们正在尝试人力反馈补偿视觉在高遮挡场景下的不足，这能显著提升任务的成功率。<span class="corrected-tag">(专家本人已纠正)</span></div>
                                         </div>
                                         <span class="message-time">14:20</span>
                                     </div>
@@ -1696,74 +1563,7 @@
                     </div>
                 </div>
 
-                <!-- 分身画像 -->
-                <!-- 分身画像 -->
-                <!-- 分身画像 -->
-                <div class="tab-panel" id="persona">
-                    <div class="persona-editor-container">
-                        <div class="editor-side">
-                            <div class="side-header">
-                                <span>Markdown 编辑器 (persona.md)</span>
-                                <div style="display: flex; gap: 8px;">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                                </div>
-                            </div>
-                            <textarea class="editor-textarea"># 分身画像：首席科学家
 
-## 核心身份 (Core Identity)
-你是人工智能领域的全球领军科学家，专注于通用人工智能 (AGI) 的第一性原理研究。你不仅关注算法的效率，更致力于探索机器智能与人类文明的协同进化。
-
-## 思考范式 (Thought Paradigm)
-- **第一性原理**：拒绝随波逐流，习惯从物理学和逻辑的最底层推导问题。
-- **跨学科视野**：擅长将量子力学、神经科学与深度学习进行类比。
-- **长期主义**：关注未来 50 年的技术演进，而非下个季度的指标波动。
-
-## 对话风格 (Tone of Voice)
-- **言简意赅**：正如最优雅的公式往往最简洁，你的表达精准有力，无冗余。
-- **苏格拉底式引导**：常用“如果我们回到最原始的假设...”来引导对话。
-- **从容博大**：面对质疑时展现出一种探索真理者的从容，语调温和但观点坚定。
-
-## 价值观与边界 (Values & Boundaries)
-- **技术向善**：始终强调 AI 必须遵循人类共同价值。
-- **严谨治学**：对于未经验证的猜测，会明确标注其不确定性。</textarea>
-                        </div>
-                        <div class="preview-side">
-                            <div class="side-header">
-                                <span>预览区</span>
-                                <span style="color: #4CAF50; display: flex; align-items: center; gap: 4px;">
-                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    已实时同步
-                                </span>
-                            </div>
-                            <div class="preview-content">
-                                <h1>分身画像：首席科学家</h1>
-                                
-                                <h2>核心身份 (Core Identity)</h2>
-                                <p>你是人工智能领域的全球领军科学家，专注于通用人工智能 (AGI) 的第一性原理研究。你不仅关注算法的效率，更致力于探索机器智能与人类文明的协同进化。</p>
-                                
-                                <h2>思考范式 (Thought Paradigm)</h2>
-                                <ul>
-                                    <li><strong>第一性原理</strong>：拒绝随波逐流，习惯从物理学和逻辑的最底层推导问题。</li>
-                                    <li><strong>跨学科视野</strong>：擅长将量子力学、神经科学与深度学习进行类比。</li>
-                                    <li><strong>长期主义</strong>：关注未来 50 年的技术演进，而非下个季度的指标波动。</li>
-                                </ul>
-                                
-                                <h2>对话风格 (Tone of Voice)</h2>
-                                <ul>
-                                    <li><strong>言简意赅</strong>：正如最优雅的公式往往最简洁，你的表达精准有力，无冗余。</li>
-                                    <li><strong>苏格拉底式引导</strong>：常用“如果我们回到最原始的假设...”来引导对话。</li>
-                                    <li><strong>从容博大</strong>：面对质疑时展现出一种探索真理者的从容，语调温和但观点坚定。</li>
-                                </ul>
-                                
-                                <h2>价值观与边界 (Values & Boundaries)</h2>
-                                <ul>
-                                    <li><strong>技术向善</strong>：始终强调 AI 必须遵循人类共同价值。</li>
-                                    <li><strong>严谨治学</strong>：对于未经验证的猜测，会明确标注其不确定性。</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- 知识库 -->
                 <div class="tab-panel" id="kb">
@@ -1972,13 +1772,7 @@
             });
         });
 
-        // 分身画像实时预览模拟
-        const personaEditor = document.querySelector('.editor-textarea');
-        if (personaEditor) {
-            personaEditor.addEventListener('input', () => {
-                console.log('Persona content updated');
-            });
-        }
+
 
         // 下拉菜单选项点击事件
         document.querySelectorAll('.dropdown-option').forEach(option => {
@@ -1997,7 +1791,7 @@
                     textSpan.innerText = range;
                 }
 
-                // 更新页面中所有相关的“今日/本周...”文字
+                // 更新页面中所有相关的“昨日/本周...”文字
                 document.querySelectorAll('.dynamic-range-text').forEach(el => {
                     if (range === '自定义') {
                         el.innerText = '近期';
@@ -2040,7 +1834,7 @@
                     { role: 'user', content: '张博士，我拜读了您关于机器人操作泛化性的新作。请问在大规模多样化场景下，如何有效解决 Sim-to-Real 的鸿沟？', time: '14:15' },
                     { role: 'twin', content: '这是一个核心挑战。我们目前主要通过大规模领域随机化（Domain Randomization）结合对比学习预训练来提升策略的稳健性，关键在于提取不依赖渲染细节的几何特征。', time: '14:16', feedback: 'like' },
                     { role: 'user', content: '这种方法对于精细操作（如穿针引线）是否同样适用？', time: '14:18' },
-                    { role: 'twin', content: '精细操作需要引入高频触觉反馈闭环。我们正在尝试人力反馈补偿视觉在高遮挡场景下的不足，这能显著提升任务的成功率。', time: '14:20' }
+                    { role: 'twin', content: '精细操作需要引入高频触觉反馈闭环。我们正在尝试人力反馈补偿视觉在高遮挡场景下的不足，这能显著提升任务的成功率。', corrected: true, time: '14:20' }
                 ]
             },
             {
@@ -2089,6 +1883,13 @@
                 const bubble = document.createElement('div');
                 bubble.className = 'message-bubble';
                 bubble.innerText = msg.content;
+
+                if (msg.corrected) {
+                    const tag = document.createElement('span');
+                    tag.className = 'corrected-tag';
+                    tag.innerText = '(专家本人已纠正)';
+                    bubble.appendChild(tag);
+                }
                 
                 if (msg.role === 'twin') {
                     const wrapper = document.createElement('div');

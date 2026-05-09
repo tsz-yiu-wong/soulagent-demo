@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>技能中心 - SoulAgent</title>
+    <title>技能广场 - SoulAgent</title>
     <script src="nav-bar.js"></script>
     <style>
         :root {
             --primary-color: #F37021;
+            --primary-light: #FFF7F2;
             --bg-color: #FFFBF9;
             --text-color: #333333;
+            --text-secondary: #666666;
             --border-color: #FEE7DB;
+            --card-bg: #FFFFFF;
             --success-color: #10B981;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-sm: 0 4px 16px rgba(243, 112, 33, 0.05);
+            --shadow-md: 0 8px 24px rgba(243, 112, 33, 0.08);
         }
 
         body, html {
@@ -20,104 +27,231 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            height: 100vh;
+            min-height: 100vh;
         }
 
         .main-content {
             padding: 40px;
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
+            animation: fadeIn 0.6s ease-out;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Header & Search --- */
         .header-section {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-end;
             margin-bottom: 32px;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        h1 {
+        .title-group h1 {
             font-size: 28px;
             font-weight: 800;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .title-group p {
+            font-size: 14px;
+            color: var(--text-secondary);
             margin: 0;
         }
 
+        .search-wrapper {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px 10px 40px;
+            font-size: 14px;
+            color: var(--text-color);
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(243, 112, 33, 0.08);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #AAA;
+            pointer-events: none;
+        }
+
+        /* --- Filter Tabs --- */
+        .tab-header {
+            display: flex;
+            gap: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .tab-item {
+            padding: 10px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .tab-item:hover { color: var(--primary-color); }
+        .tab-item.active { color: var(--primary-color); }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        /* --- Skill Grid --- */
         .skill-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
         }
 
         .skill-card {
             background: white;
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: var(--radius-lg);
+            padding: 20px 24px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            position: relative;
         }
 
         .skill-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(243, 112, 33, 0.2);
         }
 
-        .skill-icon {
-            width: 48px;
-            height: 48px;
-            background-color: #FFF7F5;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
+        .skill-card.action-card {
+            border-style: dashed;
+            background: transparent;
             justify-content: center;
-            color: var(--primary-color);
-            margin-bottom: 8px;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            display: none;
         }
 
-        .skill-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 0;
+        .skill-card.action-card:hover {
+            background: white;
+            border-style: solid;
         }
 
-        .skill-desc {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.5;
-            flex-grow: 1;
-        }
-
-        .skill-footer {
+        .card-header {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .title-row {
+            display: flex;
             align-items: center;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #F9F9F9;
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: calc(100% - 70px);
         }
 
-        .status-badge {
+        .title-row h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .skill-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .badge-official { background: #E0F2FE; color: #0284C7; }
+        .badge-community { background: #F5F3FF; color: #7C3AED; }
+        .badge-mine { background: #FFF7ED; color: #EA580C; }
+
+        .skill-desc {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* --- Toggle Button --- */
+        .btn-toggle {
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 12px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 12px;
-            background: #F0FDF4;
-            color: var(--success-color);
-        }
-
-        .btn-config {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary-color);
+            font-weight: 700;
             cursor: pointer;
-            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            white-space: nowrap;
         }
 
-        .btn-config:hover {
-            text-decoration: underline;
+        .btn-toggle.add {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(243, 112, 33, 0.2);
+        }
+
+        .btn-toggle.add:hover {
+            background: #e65a00;
+            transform: scale(1.02);
+        }
+
+        .btn-toggle.remove {
+            background: #F3F4F6;
+            color: #9CA3AF;
+        }
+
+        .btn-toggle.remove:hover {
+            background: #FEE2E2;
+            color: #EF4444;
+        }
+
+        /* --- Empty State --- */
+        .empty-state {
+            display: none;
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-secondary);
         }
     </style>
 </head>
@@ -126,51 +260,228 @@
 
     <div class="main-content">
         <div class="header-section">
-            <h1>技能中心</h1>
+            <div class="title-group">
+                <h1>技能广场</h1>
+                <p>为Agent注入专业能力，不止对话，更能直接行动</p>
+            </div>
+            <div class="search-wrapper">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="search-input" id="skillSearch" placeholder="搜索技能...">
+            </div>
         </div>
 
-        <div class="skill-grid">
-            <div class="skill-card">
-                <div class="skill-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                </div>
-                <h3 class="skill-title">联网搜索</h3>
-                <p class="skill-desc">使 Agent 能够访问实时互联网信息，获取最新的资讯、知识和数据。</p>
-                <div class="skill-footer">
-                    <span class="status-badge">已启用</span>
-                    <a href="#" class="btn-config">配置参数</a>
-                </div>
+        <div class="tab-header">
+            <div class="tab-item active" data-filter="all">全部</div>
+            <div class="tab-item" data-filter="official">官方Skill</div>
+            <div class="tab-item" data-filter="community">SkillHub</div>
+            <div class="tab-item" data-filter="mine">我的技能</div>
+        </div>
+
+        <div class="skill-grid" id="skillGrid">
+            <!-- Action Cards -->
+            <div class="skill-card action-card" data-category="mine">
+                <h3 style="font-size: 16px; margin-bottom: 8px;">+ 上传新技能</h3>
+                <p style="font-size: 12px; color: #999;">上传已封装的技能包</p>
             </div>
 
-            <div class="skill-card">
-                <div class="skill-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                </div>
-                <h3 class="skill-title">文档分析</h3>
-                <p class="skill-desc">支持上传 PDF、Word 等多种格式，快速提取核心观点、总结长文内容。</p>
-                <div class="skill-footer">
-                    <span class="status-badge">已启用</span>
-                    <a href="#" class="btn-config">管理文件</a>
-                </div>
+            <div class="skill-card action-card" data-category="mine">
+                <h3 style="font-size: 16px; margin-bottom: 8px;">+ 沉淀新技能</h3>
+                <p style="font-size: 12px; color: #999;">从文档中自动学习能力</p>
             </div>
 
-            <div class="skill-card">
-                <div class="skill-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <!-- Official Skills -->
+            <div class="skill-card" data-category="official">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>全网实时搜</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle remove">停用</button>
                 </div>
-                <h3 class="skill-title">代码运行</h3>
-                <p class="skill-desc">在沙箱环境中执行 Python 代码，完成复杂的数据处理、绘图和科学计算任务。</p>
-                <div class="skill-footer">
-                    <span class="status-badge">已启用</span>
-                    <a href="#" class="btn-config">设置限制</a>
-                </div>
+                <p class="skill-desc">允许智能体访问实时网络，并在第一时间收集和总结信息源，确保回答的时效性。</p>
             </div>
 
-            <div class="skill-card" style="border-style: dashed; background: transparent; justify-content: center; align-items: center; color: #999;">
-                <div style="font-size: 32px; margin-bottom: 8px;">+</div>
-                <div style="font-size: 14px; font-weight: 600;">创建自定义技能</div>
+            <div class="skill-card" data-category="official">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>代码助手</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle remove">停用</button>
+                </div>
+                <p class="skill-desc">深度集成的 IDE 助手，支持代码补全、重构建议及在沙箱环境中执行复杂计算。</p>
             </div>
+
+            <div class="skill-card" data-category="official">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>图像生成</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle add">启用</button>
+                </div>
+                <p class="skill-desc">基于最新的扩散模型，根据文字描述生成高品质的视觉内容，支持多种艺术风格。</p>
+            </div>
+
+            <div class="skill-card" data-category="official">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>语音交互</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle add">启用</button>
+                </div>
+                <p class="skill-desc">支持多语种实时语音转文字及极具情感表现力的语音合成，提供自然的人机交互。</p>
+            </div>
+
+            <!-- SkillHub Skills -->
+            <div class="skill-card" data-category="community">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>增长分析师</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <button class="btn-toggle remove">停用</button>
+                </div>
+                <p class="skill-desc">专注于 SaaS 指标分析、留存拆解及 A/B 测试建议。由 @GrowthMaster 贡献。</p>
+            </div>
+
+            <div class="skill-card" data-category="community">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>文案大师</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <button class="btn-toggle add">启用</button>
+                </div>
+                <p class="skill-desc">从 10 万+ 热文库中深度学习，擅长撰写各类社交媒体爆款文案，自带吸引读者的钩子。</p>
+            </div>
+
+            <div class="skill-card" data-category="community">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>法务合规官</h3>
+                        <span class="skill-badge badge-community">SkillHub</span>
+                    </div>
+                    <button class="btn-toggle add">启用</button>
+                </div>
+                <p class="skill-desc">熟知中国民法典及劳动法，为您提供初步的法律文书审查服务及相关合规风险预警。</p>
+            </div>
+
+            <!-- My Skills -->
+            <div class="skill-card" data-category="mine">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>会议纪要 Pro</h3>
+                        <span class="skill-badge badge-mine">自有</span>
+                    </div>
+                    <button class="btn-toggle remove">停用</button>
+                </div>
+                <p class="skill-desc">自动整理讨论要点、行动项和负责人，支持按项目归档导出，适配多种主流会议软件。</p>
+            </div>
+
+            <div class="skill-card" data-category="mine">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>竞品分析 Expert</h3>
+                        <span class="skill-badge badge-mine">自有</span>
+                    </div>
+                    <button class="btn-toggle remove">停用</button>
+                </div>
+                <p class="skill-desc">擅长定位分析、竞品对标以及 SWOT 模型构建。已从 5 份您上传的行业报告中沉淀。</p>
+            </div>
+
+            <div class="skill-card" data-category="mine">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>私厨营养师</h3>
+                        <span class="skill-badge badge-mine">自有</span>
+                    </div>
+                    <button class="btn-toggle add">启用</button>
+                </div>
+                <p class="skill-desc">根据您的过敏史和身体状况，定制每日少盐少糖的健康食谱，并自动生成采购清单。</p>
+            </div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+            <p>未找到相关技能</p>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab-item');
+            const cards = document.querySelectorAll('.skill-card:not(.action-card)');
+            const searchInput = document.getElementById('skillSearch');
+            const skillGrid = document.getElementById('skillGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            function filterSkills() {
+                const activeFilter = document.querySelector('.tab-item.active').dataset.filter;
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const category = card.dataset.category;
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    const desc = card.querySelector('.skill-desc').textContent.toLowerCase();
+                    
+                    const matchesFilter = activeFilter === 'all' || category === activeFilter;
+                    const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
+
+                    if (matchesFilter && matchesSearch) {
+                        card.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Action cards visibility
+                const actionCards = document.querySelectorAll('.action-card');
+                actionCards.forEach(ac => {
+                    ac.style.display = (activeFilter === 'mine') ? 'flex' : 'none';
+                });
+
+                const totalVisible = visibleCount + (activeFilter === 'mine' ? 2 : 0);
+                if (totalVisible === 0) {
+                    skillGrid.style.display = 'none';
+                    emptyState.style.display = 'block';
+                } else {
+                    skillGrid.style.display = 'grid';
+                    emptyState.style.display = 'none';
+                }
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    filterSkills();
+                });
+            });
+
+            searchInput.addEventListener('input', filterSkills);
+
+            // Toggle Add/Remove
+            skillGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-toggle')) {
+                    const btn = e.target;
+                    if (btn.classList.contains('add')) {
+                        btn.classList.remove('add');
+                        btn.classList.add('remove');
+                        btn.textContent = '停用';
+                    } else {
+                        btn.classList.remove('remove');
+                        btn.classList.add('add');
+                        btn.textContent = '启用';
+                    }
+                }
+            });
+
+            // Initial filter call
+            filterSkills();
+        });
+    </script>
 </body>
 </html>

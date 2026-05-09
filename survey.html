@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulClaw - 初始化</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #F37021;
+            --primary-light: #FF9F45;
+            --primary-dark: #D15918;
+            --bg-color: #ffffff;
+            --text-main: #1A1A1A;
+            --text-secondary: #666666;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Background Elements */
+        .bg-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary-color);
+            top: -100px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 400px;
+            height: 400px;
+            background: #FFD2A0;
+            bottom: -50px;
+            left: -50px;
+            animation-delay: -5s;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .survey-box {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .survey-box.active {
+            display: block;
+            animation: slideUpFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .survey-box h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 1.2rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.9);
+            transition: var(--transition);
+        }
+
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(243, 112, 33, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.2rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .radio-label:hover {
+            border-color: var(--primary-color);
+            background: rgba(243, 112, 33, 0.02);
+        }
+
+        .radio-label input[type="radio"] {
+            margin-right: 1rem;
+            accent-color: var(--primary-color);
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            border-radius: 100px;
+            transition: var(--transition);
+            box-shadow: 0 10px 30px rgba(243, 112, 33, 0.3);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.6s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(243, 112, 33, 0.5);
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:active {
+            transform: scale(0.98);
+        }
+
+        .action-btn:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+            border: 1px solid #e5e7eb;
+        }
+
+        .action-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media (max-width: 768px) {
+            .survey-box {
+                padding: 2rem;
+            }
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(243, 112, 33, 0.1);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        /* Birth Certificate */
+        #certificate-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #fff 0%, #f0f0f0 100%);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        #certificate-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .cert-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 40px;
+            border-radius: 4px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1);
+            border: 10px double #C5A059;
+            position: relative;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow: hidden;
+        }
+
+        .cert-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(225deg,
+                    transparent 40%,
+                    #ff3c3c 40%, #ff3c3c 43%,
+                    transparent 43%, transparent 48%,
+                    #ff3c3c 48%, #ff3c3c 51%,
+                    transparent 51%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #certificate-overlay.active .cert-card {
+            transform: scale(1);
+        }
+
+        .cert-header {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            letter-spacing: 5px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            display: inline-block;
+            padding-bottom: 10px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .cert-body {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .cert-avatar {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            box-shadow: 0 8px 24px rgba(243, 112, 33, 0.2);
+            flex-shrink: 0;
+            color: white;
+            overflow: hidden;
+        }
+
+        .cert-info {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .info-item span {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            display: block;
+            padding-bottom: 4px;
+        }
+
+        .cert-slogan {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+            font-style: italic;
+            border-top: 1px dashed #eee;
+            padding-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .cert-stamp {
+            position: absolute;
+            bottom: 60px;
+            right: 40px;
+            width: 100px;
+            height: 100px;
+            border: 3px solid rgba(255, 60, 60, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 60, 60, 0.3);
+            font-weight: 800;
+            font-size: 0.9rem;
+            transform: scale(3) rotate(-30deg);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .cert-stamp.stamped {
+            transform: scale(1) rotate(-15deg);
+            opacity: 1;
+            border-color: rgba(255, 60, 60, 0.6);
+            color: rgba(255, 60, 60, 0.6);
+        }
+
+        .cert-actions {
+            margin-top: 40px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.5s ease 1s;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        #certificate-overlay.active .cert-actions {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <!-- 步骤一 -->
+        <div class="survey-box active" id="step1">
+            <h2>给Agent取个名字吧～</h2>
+            <div class="input-group">
+                <input type="text" id="agentName" placeholder="输入Agent的名字" autocomplete="off">
+            </div>
+            <button class="action-btn" id="btn1" onclick="nextStep(1)" disabled>它叫...</button>
+        </div>
+
+        <!-- 步骤二 -->
+        <div class="survey-box" id="step2">
+            <h2>希望<span id="displayAgentName" style="color: var(--primary-color);">Agent</span>怎么称呼你？</h2>
+            <div class="input-group">
+                <input type="text" id="userName" placeholder="输入你的名字" autocomplete="off">
+            </div>
+            <button class="action-btn" id="btn2" onclick="nextStep(2)" disabled>叫我...</button>
+        </div>
+
+        <!-- 步骤三 -->
+        <div class="survey-box" id="step3">
+            <h2>问题三</h2>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="q3" value="选项一"> 选项一
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="q3" value="选项二"> 选项二
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="q3" value="选项三"> 选项三
+                </label>
+            </div>
+            <button class="action-btn" id="btn3" onclick="showLoading()" disabled>下一步</button>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">小小曜出生中...</div>
+        </div>
+
+        <!-- Certificate Overlay -->
+        <div id="certificate-overlay">
+            <div class="cert-card">
+                <div class="cert-header">✨ 出生证明 ✨</div>
+                <div class="cert-body">
+                    <div class="cert-avatar">
+                        <span id="cert-emoji">🤖</span>
+                    </div>
+                    <div class="cert-info">
+                        <div class="info-item">
+                            <label>名字 NAME</label>
+                            <span id="cert-agent-name">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>编号 ID</label>
+                            <span>SA-2026-0001</span>
+                        </div>
+                        <div class="info-item">
+                            <label>领养人 PARENT</label>
+                            <span id="cert-user-name">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>出生日期 DATE</label>
+                            <span id="cert-date">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="cert-slogan">“每一次对话，都是我在训练自己的灵魂。”</div>
+                <div class="cert-stamp" id="cert-stamp">官方认证<br>OFFICIAL</div>
+            </div>
+            
+            <div class="cert-actions">
+                <button class="action-btn" onclick="window.location.href='agent.html'">开启对话</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btn3 = document.getElementById('btn3');
+        const radios = document.querySelectorAll('input[name="q3"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                btn3.disabled = false;
+            });
+        });
+        const agentInput = document.getElementById('agentName');
+        const btn1 = document.getElementById('btn1');
+        
+        agentInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if(val) {
+                btn1.textContent = `就叫${val}吧`;
+                btn1.disabled = false;
+            } else {
+                btn1.textContent = '它叫...';
+                btn1.disabled = true;
+            }
+        });
+
+        const userInput = document.getElementById('userName');
+        const btn2 = document.getElementById('btn2');
+
+        userInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if(val) {
+                btn2.textContent = `叫我${val}吧`;
+                btn2.disabled = false;
+            } else {
+                btn2.textContent = '叫我...';
+                btn2.disabled = true;
+            }
+        });
+
+        // 允许按回车提交
+        agentInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') nextStep(1);
+        });
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') nextStep(2);
+        });
+
+        function nextStep(current) {
+            if (current === 1) {
+                const name = agentInput.value.trim();
+                if (!name) {
+                    alert('请给Agent取个名字');
+                    return;
+                }
+                document.getElementById('displayAgentName').textContent = name;
+                
+                document.getElementById('step1').classList.remove('active');
+                // 延迟展示下一个，增加一点页面顺滑感
+                setTimeout(() => {
+                    document.getElementById('step1').style.display = 'none';
+                    document.getElementById('step2').style.display = 'block';
+                    // 触发布局重绘后再加active才能有动画
+                    document.getElementById('step2').offsetHeight; 
+                    document.getElementById('step2').classList.add('active');
+                    userInput.focus();
+                }, 300);
+            } else if (current === 2) {
+                const name = userInput.value.trim();
+                if (!name) {
+                    alert('请填写怎么称呼你');
+                    return;
+                }
+                
+                document.getElementById('step2').classList.remove('active');
+                setTimeout(() => {
+                    document.getElementById('step2').style.display = 'none';
+                    document.getElementById('step3').style.display = 'block';
+                    document.getElementById('step3').offsetHeight;
+                    document.getElementById('step3').classList.add('active');
+                }, 300);
+            }
+        }
+
+        function finish() {
+            // This is now handled by showLoading
+        }
+
+        function showLoading() {
+            const selected = document.querySelector('input[name="q3"]:checked');
+            if (!selected) {
+                alert('请选择一项');
+                return;
+            }
+
+            // Hide survey box
+            document.getElementById('step3').classList.remove('active');
+            
+            setTimeout(() => {
+                document.getElementById('step3').style.display = 'none';
+                
+                // Show loading
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.display = 'flex';
+                overlay.offsetHeight; // force reflow
+                overlay.classList.add('active');
+
+                // Prepare certificate data
+                document.getElementById('cert-agent-name').textContent = agentInput.value.trim();
+                document.getElementById('cert-user-name').textContent = userInput.value.trim();
+                document.getElementById('cert-date').textContent = new Date().toISOString().split('T')[0];
+
+                // Transition to certificate after 1 second
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        showCertificate();
+                    }, 500);
+                }, 1000);
+            }, 300);
+        }
+
+        function showCertificate() {
+            const certOverlay = document.getElementById('certificate-overlay');
+            certOverlay.style.display = 'flex';
+            certOverlay.offsetHeight;
+            certOverlay.classList.add('active');
+
+            // Stamp animation after a short delay
+            setTimeout(() => {
+                document.getElementById('cert-stamp').classList.add('stamped');
+            }, 800);
+        }
+    </script>
+</body>
+</html>

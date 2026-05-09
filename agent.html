@@ -611,6 +611,204 @@
 
         .send-btn svg { width: 18px; height: 18px; margin-left: 2px; }
 
+        /* Transplanted from user.html */
+        .bg-blobs {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary-color);
+            top: -100px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 400px;
+            height: 400px;
+            background: #FF9F45;
+            bottom: -50px;
+            left: -50px;
+            animation-delay: -5s;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        .user-layout-container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0rem 1.5rem 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(3rem, 10vw, 4.5rem);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-color) 0%, #D15918 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: clamp(1.1rem, 4vw, 1.35rem);
+            color: #666666;
+            max-width: 600px;
+            margin: 0 auto;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        /* Features Section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+            text-align: left;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.2s; }
+        .feature-card:nth-child(2) { animation-delay: 0.3s; }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: white;
+            box-shadow: 0 20px 40px rgba(243, 112, 33, 0.08);
+            border-color: rgba(243, 112, 33, 0.2);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(243, 112, 33, 0.1) 0%, rgba(243, 112, 33, 0.05) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            color: #666666;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* Action Button */
+        .cta-section {
+            animation: fadeInUp 0.8s ease-out forwards;
+            animation-delay: 0.6s;
+            opacity: 0;
+            text-align: center;
+        }
+
+        .claim-button {
+            display: inline-block;
+            padding: 1.25rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #FF9F45 100%);
+            border-radius: 100px;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 10px 30px rgba(243, 112, 33, 0.3);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .claim-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.6s;
+        }
+
+        .claim-button:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 15px 40px rgba(243, 112, 33, 0.5);
+        }
+
+        .claim-button:hover::before {
+            left: 100%;
+        }
+
+        .claim-button:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -633,13 +831,13 @@
     <!-- Bottom Area -->
     <div class="bottom-area">
         <div class="quick-actions" id="quick-actions">
+            <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">SoulAgent和数字世界有什么区别</button>
             <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">介绍一下本次智源大会的主题</button>
-            <button class="quick-action-btn">为我提供智源大会的最佳浏览线路</button>
-            <button class="quick-action-btn">介绍一下AI Agent展区</button>
+            <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">为我提供智源大会的最佳浏览线路</button>
         </div>
         
         <div class="input-container-bubble">
-            <textarea class="input-main-area" placeholder="输入消息，或输入 / 触发技能..."></textarea>
+            <textarea class="input-main-area" placeholder="输入消息..."></textarea>
             <div class="input-bottom-actions">
                 <div class="actions-left">
                     <div class="input-action-btn" title="添加附件">
@@ -686,20 +884,49 @@
                 if (bottomArea) bottomArea.style.display = 'none';
                 
                 const mainContent = document.getElementById('main-content');
+                mainContent.style.justifyContent = 'flex-start';
                 const claimContainer = document.createElement('div');
-                claimContainer.style.cssText = 'display: flex; justify-content: center; align-items: center; height: 100%; width: 100%;';
+                claimContainer.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; padding-bottom: 40px;';
                 claimContainer.innerHTML = `
-                    <button style="padding: 1.25rem 2.5rem; font-size: 1.25rem; font-weight: 600; color: white; background: linear-gradient(135deg, var(--primary-color) 0%, #FF9F45 100%); border-radius: 100px; border: none; cursor: pointer; box-shadow: 0 10px 30px rgba(243, 112, 33, 0.3);">点击领取智能体</button>
+                    <div class="bg-blobs">
+                        <div class="blob blob-1"></div>
+                        <div class="blob blob-2"></div>
+                    </div>
+                    <div class="user-layout-container">
+                        <header class="hero">
+                            <h1>SoulAgent</h1>
+                            <p>它记得你的习惯、理解你的想法，逐渐成为最懂你的伙伴。</p>
+                        </header>
+                        
+                        <div class="content-area">
+                            <section class="features">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                    </div>
+                                    <h3>日常陪伴</h3>
+                                    <p>生活里的大事小事，它都能搭把手。聊聊天、查资料、整信息，通通不在话下！</p>
+                                </div>
+
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+                                    </div>
+                                    <h3>认知进化</h3>
+                                    <p>随着时间，它能比你更懂你自己，发现那些你都没注意到的规律和盲点。</p>
+                                </div>
+                            </section>
+                        </div>
+                        <div class="cta-section">
+                            <button class="claim-button">立即领取专属Agent</button>
+                        </div>
+                    </div>
                 `;
                 mainContent.appendChild(claimContainer);
 
-                claimContainer.querySelector('button').addEventListener('click', () => {
+                claimContainer.querySelector('.claim-button').addEventListener('click', () => {
                     localStorage.setItem('userMode', 'expert-claimed');
-                    window.dispatchEvent(new Event('user-mode-changed'));
-                    claimContainer.remove();
-                    if (agentWelcome) agentWelcome.style.display = '';
-                    if (chatMessages) chatMessages.style.display = '';
-                    if (bottomArea) bottomArea.style.display = '';
+                    window.location.href = 'survey.html';
                 });
             }
         });
@@ -895,7 +1122,7 @@
                             modalCard.innerHTML = `
                                 <div class="modal-title">识别成功</div>
                                 <div class="modal-body">
-                                    <div style="margin-bottom:12px; font-weight:500">小小曜成功总结以下信息！有错误您可以直接编辑修改哦</div>
+                                    <div style="margin-bottom:12px; font-weight:500">小小曜成功总结以下信息！可以直接编辑修改哦</div>
                                     <textarea class="modal-textarea">用户对“智源大会主题”表现出浓厚兴趣，重点关注人工智能未来十年的趋势。建议后续对话中主动提及大会的具体分论坛议程。</textarea>
                                 </div>
                                 <div class="modal-footer">

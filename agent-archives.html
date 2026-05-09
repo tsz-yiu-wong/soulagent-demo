@@ -8,9 +8,17 @@
     <style>
         :root {
             --primary-color: #F37021;
+            --primary-light: #FFF7F2;
             --bg-color: #FFFBF9;
             --text-color: #333333;
+            --text-secondary: #666666;
             --border-color: #FEE7DB;
+            --card-bg: #FFFFFF;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-sm: 0 4px 16px rgba(243, 112, 33, 0.05);
+            --shadow-md: 0 8px 24px rgba(243, 112, 33, 0.08);
+            --editor-bg: #FDFDFD;
         }
 
         body, html {
@@ -19,55 +27,531 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            height: 100vh;
+            min-height: 100vh;
         }
-
-
 
         .main-content {
             padding: 40px;
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
+            animation: fadeIn 0.6s ease-out;
         }
 
-        h1 {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Header --- */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 32px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .title-group h1 {
             font-size: 28px;
             font-weight: 800;
-            margin-bottom: 24px;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
         }
 
-        .archive-grid {
+        .title-group p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* --- Tabs --- */
+        .tab-header {
+            display: flex;
+            gap: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+        }
+
+        .tab-item {
+            padding: 10px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .tab-item:hover { color: var(--primary-color); }
+        .tab-item.active { color: var(--primary-color); }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-color);
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* --- Archives: Single Card Editor --- */
+        .archive-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            height: calc(100vh - 300px);
+            min-height: 600px;
+        }
+
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--primary-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            flex: 1;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+        }
+
+        .editor-pane {
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            background: var(--editor-bg);
+            min-height: 0; /* Important for flex child scrolling */
+        }
+
+        .preview-pane {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            min-height: 0; /* Important for flex child scrolling */
+        }
+
+        .pane-label {
+            padding: 8px 24px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #AAA;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(254, 231, 219, 0.5);
+        }
+
+        .pane-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .editor-textarea {
+            flex: 1;
+            padding: 24px;
+            border: none;
+            outline: none;
+            resize: none;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #444;
+            background: transparent;
+            overflow-y: auto;
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        /* Markdown Styles */
+        .preview-content h1 { font-size: 22px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-top: 0; }
+        .preview-content h2 { font-size: 18px; margin-top: 24px; color: var(--primary-color); }
+        .preview-content h3 { font-size: 16px; margin-top: 20px; }
+        .preview-content p { font-size: 14px; color: #444; margin: 12px 0; }
+        .preview-content ul { padding-left: 20px; margin: 12px 0; }
+        .preview-content li { font-size: 14px; color: #444; margin-bottom: 6px; }
+        .preview-content code { background: var(--primary-light); padding: 2px 4px; border-radius: 4px; font-family: monospace; color: var(--primary-color); }
+
+        /* --- Memory: Grid & Cards --- */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 24px;
         }
 
-        .archive-card {
-            background: white;
+        .memory-card {
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            min-height: 500px;
         }
+
+        .memory-list {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .memory-item {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .memory-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+            background: white;
+        }
+
+        .memory-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+        }
+
+        .memory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .memory-tags {
+            display: flex;
+            gap: 6px;
+        }
+
+        .memory-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .memory-time-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .memory-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .memory-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 1; /* Always visible */
+        }
+
+        .icon-btn {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .icon-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .icon-btn.delete-btn:hover {
+            color: #EF4444;
+        }
+
+        .tag-preference { background: #FFF7ED; color: #EA580C; }
+        .tag-health { background: #FEF2F2; color: #EF4444; }
+        .tag-career { background: #EFF6FF; color: #3B82F6; }
+        .tag-social { background: #F0FDF4; color: #16A34A; }
+        .tag-schedule { background: #FAF5FF; color: #9333EA; }
+
+        /* --- Utilities --- */
+        .btn-save {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save:hover {
+            transform: scale(1.05);
+            background: #e65a00;
+        }
+
     </style>
 </head>
 <body>
     <nav-bar></nav-bar>
 
     <div class="main-content">
-        <h1>小小曜档案库</h1>
-        <div class="archive-grid">
-            <div class="archive-card">
-                <h3>记忆片段 #1</h3>
-                <p>关于智源大会的主题讨论记录...</p>
+        <div class="header-section">
+            <div class="title-group">
+                <h1>档案库</h1>
+                <p>深度定制Agent的核心人格、长短期记忆与行为准则</p>
             </div>
+        </div>
+
+        <div class="tab-header">
+            <div class="tab-item active" data-tab="archive">核心档案</div>
+            <div class="tab-item" data-tab="memory">记忆</div>
+        </div>
+
+        <div id="archivePane" class="tab-pane active">
             <div class="archive-card">
-                <h3>个人Skill: 大会速递专家</h3>
-                <p>自动抓取资讯并推荐议程的技能封装。</p>
+                <div class="card-header">
+                    <div class="pane-title"><span class="status-dot"></span> 源码编辑器</div>
+                    <button class="btn-save">保存更改</button>
+                </div>
+                <div class="card-body">
+                    <div class="editor-pane">
+                        <div class="pane-label">Editor</div>
+                        <textarea class="editor-textarea" id="markdownEditor"># 小小曜 (Xiao Xiao Yao) 
+
+## 基础设定
+- **姓名**: 小小曜
+- **型号**: SoulAgent-V2-Pro
+- **核心职能**: 智源社区助手、科技资讯专家、会议纪要助手
+
+## 个人性格
+- 热情且专业，语气富有亲和力
+- 对前沿 AI 技术保持极度好奇
+- 细致入微，能捕捉对话中的微妙细节并主动跟进
+
+## 长期记忆
+- [2024-05-10] 参与了智源大会的筹备工作，记录了超过 50 场演讲摘要，对大模型基础设施有深刻理解。
+- [2024-06-15] 为用户定制了“私厨营养师”技能，反馈良好，记住了用户对海鲜过敏。
+- [2024-07-02] 学习了最新的 Agent 框架，能够更自主地拆解复杂任务。
+
+## 已加载技能
+1. **全网实时搜** (Official)
+2. **会议纪要 Pro** (Custom)
+3. **竞品分析 Expert** (Custom)
+
+## 行为准则
+- 始终以事实为依据
+- 在回答前先进行自我反思
+- 遇到不确定的信息会主动向用户核实</textarea>
+                    </div>
+                    <div class="preview-pane">
+                        <div class="pane-label">Preview</div>
+                        <div class="preview-content" id="markdownPreview">
+                            <!-- Preview will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="memoryPane" class="tab-pane">
+            <div class="memory-grid">
+                <!-- Short-term Memory -->
+                <div class="memory-card">
+                    <div class="card-header">
+                        <div class="pane-title"><span class="status-dot" style="background: #10B981;"></span> 短期记忆</div>
+                    </div>
+                    <div class="memory-list" id="shortTermList">
+                        <div class="memory-item">
+                            <div class="memory-header">
+                                <div class="memory-tags"><span class="memory-tag tag-social">社交动态</span></div>
+                                <div class="memory-time-group">
+                                    <span class="memory-time">2024-05-10 10:24</span>
+                                    <div class="memory-actions">
+                                        <svg class="icon-btn edit-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        <svg class="icon-btn delete-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="memory-text">用户提到他今天心情不错，准备参加下午的技术分享。</div>
+                        </div>
+                        <div class="memory-item">
+                            <div class="memory-header">
+                                <div class="memory-tags"><span class="memory-tag tag-schedule">行程</span></div>
+                                <div class="memory-time-group">
+                                    <span class="memory-time">2024-05-10 10:26</span>
+                                    <div class="memory-actions">
+                                        <svg class="icon-btn edit-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        <svg class="icon-btn delete-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="memory-text">询问了关于智源大会的详细地址和入场流程。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Long-term Memory -->
+                <div class="memory-card">
+                    <div class="card-header">
+                        <div class="pane-title"><span class="status-dot" style="background: #3B82F6;"></span> 长期记忆</div>
+                    </div>
+                    <div class="memory-list" id="longTermList">
+                        <div class="memory-item">
+                            <div class="memory-header">
+                                <div class="memory-tags"><span class="memory-tag tag-health">健康体质</span></div>
+                                <div class="memory-time-group">
+                                    <span class="memory-time">2024-04-15 14:30</span>
+                                    <div class="memory-actions">
+                                        <svg class="icon-btn edit-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        <svg class="icon-btn delete-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="memory-text">用户对海鲜过敏，在推荐食谱时需严格排除相关食材。</div>
+                        </div>
+                        <div class="memory-item">
+                            <div class="memory-header">
+                                <div class="memory-tags"><span class="memory-tag tag-career">职业背景</span></div>
+                                <div class="memory-time-group">
+                                    <span class="memory-time">2024-04-20 09:15</span>
+                                    <div class="memory-actions">
+                                        <svg class="icon-btn edit-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        <svg class="icon-btn delete-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="memory-text">用户的职业是高级算法工程师，交流时可以采用更专业的术语。</div>
+                        </div>
+                        <div class="memory-item">
+                            <div class="memory-header">
+                                <div class="memory-tags"><span class="memory-tag tag-preference">对话偏好</span></div>
+                                <div class="memory-time-group">
+                                    <span class="memory-time">2024-05-02 11:45</span>
+                                    <div class="memory-actions">
+                                        <svg class="icon-btn edit-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        <svg class="icon-btn delete-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="memory-text">倾向于简洁明快的对话风格，不喜欢冗长的开场白。</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab-item');
+            const panes = document.querySelectorAll('.tab-pane');
+            const editor = document.getElementById('markdownEditor');
+            const preview = document.getElementById('markdownPreview');
 
+            // Simple Markdown Parser (Simulation)
+            function renderMarkdown(text) {
+                let html = text
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^\- (.*$)/gim, '<ul><li>$1</li></ul>')
+                    .replace(/^\d\. (.*$)/gim, '<ol><li>$1</li></ol>')
+                    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                    .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                    .replace(/\[(.*?)\]/gim, '<code>$1</code>')
+                    .replace(/\n/gim, '<br>');
+                
+                // Cleanup multiple UL/OL
+                html = html.replace(/<\/ul><br><ul>/gim, '');
+                html = html.replace(/<\/ol><br><ol>/gim, '');
+                
+                return html;
+            }
+
+            function updatePreview() {
+                preview.innerHTML = renderMarkdown(editor.value);
+            }
+
+            // Tab Switching
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    panes.forEach(p => {
+                        p.classList.remove('active');
+                        if (p.id === target + 'Pane') {
+                            p.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // Editor Interaction
+            editor.addEventListener('input', updatePreview);
+
+            // Memory Actions
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    if (confirm('确定要删除这条记忆吗？')) {
+                        e.target.closest('.memory-item').remove();
+                    }
+                }
+
+                if (e.target.classList.contains('edit-btn')) {
+                    const item = e.target.closest('.memory-item');
+                    const textEl = item.querySelector('.memory-text');
+                    
+                    const newText = prompt('编辑记忆内容:', textEl.innerText);
+                    if (newText !== null) textEl.innerText = newText;
+                }
+            });
+
+            // Initial Render
+            updatePreview();
+        });
+    </script>
 </body>
 </html>

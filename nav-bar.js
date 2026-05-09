@@ -170,6 +170,96 @@ class NavBar extends HTMLElement {
                 border-color: rgba(16, 185, 129, 0.3);
             }
 
+            .status-container {
+                position: relative;
+                cursor: pointer;
+            }
+
+            .status-dropdown {
+                position: absolute;
+                top: 100%;
+                right: 50%;
+                transform: translateX(50%);
+                margin-top: 8px;
+                background: white;
+                border: 1px solid var(--border-color, #FEE7DB);
+                border-radius: 12px;
+                padding: 12px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+                display: none;
+                flex-direction: column;
+                gap: 10px;
+                min-width: 160px;
+                z-index: 200;
+            }
+
+            .navbar.dark .status-dropdown {
+                background: #1A1A1F;
+                border-color: rgba(255, 255, 255, 0.1);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            }
+
+            .status-dropdown.active {
+                display: flex;
+            }
+
+            .status-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+                color: var(--text-color, #333333);
+                font-weight: 500;
+            }
+
+            .navbar.dark .status-item {
+                color: #CBD5E0;
+            }
+
+            .rescan-btn {
+                background: #F3F4F6;
+                color: #4B5563;
+                border: none;
+                border-radius: 8px;
+                padding: 8px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                text-align: center;
+                margin-top: 4px;
+            }
+
+            .rescan-btn:hover {
+                background: #E5E7EB;
+                color: var(--primary-color, #F37021);
+            }
+
+            .navbar.dark .rescan-btn {
+                background: rgba(255, 255, 255, 0.1);
+                color: #E2E8F0;
+            }
+
+            .navbar.dark .rescan-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .item-loading-icon {
+                animation: spin 1s linear infinite;
+                display: none;
+                color: var(--primary-color, #F37021);
+            }
+            .status-item.loading .item-check-icon {
+                display: none;
+            }
+            .status-item.loading .item-loading-icon {
+                display: block;
+            }
+
             .avatar-container {
                 position: relative;
                 cursor: pointer;
@@ -257,7 +347,7 @@ class NavBar extends HTMLElement {
                 <div class="logo-placeholder">Logo</div>
                 <div class="nav-title">SoulAgent</div>
                 <div id="perspective-toggle" class="perspective-label">
-                    [${isExpert ? '专家视角' : '用户视角'}]
+                    [${isExpert ? '切换用户视角' : '切换专家视角'}]
                 </div>
             </div>
             
@@ -268,9 +358,17 @@ class NavBar extends HTMLElement {
             </div>
             
             <div class="nav-right">
-                <div class="status-tag">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    当前环境：安全
+                <div class="status-container" id="status-container">
+                    <div class="status-tag" id="status-tag">
+                        <svg class="normal-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span id="status-text">当前环境：安全</span>
+                    </div>
+                    <div class="status-dropdown" id="status-dropdown">
+                        <div class="status-item"><span class="item-check-icon">✅</span><svg class="item-loading-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> 对话内容安全</div>
+                        <div class="status-item"><span class="item-check-icon">✅</span><svg class="item-loading-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> 技能状态安全</div>
+                        <div class="status-item"><span class="item-check-icon">✅</span><svg class="item-loading-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> 服务器安全</div>
+                        <button class="rescan-btn" id="rescan-btn">重新扫描</button>
+                    </div>
                 </div>
                 <div class="avatar-container">
                     <div class="avatar-placeholder">头像</div>
@@ -296,6 +394,41 @@ class NavBar extends HTMLElement {
         const avatarContainer = this.shadowRoot.querySelector('.avatar-container');
         const dropdown = this.shadowRoot.querySelector('#avatar-dropdown');
         const perspectiveToggle = this.shadowRoot.querySelector('#perspective-toggle');
+        const statusContainer = this.shadowRoot.querySelector('#status-container');
+        const statusDropdown = this.shadowRoot.querySelector('#status-dropdown');
+        const rescanBtn = this.shadowRoot.querySelector('#rescan-btn');
+        const statusTag = this.shadowRoot.querySelector('#status-tag');
+        const statusText = this.shadowRoot.querySelector('#status-text');
+
+        if (statusContainer) {
+            statusContainer.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!e.target.closest('.status-dropdown')) {
+                    statusDropdown.classList.toggle('active');
+                }
+            });
+        }
+
+        if (rescanBtn) {
+            rescanBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const statusItems = statusDropdown.querySelectorAll('.status-item');
+                statusItems.forEach(item => item.classList.add('loading'));
+                rescanBtn.textContent = '扫描中...';
+                rescanBtn.style.pointerEvents = 'none';
+                
+                statusItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.remove('loading');
+                    }, 600 * (index + 1));
+                });
+
+                setTimeout(() => {
+                    rescanBtn.textContent = '重新扫描';
+                    rescanBtn.style.pointerEvents = 'auto';
+                }, 600 * statusItems.length + 200);
+            });
+        }
         
         if (perspectiveToggle) {
             perspectiveToggle.addEventListener('click', () => {
@@ -320,6 +453,7 @@ class NavBar extends HTMLElement {
 
         document.addEventListener('click', () => {
             dropdown.classList.remove('active');
+            if (statusDropdown) statusDropdown.classList.remove('active');
         });
     }
 }
