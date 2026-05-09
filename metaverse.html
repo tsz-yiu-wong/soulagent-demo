@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="layout-fixed">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,39 +8,57 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="shared.css">
+    <script src="nav-bar.js"></script>
     <style>
-        /* Custom styles for metaverse */
-        body {
+        :root {
+            --primary-color: #F37021;
+            --twin-color: #9D85FF;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body,
+        html {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             background: #000000;
             background: radial-gradient(ellipse at center, #151525 0%, #000000 100%);
             color: #fff;
-            font-family: 'Lexend', sans-serif;
+            font-family: 'Lexend', -apple-system, BlinkMacSystemFont, sans-serif;
             height: 100vh;
+            width: 100vw;
         }
 
-        .top-nav {
-            position: relative;
-            z-index: 100;
-            background: transparent;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        /* Floating Cards View */
-
-        #floating-view {
-            position: absolute;
+        /* --- Star Background --- */
+        #stars-canvas {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- Navigation Override --- */
+        /* To make the component fit better with dark theme, we can set some vars if it uses them */
+        /* However, nav-bar.js uses hardcoded #FFFFFF for background. */
+        /* We'll keep it as a clean white header for now to match the project's consistent UI. */
+
+        /* --- Floating View --- */
+        #floating-view {
+            position: relative;
+            z-index: 1;
+            width: 100vw;
+            height: calc(100vh - 72px);
+            /* Subtract navbar height roughly */
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            transition: all 1.2s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
         .center-content {
@@ -48,11 +67,10 @@
             max-width: 800px;
             padding: 0 20px;
             pointer-events: none;
-            transition: all 0.8s ease;
         }
 
         .center-content h1 {
-            font-size: 4.5rem;
+            font-size: 4rem;
             font-weight: 800;
             margin-bottom: 20px;
             background: linear-gradient(135deg, #FFFFFF 0%, #E9E6FF 50%, #9D85FF 100%);
@@ -67,32 +85,44 @@
             font-size: 1.25rem;
             line-height: 1.6;
             color: #CBD5E0;
-            margin-bottom: 40px;
+            margin-bottom: 12px;
             font-weight: 400;
         }
 
-        .btn-explore {
-            pointer-events: auto;
-            background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%);
-            color: white;
-            border: none;
-            padding: 16px 48px;
-            border-radius: 30px;
-            font-size: 1.2rem;
-            font-weight: 800;
+        .apply-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 24px;
+            background: rgba(157, 133, 255, 0.12);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(157, 133, 255, 0.4);
+            color: rgba(233, 230, 255, 0.9);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 100px;
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(122, 92, 255, 0.4);
-            transition: all 0.3s;
-            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.5px;
         }
 
-        .btn-explore:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 15px 40px rgba(122, 92, 255, 0.6);
+        .apply-btn:hover {
+            background: rgba(157, 133, 255, 0.2);
+            color: #fff;
+            border-color: rgba(157, 133, 255, 0.6);
+            transform: translateY(-1px);
         }
 
-        /* Floating Cards & Grid Cards */
-        .floating-card, .dark-expert-card {
+        .apply-btn:active {
+            transform: translateY(0);
+        }
+
+        /* --- Expert Cards --- */
+        .floating-card {
+            position: absolute;
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -104,54 +134,17 @@
             pointer-events: auto;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            z-index: 5;
         }
 
-        .floating-card {
-            position: absolute;
-            animation: float-animation infinite ease-in-out alternate;
-        }
 
-        .dark-expert-card {
-            width: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
 
-        @keyframes float-animation {
-            0% { transform: translateY(0px) translateX(0px); }
-            50% { transform: translateY(-15px) translateX(8px); }
-            100% { transform: translateY(10px) translateX(-10px); }
-        }
-
-        .floating-card:hover, .dark-expert-card:hover {
+        .floating-card:hover {
             transform: scale(1.08) translateY(-5px) !important;
             border-color: rgba(255, 255, 255, 0.4);
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.15);
             z-index: 20;
             background: rgba(255, 255, 255, 0.1);
-        }
-
-        .dark-expert-card .btn-talk {
-            margin-top: auto;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .dark-expert-card:hover .btn-talk {
-            background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%);
-            border-color: transparent;
-            color: white;
-            box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);
         }
 
         .card-header {
@@ -166,10 +159,10 @@
             width: 46px;
             height: 46px;
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             flex-shrink: 0;
+            /* overflow: hidden; REMOVED to allow AI bubble to float outside */
         }
 
         .card-avatar {
@@ -181,23 +174,53 @@
             font-size: 1.4rem;
             color: white;
             font-weight: 800;
-            padding-bottom: 6px;
+            padding-bottom: 4px;
+            border-radius: inherit;
+            overflow: hidden;
         }
 
-        .ai-badge {
+        .ai-bubble {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(157, 133, 255, 0.95);
+            top: -6px;
+            right: -12px;
+            padding: 2px 8px;
+            background: var(--twin-color);
             color: white;
-            font-size: 0.45rem;
+            font-size: 0.6rem;
             font-weight: 800;
-            padding: 2px 0;
-            text-align: center;
-            line-height: 1.1;
-            backdrop-filter: blur(2px);
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid #1a1a2e;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 10;
             white-space: nowrap;
+        }
+
+        .name-tag {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.65rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .scholar-tag {
+            background: rgba(243, 112, 33, 0.2);
+            color: #F37021;
+            border: 1px solid rgba(243, 112, 33, 0.4);
+        }
+
+        .tr35-tag {
+            background: rgba(157, 133, 255, 0.2);
+            color: #9D85FF;
+            border: 1px solid rgba(157, 133, 255, 0.4);
         }
 
         .card-info {
@@ -246,659 +269,867 @@
             text-overflow: ellipsis;
         }
 
-        /* --- Dark Mode Chat List View --- */
-        #chat-list-view {
-            display: none;
-            opacity: 0;
-            position: absolute;
-            top: 60px; /* height of nav */
-            left: 0;
-            width: 100vw;
-            height: calc(100vh - 60px);
-            background: transparent;
-            z-index: 50;
-            color: #E2E8F0;
-            transition: opacity 0.8s ease;
+        .bg-gradient-1 {
+            background: linear-gradient(135deg, #FF7F66 0%, #E66A52 100%);
         }
 
-        .dark-dashboard {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            height: 100%;
+        .bg-gradient-2 {
+            background: linear-gradient(135deg, #48C0B9 0%, #3AA19B 100%);
         }
 
-        .dark-sidebar {
-            background: rgba(10, 10, 15, 0.6);
+        .bg-gradient-3 {
+            background: linear-gradient(135deg, #9D85FF 0%, #7A5CFF 100%);
+        }
+
+        .bg-gradient-4 {
+            background: linear-gradient(135deg, #F6AD55 0%, #ED8936 100%);
+        }
+
+        .bg-gradient-5 {
+            background: linear-gradient(135deg, #ED64A6 0%, #D53F8C 100%);
+        }
+
+        .non-clickable {
+            cursor: default !important;
+        }
+
+        .non-clickable:hover {
+            transform: none !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        /* --- Search & Filter Bar --- */
+        .search-filter-container {
+            position: fixed;
+            top: 80px;
+            /* Reduced from 100px */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 100%;
+            max-width: 800px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            pointer-events: auto;
+        }
+
+        .top-search-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .chat-entry-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 20px;
-            overflow-y: auto;
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            flex-shrink: 0;
+            color: white;
         }
 
-        .dark-main {
-            display: flex;
-            flex-direction: column;
-            background: transparent;
+        .chat-entry-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--twin-color);
+            transform: scale(1.05);
+            color: var(--twin-color);
+        }
+
+        .search-box-wrapper {
             position: relative;
-            overflow-y: auto;
+            flex: 1;
         }
 
-        .conv-list {
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 14px 20px 14px 48px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--twin-color);
+            box-shadow: 0 0 0 4px rgba(157, 133, 255, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2rem;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 2px;
+            scrollbar-width: none;
+            /* Firefox */
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            margin-left: 62px;
+            /* Align with search box (50px icon + 12px gap) */
+        }
+
+        .filter-chips.hidden-filter {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+            height: 0;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .filter-chips::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Opera */
+        }
+
+        .filter-chip {
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .filter-chip.active {
+            background: var(--twin-color);
+            border-color: var(--twin-color);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* --- View Transitions --- */
+        #floating-view,
+        #list-view {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* --- List View --- */
+        #list-view {
+            position: relative;
+            z-index: 1;
+            padding: 150px 40px 100px;
+            /* Reduced from 170px to match search box shift */
+            min-height: 100vh;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .expert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .list-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 16px;
+            animation: fadeInUp 0.5s ease backwards;
         }
 
-        .dark-conv-item {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .list-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .list-card .card-avatar-wrapper {
+            width: 56px;
+            height: 56px;
+        }
+
+        .list-card .card-avatar {
+            font-size: 1.8rem;
+        }
+
+        .list-card .card-name {
+            font-size: 1.2rem;
+        }
+
+        .list-card .card-desc {
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            margin-top: 0;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .list-card .card-tags {
+            margin-top: auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 100px 0;
+            color: rgba(255, 255, 255, 0.4);
+            grid-column: 1 / -1;
+        }
+
+        /* --- Chat View --- */
+        #chat-view {
+            position: absolute;
+            top: 72px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.3);
+            /* More transparent to see stars */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Sidebar */
+        .chat-sidebar {
+            width: 280px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .back-to-plaza {
+            font-size: 0.75rem;
+            color: var(--twin-color);
+            cursor: pointer;
+            padding: 5px 10px;
+            background: rgba(157, 133, 255, 0.1);
+            border: 1px solid rgba(157, 133, 255, 0.2);
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .back-to-plaza:hover {
+            background: rgba(157, 133, 255, 0.2);
+            border-color: var(--twin-color);
+        }
+
+        .sidebar-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px;
+        }
+
+        .history-item {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid transparent;
-        }
-
-        .dark-conv-item:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateX(4px);
-        }
-
-        .dark-conv-item.active {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
-        }
-        
-        .dark-conv-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .dark-conv-info .conv-name {
-            color: #fff;
-            font-size: 0.95rem;
-            font-weight: 800;
+            transition: all 0.2s ease;
             margin-bottom: 4px;
         }
 
-        .dark-conv-info .conv-preview {
-            color: #A0AEC0;
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .history-item.active {
+            background: rgba(157, 133, 255, 0.15);
+            border: 1px solid rgba(157, 133, 255, 0.3);
+        }
+
+        .history-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .history-avatar .ai-bubble {
+            top: -4px;
+            right: -8px;
+            font-size: 0.5rem;
+            padding: 1px 4px;
+            border-width: 1px;
+        }
+
+        .history-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .history-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .history-last-msg {
             font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .dark-square-header {
-            padding: 25px 40px;
-            background: rgba(15, 15, 25, 0.7);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            position: relative;
+            overflow-y: auto;
         }
 
-        .dark-expert-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        /* Greeting Mode Styles */
+        .greeting-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            /* Move content up */
+            padding: 5vh 20px 20px;
+            /* Adjust top position */
+        }
+
+        /* Ensure normal chat also has room at the bottom */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 10% 160px;
+            /* Added bottom padding for footer space */
+            display: flex;
+            flex-direction: column;
             gap: 24px;
-            padding: 24px 40px;
         }
 
-        .dark-search-bar {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            padding: 12px 16px;
-            border-radius: 12px;
-            width: 100%;
-            outline: none;
-            transition: all 0.3s;
-        }
-        .dark-search-bar:focus {
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
-        }
-
-        /* Explosion / Transition Animation classes */
-        .zoom-out-fade {
-            transform: scale(3) translateZ(100px);
-            opacity: 0;
-            filter: blur(20px);
-        }
-        
-        .fade-in {
-            opacity: 1 !important;
-        }
-        
-        .bg-gradient-1 { background: linear-gradient(135deg, #FF7F66 0%, #E66A52 100%); }
-        .bg-gradient-2 { background: linear-gradient(135deg, #48C0B9 0%, #3AA19B 100%); }
-        .bg-gradient-3 { background: linear-gradient(135deg, #9D85FF 0%, #7A5CFF 100%); }
-        .bg-gradient-4 { background: linear-gradient(135deg, #F6AD55 0%, #ED8936 100%); }
-        .bg-gradient-5 { background: linear-gradient(135deg, #ED64A6 0%, #D53F8C 100%); }
-        
-        .suggestion-chips {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 8px;
-            overflow-x: auto;
-            padding: 5px 2px; /* Added vertical padding for hover animation */
-        }
-        .suggestion-chips::-webkit-scrollbar {
-            height: 4px;
-        }
-        .suggestion-chips::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-        }
-
-        .suggestion-chip {
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #A0AEC0;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .suggestion-chip:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            color: #fff;
-            transform: translateY(-2px);
-        }
-        /* --- Expert Intro View --- */
-        #dark-intro-view {
-            display: none;
-            opacity: 0;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            width: 100%;
-            padding-bottom: 80px;
-            transition: opacity 0.6s ease;
-        }
-
-        .intro-ip-wrap {
-            position: relative;
-            margin-bottom: 40px;
+        .identity-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 16px;
+            text-align: center;
         }
 
-        .intro-avatar-large {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 5rem;
-            box-shadow: 0 0 50px rgba(157, 133, 255, 0.3);
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-            z-index: 2;
-            animation: float-slow 4s infinite ease-in-out;
+        .large-avatar-wrapper {
             position: relative;
         }
 
-        .avatar-ai-tag {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: var(--color-twin);
-            color: white;
-            font-size: 0.9rem;
+        .large-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 28px;
+            font-size: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .large-avatar .ai-bubble {
+            top: -5px;
+            right: -15px;
+            font-size: 0.7rem;
+            padding: 3px 10px;
+        }
+
+        .expert-identity-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .expert-identity-name {
+            font-size: 1.5rem;
             font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 999px;
-            z-index: 10;
-            box-shadow: 0 4px 15px rgba(122, 92, 255, 0.5);
-            pointer-events: none;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            line-height: 1;
-        }
-
-        @keyframes float-slow {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-
-        .intro-msg-bubble {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 24px 30px;
-            border-radius: 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            width: 420px;
-            font-size: 1.05rem;
-            line-height: 1.7;
-            color: #fff;
-            font-weight: 500;
-            margin-bottom: 50px;
-            position: relative;
-            animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .intro-msg-bubble::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 15px solid transparent;
-            border-top-color: rgba(255, 255, 255, 0.1);
-        }
-
-        @keyframes slide-up {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .intro-recommendations {
             display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .expert-identity-tags {
+            display: flex;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 15px;
-            max-width: 800px;
-            padding: 0 40px;
-            animation: fade-in-up 1s ease 0.4s both;
         }
 
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .greeting-bubble {
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 20px 24px;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #fff;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            margin-bottom: 30px;
+            /* Removed animation */
         }
 
-        .intro-recommendation-chip {
-            background: rgba(157, 133, 255, 0.15);
-            color: #E9E6FF;
-            padding: 12px 24px;
-            border-radius: 100px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            border: 1px solid rgba(157, 133, 255, 0.3);
-            white-space: nowrap;
+        .greeting-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid rgba(255, 255, 255, 0.08);
         }
 
-        .intro-recommendation-chip:hover {
-            background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%);
-            color: white;
-            transform: translateY(-4px) scale(1.05);
-            box-shadow: 0 10px 25px rgba(122, 92, 255, 0.4);
-            border-color: transparent;
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
-        /* Typing indicator for dark mode */
-        .typing-indicator {
+        .msg-wrapper {
             display: flex;
-            gap: 5px;
-            padding: 14px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            width: fit-content;
-            margin-top: 10px;
+            gap: 12px;
+            width: 100%;
         }
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
+        .msg-wrapper.msg-user-wrapper {
+            justify-content: flex-end;
         }
 
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
-
-        /* Message Actions */
-        .msg-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 4px 0 4px;
-            margin-top: -4px; /* Reduced spacing */
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-
-        .chat-msg:hover .msg-actions {
-            opacity: 1;
-        }
-
-        .msg-action-btn {
-            width: 28px;
-            height: 28px;
-            border: none;
-            background: transparent;
-            border-radius: 7px;
-            cursor: pointer;
+        .chat-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #A0AEC0;
-            transition: all 0.2s ease;
+            font-size: 1.2rem;
+            flex-shrink: 0;
             position: relative;
+        }
+
+        .chat-avatar .ai-bubble {
+            top: -4px;
+            right: -8px;
+            font-size: 0.5rem;
+            padding: 1px 4px;
+            border-width: 1px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #FFFFFF;
+            font-weight: bold;
+            user-select: none;
             flex-shrink: 0;
         }
 
-        .msg-action-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            transform: scale(1.1);
+        .msg-bubble {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
-        .msg-action-btn.liked {
-            color: #10B981 !important;
-            background: rgba(16, 185, 129, 0.2) !important;
-        }
-
-        .msg-action-btn.disliked {
-            color: #EF4444 !important;
-            background: rgba(239, 68, 68, 0.2) !important;
-        }
-
-        .msg-action-btn.copied {
-            color: #10B981 !important;
-            background: rgba(16, 185, 129, 0.2) !important;
-        }
-
-        @keyframes btn-spring {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.4); }
-            60% { transform: scale(0.9); }
-            100% { transform: scale(1); }
-        }
-
-        .msg-action-btn.spring {
-            animation: btn-spring 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
-        }
-
-        .copy-tip {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 10px;
-            white-space: nowrap;
-            pointer-events: none;
+        .msg-ai {
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            z-index: 100;
+            border-top-left-radius: 4px;
+            /* Slightly rounded right angle for AI */
         }
 
-        .intro-input-container {
+        .msg-user {
+            background: var(--twin-color);
+            color: white;
+            border-top-right-radius: 4px;
+            /* Slightly rounded right angle for user */
+        }
+
+        /* Input Area (Shared) */
+        .chat-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 20px 40px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .rec-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             width: 100%;
             max-width: 600px;
-            margin-top: 50px;
-            padding: 0 40px;
-            animation: fade-in-up 1s ease 0.6s both;
-        }
-
-        .intro-glass-input {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 12px 12px 12px 24px;
-            display: flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s;
         }
 
-        .intro-glass-input:focus-within {
+        .rec-chip {
+            width: fit-content;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .rec-chip:hover {
             background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .intro-glass-input input {
-            flex: 1;
-            background: none;
-            border: none;
-            outline: none;
-            color: #fff;
-            font-size: 1.1rem;
-            font-family: inherit;
-        }
-
-        .intro-send-btn {
-            background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%);
             color: white;
-            border: none;
-            width: 44px;
-            height: 44px;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-input-wrapper {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 16px;
+            padding: 16px 60px 16px 20px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .chat-input:focus {
+            border-color: var(--twin-color);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .disclaimer {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.45);
+            text-align: center;
+            margin-top: 8px;
+            max-width: 600px;
+            line-height: 1.4;
+        }
+
+        .disclaimer strong {
+            color: rgba(255, 255, 255, 0.45);
+            font-weight: 600;
+        }
+
+        .correction-note {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: normal;
+            margin-left: 4px;
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: var(--twin-color);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);
+            color: white;
+            font-weight: bold;
         }
 
-        .intro-send-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(122, 92, 255, 0.6);
+        .bubble-disclaimer {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-weight: 400;
+            display: block;
         }
 
+        .msg-content-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+        }
+
+        .msg-content-container .msg-bubble {
+            max-width: 100%;
+        }
     </style>
 </head>
-<body class="twin-theme">
+
+<body>
+
+    <nav-bar active="metaverse" theme="dark"></nav-bar>
 
     <!-- Starry Background -->
-    <canvas id="stars-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none;"></canvas>
+    <canvas id="stars-canvas"></canvas>
 
-    <header class="top-nav">
-        <a href="index.html" style="text-decoration: none;">
-            <div class="logo">SoulAgent</div>
-        </a>
-        <nav class="nav-links">
-            <a href="agent.html" class="nav-link">🎓 智能体</a>
-            <a href="archives.html" class="nav-link">🗄️ 档案库</a>
-            <a href="metaverse.html" class="nav-link twin-link active">🌌 数字世界</a>
-        </nav>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <div class="status-pill" style="border-color: #9D85FF; color: #9D85FF;">数字世界运行中</div>
+    <!-- Search & Filter Bar -->
+    <div class="search-filter-container">
+        <div class="top-search-row">
+            <div class="chat-entry-btn" onclick="openExpertChat('张建国')" title="进入对话">💬</div>
+            <div class="search-box-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="search-input" placeholder="搜索专家、研究领域或机构..."
+                    autocomplete="off">
+            </div>
         </div>
-    </header>
-
-    <!-- Floating Cards View -->
-    <div id="floating-view">
-        <div class="center-content" id="center-content">
-            <h1>连接全球智慧</h1>
-            <p>汇聚全球顶尖学者与行业专家的数字空间。<br>与他们的 AI 数字分身实时交互，获取权威的专业领域解答。</p>
-            <button class="btn-explore" onclick="enterMetaverse()">探索更多数字分身</button>
+        <div class="filter-chips hidden-filter" id="filter-chips">
+            <div class="filter-chip active" data-tag="all">全部</div>
+            <div class="filter-chip" data-tag="具身智能">具身智能</div>
+            <div class="filter-chip" data-tag="大语言模型">大语言模型</div>
+            <div class="filter-chip" data-tag="世界模型">世界模型</div>
+            <div class="filter-chip" data-tag="多模态">多模态</div>
+            <div class="filter-chip" data-tag="机器人">机器人</div>
+            <div class="filter-chip" data-tag="AI安全">AI安全</div>
         </div>
     </div>
 
-    <!-- Dark Mode Chat List View (Square) -->
-    <div id="chat-list-view">
-        <div class="dark-dashboard">
-            <!-- Sidebar -->
-            <aside class="dark-sidebar">
-                <!--
-                <h2 style="font-size: 1.25rem; margin-bottom: 20px; color: #fff;">历史对话</h2>
-                -->
-                <input type="text" class="dark-search-bar" placeholder="搜索对话记录..." style="margin-bottom: 20px;">
-                
-                <div class="conv-list" id="conv-list-container">
-                    <!-- Dynamic List -->
-                </div>
-            </aside>
+    <!-- Floating Content -->
+    <div id="floating-view">
+        <div class="center-content">
+            <h1>连接全球智慧</h1>
+            <p>汇聚智源学者与顶尖专家的数字空间。<br>与他们的 AI 数字分身实时交互，获取权威的专业领域解答。</p>
+            <button class="apply-btn" onclick="alert('申请入驻功能即将上线')">申请入驻</button>
+        </div>
+        <div id="floating-cards-container"></div>
+    </div>
 
-            <!-- Main Content Area -->
-            <main class="dark-main">
-                
-                <!-- Square Grid View -->
-                <div id="dark-square-view" style="display: flex; flex-direction: column; height: 100%;">
-                    <div class="dark-square-header">
-                        <div>
-                            <p style="font-size: 0.95rem; color: #A0AEC0; margin:0;">与全球顶尖专家的数字分身对话，获取权威的专业领域解答。</p>
-                        </div>
-                        <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
-                            <select style="padding: 10px 16px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; outline:none;">
-                                <option>全部机构</option>
-                                <option>智源研究院</option>
-                                <option>清华大学</option>
-                                <option>北京大学</option>
-                            </select>
-                            <select style="padding: 10px 16px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; outline:none;">
-                                <option>全部领域</option>
-                                <option>具身智能</option>
-                                <option>世界模型</option>
-                                <option>大语言模型</option>
-                            </select>
-                            <input type="text" class="dark-search-bar" placeholder="搜索专家名称、领域或机构..." style="flex:1;">
-                        </div>
+    <!-- List View Content -->
+    <div id="list-view" class="hidden">
+        <div class="expert-grid" id="expert-grid"></div>
+    </div>
+
+    <div id="chat-view" class="hidden">
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">历史记录</div>
+                <div class="back-to-plaza" onclick="switchView('list')">返回广场</div>
+            </div>
+            <div class="history-list" id="history-list">
+                <!-- Lin Jing history -->
+                <div class="history-item" onclick="openNormalChat('林静')">
+                    <div class="history-avatar bg-gradient-5">
+                        👩‍💼
+                        <div class="ai-bubble">AI</div>
                     </div>
-
-                    <div class="dark-expert-grid" id="dark-expert-grid">
-                        <!-- Dynamic Grid -->
+                    <div class="history-info">
+                        <div class="history-name">林静</div>
+                        <div class="history-last-msg">你好，关于多模态模型...</div>
                     </div>
                 </div>
-
-                <!-- Expert Intro View -->
-                <div id="dark-intro-view">
-                    <div class="intro-ip-wrap">
-                        <div class="intro-msg-bubble" id="intro-self-intro">
-                            你好！我是张建国。我最近在研究具身智能的长时程规划问题，也关注到你对该领域的兴趣。我们可以聊聊多模态大模型如何提升机器人的理解能力，或者探讨强化学习在复杂环境下的泛化挑战。
-                        </div>
-                        <div class="intro-avatar-large bg-gradient-1" id="intro-avatar">
-                            <span id="intro-avatar-icon">👨‍🏫</span>
-                            <span class="avatar-ai-tag">AI</span>
-                        </div>
+            </div>
+        </div>
+        <div class="chat-main" id="chat-main">
+            <!-- Greeting Mode Content -->
+            <div id="greeting-mode" class="greeting-container">
+                <div class="greeting-bubble" id="greeting-bubble" style="margin-bottom: 30px;"></div>
+                <div class="identity-wrapper">
+                    <div class="large-avatar-wrapper">
+                        <div class="large-avatar" id="large-avatar"></div>
+                        <div class="ai-bubble">AI</div>
                     </div>
-                    <div class="intro-recommendations" id="intro-recommendations-container">
-                        <!-- Dynamic Chips -->
-                    </div>
-                    <div class="intro-input-container">
-                        <div class="intro-glass-input">
-                            <input type="text" id="intro-chat-input" placeholder="输入你想聊的话题..." onkeydown="if(event.key==='Enter') startChatFromIntro()">
-                            <button class="intro-send-btn" onclick="startChatFromIntro()">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                                </svg>
-                            </button>
-                        </div>
+                    <div class="expert-identity-info">
+                        <div class="expert-identity-name" id="expert-identity-name"></div>
+                        <div class="expert-identity-tags" id="expert-identity-tags"></div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Chat View -->
-                <div id="dark-chat-view" style="display: none; flex-direction: column; height: 100%; position: relative;">
-                    <div class="dark-chat-header" style="padding: 15px 40px; background: rgba(15, 15, 25, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; z-index: 5;">
-                        <div class="chat-expert-info" style="display: flex; align-items: center; gap: 12px;">
-                            <div class="card-avatar-wrapper" style="width: 42px; height: 42px;">
-                                <div class="card-avatar" id="chat-header-icon" style="font-size: 1.2rem;">👨‍🏫</div>
-                                <span class="ai-badge" style="font-size: 0.4rem; padding: 1px 0;">AI分身</span>
-                            </div>
-                            <div>
-                                <h3 id="current-expert-name" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #fff;">张建国</h3>
-                                <div id="current-expert-title" style="font-size: 0.75rem; color: #A0AEC0;">清华大学 · 计算机系教授</div>
-                            </div>
-                        </div>
-                        <button onclick="showSquare()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 8px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 12H5M12 19l-7-7 7-7" />
-                            </svg>
-                            返回专家广场
-                        </button>
-                    </div>
-                
-                    <div class="dark-chat-area" style="flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px;">
+            <!-- Normal Chat Mode Content -->
+            <div id="normal-chat-mode" class="messages-container hidden">
+                <!-- Messages -->
+            </div>
 
-                        <div class="chat-msg" style="display: flex;">
-                            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                                你好！我是相关的领域专家。请问有什么我可以帮你的吗？无论是前沿理论探讨还是具体的工程实践，我都可以为你解答。
-                            </div>
-                        </div>
-                    </div>
-                
-                    <div class="dark-chat-input-wrapper" style="padding: 24px 40px 30px; background: rgba(15, 15, 25, 0.7); backdrop-filter: blur(20px); border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                        <div class="suggestion-chips" id="suggestion-container">
-                            <!-- Dynamic Chips -->
-                        </div>
-                        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 10px 10px 10px 20px; display: flex; align-items: center; gap: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); transition: border-color 0.3s;">
-                            <input type="text" id="chat-input" placeholder="向专家的AI分身提问... (按 Enter 发送)" style="flex: 1; background: none; border: none; outline: none; color: #fff; font-size: 1rem; font-family: inherit;">
-                            <button onclick="sendMessage()" style="background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%); color: white; border: none; padding: 10px 24px; border-radius: 14px; font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);">
-                                发送
-                            </button>
-                        </div>
-                        <div style="text-align: center; color: #A0AEC0; font-size: 0.75rem; margin-top: 12px; opacity: 0.7;">
-                            —— 已连接至专家数字分身，回复内容由 AI 模型生成，不代表专家本人的真实意见与立场，亦不构成专业建议。 ——
-                        </div>
-                    </div>
+            <!-- Footer Area -->
+            <div class="chat-footer">
+                <div class="rec-questions" id="rec-questions">
+                    <!-- chips -->
                 </div>
-
-            </main>
+                <div class="chat-input-wrapper">
+                    <input type="text" class="chat-input" placeholder="输入问题，获取专家级解答">
+                    <div class="send-btn">↑</div>
+                </div>
+                <div class="disclaimer">
+                    —— 数字分身的言论、观点与答复由 AI 模型生成，<strong>不代表专家本人的真实意见与立场</strong>。——
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Define fixed positions instead of random
         const experts = [
-            { name: "张建国", sub: "清华大学 · 教授", desc: "长期专注于具身智能与机器人学习研究。可解答相关领域的前沿理论问题。", icon: "👨‍🏫", tags: ["具身智能", "强化学习"], bg: "bg-gradient-1", left: "6vw", top: "12vh", delay: "-2s", dur: "12s", questions: ["具身智能到底和传统 AI 有什么本质区别？", "强化学习在机器人控制中的瓶颈是什么？", "如何看待端到端学习与模块化设计？"] },
-            { name: "李雪娇", sub: "智源研究院 · 架构师", desc: "主导开发新一代视频生成与物理世界模型。对Diffusion与Transformer架构结合有深刻见解与丰富的实战经验。", icon: "👩‍🔬", tags: ["世界模型", "视频生成"], bg: "bg-gradient-2", left: "75vw", top: "10vh", delay: "-5s", dur: "14s", questions: ["Sora等模型的核心架构是什么？", "物理世界模型如何处理遮挡信息？", "Diffusion模型如何保持长视频一致性？"] },
-            { name: "王博文", sub: "北京大学 · 研究员", desc: "专注大语言模型对齐(Alignment)、RLHF以及长上下文推理技术。可深入交流预训练策略与高效微调(PEFT)方法。", icon: "👨‍💻", tags: ["大语言模型", "对齐技术"], bg: "bg-gradient-3", left: "10vw", top: "72vh", delay: "-1s", dur: "11s", questions: ["DPO算法相比RLHF有哪些优势？", "大模型如何处理超长上下文？", "目前最前沿的模型对齐技术有哪些？"] },
-            { name: "吴长青", sub: "清华大学 · 科学家", desc: "长期从事人工智能安全与伦理研究，参与制定多项AI安全标准。可探讨模型对抗攻击、可解释性与价值观对齐等宏观与技术问题。", icon: "🧓", tags: ["AI安全", "伦理规范"], bg: "bg-gradient-4", left: "70vw", top: "75vh", delay: "-8s", dur: "15s", questions: ["如何量化大模型的安全风险？", "红队测试的最佳实践是什么？", "价值观对齐是否会损害推理能力？"] },
-            { name: "林静", sub: "斯坦福大学 · 研究员", desc: "专注于多模态基础模型构建与大规模视觉生成，曾在顶级会议发表多篇相关论文。", icon: "👩‍💼", tags: ["多模态", "视觉生成"], bg: "bg-gradient-5", left: "38vw", top: "8vh", delay: "-4s", dur: "13s", questions: ["多模态模型如何实现真正的图文理解？", "自监督学习在视觉大模型中的应用趋势？", "如何平衡生成的真实感与创造性？"] },
-            { name: "陈博", sub: "智源研究院 · 工程师", desc: "拥有深厚的自然语言处理背景，致力于开发更高效的大规模预训练模型底座。", icon: "👨‍🔬", tags: ["自然语言处理", "预训练"], bg: "bg-gradient-1", left: "82vw", top: "42vh", delay: "-3s", dur: "10s", questions: ["下一代NLP模型的核心演进方向？", "如何优化大模型预训练的算力消耗？", "中文语料质量提升有哪些方案？"] },
-            { name: "苏珊", sub: "麻省理工 · 教授", desc: "将认知科学原理应用于机器人学，探索赋予机器人类级别灵巧度的方法。", icon: "👩‍🏫", tags: ["机器人", "认知科学"], bg: "bg-gradient-2", left: "3vw", top: "45vh", delay: "-7s", dur: "12s", questions: ["认知科学如何启发机器人运动控制？", "人类灵巧手的控制逻辑能否被模拟？", "机器人的“常识”学习路径是什么？"] },
-            { name: "赵敏", sub: "加州伯克利 · 博士后", desc: "主攻深度强化学习与运筹优化在复杂工业控制系统中的应用与落地。", icon: "👩‍💻", tags: ["强化学习", "运筹优化"], bg: "bg-gradient-3", left: "35vw", top: "82vh", delay: "-9s", dur: "14s", questions: ["强化学习在工业落地中的难点？", "如何结合运筹优化提高决策效率？", "仿真与实测差距如何缩小？"] },
-            { name: "王强", sub: "上海交大 · 研究员", desc: "研究大规模分布式深度学习系统架构，解决超大参数量模型的训练瓶颈。", icon: "👨‍💼", tags: ["深度学习", "分布式"], bg: "bg-gradient-4", left: "55vw", top: "80vh", delay: "-2s", dur: "11s", questions: ["大规模训练中的通信瓶颈如何解决？", "异构计算芯片的调度优化策略？", "千亿级模型的并行化方案对比？"] }
+            { name: "张建国", nameTag: "智源学者", sub: "清华大学 · 教授", desc: "长期专注于具身智能与机器人学习研究。可解答相关领域的前的前沿理论问题。", icon: "👨‍🏫", tags: ["具身智能", "强化学习"], bg: "bg-gradient-1", left: "4vw", top: "20vh" },
+            { name: "李雪娇", sub: "智源研究院 · 架构师", desc: "主导开发新一代视频生成与物理世界模型。对Diffusion与Transformer架构结合有深刻见解。", icon: "👩‍🔬", tags: ["世界模型", "视频生成"], bg: "bg-gradient-2", left: "73vw", top: "20vh" },
+            { name: "王博文", sub: "北京大学 · 研究员", desc: "专注大语言模型对齐(Alignment)、RLHF以及长上下文推理技术。", icon: "👨‍💻", tags: ["大语言模型", "对齐技术"], bg: "bg-gradient-3", left: "5vw", top: "65vh" },
+            { name: "吴长青", sub: "清华大学 · 科学家", desc: "长期从事人工智能安全与伦理研究，参与制定多项AI安全标准。", icon: "🧓", tags: ["AI安全", "伦理规范"], bg: "bg-gradient-4", left: "72vw", top: "65vh" },
+            { name: "林静", nameTag: "TR35", sub: "斯坦福大学 · 研究员", desc: "专注于多模态基础模型构建与大规模视觉生成。", icon: "👩‍💼", tags: ["多模态", "视觉生成"], bg: "bg-gradient-5", left: "37vw", top: "9vh" },
+            { name: "苏珊", sub: "麻省理工 · 教授", desc: "将认知科学原理应用于机器人学，探索赋予机器人类级别灵巧度的方法。", icon: "👩‍🏫", tags: ["机器人", "认知科学"], bg: "bg-gradient-2", left: "38vw", top: "68vh" }
         ];
 
-        // Initialization
+        let currentView = 'floating'; // 'floating', 'list', or 'chat'
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        const ZHANG_GREETING = "你好！我是张建国。我最近在研究具身智能的长时程规划问题，也关注到你对该领域的兴趣。我们可以聊聊多模态大模型如何提升机器人的理解能力，或者探讨强化学习在复杂环境下的泛化挑战。";
+        const ZHANG_REC_QUESTIONS = [
+            "具身智能到底和传统 AI 有什么本质区别？",
+            "强化学习在机器人控制中的瓶颈是什么？",
+            "如何看待端到端学习与模块化设计？"
+        ];
+
+        const LIN_HISTORY = [
+            { role: 'user', content: '林静老师，您好！我对多模态大模型的未来趋势很感兴趣。' },
+            { role: 'ai', content: '你好！多模态模型正朝着更强的物理世界感知和更精细的跨模态对齐方向发展，特别是在视频理解和生成领域。' },
+            { role: 'user', content: '那您认为视觉生成技术最大的难点在哪里？' },
+            { role: 'ai', content: '核心难点在于如何保持物理规律的一致性，以及在超长序列生成中的时空连贯性。<span class="correction-note">（专家本人已纠正）</span>' }
+        ];
+
         document.addEventListener('DOMContentLoaded', () => {
             initStars();
             renderFloatingCards();
-            renderListCards();
-            renderSidebarList();
+            setupEventListeners();
+            
+            const userMode = localStorage.getItem('userMode') || '';
+            if (userMode.startsWith('expert')) {
+                const centerContent = document.querySelector('.center-content');
+                if (centerContent) {
+                    centerContent.innerHTML = `
+                        <div class="large-avatar-wrapper" style="display: inline-block;">
+                            <div class="large-avatar bg-gradient-3" style="width: 120px; height: 120px; font-size: 4rem; margin: 0 auto; box-shadow: 0 10px 30px rgba(157, 133, 255, 0.4);">👨‍💼</div>
+                            <div class="ai-bubble" style="top: -5px; right: -15px; font-size: 0.7rem; padding: 3px 10px;">AI</div>
+                        </div>
+                    `;
+                }
+            }
         });
 
         // 0. Starry Background
         function initStars() {
             const canvas = document.getElementById('stars-canvas');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
             let width, height;
             let stars = [];
@@ -913,7 +1144,7 @@
 
             function initStarsArray() {
                 stars = [];
-                const numStars = Math.floor((width * height) / 1500); // density
+                const numStars = Math.floor((width * height) / 1500);
                 for (let i = 0; i < numStars; i++) {
                     stars.push({
                         x: Math.random() * width,
@@ -928,24 +1159,18 @@
 
             function draw() {
                 ctx.clearRect(0, 0, width, height);
-                
                 stars.forEach(star => {
-                    // Twinkling effect
                     const opacity = Math.sin(Date.now() * star.twinkleSpeed + star.twinklePhase) * 0.5 + 0.5;
                     ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.8})`;
-                    
                     ctx.beginPath();
                     ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
                     ctx.fill();
-                    
-                    // Move star slowly upwards
                     star.y -= star.speed;
                     if (star.y < 0) {
                         star.y = height;
                         star.x = Math.random() * width;
                     }
                 });
-                
                 requestAnimationFrame(draw);
             }
 
@@ -954,26 +1179,113 @@
             draw();
         }
 
-        // 1. Render Floating Cards
+        // 1. Setup Event Listeners
+        function setupEventListeners() {
+            const searchInput = document.getElementById('search-input');
+            const filterChips = document.querySelectorAll('.filter-chip');
+
+            // Search focus/input logic
+            searchInput.addEventListener('focus', () => {
+                if (currentView !== 'list' && currentView !== 'chat') switchView('list');
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                if (currentView !== 'list' && currentView !== 'chat') switchView('list');
+                if (currentView !== 'chat') {
+                    renderListView();
+                }
+            });
+
+            // Filter chips logic
+            filterChips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    filterChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentFilter = chip.dataset.tag;
+
+                    if (currentView !== 'list' && currentFilter !== 'all') {
+                        switchView('list');
+                    }
+
+                    renderListView();
+                });
+            });
+
+            // Handle back behavior or clear
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (currentView === 'chat') {
+                        switchView(searchQuery ? 'list' : 'floating');
+                    } else if (currentView === 'list') {
+                        searchInput.value = '';
+                        searchQuery = '';
+                        currentFilter = 'all';
+                        filterChips.forEach(c => c.classList.remove('active'));
+                        document.querySelector('[data-tag="all"]').classList.add('active');
+                        switchView('floating');
+                        searchInput.blur();
+                    }
+                }
+            });
+        }
+
+        // 2. View Switching Logic
+        function switchView(view) {
+            const floatingView = document.getElementById('floating-view');
+            const listView = document.getElementById('list-view');
+            const chatView = document.getElementById('chat-view');
+            const filterChips = document.getElementById('filter-chips');
+            const searchContainer = document.querySelector('.search-filter-container');
+
+            floatingView.classList.add('hidden');
+            listView.classList.add('hidden');
+            chatView.classList.add('hidden');
+
+            if (view === 'list') {
+                listView.classList.remove('hidden');
+                filterChips.classList.remove('hidden-filter');
+                searchContainer.classList.remove('hidden');
+                currentView = 'list';
+                renderListView();
+            } else if (view === 'chat') {
+                chatView.classList.remove('hidden');
+                searchContainer.classList.add('hidden');
+                currentView = 'chat';
+            } else {
+                floatingView.classList.remove('hidden');
+                filterChips.classList.add('hidden-filter');
+                searchContainer.classList.remove('hidden');
+                currentView = 'floating';
+            }
+        }
+
+        // 3. Render Floating Cards
         function renderFloatingCards() {
-            const container = document.getElementById('floating-view');
-            
+            const container = document.getElementById('floating-cards-container');
+            container.innerHTML = '';
             experts.forEach((expert) => {
                 const card = document.createElement('div');
                 card.className = 'floating-card';
                 card.style.left = expert.left;
                 card.style.top = expert.top;
-                card.style.animationDelay = expert.delay;
-                card.style.animationDuration = expert.dur;
+                if (expert.name === '张建国' || expert.name === '林静') {
+                    card.onclick = () => openExpertChat(expert.name);
+                } else {
+                    card.classList.add('non-clickable');
+                }
+
+                const nameTagHtml = expert.nameTag ?
+                    `<span class="name-tag ${expert.nameTag === '智源学者' ? 'scholar-tag' : 'tr35-tag'}">${expert.nameTag}</span>` : '';
 
                 card.innerHTML = `
                     <div class="card-header">
                         <div class="card-avatar-wrapper">
                             <div class="card-avatar ${expert.bg}">${expert.icon}</div>
-                            <span class="ai-badge">AI分身</span>
+                            <div class="ai-bubble">AI</div>
                         </div>
                         <div class="card-info">
-                            <div class="card-name">${expert.name}</div>
+                            <div class="card-name">${expert.name}${nameTagHtml}</div>
                             <div class="card-sub">${expert.sub}</div>
                         </div>
                     </div>
@@ -982,500 +1294,164 @@
                     </div>
                     <p class="card-desc">${expert.desc}</p>
                 `;
-                
-                card.onclick = () => {
-                    enterMetaverse();
-                    if (expert.name === "张建国") {
-                        showIntro(expert);
-                    } else {
-                        showChat(expert.name, expert.icon, expert.sub, expert.bg);
-                    }
-                };
                 container.appendChild(card);
             });
         }
 
-        // 2. Render List Cards
-        function renderListCards() {
-            const grid = document.getElementById('dark-expert-grid');
+        // 4. Render List View
+        function renderListView() {
+            const grid = document.getElementById('expert-grid');
             grid.innerHTML = '';
-            
-            experts.forEach((expert) => {
+
+            const filteredExperts = experts.filter(expert => {
+                const matchesFilter = currentFilter === 'all' || expert.tags.includes(currentFilter);
+                const matchesSearch = !searchQuery ||
+                    expert.name.toLowerCase().includes(searchQuery) ||
+                    expert.sub.toLowerCase().includes(searchQuery) ||
+                    expert.tags.some(t => t.toLowerCase().includes(searchQuery)) ||
+                    expert.desc.toLowerCase().includes(searchQuery);
+
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filteredExperts.length === 0) {
+                grid.innerHTML = '<div class="empty-state">未找到匹配的专家</div>';
+                return;
+            }
+
+            filteredExperts.forEach((expert, index) => {
                 const card = document.createElement('div');
-                card.className = 'dark-expert-card';
-                card.onclick = () => {
-                    if (expert.name === "张建国") {
-                        showIntro(expert);
-                    } else {
-                        showChat(expert.name, expert.icon, expert.sub, expert.bg);
-                    }
-                };
+                card.className = 'list-card';
+                card.style.animationDelay = `${index * 0.05}s`;
+                if (expert.name === '张建国' || expert.name === '林静') {
+                    card.onclick = () => openExpertChat(expert.name);
+                } else {
+                    card.classList.add('non-clickable');
+                }
+
+                const nameTagHtml = expert.nameTag ?
+                    `<span class="name-tag ${expert.nameTag === '智源学者' ? 'scholar-tag' : 'tr35-tag'}">${expert.nameTag}</span>` : '';
 
                 card.innerHTML = `
                     <div class="card-header">
                         <div class="card-avatar-wrapper">
                             <div class="card-avatar ${expert.bg}">${expert.icon}</div>
-                            <span class="ai-badge">AI分身</span>
+                            <div class="ai-bubble">AI</div>
                         </div>
                         <div class="card-info">
-                            <div class="card-name">${expert.name}</div>
+                            <div class="card-name">${expert.name}${nameTagHtml}</div>
                             <div class="card-sub">${expert.sub}</div>
                         </div>
                     </div>
+                    <p class="card-desc">${expert.desc}</p>
                     <div class="card-tags">
                         ${expert.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}
                     </div>
-                    <p class="card-desc">${expert.desc}</p>
-                    <button class="btn-talk" onclick="event.stopPropagation(); if('${expert.name}' === '张建国') { showIntro(experts.find(e=>e.name==='张建国')); } else { showChat('${expert.name}', '${expert.icon}', '${expert.sub}', '${expert.bg}'); }">与ta交流</button>
                 `;
-                
                 grid.appendChild(card);
             });
         }
 
-        // 3. Render Sidebar Conversions
-        function renderSidebarList() {
-            const container = document.getElementById('conv-list-container');
-            container.innerHTML = '';
-            
-            // Just take a few experts for the sidebar preview
-            const previews = ["关于模型训练有什么建议吗？", "是否可以用于3D生成？", "如何解决注意力衰减问题？", "有关安全对齐的最佳实践？"];
-            
-            experts.slice(0, 4).forEach((expert, i) => {
-                const item = document.createElement('div');
-                item.className = 'dark-conv-item' + (i === 0 ? ' active' : '');
-                item.onclick = () => {
-                    if (expert.name === "张建国") {
-                        showIntro(expert);
-                    } else {
-                        showChat(expert.name, expert.icon, expert.sub, expert.bg);
-                    }
-                };
-                
-                item.innerHTML = `
-                    <div class="dark-conv-avatar ${expert.bg}">${expert.name.charAt(0)}</div>
-                    <div class="dark-conv-info">
-                        <div class="conv-name">${expert.name}</div>
-                        <div class="conv-preview">${previews[i % previews.length]}</div>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        // Animation transition to chat list view
-        function enterMetaverse() {
-            const floatingView = document.getElementById('floating-view');
-            const chatListView = document.getElementById('chat-list-view');
-            
-            floatingView.classList.add('zoom-out-fade');
-            
-            setTimeout(() => {
-                chatListView.style.display = 'block';
-                void chatListView.offsetWidth; // Trigger reflow
-                chatListView.classList.add('fade-in');
-            }, 600);
-            
-            setTimeout(() => {
-                floatingView.style.display = 'none';
-            }, 1200);
-        }
-
-        let currentIntroExpert = null;
-
-        // Show Intro Interface
-        function showIntro(expert) {
-            currentIntroExpert = expert;
-            document.getElementById('dark-square-view').style.display = 'none';
-            document.getElementById('dark-chat-view').style.display = 'none';
-            const introView = document.getElementById('dark-intro-view');
-            introView.style.display = 'flex';
-            void introView.offsetWidth;
-            introView.classList.add('fade-in');
-
-            // Reset Intro Input
-            document.getElementById('intro-chat-input').value = '';
-
-            // Update Intro Content
-            document.getElementById('intro-avatar-icon').innerText = expert.icon;
-            document.getElementById('intro-avatar').className = 'intro-avatar-large ' + expert.bg;
-            
-            const recommendationContainer = document.getElementById('intro-recommendations-container');
-            recommendationContainer.innerHTML = '';
-            expert.questions.forEach(q => {
-                const chip = document.createElement('div');
-                chip.className = 'intro-recommendation-chip';
-                chip.innerText = q;
-                chip.onclick = () => startChatFromIntro(expert, q);
-                recommendationContainer.appendChild(chip);
-            });
-
-            // Update Active State in Sidebar
-            document.querySelectorAll('.dark-conv-item').forEach(el => {
-                el.classList.remove('active');
-                if (el.querySelector('.conv-name').innerText === expert.name) {
-                    el.classList.add('active');
-                }
-            });
-
-            // Add actions to intro bubble if not already there
-            const introBubble = document.getElementById('intro-self-intro');
-            if (!introBubble.querySelector('.msg-actions')) {
-                const actionsWrapper = document.createElement('div');
-                actionsWrapper.innerHTML = getExpertActionsHtml();
-                const actions = actionsWrapper.firstElementChild;
-                actions.style.marginTop = '10px'; // More space for the intro bubble which is larger
-                introBubble.appendChild(actions);
-            }
-        }
-
-        async function startChatFromIntro(expert, question) {
-            const exp = expert || currentIntroExpert;
-            if (!exp) return;
-
-            const input = document.getElementById('intro-chat-input');
-            const q = question || input.value.trim();
-            if (!q) return;
-
-            const introView = document.getElementById('dark-intro-view');
-            introView.style.opacity = '0';
-            
-            setTimeout(async () => {
-                introView.style.display = 'none';
-                showChat(exp.name, exp.icon, exp.sub, exp.bg);
-                
-                // Wait for showChat to finish resetting
-                setTimeout(async () => {
-                    // Send the initial question
-                    sendMessage(q);
-                    
-                    // Show typing indicator
-                    const chatArea = document.querySelector('.dark-chat-area');
-                    const typing = document.createElement('div');
-                    typing.className = 'typing-indicator';
-                    typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-                    chatArea.appendChild(typing);
-                    chatArea.scrollTop = chatArea.scrollHeight;
-                    
-                    // Wait 1 second
-                    await new Promise(r => setTimeout(r, 1000));
-                    
-                    // Remove typing and add AI response
-                    if (chatArea.contains(typing)) {
-                        chatArea.removeChild(typing);
-                    }
-                    
-                    const aiMsg = document.createElement('div');
-                    aiMsg.className = 'chat-msg';
-                    aiMsg.style.display = 'flex';
-                    aiMsg.style.flexDirection = 'column';
-                    aiMsg.style.alignItems = 'flex-start';
-                    
-                    let aiText = `这是一个非常深刻的问题。针对“${question}”，我认为核心在于如何通过层级化的架构将高层感知与底层控制解耦。目前我们的研究表明，结合大规模视觉语言模型与层级强化学习是一个极具前景的方向。`;
-                    let nextQuestions = [
-                        "具身智能在家庭场景有哪些落地挑战？",
-                        "如何评价大模型在控制任务中的表现？",
-                        "未来五年具身智能的突破口在哪里？"
-                    ];
-
-                    if (expert.name === "张建国") {
-                        aiText = `很高兴你关注到具身智能这个方向。\n一句话概括的话，具身智能要解决的核心问题是：如何让 AI 拥有物理身体，在真实世界中感知、决策并执行动作。\n这里面最关键的挑战在于：真实物理世界是连续的、不确定的、部分可观测的。你在仿真里训练好的策略，放到真实机器人上往往直接失效——光照变了、物体材质不同、机械臂有误差，这些都会导致策略崩溃。这就是我们常说的 Sim-to-Real Gap。\n你是刚开始接触具身智能，还是已经有一些机器人或强化学习的基础了？如果你有具体感兴趣的场景（比如抓取、导航、家务），我可以帮你梳理一下切入点。`;
-                        nextQuestions = [
-                            "抓取、导航、家务这几个场景，哪个对新手更友好、上手门槛更低？",
-                            "如果我对灵巧抓取感兴趣，需要提前补哪些基础知识？",
-                            "您刚提到的 Sim-to-Real 是什么，可以更具体一些么？"
-                        ];
-                    }
-
-                    aiMsg.innerHTML = `
-                        <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3); white-space: pre-wrap;">${aiText}</div>
-                        ${getExpertActionsHtml()}
-                    `;
-                    chatArea.appendChild(aiMsg);
-                    chatArea.scrollTop = chatArea.scrollHeight;
-                    
-                    const suggestionContainer = document.getElementById('suggestion-container');
-                    suggestionContainer.innerHTML = '';
-                    nextQuestions.forEach(q => {
-                        const chip = document.createElement('div');
-                        chip.className = 'suggestion-chip';
-                        chip.innerText = q;
-                        chip.onclick = () => useSuggestion(q);
-                        suggestionContainer.appendChild(chip);
-                    });
-                }, 100);
-            }, 600);
-        }
-
-        // Show Chat Interface
-        function showChat(name, icon, title, bgClass) {
-            document.getElementById('dark-square-view').style.display = 'none';
-            document.getElementById('dark-chat-view').style.display = 'flex';
-            
-            // Update Headers
-            document.getElementById('current-expert-name').innerText = name;
-            const headerIcon = document.getElementById('chat-header-icon');
-            headerIcon.innerText = icon;
-            headerIcon.className = 'card-avatar ' + bgClass;
-            document.getElementById('current-expert-title').innerText = title;
-
-            // Reset Chat Area
-            const chatArea = document.querySelector('.dark-chat-area');
-            let greeting = `你好！我是${name}。请问关于${title.split('·')[1]?.trim() || '相关领域'}有什么我可以帮你的吗？`;
-            
-            if (name === "张建国") {
-                greeting = "你好！我是张建国。我最近在研究具身智能的长时程规划问题，也关注到你对该领域的兴趣。我们可以聊聊多模态大模型如何提升机器人的理解能力，或者探讨强化学习在复杂环境下的泛化挑战。";
-            }
-
-            chatArea.innerHTML = `
-                <div class="chat-msg" style="display: flex; flex-direction: column; align-items: flex-start;">
-                    <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        ${greeting}
-                    </div>
-                    ${getExpertActionsHtml()}
-                </div>
-            `;
-
-            // Update Suggestions
+        // 5. Chat Interaction Logic
+        function openExpertChat(name) {
+            if (name !== '张建国' && name !== '林静') return;
             const expert = experts.find(e => e.name === name);
-            const suggestionContainer = document.getElementById('suggestion-container');
-            suggestionContainer.innerHTML = '';
-            if (expert && expert.questions) {
-                expert.questions.forEach(q => {
-                    const chip = document.createElement('div');
-                    chip.className = 'suggestion-chip';
-                    chip.innerText = q;
-                    chip.onclick = () => useSuggestion(q);
-                    suggestionContainer.appendChild(chip);
-                });
+
+            switchView('chat');
+
+            if (name === '林静') {
+                openNormalChat('林静');
+            } else {
+                const historyItems = document.querySelectorAll('.history-item');
+                historyItems.forEach(item => item.classList.remove('active'));
+                showGreetingMode(expert);
             }
-            
-            // Update Active State in Sidebar
-            document.querySelectorAll('.dark-conv-item').forEach(el => {
-                el.classList.remove('active');
-                if (el.querySelector('.conv-name').innerText === name) {
-                    el.classList.add('active');
+        }
+
+        function showGreetingMode(expert) {
+            document.getElementById('greeting-mode').classList.remove('hidden');
+            document.getElementById('normal-chat-mode').classList.add('hidden');
+            document.getElementById('rec-questions').classList.remove('hidden');
+
+            const bubble = document.getElementById('greeting-bubble');
+            const avatar = document.getElementById('large-avatar');
+            const nameEl = document.getElementById('expert-identity-name');
+            const tagsEl = document.getElementById('expert-identity-tags');
+            const recContainer = document.getElementById('rec-questions');
+
+            avatar.textContent = expert.icon;
+            avatar.className = `large-avatar ${expert.bg}`;
+
+            const nameTagHtml = expert.nameTag ?
+                `<span class="name-tag ${expert.nameTag === '智源学者' ? 'scholar-tag' : 'tr35-tag'}" style="margin:0">${expert.nameTag}</span>` : '';
+
+            nameEl.innerHTML = `${expert.name} ${nameTagHtml}`;
+            tagsEl.innerHTML = expert.tags.map(t => `<span class="card-tag">${t}</span>`).join('');
+
+            if (expert.name === '张建国') {
+                bubble.textContent = ZHANG_GREETING;
+                recContainer.innerHTML = ZHANG_REC_QUESTIONS.map(q => `<div class="rec-chip">${q}</div>`).join('');
+            } else {
+                bubble.textContent = `你好！我是${expert.name}。很高兴能与你交流${expert.tags[0]}相关的话题。`;
+                recContainer.innerHTML = '';
+            }
+        }
+
+        function openNormalChat(name) {
+            const historyItems = document.querySelectorAll('.history-item');
+            historyItems.forEach(item => {
+                if (item.querySelector('.history-name').textContent === name) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
                 }
             });
-        }
 
-        async function useSuggestion(text) {
-            const currentExpert = document.getElementById('current-expert-name').innerText;
-            
-            // Turn 3 questions - no reaction
-            const turn3Questions = [
-                "我有一些强化学习基础，做抓取任务可以直接用上吗？",
-                "MuJoCo 和 Isaac Sim 各自的优缺点是什么？新手选哪个好？",
-                "老师能推荐几篇具身智能方向的必读论文吗？"
-            ];
-            if (currentExpert === "张建国" && turn3Questions.includes(text)) {
-                return;
-            }
+            document.getElementById('greeting-mode').classList.add('hidden');
+            document.getElementById('normal-chat-mode').classList.remove('hidden');
+            document.getElementById('rec-questions').classList.add('hidden');
 
-            sendMessage(text);
+            const messagesContainer = document.getElementById('normal-chat-mode');
 
-            // Handle Turn 2 to Turn 3 transition for 张建国
-            const turn2Questions = [
-                "抓取、导航、家务这几个场景，哪个对新手更友好、上手门槛更低？",
-                "如果我对灵巧抓取感兴趣，需要提前补哪些基础知识？",
-                "您刚提到的 Sim-to-Real 是什么，可以更具体一些么？"
-            ];
-
-            if (currentExpert === "张建国" && turn2Questions.includes(text)) {
-                const chatArea = document.querySelector('.dark-chat-area');
-                
-                // Show typing indicator
-                const typing = document.createElement('div');
-                typing.className = 'typing-indicator';
-                typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-                chatArea.appendChild(typing);
-                chatArea.scrollTop = chatArea.scrollHeight;
-                
-                // Wait 1 second
-                await new Promise(r => setTimeout(r, 1000));
-                
-                // Remove typing
-                if (chatArea.contains(typing)) {
-                    chatArea.removeChild(typing);
-                }
-                
-                // Expert Bubble 3
-                const aiMsg = document.createElement('div');
-                aiMsg.className = 'chat-msg';
-                aiMsg.style.display = 'flex';
-                aiMsg.style.flexDirection = 'column';
-                aiMsg.style.alignItems = 'flex-start';
-                const aiText = `好问题，我帮你逐个对比一下：\n家务（如叠衣服、整理桌面）：门槛最高。这类任务是长时序、多步骤的，需要任务规划、多模态感知、精细操作的综合能力，目前学术界也还在攻坚，不建议新手直接上手。\n导航（如室内移动、避障）：门槛适中。问题定义比较清晰，但涉及 SLAM、路径规划、动态障碍物处理等一整套技术栈，前置知识量不小，而且实验往往需要真实场景或高保真 3D 环境，调试周期偏长。\n桌面级物体抓取（Tabletop Grasping）：对新手最友好，我推荐从这里切入。`;
-                
-                aiMsg.innerHTML = `
-                    <div class="expert-bubble" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-left-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.3); white-space: pre-wrap;">${aiText}</div>
-                    ${getExpertActionsHtml()}
+            if (name === '林静') {
+                const expert = experts.find(e => e.name === '林静');
+                messagesContainer.innerHTML = LIN_HISTORY.map(msg => `
+                    <div class="msg-wrapper ${msg.role === 'user' ? 'msg-user-wrapper' : ''}">
+                        ${msg.role === 'ai' ? `
+                            <div class="chat-avatar ${expert.bg}">
+                                ${expert.icon}
+                                <div class="ai-bubble">AI</div>
+                            </div>
+                            <div class="msg-content-container">
+                                <div class="msg-bubble msg-ai">
+                                    <div class="msg-text">${msg.content}</div>
+                                    <div class="bubble-disclaimer">AI生成，不代表专家本人的真实意见与立场</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="msg-bubble msg-user">
+                                ${msg.content}
+                            </div>
+                            <div class="user-avatar">头像</div>
+                        `}
+                    </div>
+                `).join('');
+            } else {
+                messagesContainer.innerHTML = `
+                    <div class="msg-wrapper">
+                        <div class="msg-content-container" style="margin-left: 48px;">
+                            <div class="msg-bubble msg-ai">
+                                <div>暂无历史对话记录。</div>
+                                <div class="bubble-disclaimer">AI生成，不代表专家本人的真实意见与立场</div>
+                            </div>
+                        </div>
+                    </div>
                 `;
-                chatArea.appendChild(aiMsg);
-                chatArea.scrollTop = chatArea.scrollHeight;
-                
-                // Turn 3 suggestions
-                const nextQuestions = [
-                    "我有一些强化学习基础，做抓取任务可以直接用上吗？",
-                    "MuJoCo 和 Isaac Sim 各自的优缺点是什么？新手选哪个好？",
-                    "老师能推荐几篇具身智能方向的必读论文吗？"
-                ];
-                
-                const suggestionContainer = document.getElementById('suggestion-container');
-                suggestionContainer.innerHTML = '';
-                nextQuestions.forEach(q => {
-                    const chip = document.createElement('div');
-                    chip.className = 'suggestion-chip';
-                    chip.innerText = q;
-                    chip.onclick = () => useSuggestion(q);
-                    suggestionContainer.appendChild(chip);
-                });
             }
-        }
 
-        function sendMessage(explicitText) {
-            const input = document.getElementById('chat-input');
-            const messageText = explicitText || input.value.trim();
-            if (messageText === '') return;
-            
-            const chatArea = document.querySelector('.dark-chat-area');
-            
-            // Create user message bubble
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'chat-msg user';
-            msgDiv.style.display = 'flex';
-            msgDiv.style.justifyContent = 'flex-end';
-            msgDiv.style.alignSelf = 'flex-end';
-            msgDiv.innerHTML = `
-                <div style="background: linear-gradient(135deg, #7A5CFF 0%, #9D85FF 100%); color: #fff; padding: 14px 20px; border-radius: 16px; border-bottom-right-radius: 4px; max-width: 600px; line-height: 1.6; box-shadow: 0 4px 15px rgba(122, 92, 255, 0.3);">
-                    ${messageText}
-                </div>
-            `;
-            chatArea.appendChild(msgDiv);
-            
-            // Scroll to bottom
-            chatArea.scrollTop = chatArea.scrollHeight;
-
-            // Clear input if we used it
-            if (!explicitText) {
-                input.value = '';
-            }
-        }
-
-        // Add Enter listener
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && document.activeElement.id === 'chat-input') {
-                sendMessage();
-            }
-        });
-
-        // Show Square Interface
-        function showSquare() {
-            document.getElementById('dark-square-view').style.display = 'flex';
-            document.getElementById('dark-chat-view').style.display = 'none';
-            
-            document.querySelectorAll('.dark-conv-item').forEach(el => el.classList.remove('active'));
-        }
-
-        // --- Message Actions ---
-        function getExpertActionsHtml() {
-            return `
-                <div class="msg-actions">
-                    <button class="msg-action-btn" onclick="msgCopy(this)" title="复制">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                    </button>
-                    <button class="msg-action-btn msg-like-btn" onclick="msgLike(this)" title="点赞">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
-                            <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                        </svg>
-                    </button>
-                    <button class="msg-action-btn msg-dislike-btn" onclick="msgDislike(this)" title="点踩">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
-                            <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"></path>
-                            <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
-                        </svg>
-                    </button>
-                    <button class="msg-action-btn" title="重新生成">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 4v6h-6"></path>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                        </svg>
-                    </button>
-                </div>
-            `;
-        }
-
-        function msgCopy(btn) {
-            let bubble = null;
-            const chatMsg = btn.closest('.chat-msg');
-            if (chatMsg) {
-                bubble = chatMsg.querySelector('.expert-bubble');
-            } else {
-                const introBubble = btn.closest('.intro-msg-bubble');
-                if (introBubble) bubble = introBubble;
-            }
-            
-            if (!bubble) return;
-            
-            // Get text, excluding the actions HTML
-            const text = bubble.innerText.replace(/复制|重新生成|点赞|点踩/g, '').trim();
-
-            const doFeedback = () => {
-                const svgCopy = btn.innerHTML;
-                btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                btn.classList.add('copied', 'spring');
-
-                const tip = document.createElement('span');
-                tip.className = 'copy-tip';
-                tip.textContent = '已复制';
-                btn.appendChild(tip);
-
-                setTimeout(() => {
-                    btn.innerHTML = svgCopy;
-                    btn.classList.remove('copied', 'spring');
-                }, 1600);
-            };
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(doFeedback).catch(doFeedback);
-            } else {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.style.position = 'fixed';
-                ta.style.opacity = '0';
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                doFeedback();
-            }
-        }
-
-        function msgLike(btn) {
-            const dislikeBtn = btn.closest('.msg-actions').querySelector('.msg-dislike-btn');
-            if (btn.classList.contains('liked')) {
-                btn.classList.remove('liked');
-            } else {
-                btn.classList.add('liked', 'spring');
-                dislikeBtn.classList.remove('disliked');
-                setTimeout(() => btn.classList.remove('spring'), 500);
-            }
-        }
-
-        function msgDislike(btn) {
-            const likeBtn = btn.closest('.msg-actions').querySelector('.msg-like-btn');
-            if (btn.classList.contains('disliked')) {
-                btn.classList.remove('disliked');
-            } else {
-                btn.classList.add('disliked', 'spring');
-                likeBtn.classList.remove('liked');
-                setTimeout(() => btn.classList.remove('spring'), 500);
-            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     </script>
 </body>
+
 </html>
