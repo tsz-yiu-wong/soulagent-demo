@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能中心 - SoulAgent</title>
+    <script src="nav-bar.js"></script>
+    <style>
+        :root {
+            --primary-color: #F37021;
+            --bg-color: #FFFBF9;
+            --text-color: #333333;
+            --border-color: #FEE7DB;
+            --success-color: #10B981;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+        }
+
+        .main-content {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .skill-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+        }
+
+        .skill-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #FFF7F5;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .skill-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .skill-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .skill-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #F9F9F9;
+        }
+
+        .status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: #F0FDF4;
+            color: var(--success-color);
+        }
+
+        .btn-config {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-config:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav-bar></nav-bar>
+
+    <div class="main-content">
+        <div class="header-section">
+            <h1>技能中心</h1>
+        </div>
+
+        <div class="skill-grid">
+            <div class="skill-card">
+                <div class="skill-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3 class="skill-title">联网搜索</h3>
+                <p class="skill-desc">使 Agent 能够访问实时互联网信息，获取最新的资讯、知识和数据。</p>
+                <div class="skill-footer">
+                    <span class="status-badge">已启用</span>
+                    <a href="#" class="btn-config">配置参数</a>
+                </div>
+            </div>
+
+            <div class="skill-card">
+                <div class="skill-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <h3 class="skill-title">文档分析</h3>
+                <p class="skill-desc">支持上传 PDF、Word 等多种格式，快速提取核心观点、总结长文内容。</p>
+                <div class="skill-footer">
+                    <span class="status-badge">已启用</span>
+                    <a href="#" class="btn-config">管理文件</a>
+                </div>
+            </div>
+
+            <div class="skill-card">
+                <div class="skill-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                </div>
+                <h3 class="skill-title">代码运行</h3>
+                <p class="skill-desc">在沙箱环境中执行 Python 代码，完成复杂的数据处理、绘图和科学计算任务。</p>
+                <div class="skill-footer">
+                    <span class="status-badge">已启用</span>
+                    <a href="#" class="btn-config">设置限制</a>
+                </div>
+            </div>
+
+            <div class="skill-card" style="border-style: dashed; background: transparent; justify-content: center; align-items: center; color: #999;">
+                <div style="font-size: 32px; margin-bottom: 8px;">+</div>
+                <div style="font-size: 14px; font-weight: 600;">创建自定义技能</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

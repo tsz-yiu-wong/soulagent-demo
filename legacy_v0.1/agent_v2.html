@@ -1,0 +1,2780 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="layout-fixed">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent | 主仪表盘</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .system-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .lobster-text {
+            color: var(--color-primary);
+        }
+
+        @keyframes fade-in-right {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-fade-in-right {
+            animation: fade-in-right 0.3s ease-out;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.4s ease-out forwards;
+        }
+
+        .twin-text {
+            color: var(--color-twin);
+        }
+
+        /* 安全监测样式 */
+        .security-status {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--color-border);
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            user-select: none;
+        }
+
+        .security-status:hover {
+            border-color: #10B981;
+            background: #F0FDF4;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #10B981;
+            border-radius: 50%;
+            animation: dot-pulse 2s infinite;
+        }
+
+        @keyframes dot-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .security-dropdown {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            width: 180px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid #10B981;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 1100;
+            transform-origin: top right;
+            animation: dropdown-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes dropdown-in {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .security-dropdown.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            font-size: 0.75rem;
+            color: #065F46;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 布局调整：移除右侧栏，增加左侧宽度 */
+        .dashboard-layout {
+            grid-template-columns: 420px 1fr !important;
+        }
+
+        /* 通知铃铛样式 */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid var(--color-border);
+            border-radius: 50%;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .notification-bell:hover {
+            border-color: var(--color-primary);
+            background: #FFF9F8;
+            transform: translateY(-1px);
+        }
+
+        .bell-icon {
+            font-size: 1.2rem;
+        }
+
+        .bell-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #EF4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        }
+
+        .sidebar-right {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-left: 2px solid var(--color-border);
+            padding: 25px 20px;
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden;
+            z-index: 100;
+        }
+
+        .sidebar-right.show {
+            display: flex;
+        }
+
+        .dashboard-layout.with-sidebar {
+            grid-template-columns: 420px 1fr 320px !important;
+        }
+
+        .notification-dropdown.show {
+            display: flex;
+        }
+
+        .notification-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 12px;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-left: 2px solid var(--color-border);
+            border-top: 2px solid var(--color-border);
+            transform: rotate(45deg);
+        }
+
+        .sidebar-header {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--color-text);
+            padding-bottom: 12px;
+            border-bottom: 2px solid #F0F0F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header .badge-count {
+            font-size: 0.75rem;
+            background: var(--color-primary);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+
+        /* 总结卡片样式 */
+        .summary-card {
+            background: linear-gradient(145deg, #FFFDFD 0%, #FFF9F8 100%);
+            border: 2px solid rgba(255, 127, 102, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 5px;
+            box-shadow: 0 4px 12px rgba(255, 127, 102, 0.05);
+        }
+
+        .summary-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--color-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            align-items: center;
+        }
+
+        .summary-item {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .summary-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--color-text);
+            display: block;
+            line-height: 1.2;
+        }
+
+        .summary-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #999;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* 数字分身激活卡片 - 宇宙星空感 */
+        .twin-activation-card {
+            background: linear-gradient(135deg, #0B0A1A 0%, #1A1A3A 100%);
+            background-image:
+                radial-gradient(1px 1px at 25% 35%, white 100%, transparent),
+                radial-gradient(1px 1px at 50% 50%, white 100%, transparent),
+                radial-gradient(1.5px 1.5px at 75% 25%, rgba(255, 255, 255, 0.8) 100%, transparent),
+                radial-gradient(1px 1px at 85% 75%, white 100%, transparent),
+                radial-gradient(1px 1px at 15% 85%, white 100%, transparent),
+                linear-gradient(135deg, #0B0A1A 0%, #13132D 100%);
+            border-radius: 16px;
+            padding: 22px;
+            margin-top: 10px;
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.15);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .twin-activation-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5), 0 0 30px rgba(168, 85, 247, 0.2);
+        }
+
+        .twin-activation-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: rotate-glow 15s linear infinite;
+        }
+
+        @keyframes rotate-glow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .twin-activation-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .twin-activation-card p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 全屏遮罩 - 密集星空背景 */
+        #twin-reveal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(15px);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            animation: fade-in 0.8s ease-out forwards;
+            overflow: hidden;
+        }
+
+        #twin-reveal-overlay::before,
+        #twin-reveal-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: stars-twinkle 4s infinite ease-in-out;
+        }
+
+        /* 异步呼吸：::after 延迟 2s 启动，形成交替发光感 */
+        #twin-reveal-overlay::after {
+            animation-delay: -2s;
+            box-shadow:
+                25vw 35vh 0 rgba(255, 255, 255, 0.7), 65vw 25vh 0 rgba(255, 255, 255, 0.8),
+                50vw 85vh 0 rgba(255, 255, 255, 0.6), 80vw 90vh 0 white,
+                40vw 40vh 0 rgba(255, 255, 255, 0.9), 95vw 5vh 0 white,
+                75vw 6vh 0 white, 88vw 40vh 0 rgba(255, 255, 255, 0.5),
+                72vw 25vh 0 white, 62vw 85vh 0 white, 45vw 95vh 0 white,
+                97vw 70vh 0 white, 58vw 78vh 0 white, 78vw 88vh 0 white;
+        }
+
+        #twin-reveal-overlay::before {
+            box-shadow:
+                15vw 10vh 0 white, 45vw 15vh 0 white, 85vw 12vh 0 white,
+                10vw 45vh 0 white, 30vw 65vh 0 white, 70vw 55vh 0 white,
+                90vw 75vh 0 white, 20vw 80vh 0 white, 60vw 60vh 0 white,
+                5vw 95vh 0 white, 35vw 50vh 0 white, 12vw 20vh 0 white,
+                18vw 55vh 0 white, 28vw 90vh 0 white, 55vw 5vh 0 white,
+                3vw 30vh 0 white, 42vw 22vh 0 white, 22vw 12vh 0 white;
+        }
+
+        @keyframes stars-twinkle {
+
+            0%,
+            100% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .reveal-icon-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 40px;
+        }
+
+        .reveal-icon {
+            font-size: 100px;
+            filter: drop-shadow(0 0 20px #8B5CF6);
+            animation: twin-pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes twin-pulse {
+            0% {
+                transform: scale(1) rotate(0);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1) rotate(5deg);
+                opacity: 1;
+                filter: drop-shadow(0 0 40px #A855F7);
+            }
+
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 0.8;
+            }
+        }
+
+        .reveal-glow-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50%;
+            animation: ring-expand 2s linear infinite;
+        }
+
+        @keyframes ring-expand {
+            from {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .reveal-text {
+            text-align: center;
+            animation: slide-up 0.8s ease-out backwards;
+            animation-delay: 0.3s;
+        }
+
+        @keyframes slide-up {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .reveal-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #6366F1 0%, #A855F7 100%);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s;
+        }
+
+        .reveal-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
+        }
+
+        .activation-btn {
+            background: linear-gradient(90deg, #A855F7 0%, #7C3AED 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .activation-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.5);
+            filter: brightness(1.1);
+        }
+
+        #notification-cards-container {
+            flex-grow: 1;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+        }
+
+        /* 滚动条美化 */
+        #notification-cards-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #notification-cards-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .calibration-input-container {
+            display: none;
+            margin-top: 10px;
+        }
+
+        /* 聊天输入框增强样式 */
+        .chat-input-wrapper {
+            padding: 20px 40px 30px 40px;
+            background: white;
+            border-top: 1px solid var(--color-border);
+            position: relative;
+        }
+
+        .chat-history-bar {
+            padding: 16px 40px 10px 40px;
+            border-bottom: 1px solid #F3F4F6;
+            background: #FFFEFD;
+            position: relative;
+            z-index: 10;
+        }
+
+        .history-title-btn {
+            width: 100%;
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            background: white;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .history-title-btn:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 4px 12px rgba(255, 127, 102, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .history-title-main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .history-title-text {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .history-title-arrow {
+            width: 16px;
+            height: 16px;
+            color: #9CA3AF;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .history-title-btn.open .history-title-arrow {
+            transform: rotate(180deg);
+        }
+
+        .history-session-menu {
+            position: absolute;
+            left: 40px;
+            right: 40px;
+            top: calc(100% - 2px);
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            padding: 10px;
+            z-index: 30;
+        }
+
+        .history-session-menu.show {
+            display: flex;
+        }
+
+        .history-session-item {
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-session-item:hover {
+            background: #FFF7F5;
+            border-color: #FED7CC;
+        }
+
+        .history-session-item.active {
+            background: rgba(255, 127, 102, 0.08);
+            border-color: rgba(255, 127, 102, 0.28);
+        }
+
+        .history-session-item-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 3px;
+        }
+
+        .history-session-item-desc {
+            font-size: 0.68rem;
+            color: #6B7280;
+            line-height: 1.35;
+        }
+
+        .report-task-row {
+            border: 1px solid #EFEFEF;
+            border-radius: 8px;
+            background: white;
+            padding: 8px 10px;
+            font-size: 0.72rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .report-task-row:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            transform: translateX(2px);
+        }
+
+        .report-task-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .report-task-arrow {
+            flex-shrink: 0;
+            opacity: 0.6;
+            font-weight: 700;
+        }
+
+        .input-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-left: 2px;
+        }
+
+        .toolbar-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #F8F9FA;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .toolbar-btn:hover {
+            background: white;
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(255, 127, 102, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .toolbar-btn.active {
+            background: rgba(255, 127, 102, 0.1);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .toolbar-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.5;
+        }
+
+        .input-box-v2 {
+            background: #F5F5F7;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 8px 8px 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .input-box-v2:focus-within {
+            background: white;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(255, 127, 102, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-box-v2 textarea {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            font-family: inherit;
+            padding: 8px 0;
+            resize: none;
+            max-height: 120px;
+            line-height: 1.5;
+            color: var(--color-text);
+        }
+
+        .send-btn-v2 {
+            width: 40px;
+            height: 40px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 127, 102, 0.3);
+        }
+
+        .send-btn-v2:hover {
+            transform: scale(1.05) translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 15px rgba(255, 127, 102, 0.4);
+        }
+
+        .send-btn-v2:active {
+            transform: scale(0.95);
+        }
+
+        /* 浮动菜单 */
+        .toolbar-item {
+            position: relative;
+        }
+
+        .input-floating-menu {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 200px;
+            z-index: 1000;
+            animation: menu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes menu-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .input-floating-menu.show {
+            display: flex;
+        }
+
+        .menu-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #F5F5F7;
+            color: var(--color-primary);
+        }
+
+        .menu-item.active {
+            color: var(--color-primary);
+            background: rgba(255, 127, 102, 0.05);
+        }
+
+        /* 知识库按钮专属样式 */
+        .kb-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #F8F9FA;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #AAA;
+            /* 默认禁用颜色 */
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            filter: grayscale(1);
+            /* 默认显灰色 */
+            opacity: 0.6;
+        }
+
+        .kb-btn:hover {
+            border-color: #10B981;
+            color: #10B981;
+            filter: grayscale(0.5);
+            opacity: 0.8;
+        }
+
+        .kb-btn.active {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: #10B981;
+            color: #10B981;
+            filter: grayscale(0);
+            opacity: 1;
+        }
+
+        .kb-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.5;
+        }
+
+        /* 打字动画 */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 4px 8px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 127, 102, 0.4);
+            border-radius: 50%;
+            animation: typing-bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing-bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.4;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chat-msg {
+            animation: message-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes message-pop {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .lobster-bob {
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center center;
+        }
+
+        /* ===== 消息操作栏 ===== */
+        .msg-bot-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 4px 0 4px;
+            margin-bottom: -12px;
+        }
+
+        .msg-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #C8C8C8;
+            transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .msg-action-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #777;
+            transform: scale(1.12);
+        }
+
+        .msg-action-btn.liked {
+            color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.12) !important;
+        }
+
+        .msg-action-btn.disliked {
+            color: #EF4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
+
+        .msg-action-btn.copied {
+            color: #10B981 !important;
+            background: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        @keyframes btn-spring {
+            0% {
+                transform: scale(1);
+            }
+
+            30% {
+                transform: scale(1.42);
+            }
+
+            60% {
+                transform: scale(0.86);
+            }
+
+            80% {
+                transform: scale(1.12);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .msg-action-btn.spring {
+            animation: btn-spring 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+        }
+
+        /* 复制提示气泡 */
+        .copy-tip {
+            position: absolute;
+            bottom: calc(100% + 5px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 200;
+            animation: copy-tip-anim 1.6s ease forwards;
+        }
+
+        @keyframes copy-tip-anim {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(4px);
+            }
+
+            18% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            72% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-6px);
+            }
+        }
+
+        /* 三点更多菜单 */
+        .msg-more-wrap {
+            position: relative;
+        }
+
+        .msg-more-dropdown {
+            position: absolute;
+            top: 0;
+            left: calc(100% + 8px);
+            background: white;
+            border: 1.5px solid var(--color-border);
+            border-radius: 11px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 5px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 140px;
+            z-index: 700;
+            transform-origin: top left;
+            animation: menu-in 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .msg-more-dropdown.show {
+            display: flex;
+        }
+
+        .msg-dropdown-item {
+            padding: 8px 12px;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s, color 0.15s;
+            user-select: none;
+        }
+
+        .msg-dropdown-item:hover {
+            background: #F5F5F7;
+            color: var(--color-primary);
+        }
+
+        @keyframes icon-spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .icon-spin {
+            animation: icon-spin 0.8s linear infinite;
+            display: block;
+        }
+
+        /* ===== 操作进度弹窗 ===== */
+        .action-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes modal-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .action-modal-card {
+            background: white;
+            border-radius: 20px;
+            padding: 36px 40px 32px 40px;
+            width: 380px;
+            max-width: calc(100vw - 40px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: modal-slide-up 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .action-modal-icon-wrap {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            position: relative;
+        }
+
+        .action-modal-icon-wrap.memory-theme {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .action-modal-icon-wrap.skill-theme {
+            background: rgba(255, 127, 102, 0.1);
+        }
+
+        .action-modal-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--color-text);
+            text-align: center;
+        }
+
+        .action-modal-subtitle {
+            font-size: 0.8rem;
+            color: #999;
+            text-align: center;
+            line-height: 1.5;
+            min-height: 1.2em;
+        }
+
+        .action-modal-bar-wrap {
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        .action-modal-bar-track {
+            width: 100%;
+            height: 8px;
+            background: #F0F0F0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .action-modal-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 0%;
+        }
+
+        .action-modal-bar-fill.memory-theme {
+            background: linear-gradient(90deg, #A855F7, #7C3AED);
+        }
+
+        .action-modal-bar-fill.skill-theme {
+            background: linear-gradient(90deg, var(--color-primary), #FF5733);
+        }
+
+        .action-modal-bar-pct {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #AAA;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        /* 成功状态 */
+        @keyframes success-pop {
+            0% {
+                transform: scale(0.4);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .action-modal-success-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .action-modal-success-icon.memory-theme {
+            background: rgba(168, 85, 247, 0.12);
+            color: #A855F7;
+        }
+
+        .action-modal-success-icon.skill-theme {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10B981;
+        }
+
+        .action-modal-success-title {
+            font-size: 1rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .action-modal-success-title.memory-theme {
+            color: #7C3AED;
+        }
+
+        .action-modal-success-title.skill-theme {
+            color: #059669;
+        }
+
+        .action-modal-close-btn {
+            margin-top: 8px;
+            padding: 10px 32px;
+            border: none;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-modal-close-btn.memory-theme {
+            background: linear-gradient(135deg, #A855F7, #7C3AED);
+            color: white;
+            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
+        }
+
+        .action-modal-close-btn.skill-theme {
+            background: linear-gradient(135deg, var(--color-primary), #E66A52);
+            color: white;
+            box-shadow: 0 4px 16px rgba(255, 127, 102, 0.3);
+        }
+
+        .action-modal-close-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.08);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="top-nav">
+        <a href="index.html" style="text-decoration: none;">
+            <div class="logo">SoulAgent</div>
+        </a>
+        <nav class="nav-links">
+            <a href="agent.html" class="nav-link active">🎓 智能体</a>
+            <a href="archives.html" class="nav-link">🗄️ 档案库</a>
+            <a href="metaverse.html" class="nav-link twin-link">🌌 数字世界</a>
+        </nav>
+
+        <div style="display: flex; gap: 16px; align-items: center; position: relative;">
+            <div class="security-status" onclick="toggleSecurityDropdown(event)">
+                <span class="status-dot"></span>
+                <span class="status-text">当前环境：安全</span>
+                <div id="security-dropdown" class="security-dropdown">
+                    <div class="dropdown-item">✓ 对话内容已保护</div>
+                    <div class="dropdown-item">✓ Skill技能已保护</div>
+                    <div class="dropdown-item">✓ 数据安全已保护</div>
+                </div>
+            </div>
+
+            <!-- 通知铃铛 -->
+            <div class="notification-bell" onclick="toggleNotificationSidebar(event)">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2"
+                    class="bell-icon-svg">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span class="bell-badge">2</span>
+            </div>
+        </div>
+
+    </header>
+
+    <div class="dashboard-layout animate-fade-in">
+
+        <!-- 系统 I: Agent (左) -->
+        <aside class="sidebar-left system-panel lobster-theme">
+
+            <!-- <div id="task-card-container"
+                style="background: rgba(255,255,255,0.6); border-radius: 12px; padding: 12px 15px; cursor: pointer; margin-bottom: 20px; transition: transform 0.2s;"
+                onclick="cycleTasks()" onmouseover="this.style.transform='scale(1.02)'"
+                onmouseout="this.style.transform='scale(1)'">
+                <div style="font-size: 0.75rem; font-weight: 800; color: #999; margin-bottom: 5px;">当前目标</div>
+                <div id="task-title" style="font-size: 0.95rem; font-weight: 600; margin-bottom: 8px;">完成10次对话</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div
+                        style="flex-grow: 1; height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; overflow: hidden;">
+                        <div id="task-progress-bar"
+                            style="width: 30%; height: 100%; background: var(--color-primary); transition: width 0.3s;">
+                        </div>
+                    </div>
+                    <span id="task-progress-text" style="font-size: 0.8rem; font-weight: 600;">3/10</span>
+                </div>
+            </div> -->
+
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div style="cursor: pointer; display: inline-block; user-select: none;" onclick="cycleNames()">
+                    <h2 id="agent-name"
+                        style="margin-bottom: 8px; transition: color 0.3s; font-size: 1.2rem; color: var(--color-primary);">
+                        幼年Bob</h2>
+                </div>
+
+                <div style="width: 55%; margin: 0 auto 12px auto;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; padding: 0 2px;">
+                        <span id="form-label"
+                            style="font-size: 0.65rem; font-weight: 800; color: #999; letter-spacing: 1px;">幼年形态</span>
+                        <span id="level-label"
+                            style="font-size: 0.75rem; font-weight: 800; color: var(--color-primary); background: rgba(255,127,102,0.1); padding: 1px 6px; border-radius: 4px;">Lv.1</span>
+                    </div>
+                    <div id="stage-indicator-container"
+                        style="height: 6px; display: flex; align-items: center; gap: 4px;">
+                        <!-- initial state injected by js -->
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 6px; justify-content: center;">
+                    <span
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">直接且高效</span>
+                    <span
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">主动出击</span>
+                    <span
+                        style="background: rgba(255,127,102,0.1); color: var(--color-primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">全面报告</span>
+                </div>
+            </div>
+
+            <div class="entity-display" style="padding-bottom: 0;">
+                <div style="position: relative;">
+                    <div
+                        style="position: absolute; width: 140%; height: 140%; background: radial-gradient(circle, rgba(255,127,102,0.15) 0%, transparent 70%); top: -20%; left: -20%; filter: blur(20px);">
+                    </div>
+                    <svg viewBox="0 0 100 100" style="position: relative;" class="lobster-bob">
+                        <circle cx="50" cy="50" r="45" fill="#FFE5E0" />
+                        <path fill="var(--color-primary)"
+                            d="M50 25c-5 0-9 4-9 9 0 3 1 5 3 7l-4 4c-3-1-6 0-8 3-2 2-2 5-1 7l-4 2c-1 0-2 1-2 2s1 2 2 2h28c1 0 2-1 2-2s-1-2-2-2l-4-2c1-2 1-5-1-7-2-3-5-4-8-3l-4-4c2-2 3-4 3-7 0-5-4-9-9-9z" />
+                        <circle cx="45" cy="34" r="3" fill="#333" />
+                        <circle cx="55" cy="34" r="3" fill="#333" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="bottom-info-bar">
+                <style>
+                    .mbti-stat {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 20px;
+                    }
+
+                    .mbti-stat:last-child {
+                        margin-bottom: 0;
+                    }
+
+                    .mbti-label {
+                        font-size: 0.75rem;
+                        font-weight: 800;
+                        color: #777;
+                        white-space: nowrap;
+                        min-width: 32px;
+                    }
+
+                    .mbti-track {
+                        height: 6px;
+                        background: rgba(0, 0, 0, 0.06);
+                        border-radius: 3px;
+                        position: relative;
+                        flex-grow: 1;
+                    }
+
+                    .mbti-track::after {
+                        content: '';
+                        position: absolute;
+                        left: 50%;
+                        top: -4px;
+                        bottom: -4px;
+                        width: 1px;
+                        background: rgba(0, 0, 0, 0.2);
+                        z-index: 1;
+                    }
+
+                    .mbti-marker {
+                        position: absolute;
+                        width: 12px;
+                        height: 12px;
+                        background: white;
+                        border: 3px solid var(--color-primary);
+                        border-radius: 50%;
+                        top: -3px;
+                        transform: translateX(-50%);
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        z-index: 2;
+                    }
+
+                    .mbti-value {
+                        position: absolute;
+                        top: -22px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        font-size: 0.65rem;
+                        font-weight: 800;
+                        color: var(--color-primary);
+                        background: rgba(255, 255, 255, 0.9);
+                        padding: 1px 4px;
+                        border-radius: 4px;
+                        border: 1px solid rgba(0, 0, 0, 0.05);
+                    }
+                </style>
+
+                <hr style="border: none; margin-top: 0; margin-bottom: 10px;">
+
+                <div class="mbti-stat">
+                    <span class="mbti-label">理性</span>
+                    <div class="mbti-track">
+                        <div id="mbti-marker-1" class="mbti-marker" style="left: 50%;">
+                            <span id="mbti-value-1" class="mbti-value">0</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">感性</span>
+                </div>
+                <div class="mbti-stat">
+                    <span class="mbti-label">主动</span>
+                    <div class="mbti-track">
+                        <div id="mbti-marker-2" class="mbti-marker" style="left: 50%; border-color: #F48FB1;">
+                            <span id="mbti-value-2" class="mbti-value" style="color: #F48FB1;">0</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">响应</span>
+                </div>
+                <div class="mbti-stat">
+                    <span class="mbti-label">精简</span>
+                    <div class="mbti-track">
+                        <div id="mbti-marker-3" class="mbti-marker" style="left: 50%; border-color: #81C784;">
+                            <span id="mbti-value-3" class="mbti-value" style="color: #81C784;">0</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">详尽</span>
+                </div>
+                <div class="mbti-stat">
+                    <span class="mbti-label">专才</span>
+                    <div class="mbti-track">
+                        <div id="mbti-marker-4" class="mbti-marker" style="left: 50%; border-color: #64B5F6;">
+                            <span id="mbti-value-4" class="mbti-value" style="color: #64B5F6;">0</span>
+                        </div>
+                    </div>
+                    <span class="mbti-label">通才</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中间: 对话频道 -->
+        <main class="main-chat">
+            <div class="chat-history-bar">
+                <button id="history-title-btn" class="history-title-btn" onclick="toggleHistoryMenu(event)">
+                    <span class="history-title-main">
+                        <span id="history-title-text" class="history-title-text"></span>
+                    </span>
+                    <svg class="history-title-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="history-session-menu" class="history-session-menu"></div>
+            </div>
+            <div id="chat-scroller" class="chat-container">
+                <!-- 动态注入对话内容 -->
+            </div>
+            <div class="chat-input-wrapper">
+                <div class="input-toolbar">
+                    <!-- 1. 上传附件 -->
+                    <div class="toolbar-item">
+                        <div class="toolbar-btn" onclick="document.getElementById('file-upload').click()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path
+                                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                            </svg>
+                            <input type="file" id="file-upload" style="display: none;"
+                                onchange="handleFileUpload(this)">
+                        </div>
+                    </div>
+
+                    <!-- 2. 选技能 -->
+                    <div class="toolbar-item">
+                        <div class="toolbar-btn" id="skill-btn" onclick="toggleFloatingMenu('skill-menu', event)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                            Skill技能 <span id="skill-count-badge"
+                                style="background: var(--color-primary); color: white; padding: 0 6px; border-radius: 10px; font-size: 0.65rem; margin-left: 4px; display: none;">0</span>
+                        </div>
+
+                        <div id="skill-menu" class="input-floating-menu">
+                            <div
+                                style="font-size: 0.65rem; font-weight: 800; color: #999; padding: 4px 12px; text-transform: uppercase;">
+                                选择Skill技能</div>
+                            <div class="menu-item" onclick="toggleSkillSelection('全网实时搜', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">全网实时搜</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #10B981; font-weight: 800; background: #E1F7EF; padding: 1px 6px; border-radius: 4px;">官方</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('代码助手', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">代码助手</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #10B981; font-weight: 800; background: #E1F7EF; padding: 1px 6px; border-radius: 4px;">官方</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('知识库检索', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">知识库检索</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #10B981; font-weight: 800; background: #E1F7EF; padding: 1px 6px; border-radius: 4px;">官方</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('增长分析师', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">增长分析师</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">SKILLHUB</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('Ty的代码规范', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">Ty 的代码规范</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">自有</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('文案大师', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">文案大师</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">SKILLHUB</span>
+                                </div>
+                            </div>
+                            <div class="menu-item" onclick="toggleSkillSelection('法务合规官', this)">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                                    <span style="font-weight: 700;">法务合规官</span>
+                                    <span
+                                        style="font-size: 0.6rem; color: #8B5CF6; font-weight: 800; background: #F3E8FF; padding: 1px 6px; border-radius: 4px;">SKILLHUB</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. 选模型 -->
+                    <div class="toolbar-item">
+                        <div class="toolbar-btn" id="model-btn" onclick="toggleFloatingMenu('model-menu', event)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path
+                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                            </svg>
+                            <span id="current-model-display">Gemini 3 Flash</span>
+                        </div>
+
+                        <div id="model-menu" class="input-floating-menu">
+                            <div
+                                style="font-size: 0.65rem; font-weight: 800; color: #999; padding: 4px 12px; text-transform: uppercase;">
+                                选择模型</div>
+                            <div class="menu-item active" onclick="selectModel('Gemini 3 Flash')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="m13 2-2 10h9L7 22l2-10H1L13 2z" />
+                                </svg>
+                                Gemini 3 Flash
+                            </div>
+                            <div class="menu-item" onclick="selectModel('Claude 4.6 Sonnet')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                                </svg>
+                                Claude 4.6 Sonnet
+                            </div>
+                            <div class="menu-item" onclick="selectModel('GPT-5')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M12 2v20M2 12h20" />
+                                </svg>
+                                GPT-5
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 知识库开关 -->
+                    <div class="toolbar-item">
+                        <div class="kb-btn active" id="kb-toggle-btn" onclick="toggleKB(this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                            </svg>
+                            <span id="kb-status-text">知识库已开启</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-box-v2">
+                    <textarea id="chat-input" placeholder="给智能体发送消息..." rows="1" oninput="autoResize(this)"
+                        onkeydown="if(event.keyCode==13 && !event.shiftKey){ event.preventDefault(); handleSendMessage(); }"></textarea>
+                    <button class="send-btn-v2" onclick="handleSendMessage()">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 系统 II: 右侧侧边栏 (系统通知) -->
+        <aside id="right-sidebar" class="sidebar-right animate-fade-in-right">
+            <div class="sidebar-header">
+                <span>系统通知</span>
+                <span class="badge-count">2 条待确认</span>
+            </div>
+            <div id="notification-cards-container">
+                <!-- Cards injected by JS -->
+            </div>
+
+            <!-- 数字分身硬广卡片 -->
+            <div id="twin-activation-node" class="twin-activation-card animate-fade-in" onclick="showTwinReveal()">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <h4 style="display: flex; align-items: center; gap: 10px; margin: 0;">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        数字分身已准备就绪
+                    </h4>
+                    <button class="activation-btn">立即激活</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 数字分身全屏揭示遮罩 -->
+        <div id="twin-reveal-overlay">
+            <div class="reveal-icon-container">
+                <div class="reveal-glow-ring"></div>
+                <div class="reveal-glow-ring" style="animation-delay: 0.5s;"></div>
+                <div class="reveal-glow-ring" style="animation-delay: 1s;"></div>
+                <div class="reveal-icon"
+                    style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <svg viewBox="0 0 100 100" width="120" height="120">
+                        <defs>
+                            <linearGradient id="reveal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#93C5FD; stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#C084FC; stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="35" r="15" fill="url(#reveal-grad)" />
+                        <path d="M50 55c-15 0-25 10-25 22v8h50v-8c0-12-10-22-25-22z" fill="url(#reveal-grad)" />
+                    </svg>
+                </div>
+            </div>
+            <div class="reveal-text">
+                <h1
+                    style="font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, #93C5FD, #C084FC); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                    数字分身已激活 </h1>
+                <p style="font-size: 1.1rem; color: #AAA; max-width: 400px; line-height: 1.6;">神经网络已初步对齐，当前同步率达 87%。</p>
+            </div>
+            <button class="reveal-btn" onclick="location.href='metaverse.html'">前往数字世界</button>
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #666; cursor: pointer;"
+                onclick="document.getElementById('twin-reveal-overlay').style.display='none'">暂不前往</div>
+        </div>
+
+    </div>
+
+    <!-- 操作进度弹窗 -->
+    <div id="action-modal" class="action-modal-overlay" onclick="closeActionModal(event)">
+        <div class="action-modal-card" onclick="event.stopPropagation()">
+            <div id="action-modal-body"></div>
+        </div>
+    </div>
+
+    <script src="navigation.js"></script>
+    <script>
+        // --- Task Cycling Logic ---
+        const tasks = [
+            { title: "完成10次对话", current: 3, total: 10 },
+            { title: "沉淀2个skill", current: 1, total: 2 },
+            { title: "让Agent完成5个任务", current: 4, total: 5 }
+        ];
+        let currentTaskIdx = 0;
+        function cycleTasks() {
+            if (currentTaskIdx === tasks.length - 1) {
+                document.getElementById('task-card-container').style.display = 'none';
+                return;
+            }
+            currentTaskIdx++;
+            const task = tasks[currentTaskIdx];
+            document.getElementById('task-title').innerText = task.title;
+            document.getElementById('task-progress-text').innerText = `${task.current}/${task.total}`;
+            const pct = (task.current / task.total) * 100;
+            document.getElementById('task-progress-bar').style.width = `${pct}%`;
+        }
+
+        // --- Stage Cycling Logic ---
+        const stages = [
+            { name: "幼年Bob", level: 1, form: "幼年形态", size: 140 },
+            { name: "青年Bob", level: 12, form: "青年形态", size: 180 },
+            { name: "成熟Bob", level: 25, form: "成熟形态", size: 220 },
+            { name: "完全体Bob", level: 30, form: "完全形态", size: 260 }
+        ];
+        let currentStageIdx = 0;
+
+        function updateStageIndicator(stage) {
+            const container = document.getElementById('stage-indicator-container');
+            const levelLabel = document.getElementById('level-label');
+            const formLabel = document.getElementById('form-label');
+
+            container.parentElement.style.display = 'block';
+            levelLabel.innerText = `Lv.${stage.level}`;
+            formLabel.innerText = stage.form;
+
+            // Calculate segments based on level (each segment is 10 levels)
+            const level = stage.level;
+            const segments = [0, 0, 0];
+            if (level <= 10) {
+                segments[0] = (level / 10) * 100;
+            } else if (level <= 20) {
+                segments[0] = 100;
+                segments[1] = ((level - 10) / 10) * 100;
+            } else if (level <= 30) {
+                segments[0] = 100;
+                segments[1] = 100;
+                segments[2] = ((level - 20) / 10) * 100;
+            } else {
+                segments[0] = 100; segments[1] = 100; segments[2] = 100;
+            }
+
+            let segmentsHtml = segments.map(s =>
+                `<div style="flex:1; height: 4px; background: rgba(0,0,0,0.08); border-radius: 2px; overflow: hidden; position: relative;">
+                    <div style="width: ${s}%; height: 100%; background: var(--color-primary); transition: width 0.3s ease-in-out;"></div>
+                </div>`
+            ).join('');
+
+            container.innerHTML = segmentsHtml;
+        }
+
+        function setStage(idx) {
+            currentStageIdx = idx;
+            const stage = stages[idx];
+            document.getElementById('agent-name').innerText = stage.name;
+            updateStageIndicator(stage);
+            updateMbtiStats(idx);
+
+            // 比例缩放 Icon
+            const icon = document.querySelector('.lobster-bob');
+            if (icon) {
+                icon.style.width = stage.size + 'px';
+                icon.style.height = stage.size + 'px';
+            }
+        }
+
+        function autoUpgradeStage() {
+            if (currentStageIdx < stages.length - 1) {
+                setStage(currentStageIdx + 1);
+            }
+        }
+
+        function cycleNames() {
+            setStage((currentStageIdx + 1) % stages.length);
+        }
+
+        // --- MBTI Dynamism ---
+        const stageMbtiData = [
+            {
+                r: { val: 45, side: 'left' },
+                p: { val: 32, side: 'left' },
+                d: { val: 30, side: 'right' },
+                s: { val: 25, side: 'left' }
+            }, // 幼年
+            {
+                r: { val: 15, side: 'right' },
+                p: { val: 55, side: 'left' },
+                d: { val: 55, side: 'right' },
+                s: { val: 45, side: 'left' }
+            }, // 青年
+            {
+                r: { val: 55, side: 'right' },
+                p: { val: 72, side: 'left' },
+                d: { val: 78, side: 'right' },
+                s: { val: 62, side: 'left' }
+            }, // 成熟 (Rationality turned Sensible 55)
+            {
+                r: { val: 82, side: 'right' },
+                p: { val: 88, side: 'left' },
+                d: { val: 92, side: 'right' },
+                s: { val: 80, side: 'left' }
+            }  // 完全体
+        ];
+
+        function updateMbtiStats(stageIdx) {
+            const data = stageMbtiData[stageIdx];
+            updateStat(1, data.r.val, data.r.side);
+            updateStat(2, data.p.val, data.p.side);
+            updateStat(3, data.d.val, data.d.side);
+            updateStat(4, data.s.val, data.s.side);
+        }
+
+        function updateStat(id, val, side) {
+            const marker = document.getElementById(`mbti-marker-${id}`);
+            const valueSpan = document.getElementById(`mbti-value-${id}`);
+
+            const leftPos = side === 'left' ? (50 - val / 2) : (50 + val / 2);
+            marker.style.left = `${leftPos}%`;
+            valueSpan.innerText = val;
+        }
+
+        // --- Twin Management Logic ---
+        let isTwinUnlocked = false;
+        let isTwinActive = true;
+        let reportTaskTab = 'running';
+
+        const trainingCards = [
+            { id: 't1', q: "发现您在课程设计时，更倾向于以“学生能力产出”而非“知识点覆盖率”作为核心目标，这个判断是否准确？", options: ["准确", "有偏差"], showInputOn: "有偏差" },
+            { id: 't2', q: "我注意到您处理学生反馈的惯用逻辑是：先识别知识盲点，再设计定向练习，对吗？", options: ["准确", "有偏差"], showInputOn: "有偏差" }
+        ];
+
+        const calibrationCards = [
+            { id: 'c1', q: "今日有 3 名同学通过数字分身预约了论文指导，主要涉及“研究方法”与“文献综述”方面的问题。", button: "点击前往查看" },
+            { id: 'c2', q: "关注到您近期在申报国自然项目，今日有相关领域最新资助指南发布，是否需要帮您整理关键变化点？", options: ["立即整理", "暂不处理"] }
+
+        ];
+
+        const reportTasks = {
+            running: [
+                { title: "《数据科学导论》下学期课程大纲完善 - 实战案例补充中", sessionId: "session-current" }
+            ],
+            completed: [
+                { title: "毕业论文开题批阅 - 研究方法修改建议已反馈", sessionId: "session-growth" },
+                { title: "期末成绩分析 - 薄弱模块与下学期补强方案", sessionId: "session-content" },
+                { title: "国自然申请书 - 研究意义部分论证逻辑优化", sessionId: "session-brand" }
+            ]
+        };
+
+        function setReportTaskTab(tab) {
+            reportTaskTab = tab;
+            renderCalibrationCards();
+        }
+
+        function openTaskConversation(sessionId) {
+            selectConversationSession(sessionId);
+        }
+
+        function renderReportTaskRows() {
+            const targetTasks = reportTasks[reportTaskTab] || [];
+            if (targetTasks.length === 0) {
+                return `<div class="report-task-row" style="cursor: default; color: #9CA3AF;">暂无任务</div>`;
+            }
+            return targetTasks.map(task => `
+                <div class="report-task-row" onclick="openTaskConversation('${task.sessionId}')">
+                    <span class="report-task-name">${task.title}</span>
+                    <span class="report-task-arrow">查看</span>
+                </div>
+            `).join('');
+        }
+
+        function handleCalibrationAction(id, option) {
+            const cardElement = document.querySelector(`[data-card-id="${id}"]`);
+            const inputContainer = cardElement.querySelector('.calibration-input-container');
+            const optionsContainer = cardElement.querySelector('.calibration-options');
+
+            // Find if this option should trigger input
+            const cards = isTwinUnlocked ? calibrationCards : trainingCards;
+            const card = cards.find(c => c.id === id);
+
+            if (card && card.showInputOn === option) {
+                inputContainer.style.display = 'block';
+                optionsContainer.style.display = 'none';
+            } else {
+                // If it's a "positive" button or a simple action, we can just show a "Success" state or nothing
+                cardElement.style.opacity = '0.5';
+                cardElement.style.pointerEvents = 'none';
+                cardElement.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--color-twin); font-weight:800;">✓ 已记录</div>`;
+            }
+        }
+
+        function submitCalibrationInput(id) {
+            const cardElement = document.querySelector(`[data-card-id="${id}"]`);
+            cardElement.style.opacity = '0.5';
+            cardElement.style.pointerEvents = 'none';
+            cardElement.innerHTML = `<div style="text-align:center; padding: 10px; color: var(--color-twin); font-weight:800;">✓ 已纠偏</div>`;
+        }
+
+        function renderCalibrationCards() {
+            const container = document.getElementById('notification-cards-container');
+            const cards = isTwinUnlocked ? calibrationCards : trainingCards;
+
+            if (!container) return;
+
+            let html = `
+                <div class="summary-card animate-fade-in">
+                    <div class="summary-title">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        今日运行简报
+                    </div>
+                    <div class="summary-grid">
+                        <div class="summary-item" style="cursor: pointer;" onclick="setReportTaskTab('completed')">
+                            <span class="summary-value" style="color: #10B981; text-decoration: ${reportTaskTab === 'completed' ? 'underline' : 'none'};">${String(reportTasks.completed.length).padStart(2, '0')}</span>
+                            <span class="summary-label">已完成任务</span>
+                        </div>
+                        <div class="summary-item" style="cursor: pointer;" onclick="setReportTaskTab('running')">
+                            <span class="summary-value" style="color: var(--color-primary); text-decoration: ${reportTaskTab === 'running' ? 'underline' : 'none'};">${String(reportTasks.running.length).padStart(2, '0')}</span>
+                            <span class="summary-label">运行中任务</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+                        ${renderReportTaskRows()}
+                    </div>
+                </div>
+            `;
+
+            html += cards.map(c => `
+                <div class="calibration-card animate-fade-in" data-card-id="${c.id}" style="background: white; border: 2px solid #F0F0F0; border-radius: 12px; padding: 15px;">
+                    <div class="calibration-question" style="font-size: 0.8rem; margin-bottom: 12px;">${c.q}</div>
+                    
+                    ${c.button ?
+                    `<button class="btn btn-twin" style="width: 100%; padding: 10px; font-size: 0.75rem;">${c.button}</button>` :
+                    (c.options ? `
+                        <div class="calibration-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            ${c.options.map(opt => `<div class="calibration-opt" style="padding: 6px; border: 1px solid #EEE; border-radius: 6px; font-size: 0.7rem; text-align: center; cursor: pointer;" onclick="handleCalibrationAction('${c.id}', '${opt}')">${opt}</div>`).join('')}
+                        </div>
+                        <div class="calibration-input-container" style="display: none; margin-top: 10px;">
+                            <input type="text" class="calibration-input" placeholder="请输入您的修正意见..." style="width: 100%; padding: 8px; border: 1px solid #EEE; border-radius: 6px; font-size: 0.7rem; margin-bottom: 8px;">
+                            <button class="btn btn-twin" style="width: 100%; padding: 8px; font-size: 0.7rem;" onclick="submitCalibrationInput('${c.id}')">提交修正</button>
+                        </div>
+                        ` : '')
+                }
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        function updateTwinUI() {
+            renderCalibrationCards();
+        }
+
+        function toggleUnlock() {
+            isTwinUnlocked = !isTwinUnlocked;
+            updateTwinUI();
+        }
+
+        function handleTwinToggle(active) {
+            isTwinActive = active;
+            updateTwinUI();
+        }
+
+        // Initialize Twin UI
+        updateTwinUI();
+
+        // Initialize other state
+        setStage(0);
+
+        // --- Notification Sidebar Logic ---
+        function toggleNotificationSidebar(event) {
+            if (event) event.stopPropagation();
+            const sidebar = document.getElementById('right-sidebar');
+            const layout = document.querySelector('.dashboard-layout');
+            const securityDropdown = document.getElementById('security-dropdown');
+
+            if (securityDropdown) securityDropdown.classList.remove('show');
+
+            sidebar.classList.toggle('show');
+            layout.classList.toggle('with-sidebar');
+        }
+
+        // --- Twin Reveal Logic ---
+        function showTwinReveal() {
+            const overlay = document.getElementById('twin-reveal-overlay');
+            overlay.style.display = 'flex';
+        }
+
+        // --- Security Dropdown Logic ---
+        function toggleSecurityDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('security-dropdown');
+            const notifyDropdown = document.getElementById('notification-dropdown');
+            if (notifyDropdown) notifyDropdown.classList.remove('show');
+            dropdown.classList.toggle('show');
+        }
+
+        document.addEventListener('click', (event) => {
+            const dropdown = document.getElementById('security-dropdown');
+            if (dropdown && !event.target.closest('.security-status')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // --- Chat Input Enhancement Logic ---
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function toggleFloatingMenu(menuId, event) {
+            event.stopPropagation();
+            const menus = document.querySelectorAll('.input-floating-menu');
+            const targetMenu = document.getElementById(menuId);
+
+            // Close other menus
+            menus.forEach(m => {
+                if (m.id !== menuId) m.classList.remove('show');
+            });
+
+            targetMenu.classList.toggle('show');
+        }
+
+        function selectModel(modelName) {
+            document.getElementById('current-model-display').innerText = modelName;
+            const menuItems = document.querySelectorAll('#model-menu .menu-item');
+            menuItems.forEach(item => {
+                if (item.innerText.includes(modelName)) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            document.getElementById('model-menu').classList.remove('show');
+        }
+
+        let selectedSkills = new Set();
+        function toggleSkillSelection(skillName, element) {
+            if (selectedSkills.has(skillName)) {
+                selectedSkills.delete(skillName);
+                element.classList.remove('active');
+            } else {
+                selectedSkills.add(skillName);
+                element.classList.add('active');
+            }
+
+            const badge = document.getElementById('skill-count-badge');
+            const btn = document.getElementById('skill-btn');
+
+            if (selectedSkills.size > 0) {
+                badge.innerText = selectedSkills.size;
+                badge.style.display = 'inline-block';
+                btn.classList.add('active');
+            } else {
+                badge.style.display = 'none';
+                btn.classList.remove('active');
+            }
+        }
+
+        function toggleKB(element) {
+            element.classList.toggle('active');
+            const statusText = document.getElementById('kb-status-text');
+            if (element.classList.contains('active')) {
+                statusText.innerText = '知识库已开启';
+            } else {
+                statusText.innerText = '知识库已关闭';
+            }
+        }
+
+        // --- Core Chat Interaction Logic ---
+        // --- Core Chat Interaction Logic ---
+        let isSending = false;
+
+        function handleSettleSkill(btn) {
+            const card = btn.closest('.skill-suggestion');
+            const buttonGroup = btn.parentElement;
+
+            // 锁定状态，切换到处理 UI
+            card.style.transition = 'all 0.4s ease';
+            card.style.borderColor = 'var(--color-primary)';
+
+            buttonGroup.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 8px 0; animation: animate-fade-in 0.3s;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 800; color: var(--color-primary); letter-spacing: 0.5px;">
+                        <span id="settle-status">🔍 正在提取核心逻辑...</span>
+                        <span id="settle-pct">0%</span>
+                    </div>
+                    <div style="height: 4px; background: #F0F0F0; border-radius: 2px; overflow: hidden;">
+                        <div id="settle-progress" style="width: 0%; height: 100%; background: var(--color-primary); transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);"></div>
+                    </div>
+                </div>
+            `;
+
+            const status = document.getElementById('settle-status');
+            const pctText = document.getElementById('settle-pct');
+            const progress = document.getElementById('settle-progress');
+
+            // 模拟多阶段处理
+            setTimeout(() => {
+                status.innerText = "✨ 正在优化Skill结构...";
+                pctText.innerText = "45%";
+                progress.style.width = "45%";
+            }, 800);
+
+            setTimeout(() => {
+                status.innerText = "🚀 正在完成Skill配置...";
+                pctText.innerText = "82%";
+                progress.style.width = "82%";
+            }, 1600);
+
+            setTimeout(() => {
+                card.style.borderColor = '#10B981';
+                card.style.background = '#F0FDF4';
+                buttonGroup.style.opacity = '0';
+                setTimeout(() => {
+                    buttonGroup.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #059669; font-weight: 800; font-size: 0.8rem; width: 100%; animation: message-pop 0.4s ease-out;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Skill技能已成功沉淀
+                        </div>
+                    `;
+                    buttonGroup.style.opacity = '1';
+                }, 300);
+            }, 2500);
+        }
+
+        function handleDiscardSkill(btn) {
+            const card = btn.closest('.skill-suggestion');
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+            btn.parentElement.innerHTML = `<div style="text-align:center; width:100%; color:#999; font-size:0.8rem; font-weight:700;">已忽略建议</div>`;
+        }
+
+        const currentConversationSteps = [
+            {
+                bot: "我是 Bob，你的专属 Agent。检测到你近期在准备下学期的《数据科学导论》课程。需要聊聊课程设计吗？",
+                userSuggest: "是的，帮我设计一份适合大二学生的数据科学课程大纲。"
+            },
+            {
+                bot: "好的挑战。考虑到大二学生的数学基础参差不齐，我建议采用“案例驱动 + 逐步深入”的教学路线。你想先定调：是侧重实践动手能力，还是理论体系构建？",
+                userSuggest: "实践为主，但核心统计和机器学习原理也不能缺。"
+            },
+            {
+                bot: `明白了。我为你生成了初步大纲：<br>1. <b>模块一</b>：Python 数据处理基础（4周）<br>2. <b>模块二</b>：统计分析与可视化（5周）<br>3. <b>模块三</b>：机器学习入门实战（5周）<br>每模块含 2 次课堂实验和 1 次小组项目，总学时 48 课时。你看这个节奏合适吗？`,
+                userSuggest: "不错，在每个模块末尾加一个真实数据集的综合案例分析，增加学生的实战感。"
+            },
+            {
+                bot: `好的，更新已完成。每模块末尾增加了真实数据集综合分析项目，并配有详细评分标准。课程大纲已同步到你的教学资料库。<br><br>发现你非常擅长将 <b>理论知识点</b> 转化为 <b>可落地的教学案例</b>。这似乎是你的核心教学方法论？<div class="skill-suggestion"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div><div class="skill-tag">智能沉淀建议</div><h4 style="margin: 10px 0 5px 0;">案例驱动课程设计 Skill</h4><p style="font-size: 0.8rem; line-height: 1.4; color: #666;">自动将知识点分解为可操作的真实案例教学模块，并配套评分标准。</p></div><div style="width: 30px; height: 30px; background: rgba(0,0,0,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg></div></div><div style="display: flex; gap: 10px; margin-top: 5px;"><button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleSettleSkill(this)">立即沉淀</button><button class="btn btn-outline" style="padding: 8px 16px; font-size: 0.75rem; flex: 1;" onclick="handleDiscardSkill(this)">暂不处理</button></div></div>`,
+                userSuggest: null
+            }
+        ];
+
+        const conversationSessions = [
+            {
+                id: 'session-current',
+                title: '当前会话｜《数据科学导论》课程设计',
+                summary: '你和 Bob 正在共创下学期数据科学课程的完整大纲与教学方案。',
+                mode: 'interactive'
+            },
+            {
+                id: 'session-growth',
+                title: '历史会话｜毕业论文开题指导',
+                summary: '针对研究方法问题给出了具体修改建议，学生已按要求补充说明。',
+                mode: 'readonly',
+                messages: [
+                    { type: 'user', text: '帮我批阅这份本科毕业论文开题报告，重点看研究方法是否合适。' },
+                    { type: 'bot', text: '研究问题定义清晰，但研究方法部分存在两个问题：1) 样本量偏小（n=30），建议扩充到 60 以上；2) 问卷缺乏信效度说明。建议在方法论部分补充 Cronbach’s α 检验计划。' },
+                    { type: 'user', text: '学生说样本来源受限，怎么给他一个可行的建议？' },
+                    { type: 'bot', text: '可以建议采用“便利抽样 + 滚雪球”的组合策略，同时在论文中明确标注样本局限性，并在结论部分讨论推广性边界。这样既实际可行，又学术规范。' }
+                ]
+            },
+            {
+                id: 'session-content',
+                title: '历史会话｜期末考试成绩分析',
+                summary: '找出回归分析模块的教学薄弱点，制定下学期针对性补强方案。',
+                mode: 'readonly',
+                messages: [
+                    { type: 'user', text: '帮我分析一下这次期末考试的成绩分布，找出教学薄弱点。' },
+                    { type: 'bot', text: '成绩呈轻微左偏，均分 72.4 分。失分集中在第三大题（回归分析应用），正确率仅 41%。建议下学期在回归模型的实际解读部分增加 2~3 节习题课。' },
+                    { type: 'user', text: '有什么方法能帮助后进学生补齐这块短板？' },
+                    { type: 'bot', text: '建议设置“课后答疑时间表”配合“同伴学习小组”：将高分学生与低分学生分组配对，每周一次互助练习。研究表明这种同伴教学法可提升薄弱学生成绩约 15%。' }
+                ]
+            },
+            {
+                id: 'session-brand',
+                title: '历史会话｜国自然申请书打磨',
+                summary: '优化了研究意义部分的论证逻辑，突出立项迫切性与可行性。',
+                mode: 'readonly',
+                messages: [
+                    { type: 'user', text: '我在写国家自然科学基金申请书，研究方向是多模态学习，帮我打磨研究意义部分。' },
+                    { type: 'bot', text: '当前写法偏罗列文献，缺乏“非做不可”的迫切感。建议结构改为：现实问题 → 现有方法的核心局限 → 你的方案带来的突破 → 预期影响力。把“为什么是你、为什么是现在”说清楚。' },
+                    { type: 'user', text: '现有局限部分怎么写得更有力度？' },
+                    { type: 'bot', text: '可以用“三段对比法”：先引一篇近期顶会成果说明现有最优水平，再指出其在特定场景下的失效原因，最后引出你的预研数据作为可行性支撑。逻辑链完整，评审专家看完会觉得立题扎实。' }
+                ]
+            }
+        ];
+
+        const currentConversationState = {
+            step: 0,
+            initialized: false,
+            messages: []
+        };
+
+        let activeSessionId = 'session-current';
+        const chatInput = document.getElementById('chat-input');
+        const chatScroller = document.getElementById('chat-scroller');
+        const historyTitleText = document.getElementById('history-title-text');
+        const historyTitleBtn = document.getElementById('history-title-btn');
+        const historySessionMenu = document.getElementById('history-session-menu');
+
+        function appendMessage(text, type) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-msg ${type === 'user' ? 'user' : ''}`;
+
+            if (type === 'user') {
+                msgDiv.innerHTML = `<div class="bubble user">${text}</div>`;
+            } else {
+                const msgId = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                msgDiv.innerHTML = `
+                    <div class="msg-bot-col">
+                        <div class="bubble lobster">${text}</div>
+                        <div class="msg-actions">
+                            <!-- 复制 -->
+                            <button class="msg-action-btn" onclick="msgCopy(this)" title="复制" data-msg-id="${msgId}">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                            <!-- 点赞 -->
+                            <button class="msg-action-btn msg-like-btn" onclick="msgLike(this)" title="点赞">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
+                                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                                </svg>
+                            </button>
+                            <!-- 点踩 -->
+                            <button class="msg-action-btn msg-dislike-btn" onclick="msgDislike(this)" title="点踩">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"></path>
+                                    <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+                                </svg>
+                            </button>
+                            <!-- 三点更多菜单 -->
+                            <div class="msg-more-wrap">
+                                <button class="msg-action-btn" onclick="toggleMsgMoreMenu('${msgId}', event)" title="更多">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                        <circle cx="5" cy="12" r="1.5"></circle>
+                                        <circle cx="12" cy="12" r="1.5"></circle>
+                                        <circle cx="19" cy="12" r="1.5"></circle>
+                                    </svg>
+                                </button>
+                                <div class="msg-more-dropdown" id="${msgId}-dropdown">
+                                    <div class="msg-dropdown-item" id="${msgId}-mem-item" onclick="msgSaveMemory(this, '${msgId}')">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"></path>
+                                            <path d="M12 6v6l4 2"></path>
+                                        </svg>
+                                        保存到记忆
+                                    </div>
+                                    <div class="msg-dropdown-item" id="${msgId}-skill-item" onclick="msgGenSkill(this, '${msgId}')">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                                        </svg>
+                                        生成Skill
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            chatScroller.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'chat-msg';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="bubble lobster">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatScroller.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function removeTyping() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function scrollToBottom() {
+            chatScroller.scrollTop = chatScroller.scrollHeight;
+        }
+
+        function getActiveSession() {
+            return conversationSessions.find(session => session.id === activeSessionId);
+        }
+
+        function updateCurrentInputStatus() {
+            if (activeSessionId !== 'session-current') {
+                chatInput.value = '';
+                chatInput.disabled = true;
+                chatInput.placeholder = '历史会话为只读，切换到当前会话继续对话...';
+                chatInput.style.height = 'auto';
+                return;
+            }
+
+            chatInput.disabled = false;
+            chatInput.placeholder = currentConversationSteps[currentConversationState.step].userSuggest || "给智能体发送消息...";
+        }
+
+        function renderSessionMenu() {
+            historySessionMenu.innerHTML = conversationSessions.map(session => `
+                <div class="history-session-item ${session.id === activeSessionId ? 'active' : ''}" onclick="selectConversationSession('${session.id}')">
+                    <div class="history-session-item-title">${session.title}</div>
+                    <div class="history-session-item-desc">${session.summary}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateSessionTitle() {
+            const session = getActiveSession();
+            if (session) historyTitleText.textContent = session.title;
+        }
+
+        function toggleHistoryMenu(event) {
+            event.stopPropagation();
+            historyTitleBtn.classList.toggle('open');
+            historySessionMenu.classList.toggle('show');
+        }
+
+        function renderCurrentConversation() {
+            chatScroller.innerHTML = '';
+            currentConversationState.messages.forEach(msg => {
+                appendMessage(msg.text, msg.type);
+            });
+            scrollToBottom();
+        }
+
+        function renderReadonlyConversation(session) {
+            chatScroller.innerHTML = '';
+            session.messages.forEach(msg => {
+                appendMessage(msg.text, msg.type);
+            });
+            scrollToBottom();
+        }
+
+        function selectConversationSession(sessionId) {
+            activeSessionId = sessionId;
+            isSending = false;
+            removeTyping();
+
+            historyTitleBtn.classList.remove('open');
+            historySessionMenu.classList.remove('show');
+            updateSessionTitle();
+            renderSessionMenu();
+
+            if (sessionId === 'session-current') {
+                renderCurrentConversation();
+            } else {
+                const session = getActiveSession();
+                renderReadonlyConversation(session);
+            }
+
+            updateCurrentInputStatus();
+        }
+
+        function handleSendMessage() {
+            if (activeSessionId !== 'session-current') return;
+            if (isSending) return; // 防重复发送锁
+
+            const text = chatInput.value.trim();
+            const hasSuggest = (currentConversationState.step < currentConversationSteps.length) && currentConversationSteps[currentConversationState.step].userSuggest;
+            const messageToSend = text || (hasSuggest ? currentConversationSteps[currentConversationState.step].userSuggest : "");
+
+            if (!messageToSend) return;
+
+            isSending = true; // 加锁
+            appendMessage(messageToSend, 'user');
+            currentConversationState.messages.push({ type: 'user', text: messageToSend });
+            chatInput.value = '';
+            chatInput.placeholder = '';
+            chatInput.style.height = 'auto';
+
+            if (currentConversationState.step + 1 < currentConversationSteps.length) {
+                chatInput.disabled = true;
+                setTimeout(() => {
+                    showTyping();
+                    setTimeout(() => {
+                        removeTyping();
+                        currentConversationState.step++;
+                        const botReply = currentConversationSteps[currentConversationState.step].bot;
+                        appendMessage(botReply, 'bot');
+                        currentConversationState.messages.push({ type: 'bot', text: botReply });
+
+                        // 对话触发形态升级：从第一个回复开始
+                        if (currentConversationState.step >= 1) {
+                            autoUpgradeStage();
+                        }
+
+                        chatInput.placeholder = currentConversationSteps[currentConversationState.step].userSuggest || "给智能体发送消息...";
+                        chatInput.disabled = false;
+                        isSending = false; // 释放锁
+                        chatInput.focus();
+                    }, 1200);
+                }, 600);
+            } else {
+                chatInput.placeholder = "给智能体发送消息...";
+                isSending = false; // 释放锁
+                chatInput.focus();
+            }
+        }
+
+        function handleFileUpload(input) {
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                alert(`已上传附件: ${fileName}`);
+                // In a real app, we would show a chip or preview in the input box
+            }
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.input-floating-menu').forEach(m => m.classList.remove('show'));
+            document.querySelectorAll('.msg-more-dropdown').forEach(d => d.classList.remove('show'));
+            historyTitleBtn.classList.remove('open');
+            historySessionMenu.classList.remove('show');
+        });
+
+        // ===== 消息操作函数 =====
+
+        function msgCopy(btn) {
+            const bubble = btn.closest('.msg-bot-col').querySelector('.bubble');
+            const text = bubble.innerText;
+
+            const doFeedback = () => {
+                const svgCopy = btn.innerHTML;
+                btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                btn.classList.add('copied', 'spring');
+
+                const tip = document.createElement('span');
+                tip.className = 'copy-tip';
+                tip.textContent = '已复制';
+                btn.appendChild(tip);
+
+                setTimeout(() => {
+                    btn.innerHTML = svgCopy;
+                    btn.classList.remove('copied', 'spring');
+                }, 1600);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(doFeedback).catch(doFeedback);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                doFeedback();
+            }
+        }
+
+        function msgLike(btn) {
+            const dislikeBtn = btn.closest('.msg-actions').querySelector('.msg-dislike-btn');
+            if (btn.classList.contains('liked')) {
+                btn.classList.remove('liked');
+            } else {
+                btn.classList.add('liked', 'spring');
+                dislikeBtn.classList.remove('disliked');
+                setTimeout(() => btn.classList.remove('spring'), 500);
+            }
+        }
+
+        function msgDislike(btn) {
+            const likeBtn = btn.closest('.msg-actions').querySelector('.msg-like-btn');
+            if (btn.classList.contains('disliked')) {
+                btn.classList.remove('disliked');
+            } else {
+                btn.classList.add('disliked', 'spring');
+                likeBtn.classList.remove('liked');
+                setTimeout(() => btn.classList.remove('spring'), 500);
+            }
+        }
+
+        function toggleMsgMoreMenu(msgId, event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById(msgId + '-dropdown');
+            document.querySelectorAll('.msg-more-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('show');
+            });
+            dropdown.classList.toggle('show');
+        }
+
+        // ===== 操作弹窗系统 =====
+
+        function closeActionModal(event) {
+            const overlay = document.getElementById('action-modal');
+            overlay.classList.remove('show');
+        }
+
+        function showActionModal(config) {
+            // config: { theme, icon (svg), title, steps[], successTitle, successDesc }
+            const overlay = document.getElementById('action-modal');
+            const body = document.getElementById('action-modal-body');
+
+            // 初始化进度态
+            body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;">
+                    <div class="action-modal-icon-wrap ${config.theme}-theme">
+                        ${config.icon}
+                    </div>
+                    <div class="action-modal-title">${config.title}</div>
+                    <div class="action-modal-subtitle" id="am-subtitle">${config.steps[0].label}</div>
+                    <div class="action-modal-bar-wrap">
+                        <div class="action-modal-bar-track">
+                            <div class="action-modal-bar-fill ${config.theme}-theme" id="am-bar"></div>
+                        </div>
+                        <div class="action-modal-bar-pct" id="am-pct">0%</div>
+                    </div>
+                </div>
+            `;
+
+            overlay.classList.add('show');
+
+            const bar = document.getElementById('am-bar');
+            const subtitle = document.getElementById('am-subtitle');
+            const pct = document.getElementById('am-pct');
+
+            // 逐步推进进度
+            config.steps.forEach((step, i) => {
+                setTimeout(() => {
+                    bar.style.width = step.pct + '%';
+                    pct.textContent = step.pct + '%';
+                    subtitle.textContent = step.label;
+                }, step.delay);
+            });
+
+            // 最后一步完成后切换为成功态
+            const lastStep = config.steps[config.steps.length - 1];
+            setTimeout(() => {
+                body.style.opacity = '0';
+                body.style.transition = 'opacity 0.25s';
+                setTimeout(() => {
+                    body.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;">
+                            <div class="action-modal-success-icon ${config.theme}-theme">
+                                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.8">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="action-modal-success-title ${config.theme}-theme">${config.successTitle}</div>
+                            <div class="action-modal-subtitle">${config.successDesc}</div>
+                            <button class="action-modal-close-btn ${config.theme}-theme" onclick="closeActionModal()">完成</button>
+                        </div>
+                    `;
+                    body.style.opacity = '1';
+                }, 260);
+            }, lastStep.delay + 600);
+        }
+
+        function msgSaveMemory(item, msgId) {
+            // 关闭下拉菜单
+            const d = document.getElementById(msgId + '-dropdown');
+            if (d) d.classList.remove('show');
+
+            showActionModal({
+                theme: 'memory',
+                title: '保存到记忆',
+                icon: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#A855F7" stroke-width="1.8">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                    <path d="M12 6v6l4 2" stroke-linecap="round"/>
+                </svg>`,
+                steps: [
+                    { pct: 0, delay: 80, label: '🔍 正在分析对话内容...' },
+                    { pct: 32, delay: 500, label: '🧩 正在提取关键信息...' },
+                    { pct: 65, delay: 1100, label: '🧠 正在写入记忆库...' },
+                    { pct: 92, delay: 1700, label: '✅ 即将完成...' },
+                    { pct: 100, delay: 2200, label: '✅ 即将完成...' },
+                ],
+                successTitle: '已成功保存到记忆',
+                successDesc: 'Bob 会在未来的对话中参考这段记忆',
+            });
+        }
+
+        function msgGenSkill(item, msgId) {
+            const d = document.getElementById(msgId + '-dropdown');
+            if (d) d.classList.remove('show');
+
+            showActionModal({
+                theme: 'skill',
+                title: '生成 Skill',
+                icon: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="var(--color-primary)" stroke-width="1.8">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>`,
+                steps: [
+                    { pct: 0, delay: 80, label: '🔍 正在提取核心逻辑...' },
+                    { pct: 28, delay: 500, label: '✨ 正在优化 Skill 结构...' },
+                    { pct: 58, delay: 1100, label: '⚙️ 正在配置参数...' },
+                    { pct: 85, delay: 1700, label: '🚀 正在完成 Skill 打包...' },
+                    { pct: 100, delay: 2300, label: '🚀 正在完成 Skill 打包...' },
+                ],
+                successTitle: 'Skill 已成功生成',
+                successDesc: '新 Skill 已存入你的技能库，可在下次对话中直接调用',
+            });
+        }
+
+        // Initialize Chat
+        window.onload = function () {
+            if (!currentConversationState.initialized) {
+                currentConversationState.messages.push({ type: 'bot', text: currentConversationSteps[0].bot });
+                currentConversationState.initialized = true;
+            }
+
+            updateSessionTitle();
+            renderSessionMenu();
+            renderCurrentConversation();
+            updateCurrentInputStatus();
+
+            updateTwinUI();
+        };
+    </script>
+</body>
+
+</html>

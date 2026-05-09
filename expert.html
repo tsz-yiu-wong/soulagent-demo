@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查看我的数字分身 - SoulAgent</title>
+    <style>
+        :root {
+            --primary-color: #FF7A00; /* Hermès Orange style */
+            --primary-hover: #E66E00;
+            --bg-color: #000000;
+            --text-color: #FFFFFF;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255, 122, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 100% 0%, rgba(255, 122, 0, 0.05) 0%, transparent 30%);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .claim-button {
+            display: inline-block;
+            padding: 1.25rem 2.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #FF9F45 100%);
+            border-radius: 100px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(255, 122, 0, 0.3);
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .claim-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                120deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transition: all 0.6s;
+        }
+
+        .claim-button:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(255, 122, 0, 0.5);
+        }
+
+        .claim-button:hover::before {
+            left: 100%;
+        }
+
+        .claim-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Subtle background glow effect */
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--primary-color);
+            filter: blur(150px);
+            opacity: 0.15;
+            z-index: -1;
+            border-radius: 50%;
+            animation: pulse 8s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1) translate(-10%, -10%); opacity: 0.1; }
+            100% { transform: scale(1.2) translate(10%, 10%); opacity: 0.2; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="container">
+        <a href="twin-manage.html" class="claim-button">查看我的数字分身</a>
+    </div>
+</body>
+</html>

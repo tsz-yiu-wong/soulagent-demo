@@ -530,6 +530,228 @@
             70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(255, 103, 0, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 103, 0, 0); }
         }
+
+        /* BBTI Card Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .bbti-card {
+            width: 100%;
+            max-width: 340px;
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f0 100%);
+            border-radius: 32px;
+            padding: 32px 24px;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .bbti-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255, 103, 0, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .bbti-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .bbti-subtitle {
+            font-size: 14px;
+            color: #475569;
+            text-align: center;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .bbti-quotes {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(255, 103, 0, 0.03);
+            border-radius: 16px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .bbti-quote {
+            font-size: 13px;
+            color: #64748b;
+            font-style: italic;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .bbti-quote:last-child {
+            margin-bottom: 0;
+        }
+
+        .bbti-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            justify-content: center;
+        }
+
+        .bbti-tag {
+            padding: 4px 12px;
+            background: white;
+            border: 1px solid #fed7aa;
+            color: #c2410c;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .bbti-summary {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .summary-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .bbti-actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 48px;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-size: 14px;
+        }
+
+        .save-btn {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 103, 0, 0.2);
+        }
+
+        .save-btn:active {
+            transform: scale(0.95);
+        }
+
+        .close-btn {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Conference Modal Styles */
+        .map-container {
+            width: 100%;
+            height: 180px;
+            background: #f1f5f9;
+            border-radius: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .map-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .conf-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .conf-summary {
+            background: #fff8f4;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.6;
+            border: 1px solid #ffedd5;
+        }
+
+        .recommend-chip.special {
+            background: linear-gradient(90deg, #FF6700, #FF8533);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(255, 103, 0, 0.2);
+            font-weight: 600;
+            padding: 12px 28px;
+        }
+
+        .recommend-chip.special:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(255, 103, 0, 0.3);
+            color: white;
+        }
     </style>
 </head>
 
@@ -643,9 +865,9 @@
                     
                     <!-- Recommended Questions -->
                     <div class="recommend-container" id="recommend-container">
+                        <div class="recommend-chip special" onclick="showBBTICard()">查看我的BBTI人格</div>
+                        <div class="recommend-chip" onclick="showConferenceMoment()">今日智源大会时刻</div>
                         <div class="recommend-chip" onclick="sendMessage('你能帮我做什么？')">你能帮我做什么？</div>
-                        <div class="recommend-chip" onclick="sendMessage('最近有什么新发现？')">最近有什么新发现？</div>
-                        <div class="recommend-chip" onclick="sendMessage('给我一点建议吧')">给我一点建议吧</div>
                     </div>
 
                     <div class="chat-input-area">
@@ -716,6 +938,82 @@
         </div>
     </div>
 
+    <!-- BBTI Card Modal -->
+    <div id="bbti-modal" class="modal-overlay" onclick="closeBBTICard(event)">
+        <div class="bbti-card" onclick="event.stopPropagation()">
+            <div class="bbti-title">PROMPT·E 提示词诗人</div>
+            <div class="bbti-subtitle">你给AI写提示词像在写情书</div>
+            
+            <div class="bbti-quotes">
+                <div class="bbti-quote">“以晨雾的质感”</div>
+                <div class="bbti-quote">“用失忆者的视角”</div>
+                <div class="bbti-quote">“假设语言刚刚被发明”</div>
+            </div>
+
+            <div class="bbti-tags">
+                <span class="bbti-tag">浪漫主义</span>
+                <span class="bbti-tag">极致精简</span>
+                <span class="bbti-tag">逻辑美学</span>
+                <span class="bbti-tag">意向派</span>
+            </div>
+
+            <div class="bbti-summary">
+                今天的你，在理性的深海里打捞感性的星光。通过 12 次精准而富有温度的交互，你不仅解决了技术难题，更赋予了机器一层罕见的人文底色。
+            </div>
+
+            <div class="bbti-actions">
+                <button class="action-btn save-btn" onclick="saveToAlbum()">保存到相册</button>
+                <button class="action-btn close-btn" onclick="document.getElementById('bbti-modal').classList.remove('active')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BAAI Conference Modal -->
+    <div id="conf-modal" class="modal-overlay" onclick="closeConfCard(event)">
+        <div class="bbti-card" onclick="event.stopPropagation()" style="max-width: 360px;">
+            <div class="bbti-title">今日智源大会时刻</div>
+            <div class="bbti-subtitle">记录你在 AGI 探索之旅的每一步</div>
+            
+            <div class="map-container">
+                <svg class="map-svg" viewBox="0 0 200 120">
+                    <!-- Stylized Map Background -->
+                    <path d="M20,20 Q50,10 80,30 T140,20 T180,50 T150,100 T100,90 T40,110 T20,70 Z" fill="#e2e8f0" opacity="0.5"/>
+                    <!-- Route -->
+                    <path d="M40,40 L70,35 L100,60 L130,45 L160,80" fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="4,2" />
+                    <!-- Coordinates -->
+                    <circle cx="40" cy="40" r="4" fill="var(--primary)"/>
+                    <circle cx="70" cy="35" r="4" fill="var(--primary)"/>
+                    <circle cx="100" cy="60" r="4" fill="var(--primary)"/>
+                    <circle cx="130" cy="45" r="4" fill="var(--primary)"/>
+                    <circle cx="160" cy="80" r="4" fill="var(--primary)"/>
+                    <!-- Labels -->
+                    <text x="35" y="30" font-size="6" fill="#64748b">签到处</text>
+                    <text x="95" y="75" font-size="6" fill="#64748b">主论坛</text>
+                    <text x="155" y="95" font-size="6" fill="#64748b">展区 C</text>
+                </svg>
+            </div>
+
+            <div class="conf-stats">
+                <div class="stat-card">
+                    <span class="stat-value">5</span>
+                    <span class="stat-label">参观展区</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">3</span>
+                    <span class="stat-label">参与论坛</span>
+                </div>
+            </div>
+
+            <div class="conf-summary">
+                你今天穿梭于大模型与机器人展区，在主论坛深度聆听了关于“具身智能”的对话。比起早上的学术讨论，你似乎在下午的互动演示区停留了更久。
+            </div>
+
+            <div class="bbti-actions">
+                <button class="action-btn save-btn" onclick="saveConfToAlbum()">保存回忆</button>
+                <button class="action-btn close-btn" onclick="document.getElementById('conf-modal').classList.remove('active')">关闭</button>
+            </div>
+        </div>
+    </div>
     <script>
         let state = {
             role: '执行者',
@@ -886,6 +1184,50 @@
             if (confirm('确定要开启新对话吗？当前对话将被保存到历史记录。')) {
                 initChat();
             }
+        }
+
+        function showBBTICard() {
+            document.getElementById('bbti-modal').classList.add('active');
+        }
+
+        function closeBBTICard(event) {
+            if (event.target.id === 'bbti-modal') {
+                document.getElementById('bbti-modal').classList.remove('active');
+            }
+        }
+
+        function saveToAlbum() {
+            const btn = document.querySelector('.save-btn');
+            const originalText = btn.innerText;
+            btn.innerText = '已保存 ✓';
+            btn.style.background = '#10b981';
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = 'var(--primary)';
+                document.getElementById('bbti-modal').classList.remove('active');
+            }, 1500);
+        }
+
+        function showConferenceMoment() {
+            document.getElementById('conf-modal').classList.add('active');
+        }
+
+        function closeConfCard(event) {
+            if (event.target.id === 'conf-modal') {
+                document.getElementById('conf-modal').classList.remove('active');
+            }
+        }
+
+        function saveConfToAlbum() {
+            const btn = document.querySelector('#conf-modal .save-btn');
+            btn.innerText = '已保存 ✓';
+            btn.style.background = '#10b981';
+            setTimeout(() => {
+                document.getElementById('conf-modal').classList.remove('active');
+                btn.innerText = '保存回忆';
+                btn.style.background = 'var(--primary)';
+            }, 1500);
         }
     </script>
 </body>

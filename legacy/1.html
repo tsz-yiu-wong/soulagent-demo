@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-color: #FF6700;
+            --primary-hover: #E65C00;
+            --bg-color: #FAFAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1A1A1A;
+            --text-secondary: #666666;
+            --border-color: #EEEEEE;
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.04);
+            --shadow-focus: 0 0 0 4px rgba(255, 103, 0, 0.1);
+            --border-radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        /* --- Left Side: Feature Highlights --- */
+        .features-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .hero-text h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 12px;
+            letter-spacing: -2px;
+        }
+
+        .hero-text h1 span {
+            color: var(--primary-color);
+        }
+
+        .hero-text p {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            max-width: 600px;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .feature-card h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* --- Right Side: Login Panel --- */
+        .login-panel {
+            background: var(--card-bg);
+            padding: 56px 48px;
+            border-radius: 28px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 440px;
+            margin-left: auto;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: block;
+        }
+
+        .input-wrapper i,
+        .input-wrapper svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            border-radius: 14px;
+            border: 1px solid #E2E8F0;
+            background: #F8FAFC;
+            font-size: 1rem;
+            transition: all 0.2s;
+            outline: none;
+            color: var(--text-main);
+        }
+
+        .form-control:focus {
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-focus);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 103, 0, 0.25);
+        }
+
+        .btn-secondary {
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: #F1F5F9 !important;
+            border-color: #CBD5E1 !important;
+            color: var(--primary-color);
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 1100px) {
+            .page-container {
+                grid-template-columns: 1fr;
+                gap: 60px;
+                padding: 40px 20px;
+                text-align: center;
+            }
+            .login-panel {
+                margin: 0 auto;
+            }
+            .hero-text p {
+                margin: 0 auto;
+            }
+            .features-grid {
+                max-width: 800px;
+                margin: 40px auto 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-text h1 {
+                font-size: 3rem;
+            }
+            .hero-text p {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <!-- Left Column -->
+        <div class="features-section">
+            <div class="hero-text">
+                <h1><span>SoulAgent</span></h1>
+                <p>—— 拥有顶尖智慧、越用越懂我的私人AI智能伙伴</p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-card">
+                    <h3>顶尖智慧</h3>
+                    <p>数十位智源学者及顶尖科学家的数字分身，随时随地交流想法</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="feature-card">
+                    <h3>极致高效</h3>
+                    <p>自研架构降低 xx% Token 消耗，响应更快、运行更稳</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="feature-card">
+                    <h3>深度懂你</h3>
+                    <p>因果记忆模型深度理解你的行为逻辑与偏好，比你更了解你自己</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="feature-card">
+                    <h3>安全可控</h3>
+                    <p>个人专属服务器 + 实时安全 Agent，数据不共享、不训练、不越权</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="login-panel">
+            <div class="login-header">
+                <h2>开启数字世界之旅</h2>
+            </div>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label>手机号码</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="smartphone"></i>
+                        <input type="tel" class="form-control" placeholder="请输入手机号">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>验证码</label>
+                    <div style="display: flex; gap: 12px;">
+                        <div class="input-wrapper" style="flex: 1;">
+                            <i data-lucide="shield-ellipsis"></i>
+                            <input type="text" class="form-control" placeholder="请输入验证码">
+                        </div>
+                        <button type="button" class="btn-secondary" style="width: auto; padding: 0 20px; white-space: nowrap; border-radius: 12px; border: 1px solid #E5E7EB; background: white; font-weight: 600; cursor: pointer;">获取验证码</button>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-primary" style="margin-top: 12px; margin-bottom: 0;" onclick="window.location.href='init.html'">登录 / 注册</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
