@@ -42,14 +42,9 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- Header & Search --- */
+        /* --- Header --- */
         .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
             margin-bottom: 32px;
-            gap: 20px;
-            flex-wrap: wrap;
         }
 
         .title-group h1 {
@@ -62,19 +57,27 @@
         .title-group p {
             font-size: 14px;
             color: var(--text-secondary);
-            margin: 0;
+            margin: 0 0 24px 0;
+        }
+
+        /* --- Toolbar --- */
+        .toolbar-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 40px;
         }
 
         .search-wrapper {
             position: relative;
-            width: 300px;
+            flex: 1;
         }
 
         .search-input {
             width: 100%;
             background: white;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 10px 16px 10px 40px;
             font-size: 14px;
             color: var(--text-color);
@@ -84,8 +87,9 @@
         }
 
         .search-input:focus {
+            background: white;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(243, 112, 33, 0.08);
+            box-shadow: 0 0 0 3px rgba(243, 112, 33, 0.05);
         }
 
         .search-icon {
@@ -97,41 +101,73 @@
             pointer-events: none;
         }
 
-        /* --- Filter Tabs --- */
-        .tab-header {
+        .btn-action {
             display: flex;
-            gap: 24px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 32px;
-        }
-
-        .tab-item {
-            padding: 10px 0;
-            font-size: 15px;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-size: 13px;
             font-weight: 600;
-            color: var(--text-secondary);
             cursor: pointer;
-            position: relative;
             transition: all 0.2s;
+            border: 1px solid var(--primary-color);
+            white-space: nowrap;
         }
 
-        .tab-item:hover { color: var(--primary-color); }
-        .tab-item.active { color: var(--primary-color); }
-        .tab-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
+        .btn-upload {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .btn-upload:hover {
+            background: var(--primary-light);
+        }
+
+        .btn-distill {
             background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-distill:hover {
+            background: #e65a00;
+            box-shadow: 0 4px 12px rgba(243, 112, 33, 0.15);
+        }
+
+        /* --- Section Titles --- */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .count-badge {
+            font-size: 12px;
+            background: var(--primary-light);
+            color: var(--primary-color);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
         }
 
         /* --- Skill Grid --- */
         .skill-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
             gap: 20px;
+            margin-bottom: 48px;
         }
 
         .skill-card {
@@ -150,21 +186,6 @@
             transform: translateY(-4px);
             box-shadow: var(--shadow-md);
             border-color: rgba(243, 112, 33, 0.2);
-        }
-
-        .skill-card.action-card {
-            border-style: dashed;
-            background: transparent;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            cursor: pointer;
-            display: none;
-        }
-
-        .skill-card.action-card:hover {
-            background: white;
-            border-style: solid;
         }
 
         .card-header {
@@ -226,13 +247,13 @@
         }
 
         .btn-toggle.add {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 2px 8px rgba(243, 112, 33, 0.2);
+            background: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
         }
 
         .btn-toggle.add:hover {
-            background: #e65a00;
+            background: var(--primary-light);
             transform: scale(1.02);
         }
 
@@ -247,12 +268,18 @@
         }
 
         /* --- Empty State --- */
-        .empty-state {
-            display: none;
+        .empty-hint {
+            grid-column: 1 / -1;
+            padding: 40px;
             text-align: center;
-            padding: 80px 20px;
-            color: var(--text-secondary);
+            color: #AAA;
+            font-size: 14px;
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.5);
         }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -262,225 +289,247 @@
         <div class="header-section">
             <div class="title-group">
                 <h1>技能广场</h1>
-                <p>为Agent注入专业能力，不止对话，更能直接行动</p>
+                <p>为小小曜添加专业能力，不止对话，更能直接行动</p>
             </div>
-            <div class="search-wrapper">
-                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" class="search-input" id="skillSearch" placeholder="搜索技能...">
+            
+            <div class="toolbar-row">
+                <div class="search-wrapper">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" class="search-input" id="skillSearch" placeholder="搜索技能名称或功能描述...">
+                </div>
+                <button class="btn-action btn-upload">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    上传新技能
+                </button>
+                <button class="btn-action btn-distill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                    沉淀新技能
+                </button>
             </div>
         </div>
 
-        <div class="tab-header">
-            <div class="tab-item active" data-filter="all">全部</div>
-            <div class="tab-item" data-filter="official">官方Skill</div>
-            <div class="tab-item" data-filter="community">SkillHub</div>
-            <div class="tab-item" data-filter="mine">我的技能</div>
+        <!-- Installed Section -->
+        <div class="section-header">
+            <h2>已添加 <span class="count-badge" id="installedCount">0</span></h2>
+        </div>
+        <div class="skill-grid" id="installedGrid">
+            <!-- Dynamically moved here -->
         </div>
 
-        <div class="skill-grid" id="skillGrid">
-            <!-- Action Cards -->
-            <div class="skill-card action-card" data-category="mine">
-                <h3 style="font-size: 16px; margin-bottom: 8px;">+ 上传新技能</h3>
-                <p style="font-size: 12px; color: #999;">上传已封装的技能包</p>
-            </div>
-
-            <div class="skill-card action-card" data-category="mine">
-                <h3 style="font-size: 16px; margin-bottom: 8px;">+ 沉淀新技能</h3>
-                <p style="font-size: 12px; color: #999;">从文档中自动学习能力</p>
-            </div>
-
-            <!-- Official Skills -->
-            <div class="skill-card" data-category="official">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>全网实时搜</h3>
-                        <span class="skill-badge badge-official">官方</span>
-                    </div>
-                    <button class="btn-toggle remove">停用</button>
-                </div>
-                <p class="skill-desc">允许智能体访问实时网络，并在第一时间收集和总结信息源，确保回答的时效性。</p>
-            </div>
-
-            <div class="skill-card" data-category="official">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>代码助手</h3>
-                        <span class="skill-badge badge-official">官方</span>
-                    </div>
-                    <button class="btn-toggle remove">停用</button>
-                </div>
-                <p class="skill-desc">深度集成的 IDE 助手，支持代码补全、重构建议及在沙箱环境中执行复杂计算。</p>
-            </div>
-
-            <div class="skill-card" data-category="official">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>图像生成</h3>
-                        <span class="skill-badge badge-official">官方</span>
-                    </div>
-                    <button class="btn-toggle add">启用</button>
-                </div>
-                <p class="skill-desc">基于最新的扩散模型，根据文字描述生成高品质的视觉内容，支持多种艺术风格。</p>
-            </div>
-
-            <div class="skill-card" data-category="official">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>语音交互</h3>
-                        <span class="skill-badge badge-official">官方</span>
-                    </div>
-                    <button class="btn-toggle add">启用</button>
-                </div>
-                <p class="skill-desc">支持多语种实时语音转文字及极具情感表现力的语音合成，提供自然的人机交互。</p>
-            </div>
-
-            <!-- SkillHub Skills -->
-            <div class="skill-card" data-category="community">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>增长分析师</h3>
-                        <span class="skill-badge badge-community">SkillHub</span>
-                    </div>
-                    <button class="btn-toggle remove">停用</button>
-                </div>
-                <p class="skill-desc">专注于 SaaS 指标分析、留存拆解及 A/B 测试建议。由 @GrowthMaster 贡献。</p>
-            </div>
-
-            <div class="skill-card" data-category="community">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>文案大师</h3>
-                        <span class="skill-badge badge-community">SkillHub</span>
-                    </div>
-                    <button class="btn-toggle add">启用</button>
-                </div>
-                <p class="skill-desc">从 10 万+ 热文库中深度学习，擅长撰写各类社交媒体爆款文案，自带吸引读者的钩子。</p>
-            </div>
-
-            <div class="skill-card" data-category="community">
-                <div class="card-header">
-                    <div class="title-row">
-                        <h3>法务合规官</h3>
-                        <span class="skill-badge badge-community">SkillHub</span>
-                    </div>
-                    <button class="btn-toggle add">启用</button>
-                </div>
-                <p class="skill-desc">熟知中国民法典及劳动法，为您提供初步的法律文书审查服务及相关合规风险预警。</p>
-            </div>
-
-            <!-- My Skills -->
-            <div class="skill-card" data-category="mine">
+        <!-- Recommended Section -->
+        <div class="section-header">
+            <h2>推荐Skill</h2>
+        </div>
+        <div class="skill-grid" id="recommendedGrid">
+            <!-- My Skills (Default Added) -->
+            <div class="skill-card" data-category="mine" data-status="added">
                 <div class="card-header">
                     <div class="title-row">
                         <h3>会议纪要 Pro</h3>
                         <span class="skill-badge badge-mine">自有</span>
                     </div>
-                    <button class="btn-toggle remove">停用</button>
+                    <button class="btn-toggle remove">移除</button>
                 </div>
                 <p class="skill-desc">自动整理讨论要点、行动项和负责人，支持按项目归档导出，适配多种主流会议软件。</p>
             </div>
 
-            <div class="skill-card" data-category="mine">
+            <div class="skill-card" data-category="mine" data-status="added">
                 <div class="card-header">
                     <div class="title-row">
                         <h3>竞品分析 Expert</h3>
                         <span class="skill-badge badge-mine">自有</span>
                     </div>
-                    <button class="btn-toggle remove">停用</button>
+                    <button class="btn-toggle remove">移除</button>
                 </div>
                 <p class="skill-desc">擅长定位分析、竞品对标以及 SWOT 模型构建。已从 5 份您上传的行业报告中沉淀。</p>
             </div>
 
-            <div class="skill-card" data-category="mine">
+            <div class="skill-card" data-category="mine" data-status="added">
                 <div class="card-header">
                     <div class="title-row">
                         <h3>私厨营养师</h3>
                         <span class="skill-badge badge-mine">自有</span>
                     </div>
-                    <button class="btn-toggle add">启用</button>
+                    <button class="btn-toggle remove">移除</button>
                 </div>
                 <p class="skill-desc">根据您的过敏史和身体状况，定制每日少盐少糖的健康食谱，并自动生成采购清单。</p>
             </div>
-        </div>
 
-        <div class="empty-state" id="emptyState">
-            <p>未找到相关技能</p>
+            <!-- Official Skills -->
+            <div class="skill-card" data-category="official" data-status="added">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>全网实时搜</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle remove">移除</button>
+                </div>
+                <p class="skill-desc">允许智能体访问实时网络，并在第一时间收集和总结信息源，确保回答的时效性。</p>
+            </div>
+
+            <div class="skill-card" data-category="official" data-status="added">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>代码助手</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle remove">移除</button>
+                </div>
+                <p class="skill-desc">深度集成的 IDE 助手，支持代码补全、重构建议及在沙箱环境中执行复杂计算。</p>
+            </div>
+
+            <div class="skill-card" data-category="official" data-status="added">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>图像生成</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle remove">移除</button>
+                </div>
+                <p class="skill-desc">基于最新的扩散模型，根据文字描述生成高品质的视觉内容，支持多种艺术风格。</p>
+            </div>
+
+            <div class="skill-card" data-category="official" data-status="unadded">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>PDF 助手</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle add">添加</button>
+                </div>
+                <p class="skill-desc">深度解析 PDF 文档，支持跨文档检索与知识归纳，甚至能从扫描件中提取结构化数据。</p>
+            </div>
+
+            <div class="skill-card" data-category="official" data-status="unadded">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>自动化工作流</h3>
+                        <span class="skill-badge badge-official">官方</span>
+                    </div>
+                    <button class="btn-toggle add">添加</button>
+                </div>
+                <p class="skill-desc">零代码连接 500+ 三方应用，实现跨平台的自动化任务编排，让 Agent 成为你的自动驾驶员。</p>
+            </div>
+
+            <!-- Community Skills -->
+            <div class="skill-card" data-category="community" data-status="added">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>增长分析师</h3>
+                        <span class="skill-badge badge-community">社区</span>
+                    </div>
+                    <button class="btn-toggle remove">移除</button>
+                </div>
+                <p class="skill-desc">专注于 SaaS 指标分析、留存拆解及 A/B 测试建议。由 @GrowthMaster 贡献。</p>
+            </div>
+
+            <div class="skill-card" data-category="community" data-status="unadded">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>小红书爆款机</h3>
+                        <span class="skill-badge badge-community">社区</span>
+                    </div>
+                    <button class="btn-toggle add">添加</button>
+                </div>
+                <p class="skill-desc">深度学习万篇爆款，自动产出带话题的吸睛文案，自带“流量密码”与视觉构图建议。</p>
+            </div>
+
+            <div class="skill-card" data-category="community" data-status="unadded">
+                <div class="card-header">
+                    <div class="title-row">
+                        <h3>亚马逊运营官</h3>
+                        <span class="skill-badge badge-community">社区</span>
+                    </div>
+                    <button class="btn-toggle add">添加</button>
+                </div>
+                <p class="skill-desc">关键词分析、竞品价格监控及 Listing 优化建议。由电商专家团队维护。</p>
+            </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const tabs = document.querySelectorAll('.tab-item');
-            const cards = document.querySelectorAll('.skill-card:not(.action-card)');
             const searchInput = document.getElementById('skillSearch');
-            const skillGrid = document.getElementById('skillGrid');
-            const emptyState = document.getElementById('emptyState');
+            const installedGrid = document.getElementById('installedGrid');
+            const recommendedGrid = document.getElementById('recommendedGrid');
+            const installedCount = document.getElementById('installedCount');
+            
+            // Collect all initial cards
+            const allCards = Array.from(document.querySelectorAll('.skill-card'));
 
-            function filterSkills() {
-                const activeFilter = document.querySelector('.tab-item.active').dataset.filter;
+            function updateUI() {
                 const searchTerm = searchInput.value.toLowerCase().trim();
-                let visibleCount = 0;
+                let installedVisible = 0;
+                let recommendedVisible = 0;
 
-                cards.forEach(card => {
-                    const category = card.dataset.category;
+                // Clear both grids' hints if any
+                const existingHints = document.querySelectorAll('.empty-hint');
+                existingHints.forEach(h => h.remove());
+
+                allCards.forEach(card => {
+                    const status = card.dataset.status;
                     const title = card.querySelector('h3').textContent.toLowerCase();
                     const desc = card.querySelector('.skill-desc').textContent.toLowerCase();
-                    
-                    const matchesFilter = activeFilter === 'all' || category === activeFilter;
                     const matchesSearch = title.includes(searchTerm) || desc.includes(searchTerm);
 
-                    if (matchesFilter && matchesSearch) {
-                        card.style.display = 'flex';
-                        visibleCount++;
+                    if (matchesSearch) {
+                        card.classList.remove('hidden');
+                        if (status === 'added') {
+                            installedGrid.appendChild(card);
+                            installedVisible++;
+                        } else {
+                            recommendedGrid.appendChild(card);
+                            recommendedVisible++;
+                        }
                     } else {
-                        card.style.display = 'none';
+                        card.classList.add('hidden');
                     }
                 });
 
-                // Action cards visibility
-                const actionCards = document.querySelectorAll('.action-card');
-                actionCards.forEach(ac => {
-                    ac.style.display = (activeFilter === 'mine') ? 'flex' : 'none';
-                });
+                // Update count
+                installedCount.textContent = installedVisible;
 
-                const totalVisible = visibleCount + (activeFilter === 'mine' ? 2 : 0);
-                if (totalVisible === 0) {
-                    skillGrid.style.display = 'none';
-                    emptyState.style.display = 'block';
-                } else {
-                    skillGrid.style.display = 'grid';
-                    emptyState.style.display = 'none';
+                // Show hints if empty
+                if (installedVisible === 0) {
+                    const hint = document.createElement('div');
+                    hint.className = 'empty-hint';
+                    hint.textContent = searchTerm ? '未找到相关已安装技能' : '尚未安装任何技能';
+                    installedGrid.appendChild(hint);
+                }
+
+                if (recommendedVisible === 0) {
+                    const hint = document.createElement('div');
+                    hint.className = 'empty-hint';
+                    hint.textContent = searchTerm ? '未找到相关推荐技能' : '暂无更多推荐技能';
+                    recommendedGrid.appendChild(hint);
                 }
             }
 
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    filterSkills();
-                });
-            });
-
-            searchInput.addEventListener('input', filterSkills);
-
             // Toggle Add/Remove
-            skillGrid.addEventListener('click', (e) => {
+            document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btn-toggle')) {
                     const btn = e.target;
+                    const card = btn.closest('.skill-card');
+                    
                     if (btn.classList.contains('add')) {
                         btn.classList.remove('add');
                         btn.classList.add('remove');
-                        btn.textContent = '停用';
+                        btn.textContent = '移除';
+                        card.dataset.status = 'added';
                     } else {
                         btn.classList.remove('remove');
                         btn.classList.add('add');
-                        btn.textContent = '启用';
+                        btn.textContent = '添加';
+                        card.dataset.status = 'unadded';
                     }
+                    updateUI();
                 }
             });
 
-            // Initial filter call
-            filterSkills();
+            searchInput.addEventListener('input', updateUI);
+
+            // Initial UI update
+            updateUI();
         });
     </script>
 </body>

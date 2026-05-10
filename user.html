@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoulClaw - 懂你的专属智能体</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary-color: #F37021;
@@ -70,8 +73,13 @@
         }
 
         @keyframes move {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(50px, 50px) scale(1.1); }
+            from {
+                transform: translate(0, 0) scale(1);
+            }
+
+            to {
+                transform: translate(50px, 50px) scale(1.1);
+            }
         }
 
         .container {
@@ -136,9 +144,13 @@
             opacity: 0;
         }
 
-        .feature-card:nth-child(1) { animation-delay: 0.2s; }
-        .feature-card:nth-child(2) { animation-delay: 0.3s; }
-        .feature-card:nth-child(3) { animation-delay: 0.4s; }
+        .feature-card:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.3s;
+        }
 
         .feature-card:hover {
             transform: translateY(-10px);
@@ -172,31 +184,7 @@
             line-height: 1.7;
         }
 
-        /* Premium Card Style (Purple) */
-        .premium-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 245, 255, 0.9) 100%);
-            border: 1px solid rgba(147, 51, 234, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
 
-        .premium-card:hover {
-            transform: translateY(-10px);
-            background: white;
-            box-shadow: 0 20px 40px rgba(147, 51, 234, 0.12);
-            border-color: rgba(147, 51, 234, 0.4);
-        }
-
-        .premium-card .feature-icon {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
-            color: #9333ea;
-        }
-
-        .premium-card:hover .feature-icon {
-            background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-            color: white;
-            box-shadow: 0 8px 16px rgba(147, 51, 234, 0.2);
-        }
 
         /* Action Button */
         .cta-section {
@@ -251,6 +239,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -258,7 +247,8 @@
         }
 
         /* State Transitions */
-        .hero h1, .hero p {
+        .hero h1,
+        .hero p {
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -327,7 +317,7 @@
             margin-bottom: 1.5rem;
             text-align: left;
         }
-        
+
         .input-group label {
             display: block;
             margin-bottom: 0.5rem;
@@ -387,18 +377,22 @@
             .container {
                 padding: 2rem 1rem;
             }
+
             .hero h1 {
                 font-size: 2.5rem;
             }
+
             .features {
                 gap: 1.5rem;
             }
+
             .feature-card {
                 padding: 1.5rem;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="bg-blobs">
         <div class="blob blob-1"></div>
@@ -408,34 +402,36 @@
     <div class="container">
         <header class="hero">
             <h1>SoulAgent</h1>
-            <p style="margin-bottom: 0.5rem;">它记得你的习惯、理解你的想法，逐渐成为最懂你的伙伴。</p>
-            <p>同时连接行业顶尖专家的数字分身，全球智慧触手可及。</p>
+            <p>你的AI全能伙伴，连接数字智慧世界。</p>
         </header>
 
         <div class="content-area">
             <section class="features">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
                     </div>
-                    <h3>日常陪伴</h3>
-                    <p>生活里的大事小事，它都能搭把手。聊聊天、查资料、整信息，通通不在话下！</p>
-                </div>
-
-                <div class="feature-card premium-card">
-                    <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
-                    </div>
-                    <h3>数字世界</h3>
-                    <p>汇聚了智源学者与顶尖科学家们的数字空间，打破次元，开启跨越时空的即时对话。</p>
+                    <h3>专属伙伴</h3>
+                    <p>聊聊天、查资料、理思路，生活里的大事小事，<strong>它都能搭把手</strong>。记得你的习惯，理解你的想法，甚至<strong>比你更了解你自己</strong>。
+                    </p>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="3" y1="15" x2="21" y2="15"></line>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                        </svg>
                     </div>
-                    <h3>认知进化</h3>
-                    <p>随着时间，它能比你更懂你自己，发现那些你都没注意到的规律和盲点。</p>
+                    <h3>数字空间</h3>
+                    <p>汇聚<strong>智源学者</strong>与<strong>顶尖科学家们</strong>的数字分身，让<strong>跨越时空的即时对话</strong>成为可能。无论身处何地，<strong>顶尖智慧与洞察</strong>都触手可及。</p>
                 </div>
             </section>
 
@@ -455,7 +451,7 @@
         </div>
 
         <div class="cta-section">
-            <button class="claim-button" onclick="showLogin()">立即领取专属Agent</button>
+            <button class="claim-button" onclick="showLogin()">立即体验</button>
         </div>
     </div>
 
@@ -464,13 +460,14 @@
             document.querySelector('.hero').classList.add('shrink');
             document.querySelector('.features').classList.add('hide');
             document.querySelector('.login-box').classList.add('show');
-            
+
             const btn = document.querySelector('.claim-button');
             btn.textContent = '登录 / 注册';
-            btn.onclick = function() {
+            btn.onclick = function () {
                 window.location.href = 'survey.html';
             };
         }
     </script>
 </body>
+
 </html>

@@ -673,7 +673,7 @@
 
         .hero h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: clamp(3rem, 10vw, 4.5rem);
+            font-size: clamp(2.2rem, 7vw, 3rem);
             font-weight: 800;
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, var(--text-color) 0%, #D15918 100%);
@@ -683,7 +683,7 @@
             letter-spacing: -0.02em;
         }
 
-        .hero p {
+        .hero h2, .hero p {
             font-size: clamp(1.1rem, 4vw, 1.35rem);
             color: #666666;
             max-width: 600px;
@@ -694,8 +694,8 @@
 
         /* Features Section */
         .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            display: flex;
+            justify-content: center;
             gap: 2rem;
             width: 100%;
             margin-bottom: 3rem;
@@ -710,7 +710,12 @@
             transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
             animation: fadeInUp 0.8s ease-out forwards;
             opacity: 0;
-            text-align: left;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 320px;
+            flex: 1;
         }
 
         .feature-card:nth-child(1) { animation-delay: 0.2s; }
@@ -831,7 +836,7 @@
     <!-- Bottom Area -->
     <div class="bottom-area">
         <div class="quick-actions" id="quick-actions">
-            <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">SoulAgent和数字世界有什么区别</button>
+            <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">SoulAgent和数字世界是什么</button>
             <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">介绍一下本次智源大会的主题</button>
             <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">为我提供智源大会的最佳浏览线路</button>
         </div>
@@ -895,7 +900,7 @@
                     <div class="user-layout-container">
                         <header class="hero">
                             <h1>SoulAgent</h1>
-                            <p>它记得你的习惯、理解你的想法，逐渐成为最懂你的伙伴。</p>
+                            <h2>你的AI全能助手</h2>
                         </header>
                         
                         <div class="content-area">
@@ -905,20 +910,20 @@
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                                     </div>
                                     <h3>日常陪伴</h3>
-                                    <p>生活里的大事小事，它都能搭把手。聊聊天、查资料、整信息，通通不在话下！</p>
+                                    <p>聊聊天、查资料、理思路，生活里的大事小事，它都能搭把手。</p>
                                 </div>
 
                                 <div class="feature-card">
                                     <div class="feature-icon">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
                                     </div>
-                                    <h3>认知进化</h3>
-                                    <p>随着时间，它能比你更懂你自己，发现那些你都没注意到的规律和盲点。</p>
+                                    <h3>越用越好用</h3>
+                                    <p>它会记得你的习惯，理解你的想法，甚至比你更了解你自己。</p>
                                 </div>
                             </section>
                         </div>
                         <div class="cta-section">
-                            <button class="claim-button">立即领取专属Agent</button>
+                            <button class="claim-button">立即领取</button>
                         </div>
                     </div>
                 `;

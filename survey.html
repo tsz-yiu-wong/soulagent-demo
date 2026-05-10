@@ -464,11 +464,11 @@
     <div class="container">
         <!-- 步骤一 -->
         <div class="survey-box active" id="step1">
-            <h2>给Agent取个名字吧～</h2>
+            <h2>给AI伙伴取个名字吧～</h2>
             <div class="input-group">
-                <input type="text" id="agentName" placeholder="输入Agent的名字" autocomplete="off">
+                <input type="text" id="agentName" placeholder="输入它的名字" autocomplete="off">
             </div>
-            <button class="action-btn" id="btn1" onclick="nextStep(1)" disabled>它叫...</button>
+            <button class="action-btn" id="btn1" onclick="nextStep(1)" disabled>就叫...</button>
         </div>
 
         <!-- 步骤二 -->
@@ -500,7 +500,7 @@
         <!-- Loading Overlay -->
         <div id="loading-overlay">
             <div class="loading-spinner"></div>
-            <div class="loading-text">小小曜出生中...</div>
+            <div class="loading-text">小小曜马上就到...</div>
         </div>
 
         <!-- Certificate Overlay -->
@@ -513,19 +513,19 @@
                     </div>
                     <div class="cert-info">
                         <div class="info-item">
-                            <label>名字 NAME</label>
+                            <label>名字</label>
                             <span id="cert-agent-name">-</span>
                         </div>
                         <div class="info-item">
-                            <label>编号 ID</label>
+                            <label>编号</label>
                             <span>SA-2026-0001</span>
                         </div>
                         <div class="info-item">
-                            <label>领养人 PARENT</label>
+                            <label>领养人</label>
                             <span id="cert-user-name">-</span>
                         </div>
                         <div class="info-item">
-                            <label>出生日期 DATE</label>
+                            <label>出生日期</label>
                             <span id="cert-date">-</span>
                         </div>
                     </div>
@@ -557,7 +557,7 @@
                 btn1.textContent = `就叫${val}吧`;
                 btn1.disabled = false;
             } else {
-                btn1.textContent = '它叫...';
+                btn1.textContent = '就叫...';
                 btn1.disabled = true;
             }
         });
