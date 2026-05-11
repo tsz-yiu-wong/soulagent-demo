@@ -27,13 +27,185 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- App Shell (sidebar + main) --- */
+        .app-shell {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 12px;
+            box-sizing: border-box;
+            gap: 4px;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #555555;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .sidebar-nav-item:hover {
+            background: #FFF7F5;
+            color: var(--primary-color);
+        }
+
+        .sidebar-nav-item.active {
+            background: #FFF7F5;
+            color: var(--primary-color);
+        }
+
+        .sidebar-nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            color: #9CA3AF;
+            transition: color 0.2s;
+        }
+
+        .sidebar-nav-item:hover svg, .sidebar-nav-item.active svg {
+            color: var(--primary-color);
+        }
+
+        .sidebar-divider {
+            margin: 8px 0;
+            border: none;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .sidebar-section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #C0C0C0;
+            letter-spacing: 0.5px;
+            padding: 4px 12px 2px;
+            text-transform: uppercase;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-right: 4px;
+        }
+
+        .history-list::-webkit-scrollbar { width: 4px; }
+        .history-list::-webkit-scrollbar-track { background: transparent; }
+        .history-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: #F9F9F9;
+        }
+
+        .history-item-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #F37021, #FF9B6A);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .history-item-text {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .history-item-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item-subtitle {
+            font-size: 11px;
+            color: #9CA3AF;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1.5px dashed var(--border-color);
+            background: transparent;
+            color: var(--primary-color);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .new-chat-btn:hover {
+            background: #FFF7F5;
+            border-color: var(--primary-color);
+        }
+
+        .new-chat-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* --- Main Column --- */
+        .main-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .main-content {
+            flex: 1;
             padding: 40px;
-            max-width: 1000px;
-            margin: 0 auto;
+            overflow-y: auto;
             animation: fadeIn 0.6s ease-out;
         }
 
@@ -339,9 +511,59 @@
     </style>
 </head>
 <body>
-    <nav-bar></nav-bar>
+    <nav-bar active="agent"></nav-bar>
 
-    <div class="main-content">
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- New Chat Button -->
+            <button class="new-chat-btn" id="new-chat-btn" onclick="newChat()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                新建对话
+            </button>
+
+            <!-- Navigation -->
+            <a class="sidebar-nav-item" href="skill-center.html" id="nav-skill-plaza">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                技能广场
+            </a>
+            <a class="sidebar-nav-item active" href="agent-archives.html" id="nav-archive">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                档案库
+            </a>
+
+            <hr class="sidebar-divider">
+
+            <!-- History -->
+            <span class="sidebar-section-label">历史对话</span>
+            <div class="history-list" id="history-list">
+                <div class="history-item" onclick="loadHistory('介绍一下本次智源大会的主题')">
+                    <div class="history-item-icon">曜</div>
+                    <div class="history-item-text">
+                        <div class="history-item-title">介绍智源大会主题</div>
+                        <div class="history-item-subtitle">今天 13:27</div>
+                    </div>
+                </div>
+                <div class="history-item" onclick="loadHistory('SoulAgent和数字世界是什么')">
+                    <div class="history-item-icon">曜</div>
+                    <div class="history-item-text">
+                        <div class="history-item-title">SoulAgent和数字世界是什么</div>
+                        <div class="history-item-subtitle">昨天</div>
+                    </div>
+                </div>
+                <div class="history-item" onclick="loadHistory('为我提供智源大会的最佳浏览线路')">
+                    <div class="history-item-icon">曜</div>
+                    <div class="history-item-text">
+                        <div class="history-item-title">智源大会最佳浏览线路</div>
+                        <div class="history-item-subtitle">5月10日</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Column -->
+        <div class="main-column">
+            <div class="main-content">
         <div class="header-section">
             <div class="title-group">
                 <h1>档案库</h1>
@@ -488,7 +710,18 @@
         </div>
     </div>
 
+        </div>
+    </div>
+
     <script>
+        function newChat() {
+            window.location.href = 'agent.html';
+        }
+
+        function loadHistory(text) {
+            window.location.href = 'agent.html';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('.tab-item');
             const panes = document.querySelectorAll('.tab-pane');

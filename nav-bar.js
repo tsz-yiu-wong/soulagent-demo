@@ -262,7 +262,6 @@ class NavBar extends HTMLElement {
 
             .avatar-container {
                 position: relative;
-                cursor: pointer;
             }
 
             .avatar-placeholder {
@@ -284,59 +283,6 @@ class NavBar extends HTMLElement {
                 color: #FFFFFF;
             }
 
-            .avatar-dropdown {
-                position: absolute;
-                top: 100%;
-                right: 0;
-                margin-top: 8px;
-                background: white;
-                border: 1px solid var(--border-color, #FEE7DB);
-                border-radius: 12px;
-                padding: 8px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-                display: none;
-                flex-direction: column;
-                gap: 4px;
-                min-width: 160px;
-                z-index: 200;
-            }
-
-            .navbar.dark .avatar-dropdown {
-                background: #1A1A1F;
-                border-color: rgba(255, 255, 255, 0.1);
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            }
-
-            .avatar-dropdown.active {
-                display: flex;
-            }
-
-            .dropdown-item {
-                padding: 10px 12px;
-                border-radius: 8px;
-                font-size: 14px;
-                color: var(--text-color, #333333);
-                cursor: pointer;
-                transition: all 0.2s;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                text-decoration: none;
-            }
-
-            .navbar.dark .dropdown-item {
-                color: #CBD5E0;
-            }
-
-            .dropdown-item:hover {
-                background: #FFF7F5;
-                color: var(--primary-color, #F37021);
-            }
-
-            .navbar.dark .dropdown-item:hover {
-                background: rgba(255, 255, 255, 0.05);
-                color: #FFFFFF;
-            }
 
             svg {
                 flex-shrink: 0;
@@ -372,16 +318,6 @@ class NavBar extends HTMLElement {
                 </div>
                 <div class="avatar-container">
                     <div class="avatar-placeholder">头像</div>
-                    <div class="avatar-dropdown" id="avatar-dropdown">
-                        <a href="skill-center.html" class="dropdown-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-                            技能广场
-                        </a>
-                        <a href="agent-archives.html" class="dropdown-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                            档案库
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -391,8 +327,6 @@ class NavBar extends HTMLElement {
     }
 
     setupEventListeners() {
-        const avatarContainer = this.shadowRoot.querySelector('.avatar-container');
-        const dropdown = this.shadowRoot.querySelector('#avatar-dropdown');
         const perspectiveToggle = this.shadowRoot.querySelector('#perspective-toggle');
         const statusContainer = this.shadowRoot.querySelector('#status-container');
         const statusDropdown = this.shadowRoot.querySelector('#status-dropdown');
@@ -443,16 +377,8 @@ class NavBar extends HTMLElement {
             });
         }
 
-        avatarContainer.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (localStorage.getItem('userMode') === 'expert') return;
-            if (!e.target.closest('.avatar-dropdown')) {
-                dropdown.classList.toggle('active');
-            }
-        });
 
         document.addEventListener('click', () => {
-            dropdown.classList.remove('active');
             if (statusDropdown) statusDropdown.classList.remove('active');
         });
     }
