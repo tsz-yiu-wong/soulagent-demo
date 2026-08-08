@@ -1,0 +1,3566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听 - SoulAgent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background: #ffffff;
+      color: #111827;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 240px;
+      background: #f9fafb;
+      border-right: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+      padding: 4px 12px 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      font-size: 14px;
+      color: #374151;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .nav-item:hover { background: #f3f4f6; }
+    .nav-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 12px 0;
+    }
+
+    .history-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .history-title {
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 0 12px 6px;
+      font-weight: 500;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #4b5563;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover { background: #f3f4f6; }
+
+    /* 用户信息 */
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .user-profile:hover { background: #f3f4f6; }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .username { font-size: 14px; font-weight: 500; color: #111827; }
+
+    /* 主区域 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 36px;
+      overflow-y: auto;
+    }
+
+    .main-header {
+      margin-bottom: 12px;
+    }
+
+    .main-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.02em;
+    }
+
+    .main-subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+
+    /* Tab 导航 */
+    .tab-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-top: 24px;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 4px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #6b7280;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover {
+      color: #111827;
+    }
+
+    .tab-btn.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+      font-weight: 600;
+    }
+
+    .tab-count {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .tab-btn.active .tab-count {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    /* Tab 内容区 */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      padding-top: 14px;
+      padding-bottom: 32px;
+    }
+
+    /* 活动卡片基础样式 */
+    .activity-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .activity-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+      border-color: #cbd5e1;
+    }
+
+    /* 卡片视觉顶图 (KV) */
+    .card-kv {
+      height: 110px;
+      position: relative;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+    }
+
+    /* 不同活动的 KV 渐变配色 */
+    .kv-baai {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #4f46e5 100%);
+    }
+
+    .kv-gdec {
+      background: linear-gradient(135deg, #065f46 0%, #0d9488 60%, #10b981 100%);
+    }
+
+    .kv-waic {
+      background: linear-gradient(135deg, #831843 0%, #be185d 60%, #f43f5e 100%);
+    }
+
+    .kv-flagos {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0284c7 100%);
+    }
+
+    .kv-pku {
+      background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 60%, #8b5cf6 100%);
+    }
+
+    .kv-flagopen {
+      background: linear-gradient(135deg, #312e81 0%, #4338ca 60%, #6366f1 100%);
+    }
+
+    .kv-apple {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+    }
+
+    .kv-podcast1 {
+      background: linear-gradient(135deg, #7c2d12 0%, #c2410c 60%, #ea580c 100%);
+    }
+
+    .kv-podcast2 {
+      background: linear-gradient(135deg, #134e4a 0%, #0d9488 60%, #14b8a6 100%);
+    }
+
+    /* 气泡标签 (Sub Pill Tags) */
+    .bubble-tags-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .bubble-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #4b5563;
+      background: #f3f4f6;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    .bubble-tag:hover {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .bubble-tag.active {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #bfdbfe;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+    }
+
+    .bubble-count {
+      font-size: 11.5px;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.06);
+      color: inherit;
+      font-weight: inherit;
+    }
+
+    .bubble-tag.active .bubble-count {
+      background: rgba(37, 99, 235, 0.12);
+      color: #2563eb;
+    }
+
+    /* 状态标签基础样式 */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      letter-spacing: 0.02em;
+    }
+
+    /* 进行中：鲜艳绿 + 发光阴影 + 白色呼吸点 */
+    .status-badge.in-progress {
+      background: #16a34a;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 3px 10px rgba(22, 163, 74, 0.4);
+    }
+
+    /* 未开始：深蓝色 + 白色文字 */
+    .status-badge.not-started {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
+    }
+
+    /* 已结束：深色半透明磨砂玻璃 + 沉稳灰白字 */
+    .status-badge.ended {
+      background: rgba(15, 23, 42, 0.65);
+      color: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      font-weight: 500;
+    }
+
+    /* 进行中呼吸灯点 */
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+      animation: pulse-ring 1.5s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+      }
+    }
+
+    /* 卡片内容体 */
+    .card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+      line-height: 1.4;
+    }
+
+    .card-info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-item svg {
+      flex-shrink: 0;
+      color: #9ca3af;
+    }
+
+    /* 置空状态 */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+
+    /* 智能听记输入框卡片 */
+    .listener-input-card {
+      margin-top: 16px;
+      margin-bottom: 8px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 16px 18px 12px;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .listener-input-card:focus-within {
+      border-color: #2563eb;
+      box-shadow: 0 4px 24px -2px rgba(37, 99, 235, 0.14);
+    }
+
+    .input-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .listener-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 14.5px;
+      color: #111827;
+      background: transparent;
+      line-height: 1.5;
+    }
+
+    .listener-input::placeholder {
+      color: #9ca3af;
+      font-size: 13.5px;
+    }
+
+    .attachment-card-block {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      padding: 10px 14px;
+      animation: chipFadeIn 0.2s ease;
+      width: 100%;
+    }
+
+    .attachment-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .attachment-icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #0284c7;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .attachment-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .attachment-file-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #0369a1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .attachment-file-size {
+      font-size: 11.5px;
+      color: #0284c7;
+    }
+
+    .remove-attachment-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #bae6fd;
+      background: #ffffff;
+      color: #0369a1;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .remove-attachment-btn:hover {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+
+    .spin-icon {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .status-badge.loading-status {
+      color: #2563eb;
+      background: rgba(239, 246, 255, 0.95);
+    }
+
+    .input-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #f3f4f6;
+      padding-top: 10px;
+    }
+
+    .action-btn-upload {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #4b5563;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .action-btn-upload:hover {
+      background: #f3f4f6;
+      color: #111827;
+      border-color: #d1d5db;
+    }
+
+    .btn-primary-listen {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary-listen:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-listen:active {
+      transform: translateY(0);
+    }
+
+    .kv-personal {
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 60%, #4f46e5 100%);
+    }
+
+    /* 全卡片解析加载态 */
+    .card-loading-state {
+      pointer-events: none;
+      border-color: #cbd5e1;
+    }
+
+    .kv-loading {
+      background: #f1f5f9;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .card-loading-pulse {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #2563eb;
+      font-size: 13px;
+      font-weight: 600;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+
+    .skeleton-line {
+      height: 12px;
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: skeletonShimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+
+    .skeleton-title {
+      height: 18px;
+      width: 75%;
+      margin-bottom: 6px;
+    }
+
+    .skeleton-sub {
+      width: 90%;
+      height: 12px;
+      margin-top: 4px;
+    }
+
+    .skeleton-sub.short {
+      width: 60%;
+    }
+
+    @keyframes skeletonShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* 页面视图与新建对话子页面 */
+    .page-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .new-chat-container {
+      width: 100%;
+      max-width: 680px;
+      margin: 120px auto 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .new-chat-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.02em;
+    }
+
+    .new-chat-input-wrapper {
+      position: relative;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 16px 20px 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .new-chat-input-wrapper:focus-within {
+      border-color: #2563eb;
+      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.12);
+    }
+
+    .new-chat-textarea {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: #111827;
+      line-height: 1.6;
+      resize: none;
+      background: transparent;
+      font-family: inherit;
+      min-height: 90px;
+    }
+
+    .new-chat-textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    /* 引用文档高亮标签 */
+    .ref-doc-chip-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .ref-doc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 13px;
+      color: #1e40af;
+      font-weight: 500;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    .ref-doc-icon {
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+    }
+
+    .ref-doc-title {
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .ref-doc-tag-label {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .ref-doc-close-btn {
+      background: transparent;
+      border: none;
+      color: #93c5fd;
+      cursor: pointer;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.15s ease;
+      margin-left: 2px;
+    }
+
+    .ref-doc-close-btn:hover {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* @ 专家选择下拉菜单 */
+    .expert-mention-dropdown {
+      position: fixed;
+      z-index: 1100;
+      display: none;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+      padding: 6px;
+      width: 250px;
+      animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .expert-dropdown-header {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #9ca3af;
+      padding: 6px 10px 4px;
+      letter-spacing: 0.02em;
+    }
+
+    .expert-option-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .expert-option-item:hover {
+      background: #f3f4f6;
+    }
+
+    .expert-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .expert-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .expert-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .expert-title {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .new-chat-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .new-chat-send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .new-chat-send-btn:hover {
+      background: #1d4ed8;
+      transform: scale(1.03);
+    }
+
+    /* Toast 通知 */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-item {
+      background: #1e293b;
+      color: #ffffff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toastIn 0.25s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==================== 详情页 样式 ==================== */
+    .detail-page-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .detail-nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 36px;
+      background: #ffffff;
+      border-bottom: 1px solid #f3f4f6;
+      flex-shrink: 0;
+    }
+
+    .btn-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #4b5563;
+      background: #f3f4f6;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-back-link:hover {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .detail-title-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .detail-main-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.01em;
+    }
+
+    .detail-tag {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* 顶部预览区域 (普通布局) */
+    .sticky-preview-section {
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 16px 36px;
+    }
+
+    .preview-grid-layout {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* 视频预览窗 Wrapper */
+    .video-player-wrapper {
+      position: relative;
+    }
+
+    /* 视频预览窗占位符 (浮窗时在原位显示) */
+    .video-player-placeholder {
+      display: none;
+      height: 230px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 500;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .video-player-placeholder:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #2563eb;
+    }
+
+    /* 视频预览窗 */
+    .video-player-container {
+      background: #0f172a;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      border: 1px solid #1e293b;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    /* iOS 风格 视频浮窗 (Picture-in-Picture Float Window) */
+    .video-player-container.is-floating {
+      position: fixed;
+      top: auto;
+      left: auto;
+      right: 28px;
+      bottom: 28px;
+      width: 360px;
+      height: 230px;
+      z-index: 1000;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.2);
+      animation: floatIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: scale(0.85) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* 浮窗顶部拖拽 Header */
+    .video-float-header {
+      display: none;
+      height: 32px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0 10px 0 12px;
+      align-items: center;
+      justify-content: space-between;
+      cursor: move;
+      user-select: none;
+      color: #f8fafc;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .video-player-container.is-floating .video-float-header {
+      display: flex;
+    }
+
+    .float-header-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #94a3b8;
+    }
+
+    .float-header-title svg {
+      color: #3b82f6;
+    }
+
+    .float-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .float-action-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #cbd5e1;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .float-action-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    .video-screen-mock {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .video-bg-waves {
+      position: absolute;
+      inset: 0;
+      opacity: 0.25;
+      background: radial-gradient(circle at 50% 50%, #3b82f6 0%, transparent 70%);
+    }
+
+    .video-screen-info {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .video-play-center-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.9);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.5);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .video-play-center-btn:hover {
+      transform: scale(1.08);
+      background: #2563eb;
+    }
+
+    .video-chapter-badge {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(0, 0, 0, 0.45);
+      padding: 4px 12px;
+      border-radius: 14px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .video-controls-bar {
+      height: 42px;
+      background: rgba(15, 23, 42, 0.95);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      color: #ffffff;
+      font-size: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .video-control-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      opacity: 0.9;
+      padding: 2px;
+    }
+    .video-control-btn:hover { opacity: 1; }
+
+    .video-progress-bar {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .video-progress-fill {
+      height: 100%;
+      width: 12.5%;
+      background: #3b82f6;
+      border-radius: 2px;
+      position: relative;
+      transition: width 0.3s ease;
+    }
+
+    .video-progress-handle {
+      width: 10px;
+      height: 10px;
+      background: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      right: -5px;
+      top: -3px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.5);
+    }
+
+    /* 章节节点面板 */
+    .chapter-nodes-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      height: 230px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chapter-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+    }
+
+    .chapter-count-badge {
+      font-size: 11.5px;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .chapter-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .chapter-item:hover {
+      background: #edf2f7;
+      color: #0f172a;
+    }
+
+    .chapter-item.active {
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+      border-left-color: #2563eb;
+    }
+
+    .chapter-time {
+      font-family: monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.05);
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .chapter-item.active .chapter-time {
+      background: rgba(37, 99, 235, 0.12);
+      color: #2563eb;
+    }
+
+    .chapter-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 正文 Content 区域 */
+    .detail-content-area {
+      padding: 20px 36px 60px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .detail-tab-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 24px;
+    }
+
+    .detail-tab-btn {
+      padding: 12px 4px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #6b7280;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: -1px;
+    }
+
+    .detail-tab-btn:hover { color: #111827; }
+    .detail-tab-btn.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+      font-weight: 600;
+    }
+
+    .detail-tab-content {
+      display: none;
+    }
+
+    .detail-tab-content.active {
+      display: block;
+    }
+
+    /* 金句高亮 */
+    .golden-quotes-section {
+      margin-bottom: 32px;
+      background: linear-gradient(135deg, #fefce8 0%, #fff7ed 100%);
+      border: 1px solid #fef08a;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .golden-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #854d0e;
+      margin-bottom: 14px;
+    }
+
+    .golden-quotes-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 期数下拉选择框 (标题左侧) */
+    .episode-dropdown-container {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .episode-dropdown-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #bfdbfe;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .episode-dropdown-btn:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .episode-dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 6px;
+      z-index: 200;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      min-width: 320px;
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .episode-dropdown-menu.show {
+      display: flex;
+    }
+
+    .episode-item {
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .episode-item:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .episode-item.active {
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    .golden-quote-card {
+      background: #ffffff;
+      border: 1px solid #fef3c7;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.06);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .quote-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1f2937;
+      font-weight: 500;
+    }
+
+    .quote-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #d97706;
+    }
+
+    /* 总结正文 */
+    .summary-article-body {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #374151;
+    }
+
+    /* 概览页独立的卡片设计 */
+    .overview-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .overview-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .overview-banner-desc {
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.7;
+    }
+
+    .overview-insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .insight-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      transition: all 0.2s ease;
+    }
+
+    .insight-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .insight-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .insight-card-desc {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    .overview-outline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .overview-outline-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13.5px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+
+    .outline-step-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .summary-article-body h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111827;
+      margin: 24px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-article-body p {
+      margin-bottom: 14px;
+    }
+
+    /* 时间戳标签 */
+    .timestamp-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #eff6ff;
+      color: #2563eb;
+      font-family: monospace;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 0 4px;
+      user-select: none;
+      transition: all 0.15s ease;
+      border: 1px solid #bfdbfe;
+    }
+
+    .timestamp-tag:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* 模拟插图 */
+    .illustration-card {
+      margin: 24px 0;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .illustration-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 14px;
+    }
+
+    /* 转录原文 */
+    .transcript-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .transcript-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .transcript-row:hover {
+      background: #f9fafb;
+      border-left-color: #cbd5e1;
+    }
+
+    .transcript-speaker {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #111827;
+      width: 175px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .transcript-speaker .timestamp-tag {
+      margin: 0;
+    }
+
+    .transcript-text {
+      flex: 1;
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    /* 划词 Popover */
+    .text-selection-popover {
+      position: absolute;
+      z-index: 1000;
+      display: none;
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 4px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      gap: 4px;
+    }
+
+    .popover-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .popover-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .popover-btn.agent-btn:hover { background: #2563eb; }
+    .popover-btn.expert-btn:hover { background: #7c3aed; }
+
+    /* Modal 对话弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: scaleUpModal 0.2s ease;
+    }
+
+    @keyframes scaleUpModal {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+    }
+    .modal-close-btn:hover { background: #e5e7eb; color: #111827; }
+
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    .quote-snippet-box {
+      background: #f1f5f9;
+      border-left: 4px solid #2563eb;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 13.5px;
+      color: #334155;
+      font-style: italic;
+    }
+
+    .ai-answer-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e3a8a;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-title">SoulAgent</div>
+    <nav class="nav-group">
+      <div class="nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        <span>新建对话</span>
+      </div>
+      <div class="nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 1 0 7.75"/></svg>
+        <span>专家分身</span>
+      </div>
+      <div class="nav-item active">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+        <span>帮我听</span>
+      </div>
+      <div class="nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>知识库</span>
+      </div>
+      <div class="nav-item">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>档案库</span>
+      </div>
+    </nav>
+
+    <div class="divider"></div>
+
+    <div class="history-section">
+      <div class="history-title">历史对话</div>
+      <div class="history-list">
+        <div class="history-item">关于 AI 智能体架构的讨论</div>
+        <div class="history-item">产品需求规划会议记录</div>
+        <div class="history-item">团队周报与进展汇报</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="user-profile">
+      <div class="avatar">U</div>
+      <span class="username">用户名</span>
+    </div>
+  </aside>
+
+  <!-- 右侧主区域 1：帮我听页面 -->
+  <main class="main-content page-view" id="page-anything-listener">
+    <div class="main-header">
+      <h1 class="main-title">帮我听</h1>
+      <p class="main-subtitle">直播、视频，随时随地实时听记</p>
+
+      <!-- 智能听记输入框卡片 (在 Tab 标签上方) -->
+      <div class="listener-input-card">
+        <div class="input-wrapper">
+          <input type="text" id="listener-input" class="listener-input" placeholder="粘贴直播网址、B站视频链接，或者直接输入想听点什么..." autocomplete="off">
+          
+          <!-- 上传文件后的替代输入块 -->
+          <div id="attachment-card-block" class="attachment-card-block" style="display: none;">
+            <div class="attachment-info">
+              <div class="attachment-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </div>
+              <div class="attachment-details">
+                <div class="attachment-file-name" id="attachment-file-name">文件名.mp3</div>
+                <div class="attachment-file-size" id="attachment-file-size">0.0 MB · 已上传音视频文件</div>
+              </div>
+            </div>
+            <button type="button" class="remove-attachment-btn" id="remove-file-btn" title="移除并重新输入">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>移除附件</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="input-actions">
+          <label class="action-btn-upload" id="upload-label-btn" title="支持上传 mp3, wav, m4a, mp4 等音视频文件">
+            <input type="file" id="file-upload-input" accept="audio/*,video/*" style="display:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            <span id="upload-btn-text">上传音视频附件</span>
+          </label>
+
+          <button type="button" id="submit-listener-btn" class="btn-primary-listen">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+            <span id="submit-btn-text">帮我听</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 导航栏 -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="conference">
+          <span>活动广场</span>
+          <span class="tab-count">7</span>
+        </button>
+        <button class="tab-btn" data-tab="course">
+          <span>课程广场</span>
+          <span class="tab-count">2</span>
+        </button>
+        <button class="tab-btn" data-tab="personal">
+          <span>个人添加</span>
+          <span class="tab-count" id="personal-tab-count">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab 内容区 1：活动广场 -->
+    <div class="tab-content active" id="tab-conference">
+      <!-- 气泡标签栏 -->
+      <div class="bubble-tags-wrapper">
+        <button type="button" class="bubble-tag active" data-filter="all">
+          <span>全部</span>
+          <span class="bubble-count">7</span>
+        </button>
+        <button type="button" class="bubble-tag" data-filter="summit">
+          <span>行业峰会</span>
+          <span class="bubble-count">3</span>
+        </button>
+        <button type="button" class="bubble-tag" data-filter="press">
+          <span>发布会</span>
+          <span class="bubble-count">2</span>
+        </button>
+        <button type="button" class="bubble-tag" data-filter="podcast">
+          <span>播客</span>
+          <span class="bubble-count">2</span>
+        </button>
+      </div>
+
+      <div class="card-grid" id="conference-card-grid">
+        
+        <!-- 【进行中 - 置顶 1】智源 FlagOpen 2.0 开源发布会 (2026-08-07 今天, 发布会) -->
+        <div class="activity-card" data-subtag="press">
+          <div class="card-kv kv-flagopen">
+            <span class="status-badge in-progress">
+              <span class="pulse-dot"></span>
+              进行中
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">智源 FlagOpen 2.0 开源发布会</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年08月07日 14:00 - 16:30</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>线上直播 · 智源人工智能研究院</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 【进行中 - 置顶 2】硅谷101 播客 (2026-08-07 今天, 播客) -->
+        <div class="activity-card" data-subtag="podcast">
+          <div class="card-kv kv-podcast1">
+            <span class="status-badge in-progress">
+              <span class="pulse-dot"></span>
+              进行中
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">【硅谷101】对话大模型具身智能新前沿</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年08月07日 · 第128期</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span>音频播客 · 小宇宙 / 喜马拉雅 / Spotify</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 【进行中 - 置顶 3】2026 智源大会 (2026-08-07 今天, 行业峰会) -->
+        <div class="activity-card" data-subtag="summit">
+          <div class="card-kv kv-baai">
+            <span class="status-badge in-progress">
+              <span class="pulse-dot"></span>
+              进行中
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">2026 智源大会</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年08月07日 - 08月08日</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>北京 · 中关村国家自主创新示范区展示中心</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 【其余按时间倒序 1】2026 苹果秋季发布会 (2026-09-12, 未开始, 发布会) -->
+        <div class="activity-card" data-subtag="press">
+          <div class="card-kv kv-apple">
+            <span class="status-badge not-started">未开始</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">2026 苹果秋季年度新品发布会</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年09月12日 01:00</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>线上直播 · 史蒂夫·乔布斯剧院</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 【其余按时间倒序 2】硬核AI 播客 (2026-07-28, 已结束, 播客) -->
+        <div class="activity-card" data-subtag="podcast">
+          <div class="card-kv kv-podcast2">
+            <span class="status-badge ended">已结束</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">【硬核AI】从 Transformer 到 Agent 的进化之路</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年07月28日 · 第45期</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span>音频播客 · 小宇宙 / Apple Podcasts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 【其余按时间倒序 3】2026 GDEC (2026-07-02, 已结束, 行业峰会) -->
+        <div class="activity-card" data-subtag="summit">
+          <div class="card-kv kv-gdec">
+            <span class="status-badge ended">已结束</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">2026 GDEC</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年07月02日 - 07月05日</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>北京 · 国家会议中心</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 【其余按时间倒序 4】2026 WAIC (2026-05-18, 已结束, 行业峰会) -->
+        <div class="activity-card" data-subtag="summit">
+          <div class="card-kv kv-waic">
+            <span class="status-badge ended">已结束</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">2026 WAIC</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年05月18日 - 05月20日</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>上海 · 世博中心</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab 内容区 2：课程广场 -->
+    <div class="tab-content" id="tab-course">
+      <div class="card-grid">
+
+        <!-- 1. FlagOS系列课程 (进行中) -->
+        <div class="activity-card">
+          <div class="card-kv kv-flagos">
+            <span class="status-badge in-progress">
+              <span class="pulse-dot"></span>
+              进行中
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">FlagOS 系列课程</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年04月10日 - 08月30日 (每周三更新)</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span>线上 · 智源社区 Hub 讲堂</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 北大黄铁军老师系列课程 (未开始) -->
+        <div class="activity-card">
+          <div class="card-kv kv-pku">
+            <span class="status-badge not-started">未开始</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">北大黄铁军老师系列课程</div>
+            <div class="card-info-list">
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年09月01日 - 11月15日</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>北京大学 · 理论物理与类脑智能报告厅 / 线上直播</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab 内容区 3：个人添加 -->
+    <div class="tab-content" id="tab-personal">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="32" height="32" fill="none" stroke="#9ca3af" stroke-width="1.75" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M12 8v8M8 12h8"/></svg>
+        </div>
+        <div class="empty-title">暂无个人添加活动</div>
+        <div class="empty-desc">暂未添加个人活动听记</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 右侧主区域 2：新建对话页面 (简单圆角矩形输入框) -->
+  <main class="main-content page-view" id="page-new-chat" style="display: none;">
+    <div class="new-chat-container">
+      <div class="new-chat-title">SoulAgent 对话助手</div>
+      <div class="new-chat-input-wrapper">
+        <!-- @ 专家选择下拉菜单 -->
+        <div id="expert-mention-dropdown" class="expert-mention-dropdown">
+          <div class="expert-dropdown-header">选择专家分身</div>
+          <div class="expert-option-item" data-expert="王仲远">
+            <div class="expert-avatar" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">王</div>
+            <div class="expert-info">
+              <span class="expert-name">王仲远</span>
+              <span class="expert-title">智源研究院院长 · 专家分身</span>
+            </div>
+          </div>
+          <div class="expert-option-item" data-expert="黄铁军">
+            <div class="expert-avatar" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);">黄</div>
+            <div class="expert-info">
+              <span class="expert-name">黄铁军</span>
+              <span class="expert-title">智源研究院理事长 · 专家分身</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 引用文档高亮标签 (Ref Document Tag) -->
+        <div id="ref-doc-chip-bar" class="ref-doc-chip-bar" style="display: none;">
+          <div class="ref-doc-chip">
+            <span class="ref-doc-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </span>
+            <span class="ref-doc-title" id="ref-doc-title">【硬核AI】从 Transformer 到 Agent 的进化之路</span>
+            <span class="ref-doc-tag-label" id="ref-doc-tag-label">总结</span>
+            <button type="button" class="ref-doc-close-btn" id="ref-doc-close-btn" title="移除引用">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <textarea id="new-chat-textarea" class="new-chat-textarea" placeholder="输入消息或对话需求..." rows="3"></textarea>
+        <div class="new-chat-actions">
+          <button type="button" class="new-chat-send-btn" title="发送消息">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 右侧主区域 3：详情页 (包含顶部冻结预览窗与正文Tab) -->
+  <main class="main-content page-view detail-page-container" id="page-detail-view" style="display: none;">
+    
+    <!-- 详情页 顶部导航 -->
+    <div class="detail-nav-bar">
+      <button type="button" class="btn-back-link" id="detail-back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span>返回</span>
+      </button>
+      <div class="detail-title-info">
+        <!-- 期数下拉按钮 (位于标题左边) -->
+        <div class="episode-dropdown-container" id="episode-dropdown-container">
+          <button type="button" class="episode-dropdown-btn" id="episode-dropdown-btn">
+            <span id="current-episode-text">第45期</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="episode-dropdown-menu" id="episode-dropdown-menu">
+            <div class="episode-item active" data-ep="45" data-title="【硬核AI】从 Transformer 到 Agent 的进化之路">第45期：从 Transformer 到 Agent 的进化之路</div>
+            <div class="episode-item" data-ep="44" data-title="【硬核AI】Sora 与 Multimodal 多模态大模型前沿">第44期：Sora 与 Multimodal 多模态大模型前沿</div>
+            <div class="episode-item" data-ep="43" data-title="【硬核AI】LLM 检索增强 RAG 架构设计实战">第43期：LLM 检索增强 RAG 架构设计实战</div>
+            <div class="episode-item" data-ep="42" data-title="【硬核AI】大模型长文本 Context 拓展与长上下文优化">第42期：大模型长文本 Context 拓展与长上下文优化</div>
+            <div class="episode-item" data-ep="41" data-title="【硬核AI】开源大模型 Llama 与 FlagOpen 生态解密">第41期：开源大模型 Llama 与 FlagOpen 生态解密</div>
+          </div>
+        </div>
+        <h2 class="detail-main-title" id="detail-main-title">【硬核AI】从 Transformer 到 Agent 的进化之路</h2>
+      </div>
+    </div>
+
+    <!-- 顶部预览区域 -->
+    <section class="sticky-preview-section">
+      <div class="preview-grid-layout">
+        
+        <!-- 左侧：视频预览窗列 (含占位符 + 播放器) -->
+        <div class="video-player-wrapper">
+          <div class="video-player-placeholder" id="video-placeholder" title="点击还原视频播放器到原位">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M14 10l7-7M9 21H3v-6M10 14l-7 7"/></svg>
+            <span>视频正在浮窗中播放 (点击还原)</span>
+          </div>
+
+          <div class="video-player-container" id="video-player-container">
+            <!-- 浮窗 顶部拖拽栏 -->
+            <div class="video-float-header" id="video-float-header">
+              <div class="float-header-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/><circle cx="15" cy="15" r="1"/></svg>
+                <span>视频浮窗 (可拖动)</span>
+              </div>
+              <div class="float-header-actions">
+                <button type="button" class="float-action-btn" id="float-dock-btn" title="还原至原位">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="video-screen-mock">
+              <div class="video-bg-waves"></div>
+              <div class="video-screen-info">
+                <div class="video-play-center-btn" id="video-center-play-btn" title="播放/暂停">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" id="center-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div class="video-chapter-badge" id="video-chapter-badge">当前章节：01. Transformer 架构回顾</div>
+              </div>
+            </div>
+
+            <div class="video-controls-bar">
+              <button type="button" class="video-control-btn" id="video-play-toggle-btn" title="播放/暂停">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" id="bar-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <span id="video-time-display" style="font-family: monospace; font-size: 12px; opacity: 0.9;">00:00 / 42:18</span>
+              
+              <div class="video-progress-bar" id="video-progress-bar-el">
+                <div class="video-progress-fill" id="video-progress-fill-el">
+                  <div class="video-progress-handle"></div>
+                </div>
+              </div>
+
+              <button type="button" class="video-control-btn" title="音量">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              </button>
+              <button type="button" class="video-control-btn" id="video-pip-toggle-btn" title="开启/关闭视频浮窗">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="11" y="9" width="9" height="7" rx="1"/></svg>
+              </button>
+              <button type="button" class="video-control-btn" title="全屏">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：章节节点 (点击快速定位) -->
+        <div class="chapter-nodes-container">
+          <div class="chapter-header">
+            <span>章节节点</span>
+            <span class="chapter-count-badge">5 个章节</span>
+          </div>
+          <div class="chapter-list" id="chapter-list-container">
+            
+            <div class="chapter-item active" data-time="00:00" data-chapter="01. Transformer 架构回顾与 self-attention 核心机制">
+              <span class="chapter-time">00:00</span>
+              <span class="chapter-title-text">01. Transformer 架构回顾与 self-attention</span>
+            </div>
+
+            <div class="chapter-item" data-time="05:20" data-chapter="02. 从 Large Language Model 到 Autonomous Agent 的演进逻辑">
+              <span class="chapter-time">05:20</span>
+              <span class="chapter-title-text">02. 从 LLM 到 Autonomous Agent 演进逻辑</span>
+            </div>
+
+            <div class="chapter-item" data-time="12:45" data-chapter="03. Agent 的四大核心组件：Planning, Memory, Tools, Action">
+              <span class="chapter-time">12:45</span>
+              <span class="chapter-title-text">03. Agent 四大核心组件拆解</span>
+            </div>
+
+            <div class="chapter-item" data-time="22:10" data-chapter="04. ReAct 范式与 Tool-using 工具调用实战">
+              <span class="chapter-time">22:10</span>
+              <span class="chapter-title-text">04. ReAct 范式与 Tool-using 工具调用</span>
+            </div>
+
+            <div class="chapter-item" data-time="31:05" data-chapter="05. 多智能体协作 (Multi-Agent Collaboration) 与未来展望">
+              <span class="chapter-time">31:05</span>
+              <span class="chapter-title-text">05. 多智能体协作 (Multi-Agent) 与展望</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 正文 Content 区域 (包含 Tab 导航) -->
+    <div class="detail-content-area">
+      
+      <!-- Sub-Tab 导航 -->
+      <div class="detail-tab-nav">
+        <button type="button" class="detail-tab-btn active" data-detail-tab="overview">概览</button>
+        <button type="button" class="detail-tab-btn" data-detail-tab="summary">总结</button>
+        <button type="button" class="detail-tab-btn" data-detail-tab="transcript">转录原文</button>
+        <button type="button" class="detail-tab-btn" data-detail-tab="multimedia">多媒体素材</button>
+      </div>
+
+      <!-- Tab 1: 概览 (金句高亮 + 核心摘要 + 核心要点 + 议题大纲) -->
+      <div class="detail-tab-content active" id="detail-tab-overview">
+        
+        <!-- 1. 核心摘要卡片 -->
+        <div class="overview-card" style="background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-color: #bfdbfe;">
+          <div class="overview-card-title" style="color: #1e40af;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>核心摘要 (Executive Summary)</span>
+          </div>
+          <div class="overview-banner-desc">
+            本期研讨会全面剖析了大模型范式从传统的 Transformer 文本生成演进至 Autonomous Agent（自主智能体）的技术路径与工程落地。重点解读了 Agent 的四大核心组件（Planning、Memory、Tools、Action）、ReAct 交互循环范式，并展望了无 UI 自然语言任务调度与 Multi-Agent 协作的未来趋势。
+          </div>
+        </div>
+
+        <!-- 2. 金句高亮卡片 -->
+        <div class="overview-card" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-color: #fde68a;">
+          <div class="overview-card-title" style="color: #854d0e;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span>金句高亮 (Golden Quotes)</span>
+          </div>
+          <div class="golden-quotes-grid">
+            <div class="golden-quote-card">
+              <div class="quote-text">“Agent 不是替代人类的终点，而是人机协同、延伸人类智力边际的倍增器。”</div>
+              <div class="quote-footer">
+                <span>核心观点 · 人机协同</span>
+                <span class="timestamp-tag" data-time="05:20">05:20</span>
+              </div>
+            </div>
+
+            <div class="golden-quote-card">
+              <div class="quote-text">“从 Transformer 到 Agent，核心转变是从‘语言生成’跨越到了‘环境感知与自主决策’。”</div>
+              <div class="quote-footer">
+                <span>范式演进 · 核心定义</span>
+                <span class="timestamp-tag" data-time="12:45">12:45</span>
+              </div>
+            </div>
+
+            <div class="golden-quote-card">
+              <div class="quote-text">“未来的软件交互将不再是 UI 按钮点击，而是以 Agent 为载体的自然语言任务调度。”</div>
+              <div class="quote-footer">
+                <span>未来展望 · 交互革新</span>
+                <span class="timestamp-tag" data-time="31:05">31:05</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 核心要点卡片 -->
+        <div class="overview-card">
+          <div class="overview-card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h6"/></svg>
+            <span>核心要点速览</span>
+          </div>
+          <div class="overview-insights-grid">
+            <div class="insight-card">
+              <div class="insight-card-head">
+                <span style="color:#2563eb">🚀</span>
+                <span>范式本质跨越</span>
+              </div>
+              <div class="insight-card-desc">
+                从“无状态语言概率预测器”跨越至具备“环境感知、长短期记忆与外部工具执行”能力的自主主体。
+              </div>
+            </div>
+
+            <div class="insight-card">
+              <div class="insight-card-head">
+                <span style="color:#059669">🧩</span>
+                <span>四大核心架构</span>
+              </div>
+              <div class="insight-card-desc">
+                中央 LLM Brain 配合规划分解 (Planning)、向量/上下文记忆 (Memory)、工具调用 (Tools) 与环境动作 (Action)。
+              </div>
+            </div>
+
+            <div class="insight-card">
+              <div class="insight-card-head">
+                <span style="color:#d97706">⚡</span>
+                <span>ReAct 思维循环</span>
+              </div>
+              <div class="insight-card-desc">
+                将 Thought (思考) 与 Action (行动) 交织，利用环境实时 Observation 反馈持续纠错与自我迭代。
+              </div>
+            </div>
+
+            <div class="insight-card">
+              <div class="insight-card-head">
+                <span style="color:#7c3aed">🌐</span>
+                <span>交互与范式未来</span>
+              </div>
+              <div class="insight-card-desc">
+                从 GUI 按钮操作全面转向以自然语言命令驱动的 Multi-Agent 协同与自动化工作流。
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /detail-tab-overview -->
+
+      <!-- Tab 2: 总结 -->
+      <div class="detail-tab-content" id="detail-tab-summary">
+        
+        <!-- 总结正文 (包含时间戳跳转 & 模拟插图) -->
+        <div class="summary-article-body">
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>一、 Transformer 到 Agent 的本质跨越</span>
+          </h3>
+          <p>
+            Transformer 架构凭借其自注意力机制 (Self-Attention) 彻底奠定了现代大语言模型 (LLM) 的基石。然而，经典的 LLM 本质上仍是一个“无状态的文本概率预测器”。当研究者将 LLM 接入环境感知与外部工具 API 时，模型便完成了从单纯文本生成向自主智能体 (Autonomous Agent) 的重大演进。点击时间戳定位：<span class="timestamp-tag" data-time="00:00">00:00</span> 了解 Transformer 机制回顾，或点击 <span class="timestamp-tag" data-time="05:20">05:20</span> 聆听 Agent 演进逻辑。
+          </p>
+
+          <!-- 模拟插图 1: 演进路径图 -->
+          <div class="illustration-card">
+            <div class="illustration-title">图 1: 大模型范式演进路径 (Transformer → LLM → Agent)</div>
+            <svg width="100%" height="110" viewBox="0 0 680 110" fill="none" style="max-width: 680px; margin: 0 auto; display: block;">
+              <rect x="10" y="25" width="180" height="60" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+              <text x="100" y="52" text-anchor="middle" fill="#1e40af" font-size="14" font-weight="bold">Transformer</text>
+              <text x="100" y="70" text-anchor="middle" fill="#3b82f6" font-size="11">Self-Attention 机制</text>
+
+              <path d="M 200 55 L 240 55" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4 2"/>
+              <polygon points="245,55 235,50 235,60" fill="#3b82f6"/>
+
+              <rect x="250" y="25" width="180" height="60" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="2"/>
+              <text x="340" y="52" text-anchor="middle" fill="#166534" font-size="14" font-weight="bold">LLM (大语言模型)</text>
+              <text x="340" y="70" text-anchor="middle" fill="#22c55e" font-size="11">通用知识与推理</text>
+
+              <path d="M 440 55 L 480 55" stroke="#22c55e" stroke-width="2" stroke-dasharray="4 2"/>
+              <polygon points="485,55 475,50 475,60" fill="#22c55e"/>
+
+              <rect x="490" y="20" width="180" height="70" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="2.5"/>
+              <text x="580" y="50" text-anchor="middle" fill="#6b21a8" font-size="14" font-weight="bold">Autonomous Agent</text>
+              <text x="580" y="68" text-anchor="middle" fill="#a855f7" font-size="11">感知 + 记忆 + 工具执行</text>
+            </svg>
+          </div>
+
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>二、 Agent 四大核心架构拆解</span>
+          </h3>
+          <p>
+            根据前沿学术与工程实践，一个完整的 Agent 系统由四大核心模块构成：规划 (Planning)、记忆 (Memory)、工具调用 (Tools) 与动作执行 (Action)。跳转定位：<span class="timestamp-tag" data-time="12:45">12:45</span>。
+          </p>
+
+          <!-- 模拟插图 2: 4大模块架构图 -->
+          <div class="illustration-card">
+            <div class="illustration-title">图 2: Autonomous Agent 四大核心模块交互架构</div>
+            <svg width="100%" height="160" viewBox="0 0 640 160" fill="none" style="max-width: 640px; margin: 0 auto; display: block;">
+              <circle cx="320" cy="80" r="42" fill="#2563eb"/>
+              <text x="320" y="76" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold">LLM Brain</text>
+              <text x="320" y="93" text-anchor="middle" fill="#93c5fd" font-size="10">中央大脑</text>
+
+              <rect x="40" y="15" width="150" height="46" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+              <text x="115" y="36" text-anchor="middle" fill="#1d4ed8" font-size="12" font-weight="bold">🧠 Planning (规划)</text>
+              <text x="115" y="50" text-anchor="middle" fill="#60a5fa" font-size="9">Sub-goal Decomposition</text>
+              <path d="M 190 38 L 278 68" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+              <rect x="40" y="100" width="150" height="46" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+              <text x="115" y="121" text-anchor="middle" fill="#b45309" font-size="12" font-weight="bold">💾 Memory (记忆)</text>
+              <text x="115" y="135" text-anchor="middle" fill="#d97706" font-size="9">Short & Long Term RAG</text>
+              <path d="M 190 123 L 278 92" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+              <rect x="450" y="15" width="150" height="46" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+              <text x="525" y="36" text-anchor="middle" fill="#15803d" font-size="12" font-weight="bold">🛠️ Tools (工具)</text>
+              <text x="525" y="50" text-anchor="middle" fill="#4ade80" font-size="9">API / Code Exec / Search</text>
+              <path d="M 450 38 L 362 68" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+              <rect x="450" y="100" width="150" height="46" rx="8" fill="#faf5ff" stroke="#a855f7" stroke-width="1.5"/>
+              <text x="525" y="121" text-anchor="middle" fill="#7e22ce" font-size="12" font-weight="bold">⚡ Action (执行)</text>
+              <text x="525" y="135" text-anchor="middle" fill="#c084fc" font-size="9">Env Interaction</text>
+              <path d="M 450 123 L 362 92" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3 3"/>
+            </svg>
+          </div>
+
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>三、 ReAct 范式与落地挑战</span>
+          </h3>
+          <p>
+            ReAct (Reason + Act) 范式通过交替交织思维推理 (Thought) 与环境动作 (Action)，解决了传统思维链无法有效结合实时外部反馈的痛点。点击跳转：<span class="timestamp-tag" data-time="22:10">22:10</span> 查看工具调用实战，或点击 <span class="timestamp-tag" data-time="31:05">31:05</span> 听记关于多智能体 (Multi-Agent) 协作模式的未来展望。
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: 转录原文 -->
+      <div class="detail-tab-content" id="detail-tab-transcript">
+        <div class="transcript-timeline">
+          
+          <div class="transcript-row">
+            <div class="transcript-speaker">
+              <span class="timestamp-tag" data-time="00:00">00:00</span> 主持人
+            </div>
+            <div class="transcript-text">
+              欢迎大家收看本期【硬核AI】，今天我们将深入讨论从 Transformer 架构到 Agent 的进化之路。我们邀请到了智源 AI 智能体实验室的专家代表...
+            </div>
+          </div>
+
+          <div class="transcript-row">
+            <div class="transcript-speaker">
+              <span class="timestamp-tag" data-time="02:15">02:15</span> 智源 AI 研究员
+            </div>
+            <div class="transcript-text">
+              Transformer 论文最初提出了 Self-Attention 机制，彻底改变了 NLP 的基石。但传统的 LLM 仅仅停留在文本生成层面，无法感知外界最新动态...
+            </div>
+          </div>
+
+          <div class="transcript-row">
+            <div class="transcript-speaker">
+              <span class="timestamp-tag" data-time="05:20">05:20</span> 智源 AI 研究员
+            </div>
+            <div class="transcript-text">
+              当我们把 LLM 接入外部环境和 API 接口，它就具备了主动探索与调用的能力，这就是 Agent 的雏形。Agent 不是替代人类的终点，而是延伸人类智力边际的倍增器...
+            </div>
+          </div>
+
+          <div class="transcript-row">
+            <div class="transcript-speaker">
+              <span class="timestamp-tag" data-time="12:45">12:45</span> 智源 AI 研究员
+            </div>
+            <div class="transcript-text">
+              一个完整的 Agent 必须包含四大核心：规划 (Planning) 负责长链条任务拆解，记忆 (Memory) 负责存取上下文与 RAG 向量检索，工具 (Tools) 负责 API 与代码执行，动作 (Action) 负责环境交互...
+            </div>
+          </div>
+
+          <div class="transcript-row">
+            <div class="transcript-speaker">
+              <span class="timestamp-tag" data-time="22:10">22:10</span> 主持人
+            </div>
+            <div class="transcript-text">
+              在实际落地中，ReAct 范式是如何解决思维链与工具调用之间的协同的？能否结合开发经验聊聊...
+            </div>
+          </div>
+
+          <div class="transcript-row">
+            <div class="transcript-speaker">
+              <span class="timestamp-tag" data-time="31:05">31:05</span> 智源 AI 研究员
+            </div>
+            <div class="transcript-text">
+              关于未来，单 Agent 往往存在上下文窗口与能力边界。Multi-Agent 团队协作模式会是突破复杂软件开发、科研突破等长链条任务的关键方向...
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab 3: 多媒体素材 (先为空) -->
+      <div class="detail-tab-content" id="detail-tab-multimedia">
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="empty-title">暂无多媒体素材</div>
+          <div class="empty-desc">暂未提取到相关音视频截图或多媒体附件</div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- 划词选中弹出按钮 Tooltip -->
+  <div id="text-selection-popover" class="text-selection-popover">
+    <button type="button" class="popover-btn agent-btn" id="popover-ask-agent-btn">
+      <span>🤖 问 Agent</span>
+    </button>
+    <button type="button" class="popover-btn expert-btn" id="popover-ask-expert-btn">
+      <span>👨‍🏫 问专家</span>
+    </button>
+  </div>
+
+  <!-- 问答 弹出 Modal -->
+  <div id="qa-modal-overlay" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" id="qa-modal-title">
+          <span>🤖 问 Agent 助手</span>
+        </div>
+        <button type="button" class="modal-close-btn" id="qa-modal-close-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="quote-snippet-box" id="qa-quote-snippet">
+          “选中的文字...”
+        </div>
+        <div class="ai-answer-box" id="qa-answer-box">
+          正在为您解读所选内容...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 容器 -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // 侧边栏与页面视图切换逻辑
+    const navItems = document.querySelectorAll('.sidebar .nav-item');
+    const pageAnythingListener = document.getElementById('page-anything-listener');
+    const pageNewChat = document.getElementById('page-new-chat');
+    const pageDetailView = document.getElementById('page-detail-view');
+    const newChatTextarea = document.getElementById('new-chat-textarea');
+
+    function switchPage(pageName) {
+      navItems.forEach(item => item.classList.remove('active'));
+
+      if (pageName === 'new-chat') {
+        if (typeof disableVideoFloat === 'function') disableVideoFloat(false);
+        navItems[0].classList.add('active'); // 新建对话 Active
+        pageAnythingListener.style.display = 'none';
+        if (pageDetailView) pageDetailView.style.display = 'none';
+        pageNewChat.style.display = 'flex';
+      } else if (pageName === 'anything-listener') {
+        if (typeof disableVideoFloat === 'function') disableVideoFloat(false);
+        navItems[2].classList.add('active'); // 帮我听 Active
+        pageNewChat.style.display = 'none';
+        if (pageDetailView) pageDetailView.style.display = 'none';
+        pageAnythingListener.style.display = 'flex';
+      } else if (pageName === 'detail-view') {
+        navItems[2].classList.add('active'); // 帮我听 Active
+        pageAnythingListener.style.display = 'none';
+        pageNewChat.style.display = 'none';
+        if (pageDetailView) {
+          pageDetailView.style.display = 'flex';
+          pageDetailView.scrollTop = 0;
+        }
+      }
+    }
+
+    // 侧边栏导航点击
+    if (navItems[0]) navItems[0].addEventListener('click', () => switchPage('new-chat'));
+    if (navItems[2]) navItems[2].addEventListener('click', () => switchPage('anything-listener'));
+
+    // Tab 切换逻辑
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(`tab-${targetTab}`).classList.add('active');
+      });
+    });
+
+    // 会议广场 气泡标签 (Sub Pill Tag) 过滤逻辑
+    const bubbleTags = document.querySelectorAll('.bubble-tag');
+    const conferenceCards = document.querySelectorAll('#conference-card-grid .activity-card');
+
+    bubbleTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        const filter = tag.getAttribute('data-filter');
+
+        bubbleTags.forEach(t => t.classList.remove('active'));
+        tag.classList.add('active');
+
+        conferenceCards.forEach(card => {
+          const subtag = card.getAttribute('data-subtag');
+          if (filter === 'all' || subtag === filter) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // 文件上传与智能听记处理
+    let attachedFile = null;
+
+    const listenerInput = document.getElementById('listener-input');
+    const fileUploadInput = document.getElementById('file-upload-input');
+    const attachmentCardBlock = document.getElementById('attachment-card-block');
+    const attachmentFileName = document.getElementById('attachment-file-name');
+    const attachmentFileSize = document.getElementById('attachment-file-size');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    const submitBtn = document.getElementById('submit-listener-btn');
+    const uploadLabelBtn = document.getElementById('upload-label-btn');
+    const uploadBtnText = document.getElementById('upload-btn-text');
+    const personalTabCount = document.getElementById('personal-tab-count');
+    const personalTabContent = document.getElementById('tab-personal');
+    let personalCardsCount = 0;
+
+    // 文件选择处理 (上传后不能输入，文本框隐藏并替换为已上传附件块)
+    fileUploadInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        attachedFile = e.target.files[0];
+        attachmentFileName.textContent = attachedFile.name;
+        attachmentFileSize.textContent = `${(attachedFile.size / (1024 * 1024)).toFixed(1)} MB · 已上传音视频文件`;
+        
+        listenerInput.style.display = 'none';
+        attachmentCardBlock.style.display = 'flex';
+        uploadBtnText.textContent = '已选择附件';
+        uploadLabelBtn.style.opacity = '0.6';
+        uploadLabelBtn.style.pointerEvents = 'none';
+      }
+    });
+
+    // 移除已选文件 (恢复文本输入框)
+    removeFileBtn.addEventListener('click', () => {
+      resetInputState();
+    });
+
+    function resetInputState() {
+      attachedFile = null;
+      fileUploadInput.value = '';
+      listenerInput.value = '';
+      attachmentCardBlock.style.display = 'none';
+      listenerInput.style.display = 'block';
+      uploadBtnText.textContent = '上传音视频附件';
+      uploadLabelBtn.style.opacity = '1';
+      uploadLabelBtn.style.pointerEvents = 'auto';
+    }
+
+    // Toast 消息提示
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast-item';
+      toast.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // 判断是否包含 URL 链接
+    function containsUrl(text) {
+      const urlPattern = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.(com|cn|tv|net|org|bilibili|douyin))/i;
+      return urlPattern.test(text);
+    }
+
+    // 提交处理
+    function handleListeningSubmit() {
+      if (submitBtn.disabled) return;
+
+      const textVal = listenerInput.value.trim();
+
+      if (!textVal && !attachedFile) {
+        showToast('请输入直播/视频网址、上传音视频，或输入听记需求');
+        return;
+      }
+
+      // 附件模式 或 有效 URL 链接 -> 个人添加创建卡片 (附带加载态)
+      if (attachedFile || containsUrl(textVal)) {
+        createPersonalCard(textVal, attachedFile);
+      } else {
+        // 自然语言 -> 无需弹窗，直接无缝跳转到当前 HTML 里的「新建对话」子页面
+        jumpToNewChat(textVal);
+      }
+    }
+
+    // 自然语言无弹窗直接跳转
+    function jumpToNewChat(text) {
+      const promptText = text.startsWith('帮我听') ? text : `帮我听${text}`;
+      newChatTextarea.value = `/anything-listener ${promptText}`;
+      switchPage('new-chat');
+      resetInputState();
+      showToast('🚀 已为您自动切换至「新建对话」并填充指令');
+    }
+
+    submitBtn.addEventListener('click', handleListeningSubmit);
+    listenerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        handleListeningSubmit();
+      }
+    });
+
+    // 创建个人添加卡片与加载态逻辑
+    function createPersonalCard(text, file) {
+      const isFileMode = !!file;
+      let cardTitle = '个人音频听记';
+      let infoSource = '用户自定义音视频';
+
+      if (isFileMode) {
+        cardTitle = file.name.replace(/\.[^/.]+$/, "");
+        infoSource = `本地音视频文件 (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
+      } else if (text) {
+        if (text.includes('bilibili.com') || text.includes('b23.tv')) {
+          cardTitle = '哔哩哔哩视频听记';
+          infoSource = text;
+        } else if (text.includes('live')) {
+          cardTitle = '网页直播听记';
+          infoSource = text;
+        } else {
+          cardTitle = text.length > 20 ? text.substring(0, 20) + '...' : text;
+          infoSource = text;
+        }
+      }
+
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const cardId = 'personal-card-' + Date.now();
+
+      let grid = document.getElementById('personal-card-grid');
+      const emptyState = personalTabContent.querySelector('.empty-state');
+      if (emptyState) {
+        emptyState.style.display = 'none';
+      }
+
+      if (!grid) {
+        grid = document.createElement('div');
+        grid.className = 'card-grid';
+        grid.id = 'personal-card-grid';
+        personalTabContent.appendChild(grid);
+      }
+
+      // 初始渲染：全卡片解析中加载态 (包含骨架屏与居中解析中 Pulse 标识)
+      const loadingLabel = '正在处理中...';
+      const initialCardHtml = `
+        <div class="activity-card card-loading-state" id="${cardId}" style="animation: scaleUp 0.3s ease;">
+          <div class="card-kv kv-loading">
+            <div class="card-loading-pulse">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin-icon"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              <span>${loadingLabel}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-sub"></div>
+            <div class="skeleton-line skeleton-sub short"></div>
+          </div>
+        </div>
+      `;
+
+      grid.insertAdjacentHTML('afterbegin', initialCardHtml);
+
+      // 更新 Tab 计数并切换至「个人添加」 Tab
+      personalCardsCount++;
+      personalTabCount.textContent = personalCardsCount;
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      document.querySelector('[data-tab="personal"]').classList.add('active');
+      personalTabContent.classList.add('active');
+
+      // 设置提交按钮为加载中
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+      const loadingBtnLabel = '正在处理中...';
+      submitBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin-icon"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><span>${loadingBtnLabel}</span>`;
+
+      // 重置输入框状态
+      resetInputState();
+
+      // 1.5 秒后解析完成：全卡片平滑转换为解析完成的正式卡片 (附件 -> 已完成; 直播 -> 进行中)
+      setTimeout(() => {
+        const cardElem = document.getElementById(cardId);
+        if (cardElem) {
+          cardElem.className = 'activity-card';
+
+          const statusHtml = isFileMode ? `
+            <span class="status-badge ended">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>已完成</span>
+            </span>
+          ` : `
+            <span class="status-badge in-progress">
+              <span class="pulse-dot"></span>
+              <span>进行中</span>
+            </span>
+          `;
+
+          cardElem.innerHTML = `
+            <div class="card-kv kv-personal">
+              ${statusHtml}
+            </div>
+            <div class="card-body">
+              <div class="card-title">${cardTitle}</div>
+              <div class="card-info-list">
+                <div class="info-item">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span>${dateStr}</span>
+                </div>
+                <div class="info-item">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px;">${infoSource}</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+          if (isFileMode) {
+            showToast('🎉 音视频附件解析完成，听记已生成！');
+          } else {
+            showToast('🎉 直播信号解析完成，听记实时进行中！');
+          }
+        }
+
+        // 恢复提交按钮
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          <span id="submit-btn-text">帮我听</span>
+        `;
+      }, 1500);
+    }
+
+    // ==================== 详情页 交互逻辑 ====================
+
+    // 返回按钮
+    const detailBackBtn = document.getElementById('detail-back-btn');
+    if (detailBackBtn) {
+      detailBackBtn.addEventListener('click', () => switchPage('anything-listener'));
+    }
+
+    // 所有卡片点击切换至详情页 (全局事件委托)
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('.activity-card');
+      if (card && !card.classList.contains('card-loading-state')) {
+        // 如果点击的不是移除按钮或其他独立交互元素
+        if (!e.target.closest('.remove-attachment-btn')) {
+          switchPage('detail-view');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    });
+
+    // 详情页 Sub-Tab 切换
+    const detailTabBtns = document.querySelectorAll('.detail-tab-btn');
+    const detailTabContents = document.querySelectorAll('.detail-tab-content');
+
+    detailTabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-detail-tab');
+        detailTabBtns.forEach(b => b.classList.remove('active'));
+        detailTabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        const targetEl = document.getElementById(`detail-tab-${targetTab}`);
+        if (targetEl) targetEl.classList.add('active');
+      });
+    });
+
+    // 时间戳与章节节点跳转逻辑
+    const chapterItems = document.querySelectorAll('.chapter-item');
+    const videoTimeDisplay = document.getElementById('video-time-display');
+    const videoChapterBadge = document.getElementById('video-chapter-badge');
+    const videoProgressFill = document.getElementById('video-progress-fill-el');
+
+    const chapterTimeData = {
+      '00:00': { percent: '2%', title: '01. Transformer 架构回顾与 self-attention 核心机制' },
+      '02:15': { percent: '5.3%', title: '01. Transformer 架构回顾与 self-attention 核心机制' },
+      '05:20': { percent: '12.6%', title: '02. 从 Large Language Model 到 Autonomous Agent 的演进逻辑' },
+      '12:45': { percent: '30.1%', title: '03. Agent 的四大核心组件：Planning, Memory, Tools, Action' },
+      '22:10': { percent: '52.5%', title: '04. ReAct 范式与 Tool-using 工具调用实战' },
+      '31:05': { percent: '73.6%', title: '05. 多智能体协作 (Multi-Agent Collaboration) 与未来展望' }
+    };
+
+    function seekToTime(timeStr) {
+      const data = chapterTimeData[timeStr] || { percent: '20%', title: '当前播放章节' };
+      if (videoTimeDisplay) videoTimeDisplay.textContent = `${timeStr} / 42:18`;
+      if (videoChapterBadge) videoChapterBadge.textContent = `当前章节：${data.title}`;
+      if (videoProgressFill) videoProgressFill.style.width = data.percent;
+
+      // 高亮对应章节
+      chapterItems.forEach(item => {
+        const itemTime = item.getAttribute('data-time');
+        if (itemTime === timeStr || (timeStr === '02:15' && itemTime === '00:00')) {
+          item.classList.add('active');
+          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      showToast(`▶ 视频播放跳转至定位点 [${timeStr}]`);
+    }
+
+    // 章节节点点击定位
+    chapterItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const time = item.getAttribute('data-time');
+        seekToTime(time);
+      });
+    });
+
+    // 总结与转录原文里的时间戳标签点击定位
+    document.addEventListener('click', (e) => {
+      const tag = e.target.closest('.timestamp-tag');
+      if (tag) {
+        const time = tag.getAttribute('data-time');
+        if (time) seekToTime(time);
+      }
+    });
+
+    // 视频播放控制模拟
+    let isPlaying = false;
+    const centerPlayBtn = document.getElementById('video-center-play-btn');
+    const barPlayBtn = document.getElementById('video-play-toggle-btn');
+    const centerPlayIcon = document.getElementById('center-play-icon');
+    const barPlayIcon = document.getElementById('bar-play-icon');
+
+    function toggleVideoPlay() {
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        centerPlayIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>`;
+        barPlayIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>`;
+        showToast('▶ 开始试听播放');
+      } else {
+        centerPlayIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+        barPlayIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+        showToast('⏸ 已暂停播放');
+      }
+    }
+
+    if (centerPlayBtn) centerPlayBtn.addEventListener('click', toggleVideoPlay);
+    if (barPlayBtn) barPlayBtn.addEventListener('click', toggleVideoPlay);
+
+    // ==================== 视频浮窗 & 拖动 logic (iOS PiP Floating Window) ====================
+    const videoContainer = document.getElementById('video-player-container');
+    const videoPlaceholder = document.getElementById('video-placeholder');
+    const floatHeader = document.getElementById('video-float-header');
+    const floatDockBtn = document.getElementById('float-dock-btn');
+    const pipToggleBtn = document.getElementById('video-pip-toggle-btn');
+
+    let isVideoFloating = false;
+    let userClosedFloat = false; // 记录用户在下滑过程中是否手动关闭了浮窗
+
+    function enableVideoFloat(showToastMsg = true) {
+      if (isVideoFloating || !videoContainer) return;
+      isVideoFloating = true;
+      videoContainer.classList.add('is-floating');
+      if (videoPlaceholder) videoPlaceholder.style.display = 'flex';
+
+      // 首次开启浮窗时重置位置到右下角
+      if (!videoContainer.style.left || videoContainer.style.left === 'auto') {
+        videoContainer.style.left = '';
+        videoContainer.style.top = '';
+        videoContainer.style.right = '28px';
+        videoContainer.style.bottom = '28px';
+      }
+
+      if (showToastMsg) showToast('📹 已开启视频浮窗模式，按住顶部标题栏可拖动位置');
+    }
+
+    function disableVideoFloat(showToastMsg = true, isUserAction = false) {
+      if (!isVideoFloating || !videoContainer) return;
+      isVideoFloating = false;
+      if (isUserAction) userClosedFloat = true;
+      videoContainer.classList.remove('is-floating');
+      if (videoPlaceholder) videoPlaceholder.style.display = 'none';
+
+      // 清除绝对/固定定位 inline style 恢复 flex 布局
+      videoContainer.style.left = '';
+      videoContainer.style.top = '';
+      videoContainer.style.right = '';
+      videoContainer.style.bottom = '';
+      videoContainer.style.transform = '';
+
+      if (showToastMsg) showToast('📌 视频已还原至原位');
+    }
+
+    // 按钮触发
+    if (pipToggleBtn) {
+      pipToggleBtn.addEventListener('click', () => {
+        if (isVideoFloating) {
+          disableVideoFloat(true, true);
+        } else {
+          userClosedFloat = false;
+          enableVideoFloat(true);
+        }
+      });
+    }
+
+    if (floatDockBtn) {
+      floatDockBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        disableVideoFloat(true, true);
+      });
+    }
+
+    if (videoPlaceholder) {
+      videoPlaceholder.addEventListener('click', () => {
+        disableVideoFloat(true, true);
+      });
+    }
+
+    // 页面与详情页容器滚动监听
+    function handleDetailScroll() {
+      const detailView = document.getElementById('page-detail-view');
+      if (!detailView || detailView.style.display === 'none') return;
+      if (!videoPlaceholder) return;
+
+      const targetEl = videoPlaceholder.parentElement || videoPlaceholder;
+      const rect = targetEl.getBoundingClientRect();
+
+      // 当原视频位置顶部移出视口顶部 (rect.top < -20) 时自动开启浮窗
+      if (rect.top < -20) {
+        if (!isVideoFloating && !userClosedFloat) {
+          enableVideoFloat(false);
+        }
+      } else if (rect.top >= 0) {
+        // 滚动回顶部时重置标志并还原
+        userClosedFloat = false;
+        if (isVideoFloating) {
+          disableVideoFloat(false);
+        }
+      }
+    }
+
+    const detailPageContainer = document.getElementById('page-detail-view');
+    if (detailPageContainer) {
+      detailPageContainer.addEventListener('scroll', handleDetailScroll);
+    }
+    window.addEventListener('scroll', handleDetailScroll);
+
+    // 浮窗拖拽交互 (Drag & Drop)
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+
+    function startDrag(e) {
+      if (!isVideoFloating) return;
+      if (e.target.closest('.float-action-btn')) return;
+
+      isDragging = true;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const rect = videoContainer.getBoundingClientRect();
+      dragStartX = clientX;
+      dragStartY = clientY;
+      initialLeft = rect.left;
+      initialTop = rect.top;
+
+      videoContainer.style.left = `${initialLeft}px`;
+      videoContainer.style.top = `${initialTop}px`;
+      videoContainer.style.right = 'auto';
+      videoContainer.style.bottom = 'auto';
+
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', stopDrag);
+      document.addEventListener('touchmove', onDrag, { passive: false });
+      document.addEventListener('touchend', stopDrag);
+    }
+
+    function onDrag(e) {
+      if (!isDragging) return;
+      if (e.cancelable) e.preventDefault();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - dragStartX;
+      const deltaY = clientY - dragStartY;
+
+      let newLeft = initialLeft + deltaX;
+      let newTop = initialTop + deltaY;
+
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const containerW = videoContainer.offsetWidth;
+      const containerH = videoContainer.offsetHeight;
+
+      newLeft = Math.max(10, Math.min(winW - containerW - 10, newLeft));
+      newTop = Math.max(10, Math.min(winH - containerH - 10, newTop));
+
+      videoContainer.style.left = `${newLeft}px`;
+      videoContainer.style.top = `${newTop}px`;
+    }
+
+    function stopDrag() {
+      isDragging = false;
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.removeEventListener('touchmove', onDrag);
+      document.removeEventListener('touchend', stopDrag);
+    }
+
+    if (floatHeader) {
+      floatHeader.addEventListener('mousedown', startDrag);
+      floatHeader.addEventListener('touchstart', startDrag, { passive: true });
+    }
+
+    // 划词弹出 ["问Agent", "问专家"] Tooltip & Modal 交互
+    const popover = document.getElementById('text-selection-popover');
+    const qaOverlay = document.getElementById('qa-modal-overlay');
+    const qaModalTitle = document.getElementById('qa-modal-title');
+    const qaQuoteSnippet = document.getElementById('qa-quote-snippet');
+    const qaAnswerBox = document.getElementById('qa-answer-box');
+    const qaModalCloseBtn = document.getElementById('qa-modal-close-btn');
+    const askAgentBtn = document.getElementById('popover-ask-agent-btn');
+    const askExpertBtn = document.getElementById('popover-ask-expert-btn');
+
+    let currentSelectedText = '';
+
+    function handleTextSelection() {
+      const selection = window.getSelection();
+      const text = selection ? selection.toString().trim() : '';
+
+      // 仅限 概览、总结、转录原文 里的文本
+      let isAllowed = false;
+      if (text.length > 0 && selection.rangeCount > 0) {
+        const allowedIds = ['detail-tab-overview', 'detail-tab-summary', 'detail-tab-transcript'];
+        let anchorEl = selection.anchorNode ? (selection.anchorNode.nodeType === 1 ? selection.anchorNode : selection.anchorNode.parentElement) : null;
+        let focusEl = selection.focusNode ? (selection.focusNode.nodeType === 1 ? selection.focusNode : selection.focusNode.parentElement) : null;
+
+        if (anchorEl && focusEl) {
+          const anchorTab = anchorEl.closest('.detail-tab-content');
+          const focusTab = focusEl.closest('.detail-tab-content');
+          if (anchorTab && focusTab && anchorTab === focusTab && allowedIds.includes(anchorTab.id)) {
+            isAllowed = true;
+          }
+        }
+      }
+
+      if (isAllowed) {
+        currentSelectedText = text;
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+
+        // 定位 popover 在选中文本上方
+        popover.style.display = 'flex';
+        popover.style.top = `${rect.top + window.scrollY - 44}px`;
+        popover.style.left = `${Math.max(10, rect.left + window.scrollX + rect.width / 2 - 90)}px`;
+      } else {
+        popover.style.display = 'none';
+      }
+    }
+
+    document.addEventListener('mouseup', (e) => {
+      if (popover && !popover.contains(e.target)) {
+        setTimeout(handleTextSelection, 10);
+      }
+    });
+
+    // 获取当前论坛/会议名称与当前选中 Tab 标签名
+    function getForumName() {
+      const detailMainTitle = document.getElementById('detail-main-title');
+      return detailMainTitle ? detailMainTitle.textContent.trim() : '【硬核AI】从 Transformer 到 Agent 的进化之路';
+    }
+
+    function getActiveTabLabel() {
+      const activeTabBtn = document.querySelector('.detail-tab-btn.active');
+      return activeTabBtn ? activeTabBtn.textContent.trim() : '总结';
+    }
+
+    const refDocChipBar = document.getElementById('ref-doc-chip-bar');
+    const refDocTitle = document.getElementById('ref-doc-title');
+    const refDocTagLabel = document.getElementById('ref-doc-tag-label');
+    const refDocCloseBtn = document.getElementById('ref-doc-close-btn');
+
+    if (refDocCloseBtn && refDocChipBar) {
+      refDocCloseBtn.addEventListener('click', () => {
+        refDocChipBar.style.display = 'none';
+      });
+    }
+
+    function setRefDocumentTag() {
+      if (refDocChipBar && refDocTitle && refDocTagLabel) {
+        refDocTitle.textContent = getForumName();
+        refDocTagLabel.textContent = getActiveTabLabel();
+        refDocChipBar.style.display = 'flex';
+      }
+    }
+
+    const expertMentionDropdown = document.getElementById('expert-mention-dropdown');
+    const expertOptionItems = document.querySelectorAll('.expert-option-item');
+
+    // 用镜像 div 计算 textarea 中指定位置的像素坐标
+    function getCaretPixelPos(textarea, atIndex) {
+      const mirrorProps = [
+        'boxSizing', 'width', 'height', 'overflowX', 'overflowY',
+        'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+        'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+        'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
+        'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily',
+        'textAlign', 'textTransform', 'textIndent', 'textDecoration',
+        'letterSpacing', 'wordSpacing', 'tabSize', 'whiteSpace'
+      ];
+      const mirror = document.createElement('div');
+      mirror.style.position = 'absolute';
+      mirror.style.visibility = 'hidden';
+      mirror.style.top = '0';
+      mirror.style.left = '0';
+      mirror.style.pointerEvents = 'none';
+      const computed = window.getComputedStyle(textarea);
+      mirrorProps.forEach(p => { mirror.style[p] = computed[p]; });
+      mirror.style.whiteSpace = 'pre-wrap';
+      mirror.style.wordWrap = 'break-word';
+      document.body.appendChild(mirror);
+
+      const textBefore = textarea.value.slice(0, atIndex);
+      mirror.textContent = textBefore;
+      const span = document.createElement('span');
+      span.textContent = textarea.value.slice(atIndex) || '.';
+      mirror.appendChild(span);
+
+      const textareaRect = textarea.getBoundingClientRect();
+      const spanRect = span.getBoundingClientRect();
+      const mirrorRect = mirror.getBoundingClientRect();
+
+      // span 在 mirror 内的相对偏移
+      const relTop = spanRect.top - mirrorRect.top;
+      const relLeft = spanRect.left - mirrorRect.left;
+
+      document.body.removeChild(mirror);
+
+      return {
+        top: textareaRect.top + relTop - textarea.scrollTop,
+        left: textareaRect.left + relLeft
+      };
+    }
+
+    // 检测输入框中的 @ 符号并显示专家下拉列表（跟随 @ 位置）
+    function checkMentionTrigger() {
+      if (!newChatTextarea || !expertMentionDropdown) return;
+      const val = newChatTextarea.value;
+      const cursorPos = newChatTextarea.selectionStart;
+      const textBeforeCursor = val.slice(0, cursorPos);
+
+      if (textBeforeCursor.endsWith('@')) {
+        const atIndex = cursorPos - 1;
+        const caretPos = getCaretPixelPos(newChatTextarea, atIndex);
+        const dropdownH = expertMentionDropdown.offsetHeight || 180;
+        const gap = 8;
+        // 优先显示在 @ 上方；若空间不足则显示在下方
+        let top = caretPos.top - dropdownH - gap;
+        if (top < 8) top = caretPos.top + parseInt(window.getComputedStyle(newChatTextarea).lineHeight, 10) + gap;
+        let left = caretPos.left;
+        // 防止超出右边界
+        if (left + 250 > window.innerWidth - 8) left = window.innerWidth - 258;
+        expertMentionDropdown.style.top = top + 'px';
+        expertMentionDropdown.style.left = left + 'px';
+        expertMentionDropdown.style.display = 'block';
+      } else {
+        expertMentionDropdown.style.display = 'none';
+      }
+    }
+
+    if (newChatTextarea) {
+      newChatTextarea.addEventListener('input', checkMentionTrigger);
+      newChatTextarea.addEventListener('keyup', checkMentionTrigger);
+      newChatTextarea.addEventListener('click', checkMentionTrigger);
+    }
+
+    // 点击专家列表项进行替换插入
+    expertOptionItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const expertName = item.getAttribute('data-expert');
+        if (newChatTextarea && expertName) {
+          const val = newChatTextarea.value;
+          const cursorPos = newChatTextarea.selectionStart;
+          const textBeforeCursor = val.slice(0, cursorPos);
+          const textAfterCursor = val.slice(cursorPos);
+
+          if (textBeforeCursor.endsWith('@')) {
+            newChatTextarea.value = textBeforeCursor.slice(0, -1) + `@${expertName} ` + textAfterCursor;
+          } else {
+            newChatTextarea.value = val + `@${expertName} `;
+          }
+
+          newChatTextarea.focus();
+          const newPos = newChatTextarea.value.length;
+          newChatTextarea.setSelectionRange(newPos, newPos);
+        }
+
+        if (expertMentionDropdown) {
+          expertMentionDropdown.style.display = 'none';
+        }
+        showToast(`已选择专家：${expertName}`);
+      });
+    });
+
+    // 点击外部区域自动关闭专家列表
+    document.addEventListener('click', (e) => {
+      if (expertMentionDropdown && !e.target.closest('#expert-mention-dropdown') && !e.target.closest('#popover-ask-expert-btn')) {
+        expertMentionDropdown.style.display = 'none';
+      }
+    });
+
+    // 问 Agent 点击 -> 填充模板与高亮引用文档标签，跳转输入框
+    if (askAgentBtn) {
+      askAgentBtn.addEventListener('click', () => {
+        popover.style.display = 'none';
+        setRefDocumentTag();
+        const fillContent = `进一步解释一下“${currentSelectedText}”`;
+
+        if (newChatTextarea) {
+          newChatTextarea.value = fillContent;
+          switchPage('new-chat');
+          newChatTextarea.focus();
+          const len = newChatTextarea.value.length;
+          newChatTextarea.setSelectionRange(len, len);
+        }
+        window.getSelection().removeAllRanges();
+        showToast('🚀 已关联引用文档并跳转至对话框');
+      });
+    }
+
+    // 问 专家 点击 -> 填充模板（带 @）、高亮引用文档标签并弹出专家列表，跳转输入框
+    if (askExpertBtn) {
+      askExpertBtn.addEventListener('click', () => {
+        popover.style.display = 'none';
+        setRefDocumentTag();
+        const fillContent = `进一步解释一下“${currentSelectedText}” @`;
+
+        if (newChatTextarea) {
+          newChatTextarea.value = fillContent;
+          switchPage('new-chat');
+          newChatTextarea.focus();
+          const len = newChatTextarea.value.length;
+          newChatTextarea.setSelectionRange(len, len);
+          if (expertMentionDropdown) {
+            expertMentionDropdown.style.display = 'block';
+          }
+        }
+        window.getSelection().removeAllRanges();
+        showToast('🚀 已关联引用文档并打开专家选择列表');
+      });
+    }
+
+    // 关闭 Modal
+    if (qaModalCloseBtn) {
+      qaModalCloseBtn.addEventListener('click', () => {
+        qaOverlay.style.display = 'none';
+      });
+    }
+
+    if (qaOverlay) {
+      qaOverlay.addEventListener('click', (e) => {
+        if (e.target === qaOverlay) qaOverlay.style.display = 'none';
+      });
+    }
+
+    // 期数下拉菜单交互
+    const episodeBtn = document.getElementById('episode-dropdown-btn');
+    const episodeMenu = document.getElementById('episode-dropdown-menu');
+    const currentEpText = document.getElementById('current-episode-text');
+    const detailMainTitle = document.getElementById('detail-main-title');
+    const episodeItems = document.querySelectorAll('.episode-item');
+
+    if (episodeBtn && episodeMenu) {
+      episodeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        episodeMenu.classList.toggle('show');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#episode-dropdown-container')) {
+          episodeMenu.classList.remove('show');
+        }
+      });
+
+      episodeItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const epNum = item.getAttribute('data-ep');
+          const title = item.getAttribute('data-title');
+
+          episodeItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          if (currentEpText) currentEpText.textContent = `第${epNum}期`;
+          if (detailMainTitle) detailMainTitle.textContent = title;
+          episodeMenu.classList.remove('show');
+
+          showToast(`已切换至第 ${epNum} 期内容`);
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>

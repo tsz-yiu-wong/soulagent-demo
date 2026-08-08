@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>帮我听 · 会议选择</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background: #e8eaf0;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    }
+
+    .phone-shell {
+      width: 390px;
+      height: 100vh;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0,0,0,0.18);
+    }
+
+    .chat-area {
+      flex: 1;
+      background: #f5f5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #bbb;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    .input-bar {
+      background: #fff;
+      border-top: 1px solid #ebebeb;
+      padding: 10px 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .selected-tag {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: #eef0fe;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #5b72f2;
+      width: fit-content;
+    }
+    .selected-tag.visible { display: inline-flex; }
+    .selected-tag-close { cursor: pointer; color: #aaa; line-height: 1; margin-left: 2px; }
+
+    .input-textarea {
+      width: 100%;
+      height: 72px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 15px;
+      color: #1a1a1a;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+    }
+    .input-textarea::placeholder { color: #bbb; }
+    .input-textarea:focus { border-color: #5b72f2; }
+
+    .input-actions { display: flex; justify-content: flex-end; }
+
+    .btn-listen {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      background: linear-gradient(135deg, #5b72f2, #8b5cf6);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: opacity 0.18s, transform 0.18s;
+      letter-spacing: 0.04em;
+    }
+    .btn-listen:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-listen:active { transform: translateY(0); }
+
+    /* Overlay */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      z-index: 10;
+      pointer-events: none;
+      transition: background 0.3s ease;
+    }
+    .overlay.visible { background: rgba(0,0,0,0.4); pointer-events: auto; }
+
+    /* Sheet */
+    .sheet {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      height: 74%;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      box-shadow: 0 -8px 32px rgba(0,0,0,0.12);
+    }
+    .sheet.open { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin: 10px auto 0;
+      flex-shrink: 0;
+    }
+
+    .sheet-views {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+    }
+
+    .sheet-view {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.3s ease;
+    }
+
+    .view-l1 { transform: translateX(0); opacity: 1; }
+    .view-l1.slide-out { transform: translateX(-30%); opacity: 0; pointer-events: none; }
+
+    .view-l23 { transform: translateX(100%); opacity: 0; pointer-events: none; }
+    .view-l23.slide-in { transform: translateX(0); opacity: 1; pointer-events: auto; }
+
+    .sheet-header { padding: 14px 16px 10px; flex-shrink: 0; }
+
+    /* L1 Tab */
+    .tab-bar {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .tab-item {
+      flex: 1; text-align: center;
+      padding: 7px 0;
+      font-size: 13px; font-weight: 500;
+      color: #888;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
+    }
+    .tab-item.active {
+      background: #fff; color: #1a1a1a;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    /* L23 header */
+    .l23-header { display: flex; flex-direction: column; gap: 10px; }
+    .breadcrumb-row { display: flex; align-items: center; gap: 8px; }
+    .back-btn {
+      display: flex; align-items: center; gap: 3px;
+      color: #5b72f2; font-size: 13px;
+      cursor: pointer; flex-shrink: 0; padding: 4px 0;
+    }
+    .breadcrumb-title {
+      font-size: 14px; font-weight: 600; color: #1a1a1a;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: #f3f4f6; border-radius: 10px; padding: 8px 12px;
+    }
+    .search-box svg { color: #aaa; flex-shrink: 0; }
+    .search-input {
+      flex: 1; border: none; background: transparent;
+      font-size: 14px; color: #1a1a1a; outline: none; font-family: inherit;
+    }
+    .search-input::placeholder { color: #bbb; }
+    .search-clear { color: #ccc; cursor: pointer; display: none; }
+    .search-clear.visible { display: flex; }
+
+    /* list scroll */
+    .list-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+    .list-scroll::-webkit-scrollbar { width: 0; }
+
+    /* L1 items */
+    .l1-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .l1-item:last-child { border-bottom: none; }
+    .l1-item:hover { background: #f9f9fc; }
+    .l1-item:active { background: #f0f1fb; }
+
+    .l1-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 20px;
+    }
+    .l1-info { flex: 1; min-width: 0; }
+    .l1-title { font-size: 14px; font-weight: 600; color: #1a1a1a; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .l1-date { font-size: 12px; color: #999; margin-top: 2px; }
+    .l1-arrow { color: #d0d0d0; flex-shrink: 0; }
+
+    /* L2 accordion */
+    .l2-group { border-bottom: 1px solid #f0f0f0; }
+    .l2-group:last-child { border-bottom: none; }
+
+    .l2-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .l2-header:hover { background: #f9f9fc; }
+
+    .l2-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 15px;
+    }
+    .l2-title { flex: 1; font-size: 14px; font-weight: 500; color: #1a1a1a; }
+    .l2-count { font-size: 11px; color: #bbb; margin-right: 2px; }
+    .l2-chevron {
+      color: #ccc; flex-shrink: 0;
+      transition: transform 0.22s ease;
+    }
+    .l2-group.expanded .l2-chevron { transform: rotate(90deg); }
+
+    /* L3 list */
+    .l3-list {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+    .l2-group.expanded .l3-list { max-height: 800px; }
+
+    .l3-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px 10px 58px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-top: 1px solid #f8f8f8;
+    }
+    .l3-item:hover { background: #f5f6fe; }
+    .l3-item:active { background: #eaecfc; }
+
+    .l3-dot { width: 6px; height: 6px; border-radius: 50%; background: #d8d8d8; flex-shrink: 0; }
+    .l3-title { flex: 1; font-size: 13px; color: #444; line-height: 1.4; }
+    .l3-speaker { font-size: 11px; color: #bbb; white-space: nowrap; }
+
+    .empty-state { padding: 48px 0; text-align: center; color: #ccc; font-size: 13px; display: none; }
+    .empty-state.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="phone-shell" id="app">
+
+  <div class="chat-area">对话区域</div>
+
+  <div class="input-bar">
+    <span class="selected-tag" id="selectedTag">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="selectedTagText"></span>
+      <span class="selected-tag-close" id="clearSelected">✕</span>
+    </span>
+    <textarea class="input-textarea" id="mainInput" placeholder="请输入您想了解的内容…"></textarea>
+    <div class="input-actions">
+      <button class="btn-listen" id="btnListen">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+          <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+        </svg>
+        帮我听
+      </button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-views">
+
+      <!-- 一级 -->
+      <div class="sheet-view view-l1" id="viewL1">
+        <div class="sheet-header">
+          <div class="tab-bar">
+            <div class="tab-item active" data-tab="conference">会议</div>
+            <div class="tab-item" data-tab="agenda">议程</div>
+          </div>
+        </div>
+        <div class="list-scroll" id="l1List"></div>
+      </div>
+
+      <!-- 二三级 -->
+      <div class="sheet-view view-l23" id="viewL23">
+        <div class="sheet-header">
+          <div class="l23-header">
+            <div class="breadcrumb-row">
+              <div class="back-btn" id="backBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                返回
+              </div>
+              <span class="breadcrumb-title" id="breadcrumbTitle"></span>
+            </div>
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input class="search-input" id="searchInput" type="text" placeholder="搜索论坛或议题…" />
+              <span class="search-clear" id="searchClear">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="list-scroll" id="l23List"></div>
+        <div class="empty-state" id="emptyState">未找到相关内容</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  conference: [
+    {
+      id: 'c1', icon: '🌐', color: '#eef0fe', title: '2026 智源大会', date: '2026.7.11 - 2026.7.12',
+      forums: [
+        { id: 'f1', icon: '🤖', color: '#fef3e2', title: '大模型与 AGI 前沿', topics: [
+            { id: 't1', title: '大模型安全与对齐', speaker: '主旨演讲' },
+            { id: 't2', title: '多模态智能体的涌现能力', speaker: '特邀报告' },
+            { id: 't3', title: 'RLHF 最新进展与挑战', speaker: '圆桌讨论' },
+        ]},
+        { id: 'f2', icon: '🧬', color: '#f0fdf4', title: 'AI for Science', topics: [
+            { id: 't4', title: 'AI 蛋白质结构预测新突破', speaker: '主旨演讲' },
+            { id: 't5', title: '药物分子生成与筛选', speaker: '特邀报告' },
+        ]},
+        { id: 'f3', icon: '🏭', color: '#fdf2f8', title: 'AI 落地与产业实践', topics: [
+            { id: 't6', title: '工业视觉检测全链路方案', speaker: '企业分享' },
+            { id: 't7', title: 'LLM 在金融风控的应用', speaker: '企业分享' },
+            { id: 't8', title: 'AI Native 产品设计方法论', speaker: '专题演讲' },
+        ]},
+      ]
+    },
+    {
+      id: 'c2', icon: '💡', color: '#fef9e7', title: '2026 全球数字经济大会', date: '2026.8.20 - 2026.8.22',
+      forums: [
+        { id: 'f4', icon: '📊', color: '#eff6ff', title: '数字基础设施峰会', topics: [
+            { id: 't9', title: '算力网络与东数西算进展', speaker: '主旨演讲' },
+            { id: 't10', title: '绿色数据中心建设', speaker: '专题论坛' },
+        ]},
+        { id: 'f5', icon: '🌏', color: '#f0fdf4', title: '数字贸易与跨境数据', topics: [
+            { id: 't11', title: '数据要素市场化改革路径', speaker: '政策解读' },
+            { id: 't12', title: '跨境数据流通合规实践', speaker: '圆桌讨论' },
+        ]},
+      ]
+    },
+    {
+      id: 'c3', icon: '🔬', color: '#f3f0ff', title: '2026 CVPR China', date: '2026.9.05 - 2026.9.07',
+      forums: [
+        { id: 'f6', icon: '👁️', color: '#fdf2f8', title: '计算机视觉基础研究', topics: [
+            { id: 't13', title: '扩散模型的可控生成', speaker: '口头报告' },
+            { id: 't14', title: '视频理解与时序建模', speaker: '口头报告' },
+        ]},
+        { id: 'f7', icon: '🎨', color: '#fef9e7', title: 'AIGC 与创意媒体', topics: [
+            { id: 't15', title: '文生图评测标准体系', speaker: '工作坊' },
+            { id: 't16', title: '版权保护与内容水印', speaker: '专题报告' },
+        ]},
+      ]
+    },
+  ],
+  agenda: [
+    {
+      id: 'a1', icon: '📅', color: '#f0f9ff', title: '今日议程 · 7月22日', date: '2026.7.22 周二',
+      forums: [
+        { id: 'af1', icon: '🌅', color: '#fef9e7', title: '上午场（09:00-12:00）', topics: [
+            { id: 'at1', title: '开幕式与主旨演讲', speaker: '09:00-10:30' },
+            { id: 'at2', title: '大模型安全圆桌', speaker: '10:45-12:00' },
+        ]},
+        { id: 'af2', icon: '🌇', color: '#f0fdf4', title: '下午场（14:00-18:00）', topics: [
+            { id: 'at3', title: 'AI for Science 专题', speaker: '14:00-15:30' },
+            { id: 'at4', title: '产业实践闭门会', speaker: '16:00-18:00' },
+        ]},
+      ]
+    },
+    {
+      id: 'a2', icon: '📅', color: '#f0f9ff', title: '明日议程 · 7月23日', date: '2026.7.23 周三',
+      forums: [
+        { id: 'af3', icon: '🌅', color: '#fef9e7', title: '上午场（09:30-12:00）', topics: [
+            { id: 'at5', title: 'AGI 进展报告', speaker: '09:30-11:00' },
+            { id: 'at6', title: '青年学者论坛', speaker: '11:00-12:00' },
+        ]},
+      ]
+    },
+  ]
+};
+
+let currentTab = 'conference';
+let currentConference = null;
+
+const overlay      = document.getElementById('overlay');
+const sheet        = document.getElementById('sheet');
+const btnListen    = document.getElementById('btnListen');
+const viewL1       = document.getElementById('viewL1');
+const viewL23      = document.getElementById('viewL23');
+const l1List       = document.getElementById('l1List');
+const l23List      = document.getElementById('l23List');
+const backBtn      = document.getElementById('backBtn');
+const breadcrumb   = document.getElementById('breadcrumbTitle');
+const searchInput  = document.getElementById('searchInput');
+const searchClear  = document.getElementById('searchClear');
+const emptyState   = document.getElementById('emptyState');
+const selectedTag  = document.getElementById('selectedTag');
+const selectedTagText = document.getElementById('selectedTagText');
+const clearSelected = document.getElementById('clearSelected');
+const tabItems     = document.querySelectorAll('.tab-item');
+
+function openSheet() {
+  sheet.classList.add('open');
+  overlay.classList.add('visible');
+  renderL1();
+}
+
+function closeSheet() {
+  sheet.classList.remove('open');
+  overlay.classList.remove('visible');
+  setTimeout(resetToL1, 320);
+}
+
+function resetToL1() {
+  viewL1.classList.remove('slide-out');
+  viewL23.classList.remove('slide-in');
+  currentConference = null;
+  searchInput.value = '';
+  searchClear.classList.remove('visible');
+}
+
+function renderL1() {
+  const items = DATA[currentTab];
+  l1List.innerHTML = '';
+  items.forEach(conf => {
+    const div = document.createElement('div');
+    div.className = 'l1-item';
+    div.innerHTML = `
+      <div class="l1-icon" style="background:${conf.color}">${conf.icon}</div>
+      <div class="l1-info">
+        <div class="l1-title">${esc(conf.title)}</div>
+        <div class="l1-date">${esc(conf.date)}</div>
+      </div>
+      <svg class="l1-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    `;
+    div.addEventListener('click', () => enterL23(conf));
+    l1List.appendChild(div);
+  });
+}
+
+function enterL23(conf) {
+  currentConference = conf;
+  breadcrumb.textContent = conf.title;
+  searchInput.value = '';
+  searchClear.classList.remove('visible');
+  renderL23(conf.forums, '');
+  viewL1.classList.add('slide-out');
+  viewL23.classList.add('slide-in');
+}
+
+function renderL23(forums, query) {
+  l23List.innerHTML = '';
+  const q = (query || '').trim().toLowerCase();
+  let hasResult = false;
+
+  forums.forEach(forum => {
+    const forumMatch = !q || forum.title.toLowerCase().includes(q);
+    const topicsFiltered = forum.topics.filter(t =>
+      !q || t.title.toLowerCase().includes(q) || forumMatch
+    );
+    if (!forumMatch && topicsFiltered.length === 0) return;
+    hasResult = true;
+
+    const group = document.createElement('div');
+    group.className = 'l2-group' + (q ? ' expanded' : '');
+
+    const header = document.createElement('div');
+    header.className = 'l2-header';
+    header.innerHTML = `
+      <div class="l2-icon" style="background:${forum.color}">${forum.icon}</div>
+      <div class="l2-title">${esc(forum.title)}</div>
+      <span class="l2-count">${topicsFiltered.length} 个议题</span>
+      <svg class="l2-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+    `;
+    header.addEventListener('click', () => group.classList.toggle('expanded'));
+
+    const l3 = document.createElement('div');
+    l3.className = 'l3-list';
+    topicsFiltered.forEach(topic => {
+      const item = document.createElement('div');
+      item.className = 'l3-item';
+      item.innerHTML = `
+        <div class="l3-dot"></div>
+        <div class="l3-title">${esc(topic.title)}</div>
+        <div class="l3-speaker">${esc(topic.speaker)}</div>
+      `;
+      item.addEventListener('click', () => selectTopic(currentConference, forum, topic));
+      l3.appendChild(item);
+    });
+
+    group.appendChild(header);
+    group.appendChild(l3);
+    l23List.appendChild(group);
+  });
+
+  emptyState.classList.toggle('visible', !hasResult);
+}
+
+function selectTopic(conf, forum, topic) {
+  const label = `${conf.title} · ${forum.title} · ${topic.title}`;
+  selectedTagText.textContent = label;
+  selectedTag.classList.add('visible');
+  closeSheet();
+}
+
+clearSelected.addEventListener('click', () => {
+  selectedTag.classList.remove('visible');
+  selectedTagText.textContent = '';
+});
+
+tabItems.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabItems.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    renderL1();
+  });
+});
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value;
+  searchClear.classList.toggle('visible', !!q);
+  if (currentConference) renderL23(currentConference.forums, q);
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  searchClear.classList.remove('visible');
+  if (currentConference) renderL23(currentConference.forums, '');
+  searchInput.focus();
+});
+
+btnListen.addEventListener('click', openSheet);
+overlay.addEventListener('click', closeSheet);
+backBtn.addEventListener('click', () => {
+  viewL1.classList.remove('slide-out');
+  viewL23.classList.remove('slide-in');
+  currentConference = null;
+  searchInput.value = '';
+  searchClear.classList.remove('visible');
+});
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

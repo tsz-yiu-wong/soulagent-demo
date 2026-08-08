@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>推荐问管理后台</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px; color: #1a1c23; background: #f5f6fa;
+  display: flex; overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; font-size: 13px; }
+input, select, textarea { font-family: inherit; font-size: 13px; }
+
+:root {
+  --primary: #4361ee;
+  --primary-hover: #3651d4;
+  --danger: #e63946;
+  --danger-hover: #c5303c;
+  --success: #22c55e;
+  --text-secondary: #6c7293;
+  --border: #e4e6ef;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ===== Sidebar (in-page, light) ===== */
+.sidebar {
+  width: 180px; min-width: 180px;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  height: 100vh;
+}
+.sidebar-header {
+  padding: 18px 16px 10px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sidebar-list { list-style: none; padding: 0 8px; flex: 1; overflow-y: auto; }
+.sidebar-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  color: #374151;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-item:hover { background: #f0f1f5; }
+.sidebar-item.active {
+  background: #eef0ff;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ===== Main ===== */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  background: #fff; border-bottom: 1px solid var(--border);
+}
+.main-header h1 { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.main-header .header-actions { display: flex; gap: 8px; }
+.main-content { flex: 1; overflow-y: auto; padding: 18px 24px; }
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; transition: background 0.15s;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-outline { background: #fff; border: 1px solid var(--border); color: #374151; }
+.btn-outline:hover { background: #f5f6fa; border-color: #ccc; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #1aab4f; }
+.btn-text { color: var(--primary); padding: 4px 6px; font-size: 12px; }
+.btn-text:hover { background: rgba(67,97,238,0.08); border-radius: 4px; }
+.btn-text-danger { color: var(--danger); padding: 4px 6px; font-size: 12px; }
+.btn-text-danger:hover { background: rgba(230,57,70,0.08); border-radius: 4px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+/* ===== Icon Action Buttons ===== */
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 6px;
+  color: var(--text-secondary);
+  transition: background 0.12s, color 0.12s;
+}
+.btn-icon:hover {
+  background: #f0f1f5; color: var(--primary);
+}
+.btn-icon-danger:hover {
+  background: rgba(230,57,70,0.08); color: var(--danger);
+}
+
+/* ===== Slot Config Card ===== */
+.slot-config-card {
+  background: #fff; border-radius: 10px;
+  box-shadow: var(--card-shadow); border: 1px solid var(--border);
+  padding: 16px 20px; margin-bottom: 18px;
+}
+.slot-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.slot-card-header .title { font-size: 14px; font-weight: 600; }
+.slot-card-header .actions { display: flex; gap: 6px; }
+
+/* Slot display mode */
+.slot-display { display: flex; flex-wrap: wrap; gap: 8px; }
+.slot-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #f5f6fa; border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 14px; font-size: 12px;
+}
+.slot-chip .slot-label { font-weight: 600; color: var(--text-secondary); }
+.slot-chip .slot-cat { color: #1a1c23; font-weight: 500; }
+.slot-chip .slot-fb { color: var(--text-secondary); font-style: italic; }
+
+/* Slot edit mode */
+.slot-edit-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid #f0f1f5;
+}
+.slot-edit-row:last-child { border-bottom: none; }
+.slot-edit-row label { font-size: 12px; font-weight: 600; color: var(--text-secondary); min-width: 50px; }
+.slot-edit-row select {
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 8px; font-size: 12px; background: #fff; outline: none;
+}
+.slot-edit-row select:focus { border-color: var(--primary); }
+.slot-edit-row .remove-slot {
+  color: #ccc; font-size: 16px; padding: 2px 4px; border-radius: 4px;
+}
+.slot-edit-row .remove-slot:hover { color: var(--danger); background: rgba(230,57,70,0.08); }
+
+/* ===== Toolbar ===== */
+.toolbar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.toolbar-left { display: flex; gap: 8px; align-items: center; flex: 1; }
+.toolbar-right { display: flex; gap: 8px; }
+.search-input {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 12px 7px 32px; width: 220px; outline: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%236c7293' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E") 10px center no-repeat;
+}
+.search-input:focus { border-color: var(--primary); }
+.filter-select {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; background: #fff; outline: none;
+}
+.filter-select:focus { border-color: var(--primary); }
+
+/* ===== Table ===== */
+.table-card {
+  background: #fff; border-radius: 10px;
+  box-shadow: var(--card-shadow); border: 1px solid var(--border);
+  overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+thead { background: #f8f9fc; }
+th {
+  padding: 10px 14px; text-align: left;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border); white-space: nowrap; user-select: none;
+}
+th.sortable { cursor: pointer; }
+th.sortable:hover { color: var(--primary); }
+th .sort-icon { font-size: 10px; margin-left: 3px; }
+td {
+  padding: 10px 14px; font-size: 13px;
+  border-bottom: 1px solid #f0f1f5; vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfd; }
+tr.selected td { background: #eef1ff; }
+td input[type="checkbox"], th input[type="checkbox"] {
+  cursor: pointer; accent-color: var(--primary); width: 15px; height: 15px;
+}
+.text-truncate { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 500;
+}
+.status-badge.on { background: #ecfdf5; color: #16a34a; }
+.status-badge.off { background: #fef2f2; color: #dc2626; }
+.icon-cell-img { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; vertical-align: middle; }
+.time-text { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+.actions-cell { display: flex; gap: 4px; align-items: center; }
+
+/* ===== Batch Bar (always visible) ===== */
+.batch-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 18px;
+  background: #f8f9fc; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.batch-bar .count { font-weight: 600; color: var(--primary); min-width: 16px; text-align: center; }
+
+/* ===== Pagination ===== */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-secondary);
+}
+.page-btns { display: flex; gap: 4px; }
+.page-btn {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: #374151; background: #fff;
+}
+.page-btn:hover { background: #f5f6fa; }
+.page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Empty State ===== */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+.empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  width: 560px; max-height: 85vh;
+  display: flex; flex-direction: column;
+}
+.modal.wide { width: 680px; }
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 22px; border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 15px; font-weight: 600; }
+.modal-close {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #aaa; border-radius: 6px;
+}
+.modal-close:hover { background: #f5f6fa; color: #555; }
+.modal-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 12px 22px; border-top: 1px solid var(--border);
+}
+
+/* ===== Form ===== */
+.form-row { margin-bottom: 14px; }
+.form-row:last-child { margin-bottom: 0; }
+.form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+.required-star { color: var(--danger); margin-left: 3px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 12px; outline: none; font-size: 13px; background: #fff;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+.form-textarea { resize: vertical; min-height: 56px; }
+.form-input:disabled { background: #f5f6fa; color: #999; cursor: not-allowed; }
+.form-hint { font-size: 11px; color: #aaa; margin-top: 3px; }
+.form-row-inline { display: flex; gap: 12px; }
+.form-row-inline > * { flex: 1; }
+
+/* ===== Management List ===== */
+.mgmt-list { list-style: none; }
+.mgmt-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: 6px;
+  border: 1px solid var(--border); margin-bottom: 6px;
+}
+.mgmt-item:hover { background: #fafbfd; }
+.mgmt-item .label { font-size: 13px; font-weight: 500; }
+.mgmt-item .id-text { font-size: 11px; color: #aaa; margin-left: 8px; }
+.mgmt-item .actions { display: flex; gap: 4px; align-items: center; }
+.mgmt-item .icon-preview { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; margin-right: 8px; border: 1px solid var(--border); }
+.mgmt-add { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
+.mgmt-add input { flex: 1; }
+
+/* ===== Import ===== */
+.import-zone {
+  border: 2px dashed var(--border); border-radius: 8px;
+  padding: 60px 20px; text-align: center; color: var(--text-secondary);
+  cursor: pointer; transition: border-color 0.15s;
+}
+.import-zone:hover { border-color: var(--primary); }
+.import-zone input[type="file"] { display: none; }
+.import-preview { margin-top: 14px; }
+.import-preview table { font-size: 12px; }
+
+/* ===== Toast ===== */
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  animation: toast-in 0.2s ease;
+}
+.toast.success { background: #16a34a; }
+.toast.error { background: #dc2626; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== Confirm Dialog ===== */
+.confirm-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35); z-index: 1100;
+  align-items: center; justify-content: center;
+}
+.confirm-overlay.show { display: flex; }
+.confirm-box {
+  background: #fff; border-radius: 12px; padding: 24px;
+  width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); text-align: center;
+}
+.confirm-box p { font-size: 14px; margin-bottom: 18px; line-height: 1.6; }
+.confirm-box .btns { display: flex; gap: 8px; justify-content: center; }
+
+/* ===== Icon Upload ===== */
+.icon-upload-area {
+  display: flex; align-items: center; gap: 10px;
+}
+.icon-upload-preview {
+  width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; background: #f8f9fc;
+}
+.icon-upload-preview img { width: 100%; height: 100%; object-fit: contain; }
+.icon-upload-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; color: #374151; cursor: pointer;
+}
+.icon-upload-btn:hover { background: #f5f6fa; }
+.icon-upload-btn input { display: none; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-header">配置对象</div>
+  <ul class="sidebar-list" id="entityList"></ul>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <header class="main-header">
+    <h1 id="mainTitle">MyAgent 推荐问</h1>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-sm" id="categoryMgmtBtn" onclick="openModal('categoryModal')">分类管理</button>
+      <button class="btn btn-outline btn-sm" onclick="openModal('iconModal')">图标管理</button>
+    </div>
+  </header>
+
+  <div class="main-content">
+    <!-- Slot Config -->
+    <div class="slot-config-card" id="slotConfigCard">
+      <div class="slot-card-header">
+        <span class="title">槽位配置</span>
+        <div class="actions" id="slotActions"></div>
+      </div>
+      <div id="slotContent"></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索文案…" oninput="onSearch()">
+        <select class="filter-select" id="filterLanguage" onchange="onFilterLanguage()">
+          <option value="">全部语言</option>
+          <option value="ZH">ZH</option>
+          <option value="EN">EN</option>
+        </select>
+        <select class="filter-select" id="filterCategory" onchange="onFilter()">
+          <option value="">全部分类</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-outline btn-sm" id="batchExportBtn" onclick="batchExport()" disabled>批量导出</button>
+        <button class="btn btn-outline btn-sm" onclick="openImportModal()">批量导入</button>
+        <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ 新建推荐问</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <!-- Batch bar: always visible -->
+      <div class="batch-bar" id="batchBar">
+        <span>已选择 <span class="count" id="batchCount">0</span> 项</span>
+        <button class="btn btn-sm btn-success" id="batchOnBtn" onclick="batchSetStatus(true)" disabled>批量上架</button>
+        <button class="btn btn-sm btn-outline" id="batchOffBtn" onclick="batchSetStatus(false)" disabled>批量下架</button>
+        <button class="btn btn-sm btn-danger" id="batchDelBtn" onclick="batchDelete()" disabled>批量删除</button>
+        <button class="btn btn-sm btn-text" id="batchClearBtn" onclick="clearSelection()" disabled>取消选择</button>
+      </div>
+      <table>
+        <thead>
+          <tr id="tableHeadRow">
+            <!-- Dynamically populated to toggle Category column -->
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none">
+        <div class="icon">📋</div>
+        <p>暂无推荐问数据</p>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Question Modal -->
+<div class="modal-overlay" id="questionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="questionModalTitle">新建推荐问</h2>
+      <button class="modal-close" onclick="closeModal('questionModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row-inline">
+        <div class="form-row">
+          <label class="form-label">语言<span class="required-star">*</span></label>
+          <select class="form-select" id="qLanguage">
+            <option value="ZH">ZH</option>
+            <option value="EN">EN</option>
+          </select>
+        </div>
+        <div class="form-row" id="qCategoryRow">
+          <label class="form-label">分类（可选）</label>
+          <select class="form-select" id="qCategory"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">推荐问文案<span class="required-star">*</span></label>
+        <textarea class="form-textarea" id="qText" rows="3" placeholder="请输入推荐问文案"></textarea>
+      </div>
+      <div class="form-row-inline">
+        <div class="form-row">
+          <label class="form-label">图标（可选）</label>
+          <select class="form-select" id="qIcon"><option value="">-</option></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">状态<span class="required-star">*</span></label>
+          <select class="form-select" id="qStatus">
+            <option value="true">上架</option>
+            <option value="false">下架</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-inline">
+        <div class="form-row">
+          <label class="form-label">默认权重<span class="required-star">*</span></label>
+          <input type="number" class="form-input" id="qWeight" min="0" max="9999" placeholder="0-9999">
+          <div class="form-hint" id="weightHint">创建后不可修改</div>
+        </div>
+        <div class="form-row" style="flex: 2; display: flex; gap: 8px;">
+          <div style="flex: 1;">
+            <label class="form-label">生效开始（可选）</label>
+            <input type="datetime-local" class="form-input" id="qTimeStart">
+          </div>
+          <div style="flex: 1;">
+            <label class="form-label">生效结束（可选）</label>
+            <input type="datetime-local" class="form-input" id="qTimeEnd">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('questionModal')">取消</button>
+      <button class="btn btn-primary" id="questionSaveBtn" onclick="saveQuestion()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category Management Modal -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>分类管理</h2>
+      <button class="modal-close" onclick="closeModal('categoryModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <ul class="mgmt-list" id="categoryList"></ul>
+      <div class="mgmt-add">
+        <input type="text" class="form-input" id="newCategoryName" placeholder="输入分类名称" onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn btn-primary btn-sm" onclick="addCategory()">添加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Icon Management Modal -->
+<div class="modal-overlay" id="iconModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>图标管理</h2>
+      <button class="modal-close" onclick="closeModal('iconModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <ul class="mgmt-list" id="iconList"></ul>
+      <div class="mgmt-add" style="gap:8px">
+        <input type="text" class="form-input" id="newIconKey" placeholder="英文标识, 如 product_intro" style="flex:1">
+        <label class="icon-upload-btn">
+          选择图片
+          <input type="file" id="newIconFile" accept="image/*">
+        </label>
+        <img id="newIconPreview" src="" style="width:28px;height:28px;object-fit:contain;border-radius:4px;display:none;border:1px solid var(--border)">
+        <button class="btn btn-primary btn-sm" onclick="addIcon()">添加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <h2>批量导入推荐问</h2>
+        <button class="btn btn-text btn-sm" onclick="downloadTemplate()" style="padding: 0; font-size: 12px; font-weight: normal;">下载模板</button>
+      </div>
+      <button class="modal-close" onclick="closeModal('importModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-zone" id="importZone" onclick="document.getElementById('importFile').click()">
+        <input type="file" id="importFile" accept=".csv" onchange="handleImportFile(event)">
+        <p>点击选择 CSV 文件，或拖拽到此处</p>
+      </div>
+      <div class="import-preview" id="importPreview" style="display:none">
+        <p style="font-size:13px;font-weight:600;margin-bottom:8px">预览（<span id="importCount">0</span> 条）</p>
+        <div style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:6px">
+          <table>
+            <thead>
+              <tr id="importTableHead"></tr>
+            </thead>
+            <tbody id="importTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('importModal')">取消</button>
+      <button class="btn btn-primary" id="importConfirmBtn" onclick="confirmImport()" disabled>确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Dialog -->
+<div class="confirm-overlay" id="confirmDialog">
+  <div class="confirm-box">
+    <p id="confirmMsg">确定要执行此操作吗？</p>
+    <div class="btns">
+      <button class="btn btn-outline" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="confirmOkBtn">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===== SVG Icons =====
+const editSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+const deleteSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+
+// ===== State =====
+const state = {
+  entities: [
+    { id: 'myagent', name: 'MyAgent', type: 'myagent' },
+    { id: 'expert-1', name: '张三', type: 'expert' },
+    { id: 'expert-2', name: '李四', type: 'expert' },
+    { id: 'expert-3', name: '王五', type: 'expert' },
+  ],
+  currentEntityId: 'myagent',
+  entityData: {},
+  categories: [
+    { id: 0, name: '默认' },
+    { id: 1, name: '产品介绍' },
+    { id: 2, name: '个人相关' },
+    { id: 3, name: '功能引导' },
+  ],
+  // Icons: key + image dataURL
+  icons: [
+    { key: 'star', imageUrl: '' },
+    { key: 'chat', imageUrl: '' },
+    { key: 'bulb', imageUrl: '' },
+    { key: 'search', imageUrl: '' },
+    { key: 'doc', imageUrl: '' },
+  ],
+  // UI
+  search: '',
+  filterCategoryId: '',
+  filterLanguage: '',
+  sortField: null,
+  sortDir: 'asc',
+  currentPage: 1,
+  pageSize: 10,
+  selectedIds: new Set(),
+  editingId: null,
+  slotEditing: false,
+  slotDraft: null, // copy of slots during editing
+  importData: [],
+};
+
+function initEntityData(entityId) {
+  if (state.entityData[entityId]) return;
+  const isAgent = entityId === 'myagent';
+  state.entityData[entityId] = {
+    slots: isAgent ? [
+      { id: 1, categoryId: 1, fallbackCategoryId: null },
+      { id: 2, categoryId: 1, fallbackCategoryId: 0 },
+      { id: 3, categoryId: 2, fallbackCategoryId: null },
+      { id: 4, categoryId: 2, fallbackCategoryId: 1 },
+    ] : [],
+    questions: [],
+    nextSlotId: 5,
+    nextQuestionId: 1,
+  };
+}
+
+function generateMockData() {
+  initEntityData('myagent');
+  const d = state.entityData['myagent'];
+  const mocks = [
+    { lang: 'ZH', text: '你能帮我做什么？', icon: 'bulb', categoryId: 1, weight: 100, online: true },
+    { lang: 'EN', text: 'What can you do for me?', icon: 'bulb', categoryId: 1, weight: 95, online: true },
+    { lang: 'ZH', text: '介绍一下你自己', icon: 'chat', categoryId: 2, weight: 90, online: true },
+    { lang: 'EN', text: 'Tell me about yourself', icon: 'chat', categoryId: 2, weight: 85, online: true },
+    { lang: 'ZH', text: '如何使用高级功能？', icon: 'doc', categoryId: 3, weight: 80, online: true },
+    { lang: 'ZH', text: '最近有什么更新？', icon: 'star', categoryId: 1, weight: 70, online: false },
+    { lang: 'ZH', text: '帮我分析数据', icon: 'search', categoryId: 3, weight: 60, online: true },
+    { lang: 'EN', text: 'How to use advanced features?', icon: 'doc', categoryId: 3, weight: 55, online: true },
+    { lang: 'ZH', text: '你支持哪些语言？', icon: '', categoryId: 1, weight: 50, online: true },
+    { lang: 'ZH', text: '如何重置密码？', icon: 'doc', categoryId: 3, weight: 40, online: true },
+    { lang: 'ZH', text: '推荐一些使用技巧', icon: 'bulb', categoryId: 0, weight: 35, online: true },
+    { lang: 'ZH', text: '我的账户信息', icon: '', categoryId: 2, weight: 30, online: false },
+  ];
+  mocks.forEach(q => {
+    d.questions.push({ id: d.nextQuestionId++, ...q, timeStart: '', timeEnd: '', createdAt: Date.now() });
+  });
+
+  // Mocks for experts - all icons default to empty ''
+  state.entities.forEach(e => {
+    if (e.id !== 'myagent') {
+      initEntityData(e.id);
+      const ed = state.entityData[e.id];
+      if (e.id === 'expert-1') {
+        const e1Mocks = [
+          { lang: 'ZH', text: '你是哪方面的专家？', icon: '', weight: 100, online: true },
+          { lang: 'EN', text: 'What is your area of expertise?', icon: '', weight: 95, online: true },
+          { lang: 'ZH', text: '可以咨询你学术问题吗？', icon: '', weight: 90, online: true },
+          { lang: 'ZH', text: '查看专家履历简介', icon: '', weight: 80, online: true },
+        ];
+        e1Mocks.forEach(q => {
+          ed.questions.push({ id: ed.nextQuestionId++, ...q, categoryId: undefined, timeStart: '', timeEnd: '', createdAt: Date.now() });
+        });
+      }
+    }
+  });
+}
+
+// ===== Helpers =====
+function getCurrent() { initEntityData(state.currentEntityId); return state.entityData[state.currentEntityId]; }
+function isCurrentAgent() { return state.currentEntityId === 'myagent'; }
+function getCategoryName(id) {
+  if (id === undefined || id === null || id === '') return '-';
+  const c = state.categories.find(c => c.id === id);
+  return c ? c.name : '-';
+}
+function getIconByKey(key) { return state.icons.find(i => i.key === key); }
+function esc(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`; el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+let confirmCallback = null;
+function showConfirm(msg, cb) {
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmDialog').classList.add('show');
+}
+function closeConfirm() { document.getElementById('confirmDialog').classList.remove('show'); confirmCallback = null; }
+document.getElementById('confirmOkBtn').onclick = () => { if (confirmCallback) confirmCallback(); closeConfirm(); };
+function openModal(id) { document.getElementById(id).classList.add('show'); if (id === 'categoryModal') renderCategoryMgmt(); if (id === 'iconModal') renderIconMgmt(); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ===== Sidebar =====
+function renderSidebar() {
+  document.getElementById('entityList').innerHTML = state.entities.map(e => `
+    <li class="sidebar-item ${e.id === state.currentEntityId ? 'active' : ''}" onclick="switchEntity('${e.id}')">${esc(e.name)}</li>
+  `).join('');
+}
+function switchEntity(id) {
+  state.currentEntityId = id;
+  state.search = ''; state.filterCategoryId = ''; state.filterLanguage = ''; state.sortField = null;
+  state.currentPage = 1; state.selectedIds.clear(); state.slotEditing = false;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterCategory').value = '';
+  document.getElementById('filterLanguage').value = '';
+  renderAll();
+}
+
+// ===== Slots =====
+function renderSlots() {
+  const data = getCurrent();
+  const slotCard = document.getElementById('slotConfigCard');
+  if (!isCurrentAgent()) {
+    slotCard.style.display = 'none';
+    return;
+  }
+  slotCard.style.display = 'block';
+
+  const actionsEl = document.getElementById('slotActions');
+  const contentEl = document.getElementById('slotContent');
+
+  if (state.slotEditing) {
+    // Edit mode
+    actionsEl.innerHTML = `
+      <button class="btn btn-sm btn-outline" onclick="addSlotDraft()">+ 添加槽位</button>
+      <button class="btn btn-sm btn-outline" onclick="cancelSlotEdit()">取消</button>
+      <button class="btn btn-sm btn-primary" onclick="saveSlotEdit()">保存</button>
+    `;
+    contentEl.innerHTML = state.slotDraft.map((s, idx) => `
+      <div class="slot-edit-row">
+        <label>槽位${s.id}</label>
+        <span style="font-size:12px;color:var(--text-secondary)">分类</span>
+        <select onchange="state.slotDraft[${idx}].categoryId=+this.value">
+          ${state.categories.map(c => `<option value="${c.id}" ${c.id === s.categoryId ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+        </select>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:12px">兜底分类</span>
+        <select onchange="state.slotDraft[${idx}].fallbackCategoryId=this.value===''?null:+this.value">
+          <option value="" ${s.fallbackCategoryId === null ? 'selected' : ''}>无（不兜底）</option>
+          ${state.categories.map(c => `<option value="${c.id}" ${s.fallbackCategoryId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
+        </select>
+        <button class="remove-slot" onclick="removeSlotDraft(${idx})" title="删除槽位">×</button>
+      </div>
+    `).join('') || '<div style="padding:12px;color:#aaa;font-size:13px">暂无槽位，点击上方"添加槽位"</div>';
+  } else {
+    // Display mode
+    actionsEl.innerHTML = `<button class="btn btn-sm btn-outline" onclick="startSlotEdit()">编辑</button>`;
+    if (data.slots.length === 0) {
+      contentEl.innerHTML = '<div style="padding:8px 0;color:#aaa;font-size:13px">暂未配置槽位</div>';
+    } else {
+      contentEl.innerHTML = '<div class="slot-display">' + data.slots.map(s => {
+        const fbText = s.fallbackCategoryId !== null ? `兜底: ${esc(getCategoryName(s.fallbackCategoryId))}` : '无兜底';
+        return `<div class="slot-chip">
+          <span class="slot-label">槽位${s.id}</span>
+          <span class="slot-cat">${esc(getCategoryName(s.categoryId))}</span>
+          <span class="slot-fb">${fbText}</span>
+        </div>`;
+      }).join('') + '</div>';
+    }
+  }
+}
+function startSlotEdit() {
+  state.slotEditing = true;
+  state.slotDraft = JSON.parse(JSON.stringify(getCurrent().slots));
+  renderSlots();
+}
+function cancelSlotEdit() { state.slotEditing = false; renderSlots(); }
+function saveSlotEdit() {
+  getCurrent().slots = state.slotDraft;
+  state.slotEditing = false;
+  renderSlots();
+  toast('槽位配置已保存');
+}
+function addSlotDraft() {
+  const maxId = state.slotDraft.reduce((m, s) => Math.max(m, s.id), 0);
+  state.slotDraft.push({ id: maxId + 1, categoryId: state.categories[0]?.id || 0, fallbackCategoryId: null });
+  renderSlots();
+}
+function removeSlotDraft(idx) { state.slotDraft.splice(idx, 1); renderSlots(); }
+
+// ===== Table =====
+function getFilteredQuestions() {
+  const data = getCurrent();
+  let list = [...data.questions];
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    list = list.filter(item => item.text && item.text.toLowerCase().includes(q));
+  }
+  if (isCurrentAgent() && state.filterCategoryId !== '') {
+    list = list.filter(item => item.categoryId === +state.filterCategoryId);
+  }
+  if (state.filterLanguage !== '') {
+    list = list.filter(item => item.lang === state.filterLanguage);
+  }
+  if (state.sortField) {
+    list.sort((a, b) => {
+      let va = a[state.sortField], vb = b[state.sortField];
+      if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+      return state.sortDir === 'asc' ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0);
+    });
+  }
+  return list;
+}
+
+function updateTableHeader() {
+  const headRow = document.getElementById('tableHeadRow');
+  const isAgent = isCurrentAgent();
+
+  let cols = `
+    <th style="width:36px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)"></th>
+    <th style="width:75px">语言</th>
+    <th class="sortable" onclick="toggleSort('text')">推荐问文案 <span class="sort-icon" id="sort-text"></span></th>
+  `;
+  if (isAgent) {
+    cols += `<th>分类</th>`;
+  }
+  cols += `
+    <th>图标</th>
+    <th class="sortable" onclick="toggleSort('weight')">权重 <span class="sort-icon" id="sort-weight"></span></th>
+    <th>生效时间</th>
+    <th>状态</th>
+    <th style="width:90px">操作</th>
+  `;
+  headRow.innerHTML = cols;
+}
+
+function renderTable() {
+  updateTableHeader();
+
+  const filtered = getFilteredQuestions();
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+  if (state.currentPage > totalPages) state.currentPage = totalPages;
+  const start = (state.currentPage - 1) * state.pageSize;
+  const pageItems = filtered.slice(start, start + state.pageSize);
+
+  const tbody = document.getElementById('tableBody');
+  const emptyEl = document.getElementById('emptyState');
+
+  if (total === 0) {
+    tbody.innerHTML = ''; emptyEl.style.display = 'block';
+    document.getElementById('pagination').innerHTML = '';
+    updateBatchBar(); return;
+  }
+  emptyEl.style.display = 'none';
+
+  const isAgent = isCurrentAgent();
+
+  tbody.innerHTML = pageItems.map(item => {
+    const sel = state.selectedIds.has(item.id);
+    const ic = item.icon ? getIconByKey(item.icon) : null;
+    let iconHtml;
+    if (ic && ic.imageUrl) {
+      iconHtml = `<img class="icon-cell-img" src="${ic.imageUrl}" alt="${esc(ic.key)}">`;
+    } else if (ic) {
+      iconHtml = esc(ic.key);
+    } else {
+      iconHtml = '<span style="color:#ccc">—</span>';
+    }
+    const timeStr = item.timeStart || item.timeEnd
+      ? `${(item.timeStart || '').replace('T', ' ')} ~ ${(item.timeEnd || '').replace('T', ' ')}`
+      : '<span style="color:#ccc">—</span>';
+    const langLabel = item.lang === 'EN' ? 'EN' : 'ZH';
+
+    return `<tr class="${sel ? 'selected' : ''}">
+      <td><input type="checkbox" ${sel ? 'checked' : ''} onchange="toggleSelect(${item.id},this.checked)"></td>
+      <td>${langLabel}</td>
+      <td><div class="text-truncate" title="${esc(item.text)}">${esc(item.text)}</div></td>
+      ${isAgent ? `<td>${esc(getCategoryName(item.categoryId))}</td>` : ''}
+      <td>${iconHtml}</td>
+      <td>${item.weight}</td>
+      <td><span class="time-text">${timeStr}</span></td>
+      <td><span class="status-badge ${item.online ? 'on' : 'off'}">${item.online ? '● 上架' : '○ 下架'}</span></td>
+      <td><div class="actions-cell">
+        <button class="btn-icon" onclick="openEditModal(${item.id})" title="编辑">${editSvg}</button>
+        <button class="btn-icon btn-icon-danger" onclick="deleteQuestion(${item.id})" title="删除">${deleteSvg}</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination(total, totalPages);
+  updateBatchBar();
+
+  document.querySelectorAll('.sort-icon').forEach(el => {
+    el.textContent = ' ↕';
+    el.style.color = '#b2b8c2';
+  });
+  if (state.sortField) {
+    const el = document.getElementById('sort-' + state.sortField);
+    if (el) {
+      el.textContent = state.sortDir === 'asc' ? ' ▲' : ' ▼';
+      el.style.color = 'var(--primary)';
+    }
+  }
+  const allOnPage = pageItems.length > 0 && pageItems.every(item => state.selectedIds.has(item.id));
+  document.getElementById('selectAll').checked = allOnPage;
+}
+
+function renderPagination(total, totalPages) {
+  const pg = document.getElementById('pagination');
+  if (totalPages <= 1) { pg.innerHTML = `<span>共 ${total} 条</span><div></div>`; return; }
+  let btns = `<button class="page-btn" ${state.currentPage <= 1 ? 'disabled' : ''} onclick="goPage(${state.currentPage - 1})">‹</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages > 7 && i > 3 && i < totalPages - 1 && Math.abs(i - state.currentPage) > 1) {
+      if (i === 4 || i === totalPages - 2) btns += '<span style="padding:0 4px;color:#aaa">…</span>';
+      continue;
+    }
+    btns += `<button class="page-btn ${i === state.currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+  }
+  btns += `<button class="page-btn" ${state.currentPage >= totalPages ? 'disabled' : ''} onclick="goPage(${state.currentPage + 1})">›</button>`;
+  pg.innerHTML = `<span>共 ${total} 条</span><div class="page-btns">${btns}</div>`;
+}
+function goPage(p) { state.currentPage = p; renderTable(); }
+
+// ===== Table Interactions =====
+function toggleSelect(id, checked) {
+  if (checked) state.selectedIds.add(id); else state.selectedIds.delete(id);
+  renderTable();
+}
+function toggleSelectAll(checked) {
+  const filtered = getFilteredQuestions();
+  const start = (state.currentPage - 1) * state.pageSize;
+  filtered.slice(start, start + state.pageSize).forEach(item => {
+    if (checked) state.selectedIds.add(item.id); else state.selectedIds.delete(item.id);
+  });
+  renderTable();
+}
+function clearSelection() { state.selectedIds.clear(); renderTable(); }
+function updateBatchBar() {
+  const count = state.selectedIds.size;
+  document.getElementById('batchCount').textContent = count;
+  const disabled = count === 0;
+  document.getElementById('batchOnBtn').disabled = disabled;
+  document.getElementById('batchOffBtn').disabled = disabled;
+  document.getElementById('batchDelBtn').disabled = disabled;
+  document.getElementById('batchClearBtn').disabled = disabled;
+  const batchExportBtn = document.getElementById('batchExportBtn');
+  if (batchExportBtn) {
+    batchExportBtn.disabled = disabled;
+  }
+}
+function onSearch() { state.search = document.getElementById('searchInput').value; state.currentPage = 1; renderTable(); }
+function onFilter() { state.filterCategoryId = document.getElementById('filterCategory').value; state.currentPage = 1; renderTable(); }
+function onFilterLanguage() { state.filterLanguage = document.getElementById('filterLanguage').value; state.currentPage = 1; renderTable(); }
+function toggleSort(field) {
+  if (state.sortField === field) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+  else { state.sortField = field; state.sortDir = 'asc'; }
+  renderTable();
+}
+function deleteQuestion(id) {
+  showConfirm('确定删除该推荐问？', () => {
+    const data = getCurrent();
+    data.questions = data.questions.filter(q => q.id !== id);
+    state.selectedIds.delete(id);
+    renderTable(); toast('已删除');
+  });
+}
+function batchSetStatus(online) {
+  const data = getCurrent();
+  state.selectedIds.forEach(id => { const q = data.questions.find(q => q.id === id); if (q) q.online = online; });
+  state.selectedIds.clear(); renderTable();
+  toast(online ? '已批量上架' : '已批量下架');
+}
+function batchDelete() {
+  const count = state.selectedIds.size;
+  showConfirm(`确定删除选中的 ${count} 条推荐问？`, () => {
+    const data = getCurrent();
+    data.questions = data.questions.filter(q => !state.selectedIds.has(q.id));
+    state.selectedIds.clear(); renderTable(); toast(`已删除 ${count} 条`);
+  });
+}
+
+// ===== Create / Edit Question =====
+function openCreateModal() {
+  state.editingId = null;
+  const isAgent = isCurrentAgent();
+
+  document.getElementById('questionModalTitle').textContent = '新建推荐问';
+  document.getElementById('questionSaveBtn').textContent = '创建';
+  document.getElementById('qLanguage').value = 'ZH';
+  document.getElementById('qText').value = '';
+  document.getElementById('qWeight').value = '';
+  document.getElementById('qWeight').disabled = false;
+  document.getElementById('weightHint').textContent = '创建后不可修改';
+  document.getElementById('qTimeStart').value = '';
+  document.getElementById('qTimeEnd').value = '';
+  document.getElementById('qStatus').value = 'true';
+
+  const catRow = document.getElementById('qCategoryRow');
+  if (isAgent) {
+    catRow.style.display = 'block';
+    renderCategoryOptions('qCategory', '');
+  } else {
+    catRow.style.display = 'none';
+  }
+
+  renderIconOptions('qIcon', '');
+  openModal('questionModal');
+}
+
+function openEditModal(id) {
+  const q = getCurrent().questions.find(q => q.id === id);
+  if (!q) return;
+  state.editingId = id;
+  const isAgent = isCurrentAgent();
+
+  document.getElementById('questionModalTitle').textContent = '编辑推荐问';
+  document.getElementById('questionSaveBtn').textContent = '保存';
+  document.getElementById('qLanguage').value = q.lang || 'ZH';
+  document.getElementById('qText').value = q.text || '';
+  document.getElementById('qWeight').value = q.weight;
+  document.getElementById('qWeight').disabled = true;
+  document.getElementById('weightHint').textContent = '权重不可修改';
+  document.getElementById('qTimeStart').value = q.timeStart || '';
+  document.getElementById('qTimeEnd').value = q.timeEnd || '';
+  document.getElementById('qStatus').value = String(q.online);
+
+  const catRow = document.getElementById('qCategoryRow');
+  if (isAgent) {
+    catRow.style.display = 'block';
+    renderCategoryOptions('qCategory', q.categoryId);
+  } else {
+    catRow.style.display = 'none';
+  }
+
+  renderIconOptions('qIcon', q.icon);
+  openModal('questionModal');
+}
+
+function saveQuestion() {
+  const text = document.getElementById('qText').value.trim();
+  if (!text) { toast('请填写推荐问文案', 'error'); return; }
+  const lang = document.getElementById('qLanguage').value;
+  const icon = document.getElementById('qIcon').value;
+  const online = document.getElementById('qStatus').value === 'true';
+  const timeStart = document.getElementById('qTimeStart').value;
+  const timeEnd = document.getElementById('qTimeEnd').value;
+  const data = getCurrent();
+  const isAgent = isCurrentAgent();
+
+  let categoryId = undefined;
+  if (isAgent) {
+    const val = document.getElementById('qCategory').value;
+    categoryId = val === '' ? undefined : +val;
+  }
+
+  if (state.editingId) {
+    const q = data.questions.find(q => q.id === state.editingId);
+    if (q) {
+      Object.assign(q, { lang, text, icon, categoryId, online, timeStart, timeEnd });
+    }
+    toast('已保存');
+  } else {
+    const weight = parseInt(document.getElementById('qWeight').value);
+    if (isNaN(weight) || weight < 0) { toast('请输入有效权重', 'error'); return; }
+    data.questions.push({
+      id: data.nextQuestionId++,
+      lang, text, icon, categoryId, weight, online, timeStart, timeEnd,
+      createdAt: Date.now()
+    });
+    toast('已创建');
+  }
+  closeModal('questionModal'); renderTable();
+}
+
+// ===== Category Management =====
+function renderCategoryMgmt() {
+  document.getElementById('categoryList').innerHTML = state.categories.map(c => `
+    <li class="mgmt-item" id="cat-item-${c.id}">
+      <div><span class="label" id="cat-label-${c.id}">${esc(c.name)}</span><span class="id-text">ID: ${c.id}</span></div>
+      <div class="actions">
+        <button class="btn-icon" onclick="startEditCategory(${c.id})" title="编辑">${editSvg}</button>
+        <button class="btn-icon btn-icon-danger" onclick="deleteCategory(${c.id})" title="删除">${deleteSvg}</button>
+      </div>
+    </li>
+  `).join('');
+}
+function addCategory() {
+  const input = document.getElementById('newCategoryName');
+  const name = input.value.trim(); if (!name) return;
+  const maxId = state.categories.reduce((m, c) => Math.max(m, c.id), -1);
+  state.categories.push({ id: maxId + 1, name });
+  input.value = ''; renderCategoryMgmt(); refreshCategorySelectors();
+  toast(`已添加分类「${name}」`);
+}
+function startEditCategory(id) {
+  const c = state.categories.find(c => c.id === id);
+  const labelEl = document.getElementById(`cat-label-${id}`);
+  const itemEl = document.getElementById(`cat-item-${id}`);
+  labelEl.innerHTML = `<input type="text" class="form-input" value="${esc(c.name)}" style="width:160px;padding:4px 8px" id="cat-edit-${id}" onkeydown="if(event.key==='Enter')confirmEditCategory(${id})">`;
+  itemEl.querySelector('.actions').innerHTML = `
+    <button class="btn-text" onclick="confirmEditCategory(${id})">保存</button>
+    <button class="btn-text-danger" onclick="renderCategoryMgmt()">取消</button>`;
+  document.getElementById(`cat-edit-${id}`).focus();
+}
+function confirmEditCategory(id) {
+  const name = document.getElementById(`cat-edit-${id}`).value.trim(); if (!name) return;
+  state.categories.find(c => c.id === id).name = name;
+  renderCategoryMgmt(); refreshCategorySelectors(); renderSlots(); renderTable();
+  toast('分类已更新');
+}
+function deleteCategory(id) {
+  showConfirm('删除分类会影响已关联的推荐问和槽位，确定？', () => {
+    state.categories = state.categories.filter(c => c.id !== id);
+    renderCategoryMgmt(); refreshCategorySelectors(); renderSlots(); renderTable();
+    toast('已删除分类');
+  });
+}
+function refreshCategorySelectors() {
+  const filterEl = document.getElementById('filterCategory');
+  const cur = filterEl.value;
+  filterEl.innerHTML = '<option value="">全部分类</option>' + state.categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  filterEl.value = cur;
+}
+
+// ===== Icon Management =====
+function renderIconMgmt() {
+  document.getElementById('iconList').innerHTML = state.icons.map((ic, idx) => `
+    <li class="mgmt-item" id="icon-item-${idx}">
+      <div style="display:flex;align-items:center">
+        ${ic.imageUrl ? `<img class="icon-preview" src="${ic.imageUrl}" alt="${esc(ic.key)}">` : '<div class="icon-preview" style="width:28px;height:28px;border:1px solid var(--border);border-radius:4px;margin-right:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#ccc;background:#f8f9fc">N/A</div>'}
+        <span class="label">${esc(ic.key)}</span>
+      </div>
+      <div class="actions">
+        <label class="btn-icon" style="cursor:pointer" title="换图">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          <input type="file" accept="image/*" style="display:none" onchange="updateIconImage(${idx},event)">
+        </label>
+        <button class="btn-icon" onclick="startEditIcon(${idx})" title="改标识">${editSvg}</button>
+        <button class="btn-icon btn-icon-danger" onclick="deleteIcon(${idx})" title="删除">${deleteSvg}</button>
+      </div>
+    </li>
+  `).join('');
+}
+function addIcon() {
+  const keyInput = document.getElementById('newIconKey');
+  const key = keyInput.value.trim();
+  if (!key) { toast('请输入标识', 'error'); return; }
+  if (state.icons.some(i => i.key === key)) { toast('该标识已存在', 'error'); return; }
+  const fileInput = document.getElementById('newIconFile');
+  const previewEl = document.getElementById('newIconPreview');
+
+  if (fileInput.files && fileInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      state.icons.push({ key, imageUrl: e.target.result });
+      keyInput.value = ''; fileInput.value = ''; previewEl.style.display = 'none';
+      renderIconMgmt(); renderTable(); toast(`已添加图标「${key}」`);
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+  } else {
+    state.icons.push({ key, imageUrl: '' });
+    keyInput.value = '';
+    renderIconMgmt(); renderTable(); toast(`已添加图标「${key}」`);
+  }
+}
+function updateIconImage(idx, event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    state.icons[idx].imageUrl = e.target.result;
+    renderIconMgmt(); renderTable(); toast('图标图片已更新');
+  };
+  reader.readAsDataURL(file);
+}
+function startEditIcon(idx) {
+  const ic = state.icons[idx];
+  const itemEl = document.getElementById(`icon-item-${idx}`);
+  const labelEl = itemEl.querySelector('.label');
+  labelEl.outerHTML = `<input type="text" class="form-input" value="${esc(ic.key)}" style="width:140px;padding:4px 8px" id="icon-key-edit-${idx}" onkeydown="if(event.key==='Enter')confirmEditIcon(${idx})">`;
+  itemEl.querySelector('.actions').innerHTML = `
+    <button class="btn-text" onclick="confirmEditIcon(${idx})">保存</button>
+    <button class="btn-text-danger" onclick="renderIconMgmt()">取消</button>`;
+  document.getElementById(`icon-key-edit-${idx}`).focus();
+}
+function confirmEditIcon(idx) {
+  const key = document.getElementById(`icon-key-edit-${idx}`).value.trim(); if (!key) return;
+  state.icons[idx].key = key;
+  renderIconMgmt(); renderTable(); toast('图标标识已更新');
+}
+function deleteIcon(idx) {
+  const key = state.icons[idx].key;
+  state.icons.splice(idx, 1);
+  renderIconMgmt(); renderTable(); toast(`已删除图标「${key}」`);
+}
+
+// New icon file preview
+document.getElementById('newIconFile').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  const previewEl = document.getElementById('newIconPreview');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = ev => { previewEl.src = ev.target.result; previewEl.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  } else {
+    previewEl.style.display = 'none';
+  }
+});
+
+// ===== Batch Import =====
+function openImportModal() {
+  state.importData = [];
+  const isAgent = isCurrentAgent();
+  const previewHead = document.getElementById('importTableHead');
+
+  if (isAgent) {
+    previewHead.innerHTML = `<tr><th>语言</th><th>推荐问文案</th><th>分类</th><th>图标</th><th>权重</th><th>状态</th></tr>`;
+  } else {
+    previewHead.innerHTML = `<tr><th>语言</th><th>推荐问文案</th><th>图标</th><th>权重</th><th>状态</th></tr>`;
+  }
+
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importFile').value = '';
+  document.getElementById('importConfirmBtn').disabled = true;
+  openModal('importModal');
+}
+
+// Batch Export
+function batchExport() {
+  const count = state.selectedIds.size;
+  if (count === 0) return;
+
+  const isAgent = isCurrentAgent();
+  const data = getCurrent();
+  const selectedQuestions = data.questions.filter(q => state.selectedIds.has(q.id));
+
+  let csvLines = [];
+  if (isAgent) {
+    csvLines.push('语言(ZH/EN),推荐问文案,图标标识,分类ID,权重,状态(1上架/0下架),开始时间,结束时间');
+    selectedQuestions.forEach(q => {
+      const textEscaped = q.text ? `"${q.text.replace(/"/g, '""')}"` : '';
+      const iconEscaped = q.icon ? `"${q.icon.replace(/"/g, '""')}"` : '';
+      const statusVal = q.online ? '1' : '0';
+      csvLines.push(`${q.lang},${textEscaped},${iconEscaped},${q.categoryId !== undefined ? q.categoryId : ''},${q.weight},${statusVal},${q.timeStart || ''},${q.timeEnd || ''}`);
+    });
+  } else {
+    csvLines.push('语言(ZH/EN),推荐问文案,图标标识,权重,状态(1上架/0下架),开始时间,结束时间');
+    selectedQuestions.forEach(q => {
+      const textEscaped = q.text ? `"${q.text.replace(/"/g, '""')}"` : '';
+      const iconEscaped = q.icon ? `"${q.icon.replace(/"/g, '""')}"` : '';
+      const statusVal = q.online ? '1' : '0';
+      csvLines.push(`${q.lang},${textEscaped},${iconEscaped},${q.weight},${statusVal},${q.timeStart || ''},${q.timeEnd || ''}`);
+    });
+  }
+
+  const csvContent = csvLines.join('\n');
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+
+  const entity = state.entities.find(e => e.id === state.currentEntityId);
+  const name = entity ? entity.name : '推荐问';
+  a.download = `${name}推荐问导出_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+
+  toast(`已成功导出 ${count} 条推荐问`);
+}
+
+// Download CSV template
+function downloadTemplate() {
+  const isAgent = isCurrentAgent();
+  let csv = '';
+  if (isAgent) {
+    csv = '语言(ZH/EN),推荐问文案,图标标识,分类ID,权重,状态(1上架/0下架),开始时间,结束时间\nZH,你能帮我做什么？,bulb,1,100,1,,\nEN,What can you do for me?,bulb,1,95,1,,';
+  } else {
+    csv = '语言(ZH/EN),推荐问文案,图标标识,权重,状态(1上架/0下架),开始时间,结束时间\nZH,你是哪方面的专家？,,100,1,,\nEN,What is your area of expertise?,,95,1,,';
+  }
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = isAgent ? 'MyAgent推荐问导入模板.csv' : '专家推荐问导入模板.csv'; a.click();
+}
+
+function handleImportFile(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const isAgent = isCurrentAgent();
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const lines = evt.target.result.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) { toast('文件为空或格式不正确', 'error'); return; }
+    const rows = lines.slice(1).map(line => {
+      const cols = parseCSVLine(line);
+      const fileLang = (cols[0] || 'ZH').toUpperCase();
+      const finalLang = (fileLang === 'EN' || fileLang === 'ZH') ? fileLang : 'ZH';
+      if (isAgent) {
+        return {
+          lang: finalLang,
+          text: cols[1] || '',
+          icon: cols[2] || '',
+          categoryId: parseInt(cols[3]) || 0,
+          weight: parseInt(cols[4]) || 0,
+          online: cols[5] !== '0',
+          timeStart: cols[6] || '',
+          timeEnd: cols[7] || ''
+        };
+      } else {
+        return {
+          lang: finalLang,
+          text: cols[1] || '',
+          icon: cols[2] || '',
+          categoryId: undefined,
+          weight: parseInt(cols[3]) || 0,
+          online: cols[4] !== '0',
+          timeStart: cols[5] || '',
+          timeEnd: cols[6] || ''
+        };
+      }
+    }).filter(r => r.text);
+
+    state.importData = rows;
+    document.getElementById('importCount').textContent = rows.length;
+
+    const tbody = document.getElementById('importTableBody');
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.lang}</td>
+        <td>${esc(r.text)}</td>
+        ${isAgent ? `<td>${esc(getCategoryName(r.categoryId))}</td>` : ''}
+        <td>${esc(r.icon||'—')}</td>
+        <td>${r.weight}</td>
+        <td>${r.online ? '上架' : '下架'}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('importPreview').style.display = 'block';
+    document.getElementById('importConfirmBtn').disabled = false;
+  };
+  reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+  const result = []; let current = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') inQ = !inQ;
+    else if (line[i] === ',' && !inQ) { result.push(current.trim()); current = ''; }
+    else current += line[i];
+  }
+  result.push(current.trim()); return result;
+}
+
+// Confirm Import
+function confirmImport() {
+  if (!state.importData.length) return;
+  const data = getCurrent();
+  state.importData.forEach(r => { data.questions.push({ id: data.nextQuestionId++, ...r, createdAt: Date.now() }); });
+  toast(`已导入 ${state.importData.length} 条推荐问`);
+  state.importData = []; closeModal('importModal'); renderTable();
+}
+
+// Drag & drop
+const importZone = document.getElementById('importZone');
+importZone.addEventListener('dragover', e => { e.preventDefault(); importZone.style.borderColor = 'var(--primary)'; });
+importZone.addEventListener('dragleave', () => { importZone.style.borderColor = ''; });
+importZone.addEventListener('drop', e => {
+  e.preventDefault(); importZone.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('importFile').files = dt.files; handleImportFile({ target: { files: [file] } }); }
+});
+
+// ===== Shared Render Helpers =====
+function renderIconOptions(selectId, selected) {
+  document.getElementById(selectId).innerHTML = '<option value="">-</option>' +
+    state.icons.map(i => `<option value="${esc(i.key)}" ${i.key === selected ? 'selected' : ''}>${esc(i.key)}</option>`).join('');
+}
+function renderCategoryOptions(selectId, selected) {
+  document.getElementById(selectId).innerHTML = '<option value="">-</option>' +
+    state.categories.map(c => `<option value="${c.id}" ${c.id === selected ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+}
+
+// ===== Render All =====
+function renderAll() {
+  const entity = state.entities.find(e => e.id === state.currentEntityId);
+  const isAgent = isCurrentAgent();
+
+  document.getElementById('mainTitle').textContent = (entity ? entity.name : '') + ' 推荐问';
+
+  const catMgmtBtn = document.getElementById('categoryMgmtBtn');
+  const catFilter = document.getElementById('filterCategory');
+  if (isAgent) {
+    catMgmtBtn.style.display = 'inline-flex';
+    catFilter.style.display = 'inline-block';
+  } else {
+    catMgmtBtn.style.display = 'none';
+    catFilter.style.display = 'none';
+  }
+
+  renderSidebar();
+  renderSlots();
+  refreshCategorySelectors();
+  renderTable();
+}
+
+// ===== Init =====
+generateMockData();
+renderAll();
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+document.getElementById('confirmDialog').addEventListener('click', e => { if (e.target.id === 'confirmDialog') closeConfirm(); });
+</script>
+</body>
+</html>

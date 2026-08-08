@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动管理 - SoulAgent 后台管理</title>
+    <!-- Cropper.js 样式组件 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <!-- 通用侧边栏组件 -->
+    <script src="sidebar.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* 顶部标题区 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1 !important;
+            color: #94a3b8 !important;
+            box-shadow: none !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+        }
+
+        .icon-btn-danger {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn-danger:hover {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        /* 活动列表区 */
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .event-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .event-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+        }
+
+        .event-main {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        /* 图标：圆角正方形 */
+        .event-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            object-fit: cover;
+            background: #eef2ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .event-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .event-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .event-desc {
+            font-size: 13px;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .desc-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .desc-item svg {
+            color: #9ca3af;
+            flex-shrink: 0;
+        }
+
+        .desc-divider {
+            color: #d1d5db;
+        }
+
+        .event-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: #f3f4f6;
+            color: #2563eb;
+        }
+
+        .arrow-icon {
+            color: #d1d5db;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .event-card:hover .arrow-icon {
+            color: #2563eb;
+            transform: translateX(3px);
+        }
+
+        /* 高质感空状态组件 */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px dashed #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+        }
+
+        .empty-state-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .empty-state-desc {
+            font-size: 13px;
+            color: #64748b;
+            max-width: 340px;
+            line-height: 1.5;
+        }
+
+        /* 弹窗样式 (Flex 纵向结构，页脚固定冻结) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(17, 24, 39, 0.45);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 640px;
+            max-width: 92vw;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 28px 18px 28px;
+            border-bottom: 1px solid #f1f5f9;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .modal-body {
+            padding: 20px 28px 14px 28px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .required-tag {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+        /* 图标上传预览区域 */
+        .icon-upload-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-preview {
+            width: 76px;
+            height: 76px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .icon-preview:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .icon-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .icon-upload-tip {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .input-text {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-text:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .input-textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            resize: vertical;
+            min-height: 76px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-textarea:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        /* 附件上传容器 */
+        .attachment-upload-box {
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .attachment-trigger-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2563eb;
+            cursor: pointer;
+            width: fit-content;
+            user-select: none;
+        }
+
+        .attachment-trigger-btn:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .attachment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .attachment-list:empty {
+            margin-top: 0;
+        }
+
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .attachment-item-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .attachment-remove-btn {
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 3px 5px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .attachment-remove-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* 冻结吸底操作区 */
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 28px 20px 28px;
+            border-top: 1px solid #f1f5f9;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .modal-footer-left {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-footer-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-header-close {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .modal-header-close:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        /* Cropper 裁剪弹窗 */
+        .crop-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .crop-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .crop-box {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            width: 440px;
+            max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .crop-box-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .crop-container {
+            width: 100%;
+            height: 280px;
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .crop-container img {
+            max-width: 100%;
+            display: block;
+        }
+
+        .crop-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* 二次确认弹窗 */
+        .confirm-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(4px);
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .confirm-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .confirm-box {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 28px;
+            width: 380px;
+            max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 14px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .confirm-icon-wrapper {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #fef2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .confirm-desc {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- 标题区 -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="header-title">活动管理</h1>
+                <p class="header-subtitle">管理大型峰会、学术论坛、行业课程等各类活动的信息与相关资料</p>
+            </div>
+            <button class="btn-primary" onclick="openModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                新建活动
+            </button>
+        </header>
+
+        <!-- 正文：活动列表 -->
+        <div class="event-list" id="eventList">
+            <!-- 动态渲染列表项 -->
+        </div>
+    </div>
+
+    <!-- 新建/编辑活动 弹窗 (带有冻结吸底操作区) -->
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">新建活动</h2>
+                <!-- 右上角关闭按钮 -->
+                <button class="modal-header-close" onclick="closeModal()" title="关闭">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <!-- 双名称同一行分布 (Grid 2col) -->
+                <div class="form-group form-row-2col">
+                    <div>
+                        <label class="form-label">活动名称 <span class="required-tag">*</span></label>
+                        <input type="text" id="eventNameInput" class="input-text" placeholder="示例：2026全球数字经济大会"
+                            oninput="validateForm()">
+                    </div>
+                    <div>
+                        <label class="form-label">常用简称</label>
+                        <input type="text" id="eventShortNameInput" class="input-text"
+                            placeholder="示例：GDEC、全球数据大会、数经大会">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">活动图标</label>
+                    <div class="icon-upload-wrapper">
+                        <div class="icon-preview" onclick="triggerFileInput()" id="iconPreviewBox">
+                            <svg id="uploadPlaceholderIcon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="#9ca3af" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <img id="iconPreviewImg" style="display:none;" />
+                        </div>
+                        <div class="icon-upload-tip">
+                            点击上传活动图标（选填）<br>
+                            最小分辨率：512 × 512<br>
+                            最大文件大小：5MB<br>
+                            支持格式：PNG、JPG、JPEG、WebP
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg, image/webp"
+                        style="display:none;" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- 大会官网 -->
+                <div class="form-group">
+                    <label class="form-label">大会官网</label>
+                    <input type="text" id="eventWebsiteInput" class="input-text"
+                        placeholder="示例：https://gdec2026.org.cn">
+                </div>
+
+                <!-- 大会介绍 (统一为示例格式) -->
+                <div class="form-group">
+                    <label class="form-label">大会介绍</label>
+                    <textarea id="eventIntroInput" class="input-textarea" rows="3"
+                        placeholder="示例：围绕全球数字经济发展趋势，设立主论坛及人工智能、大数据、数字安全等专场。"></textarea>
+                </div>
+
+                <!-- 补充附件（独立文件上传区） -->
+                <div class="form-group">
+                    <label class="form-label">补充附件</label>
+                    <div class="attachment-upload-box">
+                        <div class="attachment-trigger-btn" onclick="triggerAttachmentInput()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48">
+                                </path>
+                            </svg>
+                            上传相关附件（主视觉、展区信息、地图、指南手册等）
+                        </div>
+                        <input type="file" id="attachmentInput" multiple style="display:none;"
+                            onchange="handleAttachmentSelect(event)">
+                        <div class="attachment-list" id="attachmentList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 冻结固定吸底操作区 -->
+            <div class="modal-footer">
+                <div class="modal-footer-left">
+                    <!-- 左下角删除按钮 (编辑模式下显示) -->
+                    <button class="icon-btn-danger" id="deleteEventBtn" style="display:none; gap: 6px; width: auto; padding: 0 12px;"
+                        onclick="openDeleteConfirmModal()" title="删除活动">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        删除活动
+                    </button>
+                </div>
+                <div class="modal-footer-right">
+                    <button class="btn-secondary" onclick="closeModal()">取消</button>
+                    <button class="btn-primary" id="saveBtn" disabled onclick="saveEvent()">确定保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 正方形图片裁剪 弹窗（使用 Cropper.js） -->
+    <div class="crop-modal-overlay" id="cropModal">
+        <div class="crop-box">
+            <div class="crop-box-title">裁剪活动图标（1:1 正方形）</div>
+            <div class="crop-container">
+                <img id="cropImage" src="" alt="待裁剪图片">
+            </div>
+            <div class="crop-actions">
+                <button class="btn-secondary" onclick="cancelCrop()">取消</button>
+                <button class="btn-primary" style="padding: 8px 18px;" onclick="confirmCrop()">完成裁剪</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除二次确认 弹窗 (统一规范样式) -->
+    <div class="modal-overlay" id="deleteConfirmModal">
+        <div class="modal-card"
+            style="max-width: 420px; padding: 0; background: #fff; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+            <div class="modal-header"
+                style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center;">
+                <div class="modal-title"
+                    style="color: #dc2626; font-size: 16.5px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                        </path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    确认删除该活动？
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 20px 24px;">
+                <p style="font-size: 13.5px; color: #475569; line-height: 1.6;">
+                    删除后，<strong style="color: #dc2626;">活动内的所有论坛、议题数据将全部一并删除</strong>，且操作不可恢复。是否确定继续？
+                </p>
+            </div>
+            <div class="modal-footer"
+                style="padding: 16px 24px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; background: #fff; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                <button class="btn-secondary" onclick="closeDeleteConfirmModal()">取消</button>
+                <button class="btn-primary"
+                    style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; padding: 8px 18px;"
+                    onclick="confirmDeleteEvent()">确定删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper.js JS 脚本 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        // 默认示例数据
+        const DEFAULT_EVENTS = [
+            {
+                id: 'evt_101',
+                name: '2026全球数字经济大会',
+                shortName: 'GDEC、数经大会',
+                website: 'https://gdec2026.org.cn',
+                intro: '围绕全球数字经济发展趋势，设立主论坛及人工智能、大数据、数字安全等专场。',
+                attachments: [{ name: 'GDEC2026展区规划图.pdf', size: '2.4 MB' }],
+                icon: '',
+                color: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                dateText: '2026.08.18 - 2026.08.20',
+                locationText: '国家会议中心等5地',
+                forumCountText: '12个论坛'
+            },
+            {
+                id: 'evt_102',
+                name: '北京大学2026夏季学期学术论坛',
+                shortName: '北大夏学期论坛',
+                website: '',
+                intro: '',
+                attachments: [],
+                icon: '',
+                color: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                dateText: '2026.07.01 - 2026.08.31',
+                locationText: '北京大学',
+                forumCountText: '6个论坛'
+            }
+        ];
+
+        let events = [];
+        let editingEventId = null;
+        let currentBase64Icon = '';
+        let currentAttachments = [];
+        let cropper = null;
+
+        // 初始化渲染（纯内存演示，不写入/读取 localStorage）
+        function init() {
+            try {
+                localStorage.removeItem('soulagent_events');
+            } catch (e) { }
+            events = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+            renderEvents();
+        }
+
+        function renderEvents() {
+            const listEl = document.getElementById('eventList');
+            if (!events || events.length === 0) {
+                listEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line x1="10" y1="14" x2="14" y2="14"></line>
+              </svg>
+            </div>
+            <div class="empty-state-title">暂无活动数据</div>
+            <div class="empty-state-desc">点击右上方按钮创建第一个活动</div>
+          </div>
+        `;
+                return;
+            }
+
+            listEl.innerHTML = events.map(evt => {
+                let iconHtml = '';
+                if (evt.icon) {
+                    iconHtml = `<img src="${evt.icon}" alt="${evt.name}">`;
+                } else {
+                    const char = evt.name ? evt.name.substring(0, 1) : '活';
+                    iconHtml = `<span style="color:#fff; font-weight:bold; font-size:20px;">${char}</span>`;
+                }
+
+                const bgStyle = evt.icon ? '' : `style="background: ${evt.color || 'linear-gradient(135deg, #3b82f6, #1d4ed8)'};"`;
+                const dateStr = evt.dateText || (evt.desc ? evt.desc.split('·')[0].trim() : '时间待排定');
+                const locationStr = evt.locationText || '国家会议中心';
+                const forumStr = evt.forumCountText || (evt.desc && evt.desc.includes('·') ? evt.desc.split('·')[1].trim() : '0 个论坛');
+
+                return `
+          <div class="event-card" onclick="goToForumMgmt('${evt.id}')">
+            <div class="event-main">
+              <div class="event-icon" ${bgStyle}>
+                ${iconHtml}
+              </div>
+              <div class="event-info">
+                <div class="event-name">${escapeHtml(evt.name)}</div>
+                <div class="event-desc">
+                  <span class="desc-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    ${escapeHtml(dateStr)}
+                  </span>
+                  <span class="desc-divider">·</span>
+                  <span class="desc-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    ${escapeHtml(locationStr)}
+                  </span>
+                  <span class="desc-divider">·</span>
+                  <span class="desc-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                      <polyline points="2 17 12 22 22 17"></polyline>
+                      <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    ${escapeHtml(forumStr)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="event-actions">
+              <div class="icon-btn" onclick="openEditModal(event, '${evt.id}')" title="编辑活动">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2h-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </div>
+              <svg class="arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </div>
+        `;
+            }).join('');
+        }
+
+        function goToForumMgmt(eventId) {
+            window.location.href = `forum-mgmt.html?eventId=${eventId}`;
+        }
+
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        function triggerAttachmentInput() {
+            document.getElementById('attachmentInput').click();
+        }
+
+        function handleAttachmentSelect(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(f => {
+                const sizeStr = (f.size / (1024 * 1024)).toFixed(1) + ' MB';
+                // 倒序插入：最新上传的附件使用 unshift 置于头部
+                currentAttachments.unshift({ name: f.name, size: sizeStr });
+            });
+            renderAttachments();
+            e.target.value = '';
+        }
+
+        function removeAttachment(index) {
+            currentAttachments.splice(index, 1);
+            renderAttachments();
+        }
+
+        function renderAttachments() {
+            const container = document.getElementById('attachmentList');
+            if (currentAttachments.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = currentAttachments.map((att, idx) => `
+        <div class="attachment-item">
+          <div class="attachment-item-info">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>${escapeHtml(att.name)}</span>
+            <span style="font-size:11px; color:#94a3b8;">(${att.size})</span>
+          </div>
+          <div class="attachment-remove-btn" onclick="removeAttachment(${idx})" title="移除附件">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+              <path d="M10 11v6"></path>
+              <path d="M14 11v6"></path>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+            </svg>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // 必填项实时校验逻辑
+        function validateForm() {
+            const nameVal = document.getElementById('eventNameInput').value.trim();
+            const saveBtn = document.getElementById('saveBtn');
+
+            if (nameVal) {
+                saveBtn.disabled = false;
+            } else {
+                saveBtn.disabled = true;
+            }
+        }
+
+        // 弹窗控制
+        function openModal() {
+            editingEventId = null;
+            currentBase64Icon = '';
+            currentAttachments = [];
+            document.getElementById('modalTitle').innerText = '新建活动';
+            document.getElementById('deleteEventBtn').style.display = 'none';
+            document.getElementById('eventNameInput').value = '';
+            document.getElementById('eventShortNameInput').value = '';
+            document.getElementById('eventWebsiteInput').value = '';
+            document.getElementById('eventIntroInput').value = '';
+            document.getElementById('uploadPlaceholderIcon').style.display = 'block';
+            const img = document.getElementById('iconPreviewImg');
+            img.style.display = 'none';
+            img.src = '';
+            renderAttachments();
+            validateForm();
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function openEditModal(e, id) {
+            e.stopPropagation();
+            const evt = events.find(item => item.id === id);
+            if (!evt) return;
+
+            editingEventId = id;
+            currentBase64Icon = evt.icon || '';
+            currentAttachments = evt.attachments ? JSON.parse(JSON.stringify(evt.attachments)) : [];
+
+            document.getElementById('modalTitle').innerText = '编辑活动';
+            document.getElementById('deleteEventBtn').style.display = 'flex';
+            document.getElementById('eventNameInput').value = evt.name || '';
+            document.getElementById('eventShortNameInput').value = evt.shortName || '';
+            document.getElementById('eventWebsiteInput').value = evt.website || '';
+            document.getElementById('eventIntroInput').value = evt.intro || '';
+
+            const img = document.getElementById('iconPreviewImg');
+            const placeholder = document.getElementById('uploadPlaceholderIcon');
+
+            if (evt.icon) {
+                placeholder.style.display = 'none';
+                img.style.display = 'block';
+                img.src = evt.icon;
+            } else {
+                placeholder.style.display = 'block';
+                img.style.display = 'none';
+                img.src = '';
+            }
+
+            renderAttachments();
+            validateForm();
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').classList.remove('active');
+        }
+
+        function saveEvent() {
+            const nameInput = document.getElementById('eventNameInput');
+            const shortNameInput = document.getElementById('eventShortNameInput');
+            const websiteInput = document.getElementById('eventWebsiteInput');
+            const introInput = document.getElementById('eventIntroInput');
+
+            const name = nameInput.value.trim();
+            const shortName = shortNameInput.value.trim();
+            const website = websiteInput.value.trim();
+            const intro = introInput.value.trim();
+
+            if (!name) {
+                return;
+            }
+
+            if (editingEventId) {
+                const evt = events.find(item => item.id === editingEventId);
+                if (evt) {
+                    evt.name = name;
+                    evt.shortName = shortName;
+                    evt.website = website;
+                    evt.intro = intro;
+                    evt.attachments = [...currentAttachments];
+                    evt.icon = currentBase64Icon;
+                }
+            } else {
+                const newEvt = {
+                    id: 'evt_' + Date.now(),
+                    name: name,
+                    shortName: shortName,
+                    website: website,
+                    intro: intro,
+                    attachments: [...currentAttachments],
+                    icon: currentBase64Icon,
+                    color: getRandomGradient(),
+                    dateText: '2026.09.10 - 2026.09.12',
+                    locationText: '国家会议中心',
+                    forumCountText: '0 个论坛'
+                };
+                events.unshift(newEvt);
+            }
+
+            renderEvents();
+            closeModal();
+        }
+
+        // 删除逻辑
+        function openDeleteConfirmModal() {
+            document.getElementById('deleteConfirmModal').classList.add('active');
+        }
+
+        function closeDeleteConfirmModal() {
+            document.getElementById('deleteConfirmModal').classList.remove('active');
+        }
+
+        function confirmDeleteEvent() {
+            if (!editingEventId) return;
+
+            events = events.filter(item => item.id !== editingEventId);
+            renderEvents();
+
+            closeDeleteConfirmModal();
+            closeModal();
+        }
+
+        function getRandomGradient() {
+            const gradients = [
+                'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                'linear-gradient(135deg, #10b981, #047857)',
+                'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                'linear-gradient(135deg, #f59e0b, #d97706)',
+                'linear-gradient(135deg, #ec4899, #be185d)'
+            ];
+            return gradients[Math.floor(Math.random() * gradients.length)];
+        }
+
+        // 图片裁剪（Cropper.js 组件逻辑）
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 5MB 大小校验
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片文件大小不能超过 5MB');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                const cropImage = document.getElementById('cropImage');
+                cropImage.src = evt.target.result;
+
+                document.getElementById('cropModal').classList.add('active');
+
+                // 销毁旧实例并创建新 Cropper 实例
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.85,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false
+                });
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+
+        function cancelCrop() {
+            document.getElementById('cropModal').classList.remove('active');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        function confirmCrop() {
+            if (!cropper) return;
+
+            const canvas = cropper.getCroppedCanvas({
+                width: 512,
+                height: 512
+            });
+
+            currentBase64Icon = canvas.toDataURL('image/png');
+
+            document.getElementById('uploadPlaceholderIcon').style.display = 'none';
+            const img = document.getElementById('iconPreviewImg');
+            img.style.display = 'block';
+            img.src = currentBase64Icon;
+
+            validateForm();
+            cancelCrop();
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // 页面启动
+        init();
+    </script>
+</body>
+
+</html>

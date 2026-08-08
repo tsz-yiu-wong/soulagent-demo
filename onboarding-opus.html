@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>激活你的 AI 伙伴</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+       Design System
+       ═══════════════════════════════════════════ */
+    :root {
+      --bg-deep: #06050e;
+      --bg-surface: #0d0b1a;
+      --accent-cyan: #22d3ee;
+      --accent-cyan-rgb: 34, 211, 238;
+      --accent-purple: #a78bfa;
+      --accent-purple-rgb: 167, 139, 250;
+      --accent-amber: #fbbf24;
+      --accent-amber-rgb: 251, 191, 36;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --glass-bg: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.06);
+      --font: 'Outfit','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--bg-deep);
+      font-family: var(--font);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Ambient background ── */
+    .ambient {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.4;
+      animation: orbFloat 12s ease-in-out infinite alternate;
+    }
+    .ambient-orb:nth-child(1) {
+      width: 500px; height: 500px;
+      background: rgba(var(--accent-cyan-rgb), 0.12);
+      top: -15%; left: -10%;
+    }
+    .ambient-orb:nth-child(2) {
+      width: 400px; height: 400px;
+      background: rgba(var(--accent-purple-rgb), 0.1);
+      bottom: -10%; right: -5%;
+      animation-delay: -6s;
+    }
+    .ambient-orb:nth-child(3) {
+      width: 300px; height: 300px;
+      background: rgba(var(--accent-amber-rgb), 0.06);
+      top: 40%; left: 50%;
+      animation-delay: -3s;
+    }
+    @keyframes orbFloat {
+      to { transform: translate(40px, -30px) scale(1.1); }
+    }
+
+    /* ═══════════════════════════════════════════
+       Phone Shell
+       ═══════════════════════════════════════════ */
+    .phone-shell {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 420px;
+      height: 92vh;
+      height: 92dvh;
+      max-height: 820px;
+      background: var(--bg-surface);
+      border-radius: 40px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03),
+        0 25px 60px rgba(0,0,0,0.5),
+        0 0 80px rgba(var(--accent-cyan-rgb), 0.04);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Phone status bar ── */
+    .status-bar {
+      padding: 14px 28px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .status-bar-icons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .status-bar-icons svg { width: 14px; height: 14px; }
+
+    /* ── Chat header ── */
+    .chat-header {
+      padding: 8px 20px 14px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .agent-avatar-header {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(var(--accent-cyan-rgb), 0.1);
+      border: 1.5px solid rgba(var(--accent-cyan-rgb), 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .agent-avatar-header svg { width: 18px; height: 18px; }
+    .header-info { flex: 1; }
+    .header-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: all 0.3s;
+    }
+    .header-status {
+      font-size: 11px;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 1px;
+    }
+    .header-status::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-cyan);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .header-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      background: rgba(var(--accent-cyan-rgb), 0.08);
+      border: 1px solid rgba(var(--accent-cyan-rgb), 0.15);
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.8px;
+    }
+
+    /* ═══════════════════════════════════════════
+       Chat Body
+       ═══════════════════════════════════════════ */
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+    .chat-body::-webkit-scrollbar { display: none; }
+
+    /* ── Message rows ── */
+    .msg-row {
+      display: flex;
+      gap: 8px;
+      max-width: 88%;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: msgIn 0.4s var(--ease-out-expo) forwards;
+    }
+    .msg-row.agent { align-self: flex-start; }
+    .msg-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    @keyframes msgIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Avatars */
+    .msg-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    .msg-avatar svg { width: 14px; height: 14px; }
+    .msg-row.agent .msg-avatar {
+      background: rgba(var(--accent-cyan-rgb), 0.1);
+      border: 1px solid rgba(var(--accent-cyan-rgb), 0.25);
+    }
+    .msg-row.user .msg-avatar {
+      background: rgba(var(--accent-purple-rgb), 0.1);
+      border: 1px solid rgba(var(--accent-purple-rgb), 0.25);
+    }
+
+    /* Bubbles */
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.65;
+      position: relative;
+    }
+    .msg-row.agent .bubble {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-top-left-radius: 4px;
+      color: var(--text-primary);
+    }
+    .msg-row.user .bubble {
+      background: linear-gradient(135deg, rgba(var(--accent-purple-rgb),0.15), rgba(var(--accent-purple-rgb),0.08));
+      border: 1px solid rgba(var(--accent-purple-rgb), 0.2);
+      border-top-right-radius: 4px;
+      color: var(--text-primary);
+    }
+
+    /* Highlighted inline values */
+    .val-agent {
+      color: var(--accent-cyan);
+      font-weight: 600;
+      padding: 0 2px;
+    }
+    .val-user {
+      color: var(--accent-purple);
+      font-weight: 600;
+      padding: 0 2px;
+    }
+    .val-role {
+      color: var(--accent-amber);
+      font-weight: 600;
+      padding: 0 2px;
+    }
+
+    /* ── Typing indicator ── */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      align-items: center;
+    }
+    .typing-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: typingBounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ═══════════════════════════════════════════
+       Inline Input Area (appears inside chat)
+       ═══════════════════════════════════════════ */
+    .input-area {
+      padding: 12px 16px 16px;
+      border-top: 1px solid var(--glass-border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: msgIn 0.4s var(--ease-out-expo) forwards;
+    }
+
+    /* Quick tags row */
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .quick-tag {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 5px 12px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font);
+      white-space: nowrap;
+    }
+    .quick-tag:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-1px);
+    }
+    .quick-tag:active {
+      transform: scale(0.97);
+    }
+    .quick-tag.cyan:hover {
+      background: rgba(var(--accent-cyan-rgb), 0.08);
+      border-color: rgba(var(--accent-cyan-rgb), 0.3);
+      color: var(--accent-cyan);
+    }
+    .quick-tag.purple:hover {
+      background: rgba(var(--accent-purple-rgb), 0.08);
+      border-color: rgba(var(--accent-purple-rgb), 0.3);
+      color: var(--accent-purple);
+    }
+
+    /* Text input row */
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .chat-input {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      padding: 10px 16px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      font-family: var(--font);
+      transition: all 0.2s;
+    }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .chat-input:focus {
+      border-color: rgba(var(--accent-cyan-rgb), 0.4);
+      background: rgba(var(--accent-cyan-rgb), 0.02);
+    }
+    .chat-input.purple-focus:focus {
+      border-color: rgba(var(--accent-purple-rgb), 0.4);
+      background: rgba(var(--accent-purple-rgb), 0.02);
+    }
+
+    .send-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      background: rgba(var(--accent-cyan-rgb), 0.15);
+      color: var(--accent-cyan);
+    }
+    .send-btn:hover {
+      background: rgba(var(--accent-cyan-rgb), 0.25);
+      transform: scale(1.05);
+    }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .send-btn.purple {
+      background: rgba(var(--accent-purple-rgb), 0.15);
+      color: var(--accent-purple);
+    }
+    .send-btn.purple:hover {
+      background: rgba(var(--accent-purple-rgb), 0.25);
+    }
+    .send-btn svg { width: 16px; height: 16px; }
+
+    /* ═══════════════════════════════════════════
+       Role Selection Grid (replaces input for step 3)
+       ═══════════════════════════════════════════ */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .role-chip {
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-out-expo);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .role-chip:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+    .role-chip:active { transform: scale(0.96); }
+    .role-chip .role-emoji { font-size: 22px; transition: transform 0.2s; }
+    .role-chip:hover .role-emoji { transform: scale(1.15); }
+    .role-chip .role-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .role-chip:hover .role-label { color: var(--text-primary); }
+    .role-chip.selected {
+      background: rgba(var(--accent-amber-rgb), 0.08);
+      border-color: rgba(var(--accent-amber-rgb), 0.4);
+      box-shadow: 0 0 15px rgba(var(--accent-amber-rgb), 0.1);
+    }
+    .role-chip.selected .role-label { color: var(--accent-amber); }
+    .role-chip.selected .role-emoji {
+      filter: drop-shadow(0 0 4px rgba(var(--accent-amber-rgb), 0.5));
+    }
+
+    /* Custom role inline input */
+    .custom-role-row {
+      grid-column: 1 / -1;
+      display: none;
+    }
+    .custom-role-row.visible { display: block; }
+    .custom-role-input {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1.5px solid rgba(var(--accent-amber-rgb), 0.2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      font-family: var(--font);
+      transition: all 0.2s;
+    }
+    .custom-role-input:focus {
+      border-color: rgba(var(--accent-amber-rgb), 0.5);
+      background: rgba(var(--accent-amber-rgb), 0.03);
+    }
+    .custom-role-input::placeholder { color: var(--text-muted); }
+
+    .role-confirm-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 11px;
+      background: linear-gradient(135deg, rgba(var(--accent-amber-rgb),0.2), rgba(var(--accent-amber-rgb),0.1));
+      border: 1.5px solid rgba(var(--accent-amber-rgb), 0.3);
+      border-radius: 14px;
+      color: var(--accent-amber);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .role-confirm-btn:hover {
+      background: linear-gradient(135deg, rgba(var(--accent-amber-rgb),0.3), rgba(var(--accent-amber-rgb),0.15));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(var(--accent-amber-rgb), 0.15);
+    }
+    .role-confirm-btn:active { transform: scale(0.98); }
+
+    /* ═══════════════════════════════════════════
+       Activation Ceremony (final overlay)
+       ═══════════════════════════════════════════ */
+    .ceremony-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s var(--ease-out-expo);
+    }
+    .ceremony-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .ceremony-overlay::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--bg-surface);
+      opacity: 0.97;
+    }
+    .ceremony-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .ceremony-ring {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: rgba(var(--accent-cyan-rgb), 0.08);
+      border: 2px solid var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(var(--accent-cyan-rgb), 0.2);
+      transform: scale(0.5);
+      transition: transform 0.6s var(--ease-spring);
+    }
+    .ceremony-overlay.visible .ceremony-ring {
+      transform: scale(1);
+    }
+    .ceremony-ring svg {
+      width: 40px; height: 40px;
+      color: var(--accent-cyan);
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      transition: stroke-dashoffset 0.6s ease 0.3s;
+    }
+    .ceremony-overlay.visible .ceremony-ring svg {
+      stroke-dashoffset: 0;
+    }
+    .ceremony-title {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .ceremony-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 280px;
+    }
+    .ceremony-desc strong {
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    /* Particles during ceremony */
+    .particles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      opacity: 0;
+    }
+    .ceremony-overlay.visible .particle {
+      animation: particleFly 1.5s var(--ease-out-expo) forwards;
+    }
+    @keyframes particleFly {
+      0% { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+    }
+
+    .ceremony-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .btn-enter {
+      background: linear-gradient(135deg, var(--accent-cyan), #0891b2);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 14px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(var(--accent-cyan-rgb), 0.3);
+      transition: all 0.2s;
+    }
+    .btn-enter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(var(--accent-cyan-rgb), 0.4);
+    }
+    .btn-reset {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover {
+      color: var(--text-secondary);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    /* ═══════════════════════════════════════════
+       Progress Dots (top of chat)
+       ═══════════════════════════════════════════ */
+    .progress-track {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 0 4px;
+      flex-shrink: 0;
+    }
+    .progress-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      transition: all 0.4s var(--ease-out-expo);
+    }
+    .progress-dot.active {
+      width: 20px;
+      border-radius: 3px;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px rgba(var(--accent-cyan-rgb), 0.4);
+    }
+    .progress-dot.done {
+      background: rgba(var(--accent-cyan-rgb), 0.5);
+    }
+    .progress-connector {
+      width: 16px; height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* ═══════════════════════════════════════════
+       Helpers / Utilities
+       ═══════════════════════════════════════════ */
+    .hidden { display: none !important; }
+
+    /* Time gap spacer */
+    .time-gap { height: 8px; }
+
+    /* Scroll anchor */
+    .scroll-anchor { height: 1px; }
+
+    /* Responsive: full screen on mobile */
+    @media (max-width: 480px) {
+      body { padding: 0; }
+      .phone-shell {
+        max-width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient glow -->
+  <div class="ambient">
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
+    <div class="ambient-orb"></div>
+  </div>
+
+  <!-- Phone shell -->
+  <div class="phone-shell">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>22:25</span>
+      <div class="status-bar-icons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Chat header -->
+    <div class="chat-header">
+      <div class="agent-avatar-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+          <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15h.01M16 15h.01M9 18h6"/>
+        </svg>
+      </div>
+      <div class="header-info">
+        <div class="header-name" id="headerName">AI 伙伴</div>
+        <div class="header-status">初始化中</div>
+      </div>
+      <span class="header-badge">SETUP</span>
+    </div>
+
+    <!-- Progress dots -->
+    <div class="progress-track">
+      <div class="progress-dot active" id="dot0"></div>
+      <div class="progress-connector"></div>
+      <div class="progress-dot" id="dot1"></div>
+      <div class="progress-connector"></div>
+      <div class="progress-dot" id="dot2"></div>
+    </div>
+
+    <!-- Chat body -->
+    <div class="chat-body" id="chatBody">
+      <div class="scroll-anchor" id="scrollAnchor"></div>
+    </div>
+
+    <!-- Bottom input area (dynamically replaced per step) -->
+    <div id="inputContainer"></div>
+
+    <!-- Activation ceremony overlay -->
+    <div class="ceremony-overlay" id="ceremony">
+      <div class="particles" id="particles"></div>
+      <div class="ceremony-content">
+        <div class="ceremony-ring">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="ceremony-title">激活成功！</div>
+        <div class="ceremony-desc" id="ceremonyDesc"></div>
+        <div class="ceremony-actions">
+          <button class="btn-enter" onclick="location.reload()">开始对话</button>
+          <button class="btn-reset" onclick="resetAll()">重新设置</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════
+    // State
+    // ═══════════════════════════════════════════
+    const state = { agentName: '', userName: '', role: '', roleEmoji: '' };
+    let currentStep = 0; // 0: agent name, 1: user name, 2: role
+
+    // DOM refs
+    const chatBody = document.getElementById('chatBody');
+    const inputContainer = document.getElementById('inputContainer');
+    const scrollAnchor = document.getElementById('scrollAnchor');
+    const headerName = document.getElementById('headerName');
+    const ceremony = document.getElementById('ceremony');
+    const ceremonyDesc = document.getElementById('ceremonyDesc');
+
+    // Agent & User SVG fragments (for reuse)
+    const agentAvatarSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+      <rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15h.01M16 15h.01"/>
+    </svg>`;
+    const userAvatarSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-purple)" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+    </svg>`;
+    const sendIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+
+    // ═══════════════════════════════════════════
+    // Core utilities
+    // ═══════════════════════════════════════════
+    function scrollDown() {
+      requestAnimationFrame(() => {
+        chatBody.scrollTop = chatBody.scrollHeight;
+      });
+    }
+
+    function addMessage(side, html, delayMs = 0) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const row = document.createElement('div');
+          row.className = `msg-row ${side}`;
+          const avatarSVG = side === 'agent' ? agentAvatarSVG : userAvatarSVG;
+          row.innerHTML = `
+            <div class="msg-avatar">${avatarSVG}</div>
+            <div class="bubble">${html}</div>
+          `;
+          chatBody.insertBefore(row, scrollAnchor);
+          scrollDown();
+          resolve(row);
+        }, delayMs);
+      });
+    }
+
+    function showTyping() {
+      return new Promise(resolve => {
+        const row = document.createElement('div');
+        row.className = 'msg-row agent';
+        row.id = 'typingRow';
+        row.innerHTML = `
+          <div class="msg-avatar">${agentAvatarSVG}</div>
+          <div class="bubble">
+            <div class="typing-indicator">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+        `;
+        chatBody.insertBefore(row, scrollAnchor);
+        scrollDown();
+        resolve();
+      });
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typingRow');
+      if (el) el.remove();
+    }
+
+    async function agentSays(html, typingMs = 800) {
+      await showTyping();
+      await delay(typingMs);
+      removeTyping();
+      return addMessage('agent', html);
+    }
+
+    function delay(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    function updateProgress(step) {
+      for (let i = 0; i < 3; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        dot.classList.remove('active', 'done');
+        if (i < step) dot.classList.add('done');
+        else if (i === step) dot.classList.add('active');
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    // Step 0: Agent naming
+    // ═══════════════════════════════════════════
+    function showStep0Input() {
+      currentStep = 0;
+      updateProgress(0);
+      const tags = [
+        { emoji: '✨', label: '小达' },
+        { emoji: '🤖', label: 'Jarvis' },
+        { emoji: '💡', label: '灵感捕手' },
+        { emoji: '🍳', label: 'Chef' },
+      ];
+      const tagsHTML = tags.map(t =>
+        `<button class="quick-tag cyan" onclick="fillInput('${t.label}')">${t.emoji} ${t.label}</button>`
+      ).join('');
+
+      inputContainer.innerHTML = `
+        <div class="input-area">
+          <div class="quick-tags">${tagsHTML}</div>
+          <div class="input-row">
+            <input class="chat-input" id="mainInput" type="text"
+              placeholder="给你的伙伴起个名字..."
+              maxlength="15" autocomplete="off" />
+            <button class="send-btn" id="sendBtn" onclick="submitStep0()" disabled>
+              ${sendIconSVG}
+            </button>
+          </div>
+        </div>
+      `;
+      const input = document.getElementById('mainInput');
+      const sendBtn = document.getElementById('sendBtn');
+      input.addEventListener('input', () => {
+        sendBtn.disabled = !input.value.trim();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) submitStep0();
+      });
+      input.focus();
+    }
+
+    async function submitStep0() {
+      const input = document.getElementById('mainInput');
+      const val = input.value.trim();
+      if (!val) return;
+      state.agentName = val;
+
+      // Clear input area immediately
+      inputContainer.innerHTML = '';
+
+      // User's response bubble
+      await addMessage('user', `就叫你 <span class="val-agent">${val}</span> 吧！`);
+
+      // Update header
+      headerName.textContent = val;
+
+      // Agent responds with delight, using its new name
+      await agentSays(
+        `太好了！从现在起，我就是 <span class="val-agent">${val}</span> 了 ✨<br>请多关照！`,
+        900
+      );
+
+      await delay(400);
+
+      // Transition to step 1
+      await agentSays(
+        `那接下来，我该怎么称呼你呢？<br><span style="color:var(--text-muted);font-size:12px;">（你的昵称、称呼，比如"老板"、"陈老师"）</span>`,
+        700
+      );
+
+      showStep1Input();
+    }
+
+    // ═══════════════════════════════════════════
+    // Step 1: User nickname
+    // ═══════════════════════════════════════════
+    function showStep1Input() {
+      currentStep = 1;
+      updateProgress(1);
+      const tags = [
+        { emoji: '👑', label: '老板' },
+        { emoji: '👦', label: '小张' },
+        { emoji: '👩‍🏫', label: '陈老师' },
+        { emoji: '⚡', label: 'Master' },
+      ];
+      const tagsHTML = tags.map(t =>
+        `<button class="quick-tag purple" onclick="fillInput('${t.label}')">${t.emoji} ${t.label}</button>`
+      ).join('');
+
+      inputContainer.innerHTML = `
+        <div class="input-area">
+          <div class="quick-tags">${tagsHTML}</div>
+          <div class="input-row">
+            <input class="chat-input purple-focus" id="mainInput" type="text"
+              placeholder="你希望 ${state.agentName} 怎么叫你..."
+              maxlength="15" autocomplete="off" />
+            <button class="send-btn purple" id="sendBtn" onclick="submitStep1()" disabled>
+              ${sendIconSVG}
+            </button>
+          </div>
+        </div>
+      `;
+      const input = document.getElementById('mainInput');
+      const sendBtn = document.getElementById('sendBtn');
+      input.addEventListener('input', () => {
+        sendBtn.disabled = !input.value.trim();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) submitStep1();
+      });
+      input.focus();
+    }
+
+    async function submitStep1() {
+      const input = document.getElementById('mainInput');
+      const val = input.value.trim();
+      if (!val) return;
+      state.userName = val;
+      inputContainer.innerHTML = '';
+
+      await addMessage('user', `你可以叫我 <span class="val-user">${val}</span>。`);
+
+      // Agent responds immediately using the nickname — this is the key UX moment
+      await agentSays(
+        `好的，<span class="val-user">${val}</span>！以后我就这么叫你了 😊<br>感觉我们已经是好搭档了呢。`,
+        800
+      );
+
+      await delay(400);
+
+      await agentSays(
+        `最后一个问题～<br><span class="val-user">${val}</span>，你平时主要做什么工作？<br><span style="color:var(--text-muted);font-size:12px;">（这样我能更好地理解你的需求）</span>`,
+        700
+      );
+
+      showStep2Input();
+    }
+
+    // ═══════════════════════════════════════════
+    // Step 2: Role/profession selection
+    // ═══════════════════════════════════════════
+    const roles = [
+      { emoji: '💻', name: '程序员', pack: '代码能效技能包' },
+      { emoji: '🎨', name: '设计师', pack: '创意视觉设计包' },
+      { emoji: '🎓', name: '在校学生', pack: '学术研究与学习包' },
+      { emoji: '✍️', name: '文案编辑', pack: '内容创作与撰写包' },
+      { emoji: '💼', name: '自由职业', pack: '全能生产力技能包' },
+      { emoji: '🛠️', name: '自定义', pack: '' },
+    ];
+
+    let selectedRoleIdx = -1;
+
+    function showStep2Input() {
+      currentStep = 2;
+      updateProgress(2);
+
+      const chipsHTML = roles.map((r, i) =>
+        `<div class="role-chip" data-idx="${i}" onclick="selectRole(${i})">
+          <span class="role-emoji">${r.emoji}</span>
+          <span class="role-label">${r.name}</span>
+        </div>`
+      ).join('');
+
+      inputContainer.innerHTML = `
+        <div class="input-area">
+          <div class="role-grid" id="roleGrid">
+            ${chipsHTML}
+            <div class="custom-role-row" id="customRoleRow">
+              <input class="custom-role-input" id="customRoleInput" type="text"
+                placeholder="输入你的职业/身份..." maxlength="20" autocomplete="off" />
+            </div>
+          </div>
+          <button class="role-confirm-btn hidden" id="roleConfirmBtn" onclick="submitStep2()">
+            确认并激活 🚀
+          </button>
+        </div>
+      `;
+    }
+
+    function selectRole(idx) {
+      selectedRoleIdx = idx;
+      const chips = document.querySelectorAll('.role-chip');
+      chips.forEach(c => c.classList.remove('selected'));
+      chips[idx].classList.add('selected');
+
+      const customRow = document.getElementById('customRoleRow');
+      const confirmBtn = document.getElementById('roleConfirmBtn');
+
+      if (roles[idx].name === '自定义') {
+        customRow.classList.add('visible');
+        const customInput = document.getElementById('customRoleInput');
+        customInput.focus();
+        // Show confirm button only when custom input has value
+        customInput.oninput = () => {
+          if (customInput.value.trim()) {
+            confirmBtn.classList.remove('hidden');
+          } else {
+            confirmBtn.classList.add('hidden');
+          }
+        };
+        confirmBtn.classList.add('hidden');
+      } else {
+        customRow.classList.remove('visible');
+        confirmBtn.classList.remove('hidden');
+      }
+    }
+
+    async function submitStep2() {
+      const role = roles[selectedRoleIdx];
+      let roleName, roleEmoji, rolePack;
+
+      if (role.name === '自定义') {
+        const customVal = document.getElementById('customRoleInput').value.trim();
+        if (!customVal) return;
+        roleName = customVal;
+        roleEmoji = '🛠️';
+        rolePack = `专属${customVal}技能包`;
+      } else {
+        roleName = role.name;
+        roleEmoji = role.emoji;
+        rolePack = role.pack;
+      }
+
+      state.role = roleName;
+      state.roleEmoji = roleEmoji;
+      inputContainer.innerHTML = '';
+
+      await addMessage('user', `我是一名 <span class="val-role">${roleEmoji} ${roleName}</span>。`);
+
+      await agentSays(
+        `明白了！<span class="val-user">${state.userName}</span>，已为你装载<br><span class="val-role">「${rolePack}」</span><br>我会以专业视角全力支持你！🚀`,
+        1000
+      );
+
+      await delay(600);
+
+      // Show activation ceremony
+      showCeremony();
+    }
+
+    // ═══════════════════════════════════════════
+    // Ceremony
+    // ═══════════════════════════════════════════
+    function showCeremony() {
+      ceremonyDesc.innerHTML = `
+        <span class="val-user">${state.userName}</span> 与 
+        <strong>${state.agentName}</strong> 的连接已建立。<br>
+        已装载 ${state.roleEmoji} ${state.role} 专属知识库。
+      `;
+
+      // Spawn particles
+      createParticles();
+
+      ceremony.classList.add('visible');
+    }
+
+    function createParticles() {
+      const container = document.getElementById('particles');
+      container.innerHTML = '';
+      const colors = ['var(--accent-cyan)', 'var(--accent-purple)', 'var(--accent-amber)', '#fff'];
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const angle = (Math.PI * 2 * i) / 30;
+        const dist = 80 + Math.random() * 120;
+        p.style.cssText = `
+          left: 50%; top: 42%;
+          background: ${colors[i % colors.length]};
+          --tx: ${Math.cos(angle) * dist}px;
+          --ty: ${Math.sin(angle) * dist}px;
+          animation-delay: ${Math.random() * 0.3}s;
+        `;
+        container.appendChild(p);
+      }
+    }
+
+    function resetAll() {
+      ceremony.classList.remove('visible');
+      state.agentName = '';
+      state.userName = '';
+      state.role = '';
+      headerName.textContent = 'AI 伙伴';
+      chatBody.innerHTML = '<div class="scroll-anchor" id="scrollAnchor"></div>';
+      inputContainer.innerHTML = '';
+      startConversation();
+    }
+
+    // ═══════════════════════════════════════════
+    // Helper: fill input from quick tag
+    // ═══════════════════════════════════════════
+    function fillInput(val) {
+      const input = document.getElementById('mainInput');
+      if (!input) return;
+      input.value = val;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+    }
+
+    // ═══════════════════════════════════════════
+    // Boot sequence
+    // ═══════════════════════════════════════════
+    async function startConversation() {
+      await delay(500);
+
+      await agentSays(
+        `嗨，你好呀！👋<br>我是你即将激活的 AI 伙伴。`,
+        800
+      );
+
+      await agentSays(
+        `在开始之前，我需要你帮我完成 3 件小事，这样我才能真正成为<em>你的</em>专属伙伴。`,
+        900
+      );
+
+      await delay(300);
+
+      await agentSays(
+        `<strong>第一件事 —</strong> 给我起一个属于我的名字吧！<br><span style="color:var(--text-muted);font-size:12px;">（我会以这个名字来自称哦）</span>`,
+        700
+      );
+
+      showStep0Input();
+    }
+
+    // 🚀 Go!
+    startConversation();
+  </script>
+
+</body>
+</html>

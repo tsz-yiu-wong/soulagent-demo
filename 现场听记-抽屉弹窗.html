@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>现场听记 - 抽屉弹窗</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap');
+
+    :root {
+      --bg-gradient: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+      --device-bg: #F9FAFB;
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --border: #E5E7EB;
+      --danger: #EF4444;
+      --surface: #FFFFFF;
+    }
+
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+    body {
+      margin: 0; padding: 40px 20px;
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+    .device-wrapper {
+      position: relative;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 52px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      margin: auto 0;
+      transition: transform 0.2s ease;
+    }
+
+    @media (max-height: 960px) {
+      .device-wrapper {
+        transform: scale(0.9);
+      }
+    }
+    @media (max-height: 850px) {
+      .device-wrapper {
+        transform: scale(0.8);
+      }
+    }
+    @media (max-height: 750px) {
+      .device-wrapper {
+        transform: scale(0.7);
+      }
+    }
+
+    .device {
+      width: 393px; height: 852px;
+      background: var(--device-bg);
+      border-radius: 40px;
+      position: relative;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      border: 8px solid #1f2937;
+    }
+
+    .header {
+      padding: 24px 20px 16px;
+      text-align: center; font-size: 17px; font-weight: 600;
+      color: var(--text-main);
+      background: rgba(249, 250, 251, 0.8);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    .chat-area {
+      flex: 1; padding: 20px; padding-bottom: 140px;
+      overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 80%; padding: 12px 16px; border-radius: 20px;
+      font-size: 15px; line-height: 1.5;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .message.bot {
+      background: var(--surface); color: var(--text-main);
+      border: 1px solid var(--border); border-bottom-left-radius: 4px;
+      align-self: flex-start;
+    }
+    .message.user {
+      background: var(--primary); color: white;
+      border-bottom-right-radius: 4px; align-self: flex-end;
+    }
+
+    .message.audio-card-user {
+      background: var(--primary); color: white;
+      border: none; border-bottom-right-radius: 4px;
+      padding: 14px; width: 85%; align-self: flex-end;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+      cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .message.audio-card-user:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+    }
+    .audio-header-user {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: white;
+      margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,0.3);
+    }
+    .audio-summary-user { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.9); }
+    
+    .time-stamp { font-weight: normal; color: #9CA3AF; margin-left: 6px; font-size: 11px; }
+
+    /* Default Composer Island */
+    .default-composer {
+      position: absolute; bottom: 24px; left: 16px; right: 16px;
+      background: var(--surface); border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); border: 1px solid rgba(0,0,0,0.05);
+      padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;
+      z-index: 10; transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .default-composer.hidden {
+      transform: translateY(30px) scale(0.95); opacity: 0; pointer-events: none;
+    }
+    .default-composer textarea {
+      width: 100%; border: none; background: transparent;
+      resize: none; font-size: 15px; font-family: inherit;
+      max-height: 100px; outline: none; line-height: 1.5; padding: 4px 0;
+    }
+    .default-actions-row {
+      display: flex; justify-content: flex-end; align-items: center; gap: 12px;
+    }
+
+    .record-btn-circular {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: white; border: 2px solid #E5E7EB;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .record-btn-circular .inner-circle {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--danger); transition: transform 0.2s;
+    }
+    .record-btn-circular:active .inner-circle { transform: scale(0.85); }
+
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; background: #F3F4F6; color: var(--text-muted);
+    }
+    .icon-btn:hover { background: #E5E7EB; color: var(--text-main); }
+    .icon-btn.send-btn { background: var(--primary); color: white; opacity: 0.5; pointer-events: none; }
+    .icon-btn.send-btn.active { opacity: 1; pointer-events: auto; }
+
+    /* Drawer UI */
+    .drawer-backdrop {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease; z-index: 15;
+    }
+    .drawer-backdrop.active { opacity: 1; pointer-events: auto; }
+
+    .recording-drawer {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 66%; background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 20; display: flex; flex-direction: column;
+    }
+    .recording-drawer.open { transform: translateY(0); }
+
+    .drawer-header {
+      padding: 12px 16px 16px; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .drawer-drag-handle {
+      width: 36px; height: 4px; background: #E5E7EB;
+      border-radius: 4px; margin-bottom: 16px; cursor: pointer;
+    }
+
+    /* Mini Recording Bar */
+    .recording-mini-bar {
+      position: absolute; bottom: 24px; left: 16px; right: 16px;
+      background: white; border-radius: 28px;
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.15);
+      border: 1px solid rgba(79, 70, 229, 0.25);
+      padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;
+      z-index: 10; transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+      transform: translateY(30px) scale(0.95); opacity: 0; pointer-events: none;
+      cursor: pointer;
+    }
+    .recording-mini-bar.show {
+      transform: translateY(0) scale(1); opacity: 1; pointer-events: auto;
+    }
+    .mini-transcription-text {
+      font-size: 14px; line-height: 1.45; color: var(--text-main);
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; text-overflow: ellipsis;
+      min-height: 40px; word-break: break-word;
+    }
+    .mini-bar-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .mini-bar-info {
+      display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 600; font-size: 13px;
+    }
+    .mini-action-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #F3F4F6; color: var(--text-main);
+      border: none; display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .mini-action-btn:hover { background: #E5E7EB; }
+    .mini-action-btn.stop {
+      background: rgba(239, 68, 68, 0.1); color: var(--danger);
+    }
+    .mini-action-btn.stop:hover { background: rgba(239, 68, 68, 0.2); }
+    
+    .header-content {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+    }
+    .timer-container { flex: 1; display: flex; align-items: center; gap: 6px; }
+    .pulse-dot {
+      width: 8px; height: 8px; background: var(--danger); border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulse 1.5s infinite;
+    }
+    .pulse-dot.paused { animation: none; background: var(--text-muted); }
+    
+    .timer-text { font-family: 'Roboto Mono', monospace; font-size: 14px; font-weight: 600; color: var(--danger); }
+    .timer-text.paused { color: var(--text-muted); }
+
+    .wave-center { flex: 1; display: flex; align-items: center; justify-content: center; gap: 3px; height: 24px; }
+    .wave { width: 3px; background: var(--danger); border-radius: 3px; height: 4px; transition: height 0.1s ease; }
+    .wave.animating { animation: wave 1.2s infinite ease-in-out; }
+    .wave:nth-child(1) { animation-duration: 0.8s; animation-delay: -0.1s; } 
+    .wave:nth-child(2) { animation-duration: 1.1s; animation-delay: -0.5s; }
+    .wave:nth-child(3) { animation-duration: 0.75s; animation-delay: -0.2s; } 
+    .wave:nth-child(4) { animation-duration: 1.3s; animation-delay: -0.7s; }
+    .wave:nth-child(5) { animation-duration: 0.9s; animation-delay: -0.3s; } 
+    .wave:nth-child(6) { animation-duration: 1.0s; animation-delay: -0.6s; }
+    .wave:nth-child(7) { animation-duration: 0.85s; animation-delay: -0.4s; }
+    
+    @keyframes wave {
+      0%, 100% { height: 4px; }
+      20% { height: 16px; }
+      40% { height: 6px; }
+      60% { height: 20px; }
+      80% { height: 10px; }
+    }
+    
+    .template-dropdown { position: relative; flex: 1; display: flex; justify-content: flex-end; }
+    #template-btn {
+      background: #F3F4F6; border: none; padding: 6px 10px; border-radius: 8px;
+      font-size: 12px; font-weight: 500; color: var(--text-main);
+      display: flex; align-items: center; gap: 4px; cursor: pointer; transition: background 0.2s;
+    }
+    #template-btn:hover { background: #E5E7EB; }
+    
+    .dropdown-menu {
+      position: absolute; top: 100%; right: 0; margin-top: 4px;
+      background: white; border: 1px solid var(--border); border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100px;
+      opacity: 0; pointer-events: none; transform: translateY(-5px);
+      transition: all 0.2s ease; z-index: 30; overflow: hidden;
+    }
+    .dropdown-menu.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .menu-item { padding: 10px 12px; font-size: 13px; cursor: pointer; }
+    .menu-item:hover { background: #F9FAFB; }
+
+    /* Transcription Area */
+    .transcription-area {
+      flex: 1; overflow-y: auto; padding: 16px; background: #F9FAFB;
+      display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
+    }
+    .speaker-block { display: flex; flex-direction: column; gap: 4px; animation: fadeIn 0.3s ease; }
+    .speaker-name { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .speaker-name.s1 { color: var(--primary); }
+    .speaker-name.s2 { color: #059669; }
+    .speaker-name::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+    .speaker-name.s1::before { background: var(--primary); }
+    .speaker-name.s2::before { background: #059669; }
+    .speaker-text { font-size: 15px; line-height: 1.6; color: var(--text-main); }
+    
+    .typing-cursor {
+      display: inline-block; width: 2px; height: 1em; background: var(--primary);
+      vertical-align: middle; animation: blink 1s step-end infinite; margin-left: 2px;
+    }
+    
+    /* User Notes inserted in transcription */
+    .user-note {
+      background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 10px 12px;
+      border-radius: 0 8px 8px 0; font-size: 14px; color: #92400E; margin: 2px 0;
+      display: flex; align-items: flex-start; gap: 8px; animation: slideInNote 0.3s ease-out forwards;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05); line-height: 1.5;
+    }
+    .user-note svg { flex-shrink: 0; margin-top: 2px; color: #F59E0B; }
+    @keyframes slideInNote {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Drawer Footer */
+    .drawer-footer {
+      padding: 12px 16px 24px; border-top: 1px solid var(--border);
+      background: white; display: flex; flex-direction: column; gap: 12px;
+    }
+    .drawer-footer textarea {
+      width: 100%; border: none; background: #F3F4F6; border-radius: 12px;
+      padding: 12px; font-size: 15px; resize: none; outline: none; font-family: inherit;
+      max-height: 80px;
+    }
+    .footer-actions { display: flex; justify-content: space-between; align-items: center; }
+    .action-group-left { display: flex; gap: 8px; }
+    
+    .action-btn {
+      display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+      border-radius: 100px; border: none; font-family: inherit; font-size: 13px;
+      font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .pause-btn { background: #F3F4F6; color: var(--text-main); }
+    .pause-btn:hover { background: #E5E7EB; }
+    .stop-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+    .stop-btn:hover { background: rgba(239, 68, 68, 0.2); }
+    
+    .text-btn {
+      padding: 8px 16px; border-radius: 100px; border: none; font-family: inherit;
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+      background: var(--primary); color: white; opacity: 0.5; pointer-events: none;
+    }
+    .text-btn.active { opacity: 1; pointer-events: auto; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .text-btn:active { transform: scale(0.95); }
+  </style>
+</head>
+<body>
+
+  <div class="device-wrapper">
+    <div class="device">
+      <div class="header">现场听记</div>
+      <div class="chat-area" id="chat-area">
+      </div>
+      
+      <!-- Default Composer -->
+      <div class="default-composer" id="default-composer">
+        <textarea id="default-input" rows="1" placeholder="发送消息..."></textarea>
+        <div class="default-actions-row">
+          <button class="icon-btn" id="btn-start-record" title="开始听记" style="background: #FEE2E2; color: var(--danger);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="3" x2="12" y2="21"></line>
+              <line x1="8" y1="8" x2="8" y2="16"></line>
+              <line x1="16" y1="6" x2="16" y2="18"></line>
+              <line x1="4" y1="11" x2="4" y2="13"></line>
+              <line x1="20" y1="10" x2="20" y2="14"></line>
+            </svg>
+          </button>
+          <button class="icon-btn send-btn" id="btn-send-default" title="发送">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mini Recording Bar (Collapsed state) -->
+      <div class="recording-mini-bar" id="recording-mini-bar">
+        <div class="mini-transcription-text" id="mini-transcription-text">录音中，正在实时听记...</div>
+        <div class="mini-bar-footer">
+          <div class="mini-bar-info">
+            <div class="pulse-dot"></div>
+            <span id="mini-timer" style="font-family: 'Roboto Mono', monospace; font-size: 13px; font-weight: 600; color: var(--danger);">00:00</span>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-left: 2px;">点击展开听记</span>
+          </div>
+          <div class="mini-bar-actions" style="display:flex; gap:8px;">
+            <button class="mini-action-btn" id="btn-mini-pause" title="暂停/继续">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+              </svg>
+            </button>
+            <button class="mini-action-btn stop" id="btn-mini-stop" title="结束录音">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5" y="5" width="14" height="14" rx="2" ry="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drawer UI -->
+      <div class="drawer-backdrop" id="drawer-backdrop"></div>
+      <div class="recording-drawer" id="recording-drawer">
+        <div class="drawer-header">
+          <div class="drawer-drag-handle"></div>
+          <div class="header-content">
+            <div class="timer-container">
+              <div class="pulse-dot"></div>
+              <span class="timer-text" id="timer">00:00</span>
+            </div>
+            <div class="wave-center" id="waves">
+              <div class="wave"></div><div class="wave"></div>
+              <div class="wave"></div><div class="wave"></div>
+              <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+            </div>
+            <div class="template-dropdown">
+              <button id="template-btn">
+                <span>日常记录</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="dropdown-menu" id="dropdown-menu">
+                <div class="menu-item">日常记录</div>
+                <div class="menu-item">头脑风暴</div>
+                <div class="menu-item">会议纪要</div>
+                <div class="menu-item">灵感速记</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="transcription-area" id="transcription">
+          <!-- Text dynamically inserted here -->
+        </div>
+
+        <div class="drawer-footer">
+          <textarea id="drawer-note-input" rows="3" placeholder="记录笔记..."></textarea>
+          <div class="footer-actions">
+            <div class="action-group-left" id="recording-actions">
+              <button class="action-btn pause-btn" id="btn-pause">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                </svg>
+                <span class="btn-text">暂停</span>
+              </button>
+              <button class="action-btn stop-btn" id="btn-stop">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="5" y="5" width="14" height="14" rx="2" ry="2"/>
+                </svg>
+                <span class="btn-text">结束</span>
+              </button>
+            </div>
+            <div class="action-group-left" id="playback-actions" style="display: none; align-items: center; gap: 10px; flex: 1;">
+              <button class="action-btn" id="btn-play-audio" style="background: var(--primary); color: white; width: 34px; height: 34px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" title="播放/暂停">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" id="play-icon">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+              </button>
+              <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                <input type="range" id="audio-progress" min="0" max="100" value="0" style="flex: 1; accent-color: var(--primary); height: 4px; cursor: pointer;">
+                <span id="playback-time" style="font-family: 'Roboto Mono', monospace; font-size: 11px; color: var(--text-muted); min-width: 65px;">00:00</span>
+              </div>
+            </div>
+            <div class="action-group-right">
+              <button class="text-btn insert-btn" id="btn-insert-note">
+                添加笔记
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Elements
+    const defaultComposer = document.getElementById('default-composer');
+    const defaultInput = document.getElementById('default-input');
+    const btnStartRecord = document.getElementById('btn-start-record');
+    const btnSendDefault = document.getElementById('btn-send-default');
+    
+    const recordingDrawer = document.getElementById('recording-drawer');
+    const backdrop = document.getElementById('drawer-backdrop');
+    
+    const timerText = document.getElementById('timer');
+    const waves = document.querySelectorAll('.wave');
+    const pulseDot = document.querySelector('.pulse-dot');
+    const transcriptionArea = document.getElementById('transcription');
+    
+    const recordingMiniBar = document.getElementById('recording-mini-bar');
+    const miniTimerText = document.getElementById('mini-timer');
+    const miniTranscriptionText = document.getElementById('mini-transcription-text');
+    const btnMiniPause = document.getElementById('btn-mini-pause');
+    const btnMiniStop = document.getElementById('btn-mini-stop');
+    const dragHandle = document.querySelector('.drawer-drag-handle');
+    
+    const templateBtn = document.getElementById('template-btn');
+    const templateText = templateBtn.querySelector('span');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    
+    const drawerNoteInput = document.getElementById('drawer-note-input');
+    const btnPause = document.getElementById('btn-pause');
+    const btnStop = document.getElementById('btn-stop');
+    const btnInsertNote = document.getElementById('btn-insert-note');
+    
+    const recordingActions = document.getElementById('recording-actions');
+    const playbackActions = document.getElementById('playback-actions');
+    const btnPlayAudio = document.getElementById('btn-play-audio');
+    const audioProgress = document.getElementById('audio-progress');
+    const playbackTime = document.getElementById('playback-time');
+    
+    const chatArea = document.getElementById('chat-area');
+
+    // State variables
+    let isRecording = false;
+    let isPaused = false;
+    let seconds = 0;
+    let recordingInterval;
+    let transcriptionInterval;
+    
+    // History & Playback variables
+    let isPlayingAudio = false;
+    let audioPlaybackInterval = null;
+    let currentPlaybackSec = 0;
+    let totalAudioSec = 0;
+    let currentHistoryData = null;
+    
+    // Multi-speaker scripts
+    const scripts = [
+      { s: 1, text: "今天的头脑风暴，我们要讨论的是下个季度的产品方向。" },
+      { s: 2, text: "我觉得现在的听记体验还有提升空间。我们是否能引入更多手势操作？" },
+      { s: 1, text: "这是个好点子，比如底部的抽屉交互可以更灵活，屏占比也能更大。" },
+      { s: 2, text: "另外一点，如果用户随时有灵感，应该能直接把笔记作为一个标记块，无缝插入到转录文字的上下文中。" },
+      { s: 1, text: "没错！现在我们正在演示的就是这个效果，笔记会高亮显示，清晰分隔了多人的语音与用户的私人思考。" }
+    ];
+    let scriptIdx = 0;
+    let charIdx = 0;
+    let activeBlock = null;
+    let activeText = null;
+
+    // Collapse / Expand Logic
+    function collapseDrawer() {
+      recordingDrawer.classList.remove('open');
+      backdrop.classList.remove('active');
+      if (isRecording) {
+        recordingMiniBar.classList.add('show');
+      }
+      if (isPlayingAudio) {
+        pauseAudio();
+      }
+    }
+
+    function expandDrawer() {
+      recordingMiniBar.classList.remove('show');
+      backdrop.classList.add('active');
+      recordingDrawer.classList.add('open');
+    }
+
+    dragHandle.addEventListener('click', collapseDrawer);
+    backdrop.addEventListener('click', collapseDrawer);
+
+    // History & Audio Playback Logic
+    function openHistoryDrawer(data) {
+      if (isRecording) stopRecording();
+      if (isPlayingAudio) pauseAudio();
+      
+      currentHistoryData = data;
+      isRecording = false;
+      
+      recordingMiniBar.classList.remove('show');
+      defaultComposer.classList.remove('hidden');
+      
+      recordingActions.style.display = 'none';
+      playbackActions.style.display = 'flex';
+      
+      drawerNoteInput.style.display = 'none';
+      const rightGroup = document.querySelector('.action-group-right');
+      if (rightGroup) rightGroup.style.display = 'none';
+      
+      templateBtn.style.pointerEvents = 'none';
+      const arrow = templateBtn.querySelector('svg');
+      if (arrow) arrow.style.display = 'none';
+      templateBtn.style.background = '#EEF2FF';
+      templateBtn.style.color = 'var(--primary)';
+      
+      transcriptionArea.innerHTML = data.html;
+      templateText.textContent = data.template;
+      
+      totalAudioSec = data.seconds || 0;
+      currentPlaybackSec = 0;
+      updatePlaybackUI();
+      
+      backdrop.classList.add('active');
+      recordingDrawer.classList.add('open');
+    }
+
+    function togglePlayAudio() {
+      isPlayingAudio ? pauseAudio() : playAudio();
+    }
+
+    function playAudio() {
+      if (currentPlaybackSec >= totalAudioSec) {
+        currentPlaybackSec = 0;
+      }
+      isPlayingAudio = true;
+      document.getElementById('play-icon').innerHTML = '<rect x="5" y="4" width="4" height="16"/><rect x="15" y="4" width="4" height="16"/>';
+      waves.forEach(w => w.classList.add('animating'));
+      pulseDot.classList.remove('paused');
+      
+      clearInterval(audioPlaybackInterval);
+      audioPlaybackInterval = setInterval(() => {
+        currentPlaybackSec++;
+        updatePlaybackUI();
+        if (currentPlaybackSec >= totalAudioSec) {
+          pauseAudio();
+          currentPlaybackSec = 0;
+          updatePlaybackUI();
+        }
+      }, 1000);
+    }
+
+    function pauseAudio() {
+      isPlayingAudio = false;
+      clearInterval(audioPlaybackInterval);
+      document.getElementById('play-icon').innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+      waves.forEach(w => w.classList.remove('animating'));
+      pulseDot.classList.add('paused');
+    }
+
+    function updatePlaybackUI() {
+      if (timerText) {
+        timerText.textContent = formatTime(currentPlaybackSec);
+      }
+      if (playbackTime) {
+        playbackTime.textContent = `${formatTime(currentPlaybackSec)} / ${formatTime(totalAudioSec)}`;
+      }
+      if (audioProgress && totalAudioSec > 0) {
+        audioProgress.value = Math.floor((currentPlaybackSec / totalAudioSec) * 100);
+      } else if (audioProgress) {
+        audioProgress.value = 0;
+      }
+    }
+
+    recordingMiniBar.addEventListener('click', (e) => {
+      expandDrawer();
+    });
+    
+    btnMiniPause.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isPaused ? resumeRecording() : pauseRecording();
+    });
+    
+    btnMiniStop.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stopRecording();
+    });
+
+    // Dropdown Logic
+    templateBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+    });
+    document.addEventListener('click', () => {
+      dropdownMenu.classList.remove('show');
+    });
+    dropdownMenu.addEventListener('click', (e) => {
+      if (e.target.classList.contains('menu-item')) {
+        templateText.textContent = e.target.textContent;
+      }
+    });
+
+    // Utilities
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    // Transcription Simulation
+    function simulateTranscription() {
+      if (scriptIdx >= scripts.length) return;
+      const current = scripts[scriptIdx];
+      
+      // Check if we need to create a new speaker block
+      if (!activeBlock || activeBlock.dataset.speaker != current.s) {
+        activeBlock = document.createElement('div');
+        activeBlock.className = 'speaker-block';
+        activeBlock.dataset.speaker = current.s;
+        activeBlock.innerHTML = `<div class="speaker-name s${current.s}">说话人 ${current.s} <span class="time-stamp">${timerText.textContent}</span></div>`;
+        
+        activeText = document.createElement('div');
+        activeText.className = 'speaker-text';
+        activeBlock.appendChild(activeText);
+        transcriptionArea.appendChild(activeBlock);
+      }
+      
+      // Manage cursor
+      const cursor = activeText.querySelector('.typing-cursor');
+      if (cursor) cursor.remove();
+      
+      activeText.innerHTML += current.text.charAt(charIdx);
+      miniTranscriptionText.textContent = `说话人 ${current.s}：` + current.text.substring(0, charIdx + 1);
+      charIdx++;
+      
+      if (charIdx >= current.text.length) {
+        scriptIdx++;
+        charIdx = 0;
+        // Pause briefly before next speaker
+      } else {
+        activeText.innerHTML += '<span class="typing-cursor"></span>';
+      }
+      transcriptionArea.scrollTop = transcriptionArea.scrollHeight;
+    }
+
+    // Recording Controls
+    function startRecording() {
+      if (isPlayingAudio) pauseAudio();
+      isRecording = true;
+      isPaused = false;
+      
+      // UI Transitions
+      defaultComposer.classList.add('hidden');
+      recordingMiniBar.classList.remove('show');
+      recordingActions.style.display = 'flex';
+      playbackActions.style.display = 'none';
+      
+      drawerNoteInput.style.display = 'block';
+      const rightGroup = document.querySelector('.action-group-right');
+      if (rightGroup) rightGroup.style.display = 'block';
+      
+      templateBtn.style.pointerEvents = 'auto';
+      const arrow = templateBtn.querySelector('svg');
+      if (arrow) arrow.style.display = 'inline-block';
+      templateBtn.style.background = '#F3F4F6';
+      templateBtn.style.color = 'var(--text-main)';
+      
+      backdrop.classList.add('active');
+      recordingDrawer.classList.add('open');
+      
+      // Reset State
+      seconds = 0;
+      timerText.textContent = "00:00";
+      miniTimerText.textContent = "00:00";
+      miniTranscriptionText.textContent = "录音中，正在实时听记...";
+      timerText.classList.remove('paused');
+      pulseDot.classList.remove('paused');
+      waves.forEach(w => w.classList.add('animating'));
+      
+      const pauseHtml = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+        </svg>
+      `;
+      btnPause.innerHTML = pauseHtml + `<span class="btn-text">暂停</span>`;
+      btnMiniPause.innerHTML = pauseHtml;
+      
+      // Clear transcription
+      transcriptionArea.innerHTML = '';
+      scriptIdx = 0;
+      charIdx = 0;
+      activeBlock = null;
+      activeText = null;
+      
+      recordingInterval = setInterval(() => {
+        seconds++;
+        const t = formatTime(seconds);
+        timerText.textContent = t;
+        miniTimerText.textContent = t;
+      }, 1000);
+      
+      transcriptionInterval = setInterval(simulateTranscription, 120);
+    }
+
+    function pauseRecording() {
+      isPaused = true;
+      clearInterval(recordingInterval);
+      clearInterval(transcriptionInterval);
+      
+      pulseDot.classList.add('paused');
+      timerText.classList.add('paused');
+      waves.forEach(w => w.classList.remove('animating'));
+      
+      const playHtml = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      `;
+      btnPause.innerHTML = playHtml + `<span class="btn-text">继续</span>`;
+      btnMiniPause.innerHTML = playHtml;
+      if(activeText) {
+        const cursor = activeText.querySelector('.typing-cursor');
+        if (cursor) cursor.remove();
+      }
+    }
+
+    function resumeRecording() {
+      isPaused = false;
+      pulseDot.classList.remove('paused');
+      timerText.classList.remove('paused');
+      waves.forEach(w => w.classList.add('animating'));
+      
+      const pauseHtml = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+        </svg>
+      `;
+      btnPause.innerHTML = pauseHtml + `<span class="btn-text">暂停</span>`;
+      btnMiniPause.innerHTML = pauseHtml;
+      
+      if(activeText && charIdx > 0) {
+         activeText.innerHTML += '<span class="typing-cursor"></span>';
+      }
+      
+      recordingInterval = setInterval(() => {
+        seconds++;
+        const t = formatTime(seconds);
+        timerText.textContent = t;
+        miniTimerText.textContent = t;
+      }, 1000);
+      transcriptionInterval = setInterval(simulateTranscription, 120);
+    }
+
+    function stopRecording() {
+      if (!isRecording) return;
+      isRecording = false;
+      clearInterval(recordingInterval);
+      clearInterval(transcriptionInterval);
+      
+      // UI Transitions
+      recordingDrawer.classList.remove('open');
+      backdrop.classList.remove('active');
+      recordingMiniBar.classList.remove('show');
+      defaultComposer.classList.remove('hidden');
+      waves.forEach(w => w.classList.remove('animating'));
+      
+      // Add Summary Card to Chat
+      if (transcriptionArea.innerHTML.trim() !== '') {
+        const savedHtml = transcriptionArea.innerHTML;
+        const savedSec = seconds;
+        const savedTemplate = templateText.textContent;
+        const formattedTime = timerText.textContent;
+        
+        setTimeout(() => {
+          const cardData = {
+            html: savedHtml,
+            seconds: savedSec,
+            template: savedTemplate
+          };
+          
+          const card = document.createElement('div');
+          card.className = 'message user audio-card-user';
+          card.innerHTML = `
+            <div class="audio-header-user">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+              </svg>
+              现场听记音频 (${formattedTime})
+            </div>
+            <div class="audio-summary-user">
+              已应用模板: ${savedTemplate}<br>
+              [包含音频及完整转录文本]
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.85);">
+              <span>点击查看完整转录记录</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          `;
+          card.addEventListener('click', () => {
+            openHistoryDrawer(cardData);
+          });
+          chatArea.appendChild(card);
+          chatArea.scrollTop = chatArea.scrollHeight;
+          
+          setTimeout(() => {
+            const aiReply = document.createElement('div');
+            aiReply.className = 'message bot';
+            aiReply.innerHTML = `好的，已收到您的听记记录。根据【${savedTemplate}】为您总结核心内容：<br><br>1. 确定了下季度的产品方向，旨在提升听记体验；<br>2. 计划引入更多灵活的手势操作；<br>3. 确认了笔记无缝插入转录流的高亮交互设计。`;
+            chatArea.appendChild(aiReply);
+            chatArea.scrollTop = chatArea.scrollHeight;
+          }, 1000);
+        }, 400);
+      }
+    }
+
+    // Note Insertion logic
+    function insertNote() {
+      if (!btnInsertNote.classList.contains('active')) return;
+      const text = drawerNoteInput.value.trim();
+      if (!text) return;
+      
+      const note = document.createElement('div');
+      note.className = 'user-note';
+      note.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+           <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        <div style="flex:1;">
+          <span><strong>我的笔记：</strong>${text}</span>
+          <div class="time-stamp" style="margin-left:0; margin-top:2px;">${timerText.textContent}</div>
+        </div>
+      `;
+      transcriptionArea.appendChild(note);
+      
+      if (currentHistoryData) {
+        currentHistoryData.html = transcriptionArea.innerHTML;
+      }
+      
+      // Clean up
+      drawerNoteInput.value = '';
+      drawerNoteInput.style.height = 'auto';
+      btnInsertNote.classList.remove('active');
+      
+      // Force a new block next time someone speaks
+      activeBlock = null; 
+      transcriptionArea.scrollTop = transcriptionArea.scrollHeight;
+    }
+
+    // Default Send message logic
+    function sendDefaultMessage() {
+      if (!btnSendDefault.classList.contains('active')) return;
+      const text = defaultInput.value.trim();
+      if (text) {
+        const msg = document.createElement('div');
+        msg.className = 'message user';
+        msg.textContent = text;
+        chatArea.appendChild(msg);
+        chatArea.scrollTop = chatArea.scrollHeight;
+        
+        defaultInput.value = '';
+        defaultInput.style.height = 'auto';
+        btnSendDefault.classList.remove('active');
+      }
+    }
+
+    // Event Listeners
+    btnStartRecord.addEventListener('click', startRecording);
+    
+    btnPause.addEventListener('click', () => {
+      isPaused ? resumeRecording() : pauseRecording();
+    });
+    
+    btnStop.addEventListener('click', stopRecording);
+    
+    btnInsertNote.addEventListener('click', insertNote);
+    btnSendDefault.addEventListener('click', sendDefaultMessage);
+    
+    btnPlayAudio.addEventListener('click', togglePlayAudio);
+    audioProgress.addEventListener('input', (e) => {
+      const pct = parseFloat(e.target.value);
+      currentPlaybackSec = Math.round((pct / 100) * totalAudioSec);
+      updatePlaybackUI();
+    });
+    
+    // Auto-resize inputs
+    function handleInputResize(el, btn) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+      if (el.value.trim().length > 0) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+    
+    defaultInput.addEventListener('input', () => handleInputResize(defaultInput, btnSendDefault));
+    drawerNoteInput.addEventListener('input', () => handleInputResize(drawerNoteInput, btnInsertNote));
+    
+    drawerNoteInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        insertNote();
+      }
+    });
+    
+    defaultInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendDefaultMessage();
+      }
+    });
+
+  </script>
+</body>
+</html>

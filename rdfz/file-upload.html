@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>创建专家档案 · SoulAgent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #C20F24; --accent-light: #E03547; --accent-dark: #9E0B1B;
+      --surface: rgba(255,255,255,0.84); --surface-hover: rgba(255,255,255,0.96);
+      --border: rgba(194,15,36,0.18); --border-active: rgba(194,15,36,0.55);
+      --text-primary: #1a1a2e; --text-secondary: #5a5a7a; --text-muted: #9090b0;
+      --tag-bg: rgba(194,15,36,0.08); --tag-color: #C20F24;
+      --danger: #ff5a5a; --success: #22c55e;
+      --radius: 16px; --radius-sm: 10px;
+      --shadow: 0 8px 40px rgba(120,20,30,0.12);
+    }
+    html, body { height: 100%; font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-primary); }
+    body { position: relative; min-height: 100vh; overflow-x: hidden; }
+
+    .bg-layer { position: fixed; inset: 0; background: url("banner1220.jpg") center center / cover no-repeat; opacity: 0.15; z-index: 0; pointer-events: none; }
+    .bg-tint { position: fixed; inset: 0; background: linear-gradient(135deg, #fff0f0 0%, #fdf5f5 60%, #fffbf5 100%); z-index: 0; pointer-events: none; }
+
+    /* ── Page shell ── */
+    .page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 52px 20px 80px; }
+
+    /* ── Shared header ── */
+    .header { width: 100%; max-width: 860px; margin-bottom: 32px; text-align: center; }
+    .header-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--tag-bg); color: var(--tag-color); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border-active); margin-bottom: 16px; }
+    .header h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; line-height: 1.3; }
+    .header p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 480px; margin: 0 auto; }
+    .header-safety { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: rgba(34, 197, 94, 0.06); color: var(--text-secondary); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; padding: 6px 14px; font-size: 12.5px; font-weight: 400; margin-top: 12px; line-height: 1.4; max-width: 520px; margin-left: auto; margin-right: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+
+    /* ── Main card ── */
+    .main-card { width: 100%; max-width: 860px; background: var(--surface); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8); border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); overflow: hidden; }
+
+    #main-header { display: none; }
+    #page1-btn-wrap { display: none; }
+
+    /* ═══════════════════════════════════════════
+       PAGE 0 – Login / Binding
+    ═══════════════════════════════════════════ */
+    #page0 { display: block; max-width: 440px; margin: auto; padding: 40px 32px; }
+    .login-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 28px; color: var(--text-primary); }
+    .code-input-row { display: flex; gap: 12px; align-items: center; }
+    .code-input-row input { flex: 1; }
+    .btn-get-code {
+      padding: 11px 16px;
+      background: transparent;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s;
+    }
+    .btn-get-code:hover { background: rgba(194,15,36,0.08); }
+    .btn-get-code:disabled { border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; background: transparent; }
+    .btn-bind {
+      width: 100%; padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border: none; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 600; color: #fff;
+      cursor: pointer; transition: all 0.18s;
+      box-shadow: 0 4px 14px rgba(194,15,36,0.35);
+      margin-top: 10px;
+    }
+    .btn-bind:hover { box-shadow: 0 6px 20px rgba(194,15,36,0.45); transform: translateY(-1px); }
+
+    /* ═══════════════════════════════════════════
+       PAGE 1 – Personal Info
+    ═══════════════════════════════════════════ */
+    #page1 { display: none; flex-direction: column; align-items: center; }
+    #page2 { display: none; }
+
+    /* Left: form */
+    .info-form-col { width: 100%; padding: 36px 36px; }
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 22px; }
+
+    .field { margin-bottom: 22px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+    .field input, .field textarea {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.75); font-size: 14px; color: var(--text-primary);
+      font-family: inherit; outline: none; transition: border-color 0.18s, background 0.18s;
+      resize: none;
+    }
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-muted); }
+    .field input:focus, .field textarea:focus { border-color: var(--accent); background: #fff; }
+    .field-readonly-val {
+      font-size: 14px;
+      color: var(--text-muted);
+      background: rgba(0,0,0,0.035);
+      border: 1.5px solid rgba(0,0,0,0.06);
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      width: 100%;
+      cursor: not-allowed;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+
+    /* Avatar upload */
+    .avatar-upload-row { display: flex; align-items: center; gap: 16px; }
+    .avatar-preview {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: rgba(194,15,36,0.10); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0; position: relative; cursor: pointer;
+      transition: border-color 0.18s;
+    }
+    .avatar-preview:hover { border-color: var(--accent); }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .avatar-preview .avatar-placeholder { font-size: 28px; transition: opacity 0.2s; }
+    .avatar-preview input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .avatar-hint { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+    .avatar-hint span { color: var(--accent); font-weight: 600; cursor: pointer; }
+
+    /* Next button */
+    .footer-btn-wrap { display: flex; justify-content: center; margin-top: 32px; width: 100%; }
+    .btn-next { padding: 12px 36px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; color: #fff; cursor: pointer; font-family: inherit; transition: all 0.18s; box-shadow: 0 4px 14px rgba(194,15,36,0.35); display: flex; align-items: center; gap: 8px; }
+    .btn-next:hover { box-shadow: 0 6px 20px rgba(194,15,36,0.45); transform: translateY(-1px); }
+    .btn-next svg { width: 15px; height: 15px; stroke: #fff; stroke-width: 2.2; fill: none; }
+
+    /* Right: card preview */
+    .info-preview-col { width: 100%; background: linear-gradient(160deg, rgba(194,15,36,0.06) 0%, rgba(255,255,255,0.3) 100%); border-bottom: 1px solid var(--border); padding: 30px 24px; display: flex; flex-direction: column; align-items: center; }
+    .preview-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 20px; }
+
+    /* Expert card mock */
+    .expert-card { background: #fff; border: 1px solid rgba(0,0,0,0.07); border-radius: 16px; padding: 18px 18px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.07); width: 100%; max-width: 320px; }
+    .ec-top { display: flex; align-items: flex-start; gap: 14px; }
+    .ec-avatar { width: 54px; height: 54px; border-radius: 50%; background: rgba(194,15,36,0.12); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 22px; position: relative; }
+    .ec-avatar img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .ec-ai-badge { position: absolute; bottom: 0; right: 0; width: 18px; height: 18px; border-radius: 50%; background: #FF8C00; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; border: 1.5px solid #fff; }
+    .ec-meta { flex: 1; min-width: 0; }
+    .ec-name { font-size: 17px; font-weight: 700; color: #1a1a2e; line-height: 1.2; margin-bottom: 3px; }
+    .ec-name-placeholder { font-size: 15px; font-weight: 600; color: #ccc; }
+    .ec-subject { font-size: 12px; color: #888; margin-bottom: 8px; }
+    .ec-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .ec-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #fff8f0; color: #d4830a; border: 1px solid #fde8c0; font-weight: 500; }
+    .ec-divider { height: 1px; background: #f0f0f0; margin: 12px 0; }
+    .ec-bio { font-size: 12px; color: #666; line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .ec-bio-placeholder { font-size: 12px; color: #ccc; line-height: 1.6; }
+
+    .preview-caption { margin-top: 16px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6; text-align: center; }
+
+    /* ═══════════════════════════════════════════
+       PAGE 2 – Upload
+    ═══════════════════════════════════════════ */
+    .p2-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); cursor: pointer; margin-bottom: 20px; width: fit-content; transition: color 0.15s; user-select: none; }
+    .p2-back:hover { color: var(--accent); }
+    .p2-back svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+    .categories { padding: 28px 32px 0; }
+    .categories-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 14px; }
+    .cat-tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+    .cat-tab { position: relative; flex: 1; min-width: 190px; background: rgba(255,255,255,0.6); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; transition: all 0.22s ease; text-align: left; outline: none; overflow: hidden; }
+    .cat-tab::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(194,15,36,0.07), rgba(194,15,36,0.03)); opacity: 0; transition: opacity 0.22s; }
+    .cat-tab:hover { border-color: var(--border-active); background: var(--surface-hover); }
+    .cat-tab:hover::before { opacity: 1; }
+    .cat-tab.selected { border-color: var(--accent); background: rgba(194,15,36,0.07); box-shadow: 0 0 0 3px rgba(194,15,36,0.12); }
+    .cat-tab.selected::before { opacity: 1; }
+    .cat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; background: var(--tag-bg); }
+    .cat-tab.selected .cat-icon { background: rgba(194,15,36,0.18); }
+    .cat-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .cat-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+    .cat-purpose { font-size: 13px; color: var(--text-primary); line-height: 1.6; border-top: 1px solid rgba(194,15,36,0.10); padding-top: 10px; font-weight: 400; }
+    .cat-check { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.6); transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .cat-check svg { width: 11px; height: 11px; stroke: #fff; stroke-width: 2.5; fill: none; }
+    .cat-tab.selected .cat-check { opacity: 1; transform: scale(1); }
+
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 28px 32px 0; }
+
+    .upload-section { padding: 28px 32px 36px; }
+    .upload-section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; }
+
+    .upload-mode-tabs { display: flex; background: rgba(194,15,36,0.07); border-radius: 10px; padding: 4px; width: fit-content; margin-bottom: 20px; }
+    .mode-tab { padding: 7px 20px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border: none; background: transparent; transition: all 0.18s; outline: none; font-family: inherit; }
+    .mode-tab.active { background: #fff; color: var(--accent); font-weight: 600; box-shadow: 0 2px 8px rgba(60,40,120,0.12); }
+
+    .drop-zone { position: relative; border: 2px dashed var(--border-active); border-radius: var(--radius); background: rgba(194,15,36,0.03); transition: all 0.22s ease; overflow: hidden; cursor: pointer; height: 236px; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(194,15,36,0.07); }
+    .drop-zone.dragover { transform: scale(1.01); box-shadow: 0 0 0 4px rgba(194,15,36,0.15); }
+    .drop-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px 32px; gap: 12px; pointer-events: none; }
+    .drop-icon-wrap { width: 60px; height: 60px; border-radius: 16px; background: linear-gradient(135deg, rgba(194,15,36,0.12), rgba(194,15,36,0.06)); border: 1.5px solid rgba(194,15,36,0.2); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; transition: transform 0.2s; }
+    .drop-zone:hover .drop-icon-wrap { transform: translateY(-3px); }
+    .drop-icon-wrap svg { width: 26px; height: 26px; stroke: var(--accent); stroke-width: 1.8; fill: none; }
+    .drop-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .drop-sub { font-size: 13px; color: var(--text-secondary); text-align: center; line-height: 1.6; }
+    .drop-sub span { color: var(--accent); font-weight: 600; }
+    .drop-formats { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+    .fmt-tag { background: var(--tag-bg); color: var(--tag-color); font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(194,15,36,0.15); }
+    .drop-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+    .link-panel { display: none; height: 236px; }
+    .link-panel.active { display: flex; flex-direction: column; gap: 12px; }
+    .file-panel.hidden { display: none; }
+
+    .link-textarea { width: 100%; flex: 1; min-height: 0; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: var(--radius); background: rgba(255,255,255,0.8); font-size: 14px; color: var(--text-primary); font-family: inherit; outline: none; transition: border-color 0.18s; resize: none; display: block; margin-bottom: 0; line-height: 1.6; }
+    .link-textarea::placeholder { color: var(--text-muted); }
+    .link-textarea:focus { border-color: var(--accent); background: #fff; }
+    .link-add-btn { padding: 12px 20px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.18s, transform 0.12s; white-space: nowrap; margin-bottom: 0; }
+    .link-add-btn:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .link-hint { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+    .file-list { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.85); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    .file-type-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; background: var(--tag-bg); }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .file-status { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+    .status-dot.uploading { background: var(--accent); animation: pulse 1.2s infinite; }
+    .status-dot.done { background: var(--success); }
+    .status-dot.error { background: var(--danger); }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+    .status-text { font-size: 11px; color: var(--text-muted); }
+    .file-remove { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: background 0.15s, color 0.15s; flex-shrink: 0; }
+    .file-remove:hover { background: rgba(255,90,90,0.1); color: var(--danger); }
+    .file-remove svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+    /* Loading spinner for uploading state */
+    .spinner { width: 18px; height: 18px; animation: spin 1s linear infinite; display: block; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Anonymous icon for private state */
+    .anonymous-icon { width: 18px; height: 18px; color: var(--accent); display: block; }
+
+    /* Visibility Toggle Switch */
+    .visibility-toggle-wrap { display: flex; align-items: center; gap: 6px; margin-right: 4px; flex-shrink: 0; }
+    .toggle-label { font-size: 12px; font-weight: 500; color: var(--text-muted); user-select: none; transition: color 0.15s; }
+    .toggle-label.active { color: var(--accent); font-weight: 600; }
+    .toggle-label.private-label { display: inline-flex; align-items: center; gap: 3px; }
+    .switch { position: relative; display: inline-block; width: 32px; height: 18px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: rgba(0, 0, 0, 0.06); transition: .2s; border-radius: 18px; border: 1px solid rgba(0, 0, 0, 0.1); }
+    .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    input:checked + .slider { background-color: var(--accent); border-color: var(--accent); }
+    input:checked + .slider:before { transform: translateX(14px); }
+
+    /* Tooltip & Info Icon */
+    .info-icon { width: 13px; height: 13px; color: var(--text-muted); transition: color 0.15s; display: block; }
+    .tooltip:hover .info-icon { color: var(--accent); }
+    .tooltip { position: relative; display: inline-flex; align-items: center; cursor: pointer; margin-left: 2px; }
+    .tooltip::after { content: "保密状态下，该文件不会作用于对话回复"; position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%) translateY(4px); background: #fff; color: #1a1a2e; padding: 6px 10px; border-radius: 6px; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.12); opacity: 0; pointer-events: none; transition: opacity 0.15s ease, transform 0.15s ease; z-index: 100; font-weight: 500; }
+    .tooltip:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .tooltip::before { content: ""; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) translateY(4px); border-width: 5px; border-style: solid; border-color: #fff transparent transparent transparent; opacity: 0; pointer-events: none; transition: opacity 0.15s ease, transform 0.15s ease; z-index: 100; }
+    .tooltip:hover::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* File count bar and divider */
+    .upload-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 24px 0; }
+    .upload-count-header { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+    .upload-count-header strong { color: var(--accent); font-weight: 700; }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast { display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: rgba(26,26,46,0.92); backdrop-filter: blur(12px); border-radius: 12px; color: #fff; font-size: 13px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2); animation: toastIn 0.3s ease; white-space: nowrap; }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast.info    { border-left: 3px solid var(--accent); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateY(12px) scale(0.96); } }
+
+    /* Page transition */
+    .page-transition-out { animation: fadeOut 0.22s ease forwards; }
+    .page-transition-in  { animation: fadeIn  0.28s ease forwards; }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-12px); } }
+    @keyframes fadeIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 700px) {
+      #page1 { flex-direction: column; }
+      .info-preview-col { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+      .categories, .upload-section, .upload-footer { padding-left: 20px; padding-right: 20px; }
+      .cat-tabs { flex-direction: column; }
+      .cat-tab { min-width: unset; }
+    }
+
+    /* ── Cascade select ── */
+    .cascade-select-wrap { position: relative; }
+    .cascade-select {
+      width: 100%;
+      padding: 11px 36px 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.75);
+      font-size: 14px;
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239090b0' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    .cascade-select:focus { border-color: var(--accent); background-color: #fff; }
+    .cascade-select:disabled { color: var(--text-muted); cursor: not-allowed; background-color: rgba(0,0,0,0.03); }
+    .cascade-select option { color: var(--text-primary); }
+
+    /* ── Whitelist page ── */
+    .wl-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 28px 32px 0; }
+    .wl-toolbar-left { display: flex; align-items: center; gap: 10px; }
+    .wl-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .wl-count { font-size: 13px; color: var(--text-muted); background: rgba(194,15,36,0.07); padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); }
+    .wl-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; border: none; }
+    .wl-btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: #fff; box-shadow: 0 3px 10px rgba(194,15,36,0.28); }
+    .wl-btn-primary:hover { box-shadow: 0 5px 16px rgba(194,15,36,0.38); transform: translateY(-1px); }
+    .wl-btn-secondary { background: rgba(255,255,255,0.85); color: var(--accent); border: 1.5px solid var(--border-active) !important; }
+    .wl-btn-secondary:hover { background: rgba(194,15,36,0.06); }
+    .wl-table-wrap { padding: 20px 32px 36px; overflow-x: auto; }
+    .wl-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .wl-table thead th { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; color: var(--text-muted); text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 1.5px solid var(--border); background: rgba(194,15,36,0.03); }
+    .wl-table thead th:first-child { border-radius: 8px 0 0 0; }
+    .wl-table thead th:last-child { border-radius: 0 8px 0 0; text-align: center; }
+    .wl-table tbody tr { border-bottom: 1px solid rgba(194,15,36,0.07); transition: background 0.15s; }
+    .wl-table tbody tr:last-child { border-bottom: none; }
+    .wl-table tbody tr:hover { background: rgba(194,15,36,0.03); }
+    .wl-table tbody td { padding: 13px 14px; color: var(--text-primary); vertical-align: middle; }
+    .wl-table tbody td:last-child { text-align: center; }
+    .wl-phone { font-family: 'SF Mono', 'Fira Mono', monospace, sans-serif; font-size: 13px; letter-spacing: 0.04em; }
+    .wl-role-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+    .wl-role-student { background: rgba(59,130,246,0.1); color: #2563eb; border: 1px solid rgba(59,130,246,0.2); }
+    .wl-role-teacher { background: rgba(34,197,94,0.1); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); }
+    .wl-role-admin { background: rgba(194,15,36,0.1); color: var(--accent); border: 1px solid rgba(194,15,36,0.2); }
+    .wl-del-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: none; background: transparent; border-radius: 7px; cursor: pointer; color: var(--text-muted); transition: background 0.15s, color 0.15s; }
+    .wl-del-btn:hover { background: rgba(255,90,90,0.1); color: var(--danger); }
+    .wl-del-btn svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2; fill: none; }
+    .wl-empty { text-align: center; padding: 52px 24px; color: var(--text-muted); font-size: 14px; }
+    .wl-empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ── Modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(20,10,20,0.42); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-box { background: #fff; border-radius: 20px; box-shadow: 0 20px 60px rgba(120,20,30,0.18); width: 100%; max-width: 480px; padding: 32px; position: relative; transform: translateY(18px) scale(0.97); transition: transform 0.25s cubic-bezier(0.34,1.3,0.64,1), opacity 0.22s; opacity: 0; }
+    .modal-overlay.open .modal-box { transform: none; opacity: 1; }
+    .modal-close { position: absolute; top: 18px; right: 18px; width: 28px; height: 28px; border: none; background: rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: background 0.15s; }
+    .modal-close:hover { background: rgba(255,90,90,0.1); color: var(--danger); }
+    .modal-close svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2.2; fill: none; }
+    .modal-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .modal-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .modal-field { margin-bottom: 18px; }
+    .modal-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 7px; }
+    .modal-field input, .modal-field select, .modal-field textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: rgba(255,255,255,0.9); font-size: 14px; color: var(--text-primary); font-family: inherit; outline: none; transition: border-color 0.18s; }
+    .modal-field select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239090b0' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+    .modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus { border-color: var(--accent); background: #fff; }
+    .modal-field textarea { resize: none; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+    .modal-btn-cancel { padding: 10px 22px; border: 1.5px solid var(--border); background: transparent; color: var(--text-secondary); border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .modal-btn-cancel:hover { border-color: var(--text-muted); background: rgba(0,0,0,0.03); }
+    .modal-btn-confirm { padding: 10px 22px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: #fff; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; box-shadow: 0 3px 10px rgba(194,15,36,0.28); transition: all 0.18s; }
+    .modal-btn-confirm:hover { box-shadow: 0 5px 16px rgba(194,15,36,0.38); transform: translateY(-1px); }
+    .modal-divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .modal-template-row { display: flex; align-items: center; justify-content: space-between; background: rgba(194,15,36,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+    .modal-template-info { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .modal-template-info strong { color: var(--text-primary); font-weight: 600; }
+    .modal-template-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border: 1.5px solid var(--border-active); background: transparent; color: var(--accent); border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; margin-left: 12px; }
+    .modal-template-btn:hover { background: rgba(194,15,36,0.07); }
+    .modal-template-btn svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2.2; fill: none; }
+  </style>
+</head>
+<body>
+<div class="bg-tint"></div>
+<div class="bg-layer"></div>
+
+<div class="page">
+  <div id="global-back-wrap" style="width: 100%; max-width: 860px; margin-bottom: 24px; display: none;">
+    <div class="p2-back" onclick="goToSelectionGlobal()" style="margin-bottom: 0; display: inline-flex;">
+      <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      返回上传类型选择
+    </div>
+  </div>
+
+  <!-- ── Header ── -->
+  <div class="header" id="main-header">
+    <h1 id="header-title">填写您的个人信息</h1>
+    <p id="header-desc">这些信息将用于构建您的专家卡片</p>
+    <div class="header-safety" id="header-safety" style="margin-top: 12px; max-width: none; font-weight: 600; white-space: nowrap;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #22c55e; flex-shrink: 0;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      <span id="header-safety-text">资料仅用于构建您的专属分身，数据存储在人大附中专属服务器内，不会共享给任何第三方</span>
+    </div>
+  </div>
+
+  <!-- ── PAGE 0: Login / Binding ── -->
+  <div class="main-card" id="page0">
+    <h2 class="login-title">老师账号登录</h2>
+    
+    <div class="field">
+      <label for="inp-phone">手机号</label>
+      <input id="inp-phone" type="tel" placeholder="请输入手机号" />
+    </div>
+
+    <div class="field">
+      <label for="inp-code">验证码</label>
+      <div class="code-input-row">
+        <input id="inp-code" type="text" placeholder="请输入验证码" />
+        <button class="btn-get-code" id="btn-code" onclick="sendCode()">获取验证码</button>
+      </div>
+    </div>
+
+    <button class="btn-bind" onclick="confirmBinding()">登录/注册</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE Selection: Choose Upload Type
+  ══════════════════════════════════════ -->
+  <div id="page-selection" style="display: none; width: 100%; max-width: 860px;">
+    <div style="display: flex; gap: 24px; flex-direction: row; flex-wrap: wrap;">
+      <button class="main-card" style="flex: 1; min-width: 240px; text-align: left; padding: 40px 32px; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; overflow: visible;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 48px rgba(194,15,36,0.18)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow)';" onclick="goToPageAgentCourse()">
+        <div class="cat-icon" style="background: rgba(34, 197, 94, 0.1); width: 48px; height: 48px; font-size: 24px; border-radius: 14px; margin-bottom: 20px;">📚</div>
+        <div class="cat-title" style="font-size: 19px; margin-bottom: 12px; font-weight: 700;">【Agent听课】资料上传</div>
+        <div class="cat-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">上传课程信息、课件教案等资料，让 Agent 实时辅助听课。</div>
+      </button>
+      <button class="main-card" style="flex: 1; min-width: 240px; text-align: left; padding: 40px 32px; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; overflow: visible;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 48px rgba(194,15,36,0.18)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow)';" onclick="goToPage1FromSelection()">
+        <div class="cat-icon" style="width: 48px; height: 48px; font-size: 24px; border-radius: 14px; margin-bottom: 20px;">👤</div>
+        <div class="cat-title" style="font-size: 19px; margin-bottom: 12px; font-weight: 700;">【AI分身构建】资料上传</div>
+        <div class="cat-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">填写个人信息，上传公开课、演讲等资料，构建您的专属 AI 分身。</div>
+      </button>
+      <button class="main-card" style="flex: 1; min-width: 240px; text-align: left; padding: 40px 32px; min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; overflow: visible;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 48px rgba(194,15,36,0.18)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow)';" onclick="goToPageWhitelist()">
+        <div class="cat-icon" style="background: rgba(139,92,246,0.1); width: 48px; height: 48px; font-size: 24px; border-radius: 14px; margin-bottom: 20px;">🛡️</div>
+        <div class="cat-title" style="font-size: 19px; margin-bottom: 12px; font-weight: 700;">白名单管理</div>
+        <div class="cat-desc" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">维护可访问系统的手机号白名单，按角色精细化管控访问权限。</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE 1: Personal Info
+  ══════════════════════════════════════ -->
+  <div class="main-card" id="page1">
+
+    <!-- Right: Card preview -->
+    <div class="info-preview-col">
+      <div class="preview-label">专家卡片预览</div>
+      <div class="expert-card">
+        <div class="ec-top">
+          <div class="ec-avatar" id="ec-avatar">
+            <span id="ec-avatar-emoji">🧑‍🏫</span>
+            <img id="ec-avatar-img" alt="" />
+            <div class="ec-ai-badge">AI</div>
+          </div>
+          <div class="ec-meta">
+            <div class="ec-name-row" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 4px;">
+              <span class="ec-name" id="ec-name" style="font-size: 16px; font-weight: 700; color: #1a1a2e; margin-bottom: 0;"><span class="ec-name-placeholder">您的名字</span></span>
+              <span id="ec-tags" style="display: inline-flex; flex-wrap: wrap; gap: 5px;"><span class="ec-tag">专家</span></span>
+            </div>
+            <div class="ec-post" id="ec-post" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">岗位</div>
+          </div>
+        </div>
+        <div id="ec-bio" class="ec-bio-placeholder" style="margin-top: 12px;">这里将显示您填写的简介……</div>
+        <div class="ec-divider" style="margin: 12px 0;"></div>
+        <div class="ec-subject-row" style="display: flex; align-items: center; gap: 6px; font-size: 12px;">
+          <span id="ec-subject" style="color: var(--text-secondary); font-weight: 500;">教学学科</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Left: Form -->
+    <div class="info-form-col">
+
+      <!-- Bound Phone -->
+      <div class="field">
+        <label>已绑定手机号</label>
+        <div class="field-readonly-val">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <span id="bound-phone-val">--</span>
+        </div>
+      </div>
+
+      <!-- Avatar -->
+      <div class="field">
+        <label>头像</label>
+        <div class="avatar-upload-row">
+          <div class="avatar-preview" id="avatar-wrap" onclick="document.getElementById('avatar-input').click()">
+            <span class="avatar-placeholder" id="avatar-placeholder">🧑‍🏫</span>
+            <img id="avatar-img" alt="头像" />
+            <input type="file" id="avatar-input" accept="image/*" style="display:none" />
+          </div>
+          <div class="avatar-hint">
+            点击上传头像<br>
+            支持 JPG、PNG，建议正方形
+          </div>
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div class="field">
+        <label for="inp-name">名字</label>
+        <input id="inp-name" type="text" placeholder="请输入您的名字" oninput="syncPreview()" />
+      </div>
+
+      <!-- Tags -->
+      <div class="field">
+        <label for="inp-tags">标签</label>
+        <input id="inp-tags" type="text" placeholder="多标签请用分号分割" oninput="syncPreview()" />
+      </div>
+
+      <!-- Post -->
+      <div class="field">
+        <label for="inp-post">岗位</label>
+        <input id="inp-post" type="text" placeholder="请输入您的岗位，如：特级教师、副教授…" oninput="syncPreview()" />
+      </div>
+
+      <!-- Bio -->
+      <div class="field">
+        <label for="inp-bio">简介</label>
+        <textarea id="inp-bio" rows="3" placeholder="请输入个人简介…" oninput="syncPreview()"></textarea>
+      </div>
+
+      <!-- Subject -->
+      <div class="field">
+        <label for="inp-subject">教学学科</label>
+        <input id="inp-subject" type="text" placeholder="多学科请用分号分割" oninput="syncPreview()" />
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-btn-wrap" id="page1-btn-wrap">
+    <button class="btn-next" onclick="goToPage2()">
+      下一步：上传资料
+      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE 2: Upload
+  ══════════════════════════════════════ -->
+  <div class="main-card" id="page2">
+
+    <!-- Back button (inside card header area) -->
+    <div style="padding: 24px 32px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+      <div class="p2-back" onclick="goToPage1()" style="margin-bottom: 0;">
+        <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        修改个人信息
+      </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories">
+      <div class="categories-label">资料类型</div>
+      <div class="cat-tabs">
+
+        <button class="cat-tab selected" id="cat-0" onclick="selectCat(0)">
+          <div class="cat-check"><svg viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1"/></svg></div>
+          <div class="cat-icon">📚</div>
+          <div class="cat-title">课程资料</div>
+          <div class="cat-desc">例如：课程文档、课件、公开课视频、优质课视频、教案文档等</div>
+          <div class="cat-purpose">该类资料用于分身更完整地理解课程内容，使课程相关问题回答更准确、更专业，与您的授课内容尽量保持一致。</div>
+        </button>
+
+        <button class="cat-tab" id="cat-1" onclick="selectCat(1)">
+          <div class="cat-check"><svg viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1"/></svg></div>
+          <div class="cat-icon">📄</div>
+          <div class="cat-title">其他公开资料</div>
+          <div class="cat-desc">例如：演讲、播客、访谈、新闻报道、论文、报刊、期刊等</div>
+          <div class="cat-purpose">该类资料用于分身学习您在公开分享中的表达方式和思考习惯，让分身更自然地还原您的讲课风格和沟通特点。</div>
+        </button>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Upload area -->
+    <div class="upload-section">
+
+      <div class="upload-mode-tabs">
+        <button class="mode-tab active" id="mode-file" onclick="switchMode('file')">上传文件</button>
+        <button class="mode-tab" id="mode-link" onclick="switchMode('link')">添加链接</button>
+      </div>
+
+      <div class="file-panel" id="file-panel">
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" class="drop-input" id="file-input" multiple accept="*/*" />
+          <div class="drop-inner">
+            <div class="drop-icon-wrap">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="drop-title">拖拽文件到此处，或点击上传</div>
+            <div class="drop-formats" id="drop-formats">
+              <span class="fmt-tag">PDF</span><span class="fmt-tag">PPT / PPTX</span>
+              <span class="fmt-tag">DOC / DOCX</span><span class="fmt-tag">MP4 / AVI / FLV / MKV / MOV</span>
+              <span class="fmt-tag">MP3 / WAV / M4A</span><span class="fmt-tag">TXT</span><span class="fmt-tag">PNG / JPG / JPEG</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="link-panel" id="link-panel">
+        <textarea class="link-textarea" id="link-input" placeholder="请输入链接，多个链接可通过换行或分号分隔。&#10;例如：&#10;https://www.bilibili.com/video/BV1xx...&#10;https://mp.weixin.qq.com/s/..."></textarea>
+        <button class="link-add-btn" onclick="addLink()" style="width: 100%; display: block; margin-bottom: 0;">添加链接</button>
+      </div>
+
+      <div class="upload-divider"></div>
+      <div class="upload-count-header">
+        已添加 <strong id="count">0</strong> 个文件
+      </div>
+      <div class="file-list" id="file-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PAGE Agent Course
+  ══════════════════════════════════════ -->
+  <div class="main-card" id="page-agent-course" style="display: none; padding-bottom: 32px;">
+    
+    <div style="padding: 32px 36px 0;">
+      <div class="field">
+        <label>学科</label>
+        <div style="display: flex; gap: 12px;">
+          <div class="cascade-select-wrap" style="flex: 1;">
+            <select id="course-type" class="cascade-select" onchange="onCourseTypeChange()">
+              <option value="">选择课程体系</option>
+              <option value="ap">AP</option>
+              <option value="ib">IB</option>
+              <option value="alevel">A-Level</option>
+              <option value="cn">人教版（国内）</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="cascade-select-wrap" style="flex: 1;">
+            <select id="course-subject" class="cascade-select" disabled>
+              <option value="">选择科目</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>课程主题</label>
+        <input type="text" placeholder="例如：古代诗歌鉴赏" />
+      </div>
+      <div class="field">
+        <label>课程时间</label>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <input type="datetime-local" />
+          <span style="color: var(--text-muted);">-</span>
+          <input type="datetime-local" />
+        </div>
+      </div>
+      <div class="field">
+        <label>授课老师</label>
+        <input type="text" placeholder="例如：张三老师" />
+      </div>
+      <div class="field">
+        <label>课件</label>
+        <div id="courseware-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
+        <button type="button" onclick="document.getElementById('courseware-input').click()" style="padding: 8px 16px; background: rgba(194,15,36,0.08); color: var(--accent); border: 1px dashed var(--accent); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; width: 100%; text-align: center; transition: all 0.2s;">+ 上传文件</button>
+        <input type="file" id="courseware-input" multiple style="display: none;" onchange="handleSimpleUpload(event, 'courseware-list')" />
+      </div>
+      <div class="field">
+        <label>教案（选填）</label>
+        <div id="lesson-plan-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;"></div>
+        <button type="button" onclick="document.getElementById('lesson-plan-input').click()" style="padding: 8px 16px; background: rgba(194,15,36,0.08); color: var(--accent); border: 1px dashed var(--accent); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; width: 100%; text-align: center; transition: all 0.2s;">+ 上传文件</button>
+        <input type="file" id="lesson-plan-input" multiple style="display: none;" onchange="handleSimpleUpload(event, 'lesson-plan-list')" />
+      </div>
+
+      <div class="footer-btn-wrap" style="margin-top: 32px;">
+        <button class="btn-next" onclick="showToast('保存成功', 'success')">保存</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════
+       PAGE Whitelist
+  ══════════════════════════════════════ -->
+  <div class="main-card" id="page-whitelist" style="display: none; width: 100%; max-width: 960px;">
+
+    <!-- Toolbar -->
+    <div class="wl-toolbar">
+      <div class="wl-toolbar-left">
+        <span class="wl-title">白名单列表</span>
+        <span class="wl-count" id="wl-count">共 3 条</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="wl-btn wl-btn-secondary" onclick="openImportModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          批量导入
+        </button>
+        <button class="wl-btn wl-btn-primary" onclick="openAddModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增号码
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="wl-table-wrap">
+      <table class="wl-table">
+        <thead>
+          <tr>
+            <th>手机号（脱敏）</th>
+            <th>角色</th>
+            <th>备注</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="wl-tbody">
+          <!-- populated by JS -->
+        </tbody>
+      </table>
+      <div class="wl-empty" id="wl-empty" style="display:none;">
+        <div class="wl-empty-icon">🛡️</div>
+        <div>暂无白名单记录</div>
+        <div style="font-size:12px; margin-top:6px;">点击「新增号码」或「批量导入」添加第一条记录</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     Modal: 新增号码
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-add" onclick="handleModalOverlayClick(event, 'modal-add')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-add')">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-title">新增白名单号码</div>
+    <div class="modal-desc">添加手机号后，该用户即可访问系统相关功能。</div>
+
+    <div class="modal-field">
+      <label for="add-phone">手机号 <span style="color:var(--accent)">*</span></label>
+      <input id="add-phone" type="tel" placeholder="请输入 11 位手机号" maxlength="11" />
+    </div>
+    <div class="modal-field">
+      <label for="add-role">角色 <span style="color:var(--accent)">*</span></label>
+      <select id="add-role">
+        <option value="">请选择角色</option>
+        <option value="student">学生</option>
+        <option value="teacher">老师</option>
+        <option value="admin">管理员</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label for="add-remark">备注（选填）</label>
+      <textarea id="add-remark" rows="2" placeholder="如：高三(1)班班长、数学备课组组长…"></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-btn-cancel" onclick="closeModal('modal-add')">取消</button>
+      <button class="modal-btn-confirm" onclick="confirmAdd()">确认添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     Modal: 批量导入
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-import" onclick="handleModalOverlayClick(event, 'modal-import')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-import')">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="modal-title">批量导入白名单</div>
+    <div class="modal-desc">请先下载模板，按格式填写后上传，系统将自动解析并导入。</div>
+
+    <!-- Template download -->
+    <div class="modal-template-row">
+      <div class="modal-template-info">
+        <strong>📋 白名单导入模板</strong><br>
+        包含手机号、角色、备注三列，支持 Excel / CSV
+      </div>
+      <button class="modal-template-btn" onclick="downloadTemplate()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        下载模板
+      </button>
+    </div>
+
+    <div class="modal-divider"></div>
+
+    <!-- Upload zone -->
+    <div class="drop-zone" id="import-drop-zone" style="height: 160px;" onclick="document.getElementById('import-file-input').click()">
+      <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="handleImportFile(event)" />
+      <div class="drop-inner">
+        <div class="drop-icon-wrap">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div class="drop-title">拖拽文件到此处，或点击上传</div>
+        <div class="drop-formats">
+          <span class="fmt-tag">XLSX</span>
+          <span class="fmt-tag">XLS</span>
+          <span class="fmt-tag">CSV</span>
+        </div>
+      </div>
+    </div>
+    <div id="import-file-name" style="font-size:12.5px; color:var(--text-muted); margin-top:10px; min-height:18px;"></div>
+
+    <div class="modal-footer">
+      <button class="modal-btn-cancel" onclick="closeModal('modal-import')">取消</button>
+      <button class="modal-btn-confirm" onclick="confirmImport()">开始导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  /* ── Cascading subject dropdown ───────────────── */
+  const COURSE_SUBJECTS = {
+    ap: [
+      { value: 'ap-physics-c', label: 'AP Physics C' },
+      { value: 'ap-physics-1', label: 'AP Physics 1' },
+      { value: 'ap-physics-2', label: 'AP Physics 2' },
+      { value: 'ap-chemistry', label: 'AP Chemistry' },
+      { value: 'ap-biology', label: 'AP Biology' },
+      { value: 'ap-calculus-ab', label: 'AP Calculus AB' },
+      { value: 'ap-calculus-bc', label: 'AP Calculus BC' },
+      { value: 'ap-stats', label: 'AP Statistics' },
+      { value: 'ap-chinese', label: 'AP Chinese Language' },
+      { value: 'ap-english-lang', label: 'AP English Language' },
+      { value: 'ap-english-lit', label: 'AP English Literature' },
+      { value: 'ap-french', label: 'AP French Language' },
+      { value: 'ap-spanish', label: 'AP Spanish Language' },
+      { value: 'ap-world-history', label: 'AP World History' },
+      { value: 'ap-us-history', label: 'AP US History' },
+      { value: 'ap-cs-a', label: 'AP Computer Science A' },
+      { value: 'ap-cs-principles', label: 'AP Computer Science Principles' },
+      { value: 'ap-econ-macro', label: 'AP Macroeconomics' },
+      { value: 'ap-econ-micro', label: 'AP Microeconomics' },
+      { value: 'ap-psych', label: 'AP Psychology' },
+    ],
+    ib: [
+      { value: 'ib-physics-hl', label: 'IB Physics HL' },
+      { value: 'ib-physics-sl', label: 'IB Physics SL' },
+      { value: 'ib-chemistry-hl', label: 'IB Chemistry HL' },
+      { value: 'ib-chemistry-sl', label: 'IB Chemistry SL' },
+      { value: 'ib-biology-hl', label: 'IB Biology HL' },
+      { value: 'ib-biology-sl', label: 'IB Biology SL' },
+      { value: 'ib-math-aa-hl', label: 'IB Math AA HL' },
+      { value: 'ib-math-aa-sl', label: 'IB Math AA SL' },
+      { value: 'ib-math-ai-hl', label: 'IB Math AI HL' },
+      { value: 'ib-math-ai-sl', label: 'IB Math AI SL' },
+      { value: 'ib-chinese-a', label: 'IB Chinese A（语言与文学）' },
+      { value: 'ib-chinese-b', label: 'IB Chinese B' },
+      { value: 'ib-english-a', label: 'IB English A' },
+      { value: 'ib-english-b', label: 'IB English B' },
+      { value: 'ib-french-b', label: 'IB French B' },
+      { value: 'ib-spanish-b', label: 'IB Spanish B' },
+      { value: 'ib-economics', label: 'IB Economics' },
+      { value: 'ib-history', label: 'IB History' },
+      { value: 'ib-psychology', label: 'IB Psychology' },
+      { value: 'ib-cs', label: 'IB Computer Science' },
+    ],
+    alevel: [
+      { value: 'al-physics', label: 'A-Level Physics' },
+      { value: 'al-chemistry', label: 'A-Level Chemistry' },
+      { value: 'al-biology', label: 'A-Level Biology' },
+      { value: 'al-math', label: 'A-Level Mathematics' },
+      { value: 'al-further-math', label: 'A-Level Further Math' },
+      { value: 'al-english-lang', label: 'A-Level English Language' },
+      { value: 'al-english-lit', label: 'A-Level English Literature' },
+      { value: 'al-chinese', label: 'A-Level Chinese' },
+      { value: 'al-french', label: 'A-Level French' },
+      { value: 'al-economics', label: 'A-Level Economics' },
+      { value: 'al-history', label: 'A-Level History' },
+      { value: 'al-cs', label: 'A-Level Computer Science' },
+    ],
+    cn: [
+      { value: 'cn-chinese', label: '语文' },
+      { value: 'cn-math', label: '数学' },
+      { value: 'cn-english', label: '英语' },
+      { value: 'cn-physics', label: '物理' },
+      { value: 'cn-chemistry', label: '化学' },
+      { value: 'cn-biology', label: '生物' },
+      { value: 'cn-history', label: '历史' },
+      { value: 'cn-geography', label: '地理' },
+      { value: 'cn-politics', label: '政治' },
+      { value: 'cn-cs', label: '信息技术' },
+    ],
+    other: [
+      { value: 'other-math', label: '数学' },
+      { value: 'other-physics', label: '物理' },
+      { value: 'other-chemistry', label: '化学' },
+      { value: 'other-biology', label: '生物' },
+      { value: 'other-chinese', label: '中文' },
+      { value: 'other-english', label: '英语' },
+      { value: 'other-french', label: '法语' },
+      { value: 'other-spanish', label: '西班牙语' },
+      { value: 'other-cs', label: '计算机科学' },
+      { value: 'other-economics', label: '经济学' },
+    ],
+  };
+
+  function onCourseTypeChange() {
+    const type = document.getElementById('course-type').value;
+    const subjectSel = document.getElementById('course-subject');
+    subjectSel.innerHTML = '<option value="">选择科目</option>';
+    if (type && COURSE_SUBJECTS[type]) {
+      COURSE_SUBJECTS[type].forEach(function(item) {
+        const opt = document.createElement('option');
+        opt.value = item.value;
+        opt.textContent = item.label;
+        subjectSel.appendChild(opt);
+      });
+      subjectSel.disabled = false;
+    } else {
+      subjectSel.disabled = true;
+    }
+  }
+
+  /* ── Send code & Binding ─────────────────────── */
+  let countdownTimer = null;
+  function sendCode() {
+    const phone = document.getElementById('inp-phone').value.trim();
+    if (!phone) {
+      showToast('请输入手机号', 'error');
+      document.getElementById('inp-phone').focus();
+      return;
+    }
+    if (!/^\d{11}$/.test(phone)) {
+      showToast('请输入正确的11位手机号', 'error');
+      document.getElementById('inp-phone').focus();
+      return;
+    }
+
+    const btn = document.getElementById('btn-code');
+    btn.disabled = true;
+    let seconds = 60;
+    btn.textContent = seconds + 's';
+    
+    showToast('验证码已发送', 'success');
+
+    countdownTimer = setInterval(function() {
+      seconds--;
+      if (seconds <= 0) {
+        clearInterval(countdownTimer);
+        btn.disabled = false;
+        btn.textContent = '获取验证码';
+      } else {
+        btn.textContent = seconds + 's';
+      }
+    }, 1000);
+  }
+
+  function confirmBinding() {
+    const phone = document.getElementById('inp-phone').value.trim();
+    const code = document.getElementById('inp-code').value.trim();
+
+    if (!phone) {
+      showToast('请输入手机号', 'error');
+      document.getElementById('inp-phone').focus();
+      return;
+    }
+    if (!code) {
+      showToast('请输入验证码', 'error');
+      document.getElementById('inp-code').focus();
+      return;
+    }
+
+    const p0 = document.getElementById('page0');
+    p0.classList.add('page-transition-out');
+
+    setTimeout(function() {
+      p0.style.display = 'none';
+      p0.classList.remove('page-transition-out');
+
+      const header = document.getElementById('main-header');
+      header.style.display = 'block';
+      header.classList.add('page-transition-in');
+      setTimeout(function() { header.classList.remove('page-transition-in'); }, 300);
+
+      // Display bound phone number
+      const formattedPhone = phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3');
+      document.getElementById('bound-phone-val').textContent = formattedPhone;
+
+      const pSel = document.getElementById('page-selection');
+      pSel.style.display = 'block';
+      pSel.classList.add('page-transition-in');
+      setTimeout(function() {
+        pSel.classList.remove('page-transition-in');
+      }, 300);
+
+      document.getElementById('header-title').textContent = '选择上传类型';
+      document.getElementById('header-desc').style.display = 'none';
+      document.getElementById('header-safety').style.display = 'none';
+
+      showToast('账号登录成功', 'success');
+    }, 200);
+  }
+
+  /* ── Avatar ─────────────────────────────────── */
+  document.getElementById('avatar-input').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const src = e.target.result;
+      // Page1 preview
+      document.getElementById('avatar-img').src = src;
+      document.getElementById('avatar-img').style.display = 'block';
+      document.getElementById('avatar-placeholder').style.display = 'none';
+      // Card preview
+      document.getElementById('ec-avatar-img').src = src;
+      document.getElementById('ec-avatar-img').style.display = 'block';
+      document.getElementById('ec-avatar-emoji').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  /* ── Sync form → card preview ────────────────── */
+  function syncPreview() {
+    const name    = document.getElementById('inp-name').value.trim();
+    const tags    = document.getElementById('inp-tags').value.trim();
+    const post    = document.getElementById('inp-post').value.trim();
+    const bio     = document.getElementById('inp-bio').value.trim();
+    const subject = document.getElementById('inp-subject').value.trim();
+
+    const ecName = document.getElementById('ec-name');
+    ecName.innerHTML = name
+      ? escHtml(name)
+      : '<span class="ec-name-placeholder">您的名字</span>';
+
+    const ecPost = document.getElementById('ec-post');
+    ecPost.textContent = post || '岗位';
+
+    const ecSubject = document.getElementById('ec-subject');
+    if (subject) {
+      ecSubject.textContent = subject.split(/[;；]/).map(function(s) { return s.trim(); }).filter(Boolean).join(' / ');
+    } else {
+      ecSubject.textContent = '教学学科';
+    }
+
+    const ecTags = document.getElementById('ec-tags');
+    if (tags) {
+      const tagList = tags.split(/[;；]/).map(function(t) { return t.trim(); }).filter(Boolean);
+      if (tagList.length > 0) {
+        ecTags.innerHTML = tagList.map(function(t) { return '<span class="ec-tag">' + escHtml(t) + '</span>'; }).join('');
+      } else {
+        ecTags.innerHTML = '<span class="ec-tag">专家</span>';
+      }
+    } else {
+      ecTags.innerHTML = '<span class="ec-tag">专家</span>';
+    }
+
+    const ecBio = document.getElementById('ec-bio');
+    if (bio) {
+      ecBio.className = 'ec-bio';
+      ecBio.textContent = bio;
+    } else {
+      ecBio.className = 'ec-bio-placeholder';
+      ecBio.textContent = '这里将显示您填写的简介……';
+    }
+  }
+
+  /* ── Page selection & navigation ─────────────── */
+  function goToPageAgentCourse() {
+    const pSel = document.getElementById('page-selection');
+    pSel.classList.add('page-transition-out');
+    setTimeout(function() {
+      pSel.style.display = 'none';
+      pSel.classList.remove('page-transition-out');
+      
+      document.getElementById('header-title').textContent = 'Agent听课资料上传';
+      document.getElementById('header-desc').textContent = '请填写课程信息并上传课件资料';
+      document.getElementById('header-safety-text').textContent = '资料仅用于Agent帮你听课功能，数据存储在人大附中专属服务器内，不会共享给任何第三方。';
+      document.getElementById('header-desc').style.display = 'block';
+      document.getElementById('header-safety').style.display = 'inline-flex';
+      document.getElementById('global-back-wrap').style.display = 'block';
+      
+      const pAC = document.getElementById('page-agent-course');
+      pAC.style.display = 'block';
+      pAC.classList.add('page-transition-in');
+      setTimeout(function() { pAC.classList.remove('page-transition-in'); }, 300);
+    }, 200);
+  }
+
+  function goToPage1FromSelection() {
+    const pSel = document.getElementById('page-selection');
+    pSel.classList.add('page-transition-out');
+    setTimeout(function() {
+      pSel.style.display = 'none';
+      pSel.classList.remove('page-transition-out');
+      
+      document.getElementById('header-title').textContent = '填写您的个人信息';
+      document.getElementById('header-desc').textContent = '这些信息将用于构建您的专家卡片';
+      document.getElementById('header-safety-text').textContent = '资料仅用于构建您的专属分身，数据存储在人大附中专属服务器内，不会共享给任何第三方';
+      document.getElementById('header-desc').style.display = 'block';
+      document.getElementById('header-safety').style.display = 'inline-flex';
+      document.getElementById('global-back-wrap').style.display = 'block';
+      
+      const p1 = document.getElementById('page1');
+      const btnWrap = document.getElementById('page1-btn-wrap');
+      p1.style.display = 'flex';
+      btnWrap.style.display = 'flex';
+      p1.classList.add('page-transition-in');
+      btnWrap.classList.add('page-transition-in');
+      setTimeout(function() { p1.classList.remove('page-transition-in'); btnWrap.classList.remove('page-transition-in'); }, 300);
+    }, 200);
+  }
+
+  function goToSelectionGlobal() {
+    const p1 = document.getElementById('page1');
+    const btnWrap = document.getElementById('page1-btn-wrap');
+    const p2 = document.getElementById('page2');
+    const pAC = document.getElementById('page-agent-course');
+    const pWL = document.getElementById('page-whitelist');
+    const globalBack = document.getElementById('global-back-wrap');
+    
+    if (p1.style.display !== 'none') { p1.classList.add('page-transition-out'); btnWrap.classList.add('page-transition-out'); }
+    if (p2.style.display !== 'none') p2.classList.add('page-transition-out');
+    if (pAC.style.display !== 'none') pAC.classList.add('page-transition-out');
+    if (pWL.style.display !== 'none') pWL.classList.add('page-transition-out');
+    
+    setTimeout(function() {
+      p1.style.display = 'none';
+      btnWrap.style.display = 'none';
+      p2.style.display = 'none';
+      pAC.style.display = 'none';
+      pWL.style.display = 'none';
+      globalBack.style.display = 'none';
+      
+      p1.classList.remove('page-transition-out');
+      btnWrap.classList.remove('page-transition-out');
+      p2.classList.remove('page-transition-out');
+      pAC.classList.remove('page-transition-out');
+      pWL.classList.remove('page-transition-out');
+      
+      document.getElementById('header-title').textContent = '选择上传类型';
+      document.getElementById('header-desc').style.display = 'none';
+      document.getElementById('header-safety').style.display = 'none';
+      
+      const pSel = document.getElementById('page-selection');
+      pSel.style.display = 'block';
+      pSel.classList.add('page-transition-in');
+      setTimeout(function() { pSel.classList.remove('page-transition-in'); }, 300);
+    }, 200);
+  }
+
+  /* ── Page navigation ─────────────────────────── */
+  function goToPage2() {
+    const name = document.getElementById('inp-name').value.trim();
+    if (!name) { showToast('请先填写您的名字', 'error'); document.getElementById('inp-name').focus(); return; }
+
+    const p1 = document.getElementById('page1');
+    const btnWrap = document.getElementById('page1-btn-wrap');
+    p1.classList.add('page-transition-out');
+    btnWrap.classList.add('page-transition-out');
+    setTimeout(function() {
+      p1.style.display = 'none';
+      btnWrap.style.display = 'none';
+      p1.classList.remove('page-transition-out');
+      btnWrap.classList.remove('page-transition-out');
+      document.getElementById('header-title').textContent = '上传相关文件';
+      document.getElementById('header-desc').textContent = '文件内容越丰富，AI分身越能还原您的知识、表达和思考方式。';
+      const p2 = document.getElementById('page2');
+      p2.style.display = 'block';
+      p2.classList.add('page-transition-in');
+      setTimeout(function() { p2.classList.remove('page-transition-in'); }, 300);
+    }, 200);
+  }
+
+  function goToPage1() {
+    const p2 = document.getElementById('page2');
+    p2.classList.add('page-transition-out');
+    setTimeout(function() {
+      p2.style.display = 'none';
+      p2.classList.remove('page-transition-out');
+      document.getElementById('header-title').textContent = '填写您的个人信息';
+      document.getElementById('header-desc').textContent = '这些信息将用于构建您的专家卡片';
+      const p1 = document.getElementById('page1');
+      const btnWrap = document.getElementById('page1-btn-wrap');
+      p1.style.display = 'flex';
+      btnWrap.style.display = 'flex';
+      p1.classList.add('page-transition-in');
+      btnWrap.classList.add('page-transition-in');
+      setTimeout(function() { p1.classList.remove('page-transition-in'); btnWrap.classList.remove('page-transition-in'); }, 300);
+    }, 200);
+  }
+
+  /* ── Category selection ──────────────────────── */
+  let selectedCat = 0;
+  const catFormats = {
+    0: ['PDF', 'PPT', 'PPTX', 'DOCX', 'TXT', '图片', 'MP4', '视频/课件链接'],
+    1: ['PDF', 'DOCX', 'TXT', 'HTML', 'MP3/MP4', '文章/播客/演讲链接'],
+  };
+  function selectCat(idx) {
+    selectedCat = idx;
+    document.querySelectorAll('.cat-tab').forEach(function(el, i) { el.classList.toggle('selected', i === idx); });
+    document.getElementById('drop-formats').innerHTML = catFormats[idx].map(function(f) { return '<span class="fmt-tag">' + f + '</span>'; }).join('');
+  }
+
+  /* ── Mode switch ─────────────────────────────── */
+  let mode = 'file';
+  function switchMode(m) {
+    mode = m;
+    document.getElementById('mode-file').classList.toggle('active', m === 'file');
+    document.getElementById('mode-link').classList.toggle('active', m === 'link');
+    document.getElementById('file-panel').classList.toggle('hidden', m === 'link');
+    document.getElementById('link-panel').classList.toggle('active', m === 'link');
+  }
+
+  /* ── File drop / input ───────────────────────── */
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  dropZone.addEventListener('dragover', function(e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', function() { dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', function(e) { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(Array.from(e.dataTransfer.files)); });
+  fileInput.addEventListener('change', function() { handleFiles(Array.from(fileInput.files)); fileInput.value = ''; });
+
+  let items = [], idCounter = 0;
+
+  function handleFiles(files) {
+    if (!files.length) return;
+    files.forEach(function(file) {
+      var id = ++idCounter;
+      items.push({ id: id, name: file.name, size: file.size, status: 'uploading', progress: 0, kind: 'file', isPrivate: false });
+      renderList();
+      simulateUpload(id);
+    });
+    showToast('已添加 ' + files.length + ' 个文件', 'info');
+  }
+
+  /* ── Link add ────────────────────────────────── */
+  function addLink() {
+    var input = document.getElementById('link-input');
+    var rawText = input.value.trim();
+    if (!rawText) { showToast('请先输入链接', 'error'); return; }
+
+    var urls = rawText.split(/[\n;；]+/).map(function(u) { return u.trim(); }).filter(Boolean);
+    if (urls.length === 0) {
+      showToast('请输入有效的链接地址', 'error');
+      return;
+    }
+
+    var validUrls = [];
+    var invalidCount = 0;
+
+    urls.forEach(function(url) {
+      if (isValidUrl(url)) {
+        validUrls.push(url);
+      } else {
+        invalidCount++;
+      }
+    });
+
+    if (validUrls.length === 0) {
+      showToast('没有检测到有效的链接地址', 'error');
+      return;
+    }
+
+    validUrls.forEach(function(url) {
+      var id = ++idCounter;
+      var name = extractLinkName(url);
+      items.push({ id: id, name: name, size: null, status: 'uploading', progress: 0, kind: 'link', url: url, isPrivate: false });
+      simulateUpload(id);
+    });
+
+    input.value = '';
+    renderList();
+
+    if (invalidCount > 0) {
+      showToast('成功添加 ' + validUrls.length + ' 个链接，已过滤 ' + invalidCount + ' 个无效链接', 'info');
+    } else {
+      showToast('成功添加 ' + validUrls.length + ' 个链接，正在解析…', 'success');
+    }
+  }
+  document.getElementById('link-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      addLink();
+    }
+  });
+  function isValidUrl(str) { try { new URL(str); return true; } catch(e) { return false; } }
+  function extractLinkName(url) {
+    try {
+      var u = new URL(url);
+      if (u.hostname.includes('bilibili')) return 'B站视频 · ' + (u.pathname.split('/').filter(Boolean).pop() || url);
+      if (u.hostname.includes('youtube')) return 'YouTube 视频 · ' + (u.searchParams.get('v') || url);
+      return u.hostname + ' · ' + (u.pathname.split('/').filter(Boolean).slice(-1)[0] || '链接');
+    } catch(e) { return url; }
+  }
+
+  /* ── Simulate upload ─────────────────────────── */
+  function simulateUpload(id) {
+    var progress = 0;
+    var speed = Math.random() * 15 + 8;
+    var interval = setInterval(function() {
+      progress = Math.min(100, progress + speed * (Math.random() * 0.8 + 0.6));
+      var item = null;
+      for (var i = 0; i < items.length; i++) { if (items[i].id === id) { item = items[i]; break; } }
+      if (!item) { clearInterval(interval); return; }
+      item.progress = Math.round(progress);
+      if (progress >= 100) {
+        item.status = 'done'; item.progress = 100; clearInterval(interval);
+        showToast('「' + item.name.slice(0, 16) + '…」上传成功', 'success');
+      }
+      renderList();
+    }, 280);
+  }
+
+  /* ── Render file list ────────────────────────── */
+  function renderList() {
+    var list = document.getElementById('file-list');
+    list.innerHTML = items.map(function(item) {
+      var isPrivate = item.isPrivate || false;
+      var icon = item.status === 'uploading'
+        ? '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke="rgba(194, 15, 36, 0.15)" /><path d="M12 2a10 10 0 0 1 10 10" stroke="var(--accent)" /></svg>'
+        : (isPrivate
+            ? '<svg class="anonymous-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"></path><path d="M6 12c0-3 3-5 6-5s6 2 6 5"></path><path d="M12 2v5"></path><circle cx="8" cy="16" r="3"></circle><circle cx="16" cy="16" r="3"></circle><path d="M11 16h2"></path></svg>'
+            : getIcon(item));
+      var sizeStr = item.size ? formatSize(item.size) : (item.kind === 'link' ? '链接' : '');
+      
+      var metaHtml = '';
+      if (item.status === 'uploading') {
+        metaHtml = '<span class="status-dot uploading"></span><span class="status-text">上传中…' + (sizeStr ? ' · ' + sizeStr : '') + '</span>';
+      } else if (item.status === 'error') {
+        metaHtml = '<span class="status-dot error"></span><span class="status-text">上传失败' + (sizeStr ? ' · ' + sizeStr : '') + '</span>';
+      } else {
+        metaHtml = '<span class="status-text">' + sizeStr + '</span>';
+      }
+
+      var toggleHtml = '';
+      if (item.status !== 'uploading') {
+        var isChecked = !isPrivate ? 'checked' : '';
+        toggleHtml = '<div class="visibility-toggle-wrap">'
+          + '<span class="toggle-label private-label ' + (isPrivate ? 'active' : '') + '">保密'
+            + '<span class="tooltip">'
+              + '<svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+                + '<circle cx="12" cy="12" r="10"></circle>'
+                + '<line x1="12" y1="16" x2="12" y2="12"></line>'
+                + '<line x1="12" y1="8" x2="12.01" y2="8"></line>'
+              + '</svg>'
+            + '</span>'
+          + '</span>'
+          + '<label class="switch">'
+            + '<input type="checkbox" ' + isChecked + ' onchange="togglePublic(' + item.id + ', this.checked)">'
+            + '<span class="slider"></span>'
+          + '</label>'
+          + '<span class="toggle-label public-label ' + (!isPrivate ? 'active' : '') + '">公开</span>'
+        + '</div>';
+      }
+
+      return '<div class="file-item">'
+        + '<div class="file-type-icon">' + icon + '</div>'
+        + '<div class="file-info">'
+          + '<div class="file-name">' + escHtml(item.name) + '</div>'
+          + '<div class="file-meta"><span class="file-status">' + metaHtml + '</span></div>'
+        + '</div>'
+        + toggleHtml
+        + '<button class="file-remove" onclick="removeItem(' + item.id + ')" title="移除">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            + '<polyline points="3 6 5 6 21 6"></polyline>'
+            + '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>'
+            + '<line x1="10" y1="11" x2="10" y2="17"></line>'
+            + '<line x1="14" y1="11" x2="14" y2="17"></line>'
+          + '</svg>'
+        + '</button>'
+      + '</div>';
+    }).join('');
+    document.getElementById('count').textContent = items.length;
+  }
+
+  function removeItem(id) { items = items.filter(function(i) { return i.id !== id; }); renderList(); }
+  function togglePublic(id, checked) {
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id === id) {
+        items[i].isPrivate = !checked;
+        break;
+      }
+    }
+    renderList();
+  }
+
+  /* ── Helpers ─────────────────────────────────── */
+  function getIcon(item) {
+    if (item.kind === 'link') return '🔗';
+    var ext = (item.name.split('.').pop() || '').toLowerCase();
+    return { pdf:'📕', ppt:'📊', pptx:'📊', doc:'📝', docx:'📝', txt:'📃', mp4:'🎬', mkv:'🎬', mov:'🎬', mp3:'🎵', m4a:'🎵', wav:'🎵', jpg:'🖼️', jpeg:'🖼️', png:'🖼️' }[ext] || '📁';
+  }
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function showToast(msg, type) {
+    type = type || 'info';
+    var container = document.getElementById('toast-container');
+    var el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(function() {
+      el.style.animation = 'toastOut 0.3s ease forwards';
+      setTimeout(function() { el.remove(); }, 300);
+    }, 3000);
+  }
+
+  function handleSimpleUpload(event, listId) {
+    const listEl = document.getElementById(listId);
+    const files = event.target.files;
+    if (!files.length) return;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const item = document.createElement('div');
+      item.style.display = 'flex';
+      item.style.alignItems = 'center';
+      item.style.justifyContent = 'space-between';
+      item.style.padding = '8px 12px';
+      item.style.background = 'rgba(255,255,255,0.8)';
+      item.style.border = '1px solid var(--border)';
+      item.style.borderRadius = 'var(--radius-sm)';
+      item.style.fontSize = '13px';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = file.name;
+      nameSpan.style.overflow = 'hidden';
+      nameSpan.style.textOverflow = 'ellipsis';
+      nameSpan.style.whiteSpace = 'nowrap';
+      nameSpan.style.flex = '1';
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="display:block;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      removeBtn.style.background = 'none';
+      removeBtn.style.border = 'none';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.color = 'var(--text-muted)';
+      removeBtn.style.marginLeft = '8px';
+      removeBtn.style.display = 'flex';
+      removeBtn.style.alignItems = 'center';
+      removeBtn.style.justifyContent = 'center';
+      removeBtn.onclick = function() {
+        item.remove();
+      };
+      
+      item.appendChild(nameSpan);
+      item.appendChild(removeBtn);
+      listEl.appendChild(item);
+    }
+    // reset input
+    event.target.value = '';
+  }
+
+  /* ── Whitelist page navigation ────────────────── */
+  function goToPageWhitelist() {
+    const pSel = document.getElementById('page-selection');
+    pSel.classList.add('page-transition-out');
+    setTimeout(function() {
+      pSel.style.display = 'none';
+      pSel.classList.remove('page-transition-out');
+
+      document.getElementById('header-title').textContent = '白名单管理';
+      document.getElementById('header-desc').textContent = '管理可访问系统的手机号及其权限角色';
+      document.getElementById('header-safety-text').textContent = '白名单数据仅用于访问权限管控，存储在人大附中专属服务器内，不会共享给任何第三方。';
+      document.getElementById('header-desc').style.display = 'block';
+      document.getElementById('header-safety').style.display = 'inline-flex';
+      document.getElementById('global-back-wrap').style.display = 'block';
+
+      const pWL = document.getElementById('page-whitelist');
+      pWL.style.display = 'block';
+      pWL.classList.add('page-transition-in');
+      setTimeout(function() { pWL.classList.remove('page-transition-in'); }, 300);
+
+      renderWhitelist();
+    }, 200);
+  }
+
+  /* ── Whitelist data ────────────────────────────── */
+  var wlData = [
+    { id: 1, phone: '138****8001', raw: '13812348001', role: 'student', remark: '高三(1)班' },
+    { id: 2, phone: '186****2233', raw: '18611112233', role: 'teacher', remark: '数学备课组组长' },
+    { id: 3, phone: '139****9900', raw: '13900009900', role: 'admin', remark: '系统管理员' },
+  ];
+  var wlIdCounter = 100;
+
+  var ROLE_MAP = {
+    student: { label: '学生', cls: 'wl-role-student' },
+    teacher: { label: '老师',  cls: 'wl-role-teacher' },
+    admin:   { label: '管理员', cls: 'wl-role-admin' },
+  };
+
+  function maskPhone(raw) {
+    if (!raw || raw.length < 7) return raw;
+    return raw.slice(0, 3) + '****' + raw.slice(-4);
+  }
+
+  function renderWhitelist() {
+    var tbody = document.getElementById('wl-tbody');
+    var empty = document.getElementById('wl-empty');
+    var countEl = document.getElementById('wl-count');
+    countEl.textContent = '共 ' + wlData.length + ' 条';
+    if (wlData.length === 0) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = wlData.map(function(row) {
+      var role = ROLE_MAP[row.role] || { label: row.role, cls: '' };
+      return '<tr>'
+        + '<td><span class="wl-phone">' + escHtml(row.phone) + '</span></td>'
+        + '<td><span class="wl-role-badge ' + role.cls + '">' + role.label + '</span></td>'
+        + '<td style="color:var(--text-secondary);">' + escHtml(row.remark || '—') + '</td>'
+        + '<td><button class="wl-del-btn" onclick="deleteWlRow(' + row.id + ')" title="删除">'
+            + '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline>'
+            + '<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>'
+            + '<line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>'
+            + '</svg></button></td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function deleteWlRow(id) {
+    wlData = wlData.filter(function(r) { return r.id !== id; });
+    renderWhitelist();
+    showToast('已删除该白名单号码', 'success');
+  }
+
+  /* ── Modal helpers ─────────────────────────────── */
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  function handleModalOverlayClick(e, id) {
+    if (e.target === document.getElementById(id)) closeModal(id);
+  }
+
+  /* ── Add modal ─────────────────────────────────── */
+  function openAddModal() {
+    document.getElementById('add-phone').value = '';
+    document.getElementById('add-role').value = '';
+    document.getElementById('add-remark').value = '';
+    openModal('modal-add');
+    setTimeout(function() { document.getElementById('add-phone').focus(); }, 80);
+  }
+
+  function confirmAdd() {
+    var phone = document.getElementById('add-phone').value.trim();
+    var role  = document.getElementById('add-role').value;
+    var remark = document.getElementById('add-remark').value.trim();
+    if (!/^\d{11}$/.test(phone)) { showToast('请输入正确的 11 位手机号', 'error'); document.getElementById('add-phone').focus(); return; }
+    if (!role) { showToast('请选择角色', 'error'); document.getElementById('add-role').focus(); return; }
+    // check duplicate
+    for (var i = 0; i < wlData.length; i++) {
+      if (wlData[i].raw === phone) { showToast('该手机号已在白名单中', 'error'); return; }
+    }
+    wlData.push({ id: ++wlIdCounter, phone: maskPhone(phone), raw: phone, role: role, remark: remark });
+    renderWhitelist();
+    closeModal('modal-add');
+    showToast('添加成功', 'success');
+  }
+
+  /* ── Import modal ──────────────────────────────── */
+  var importFile = null;
+
+  function openImportModal() {
+    importFile = null;
+    document.getElementById('import-file-name').textContent = '';
+    document.getElementById('import-file-input').value = '';
+    openModal('modal-import');
+  }
+
+  function handleImportFile(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    importFile = file;
+    document.getElementById('import-file-name').textContent = '已选择：' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB）';
+  }
+
+  // drag-and-drop on import zone
+  (function() {
+    var dz = document.getElementById('import-drop-zone');
+    dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+    dz.addEventListener('drop', function(e) {
+      e.preventDefault(); dz.classList.remove('dragover');
+      var file = e.dataTransfer.files[0];
+      if (!file) return;
+      importFile = file;
+      document.getElementById('import-file-name').textContent = '已选择：' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB）';
+    });
+  })();
+
+  function confirmImport() {
+    if (!importFile) { showToast('请先上传文件', 'error'); return; }
+    // Simulate import: add 3 mock entries
+    var mockRows = [
+      { raw: '1' + Math.floor(Math.random()*9000000000+1000000000).toString(), role: 'student', remark: '批量导入' },
+      { raw: '1' + Math.floor(Math.random()*9000000000+1000000000).toString(), role: 'teacher', remark: '批量导入' },
+      { raw: '1' + Math.floor(Math.random()*9000000000+1000000000).toString(), role: 'student', remark: '批量导入' },
+    ];
+    mockRows.forEach(function(r) {
+      wlData.push({ id: ++wlIdCounter, phone: maskPhone(r.raw), raw: r.raw, role: r.role, remark: r.remark });
+    });
+    renderWhitelist();
+    closeModal('modal-import');
+    showToast('成功导入 ' + mockRows.length + ' 条记录', 'success');
+  }
+
+  function downloadTemplate() {
+    var csv = '手机号,角色,备注\n13800000001,student,高三(1)班\n13800000002,teacher,数学备课组\n13800000003,admin,系统管理员';
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = '白名单导入模板.csv'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('模板已下载', 'success');
+  }
+</script>
+</body>
+</html>

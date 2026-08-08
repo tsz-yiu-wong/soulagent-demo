@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自定义单选下拉框</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      gap: 32px;
+    }
+
+    h1 { font-size: 18px; color: #333; font-weight: 500; }
+
+    .select-wrapper { position: relative; width: 280px; }
+
+    /* ── 触发器 ── */
+    .select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #fff;
+      border: 1.5px solid #d9d9d9;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      user-select: none;
+    }
+    .select-trigger:hover { border-color: #4096ff; }
+    .select-trigger.open {
+      border-color: #4096ff;
+      box-shadow: 0 0 0 2px rgba(64,150,255,0.2);
+    }
+    .trigger-text .placeholder { color: #bbb; }
+    .arrow {
+      width: 16px; height: 16px; flex-shrink: 0;
+      color: #999; transition: transform 0.2s;
+    }
+    .select-trigger.open .arrow { transform: rotate(180deg); }
+
+    /* ── 输入模式 ── */
+    .custom-input-field {
+      display: none;
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #4096ff;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #333;
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(64,150,255,0.2);
+    }
+    .custom-input-field::placeholder { color: #bbb; }
+    .select-wrapper.editing .select-trigger { display: none; }
+    .select-wrapper.editing .custom-input-field { display: block; }
+
+    /* ── 下拉面板 ── */
+    .select-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0; width: 100%;
+      background: #fff;
+      border: 1.5px solid #e8e8e8;
+      border-radius: 8px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+      overflow: hidden;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .select-dropdown.open {
+      opacity: 1; transform: translateY(0); pointer-events: auto;
+    }
+
+    /* ── 普通选项 ── */
+    .option-item {
+      display: flex; align-items: center;
+      padding: 10px 14px;
+      font-size: 14px; color: #333;
+      cursor: pointer; gap: 8px;
+      transition: background 0.15s;
+    }
+    .option-item:hover { background: #f5f7ff; }
+    .option-item.selected { background: #eef3ff; color: #4096ff; font-weight: 500; }
+    .option-item .check { width: 15px; height: 15px; flex-shrink: 0; opacity: 0; }
+    .option-item.selected .check { opacity: 1; }
+    .option-item .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── 自定义选项的删除按钮 ── */
+    .delete-btn {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px;
+      color: #bbb;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s, color 0.15s;
+      cursor: pointer;
+    }
+    .option-item:hover .delete-btn { opacity: 1; }
+    .delete-btn:hover { background: #fee2e2; color: #ef4444; }
+
+    /* ── 确认弹窗 ── */
+    .confirm-mask {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .confirm-mask.visible { display: flex; }
+    .confirm-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 28px 20px;
+      width: 280px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+      display: flex; flex-direction: column; gap: 16px;
+      animation: popIn 0.18s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .confirm-box .confirm-title {
+      font-size: 15px; font-weight: 600; color: #1a1a1a;
+    }
+    .confirm-box .confirm-body {
+      font-size: 13px; color: #666; line-height: 1.6;
+    }
+    .confirm-box .confirm-body strong { color: #333; }
+    .confirm-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .btn-cancel {
+      padding: 7px 16px; border-radius: 6px;
+      border: 1.5px solid #d9d9d9; background: #fff;
+      font-size: 13px; color: #555; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: #f5f5f5; }
+    .btn-delete {
+      padding: 7px 16px; border-radius: 6px;
+      border: none; background: #ef4444;
+      font-size: 13px; color: #fff; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-delete:hover { background: #dc2626; }
+
+    /* ── "自定义输入" 底部固定行 ── */
+    .custom-add-row {
+      display: flex; align-items: center;
+      padding: 10px 14px;
+      font-size: 14px; color: #888;
+      cursor: pointer; gap: 8px;
+      border-top: 1px solid #f0f0f0;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .custom-add-row:hover { background: #f5f7ff; color: #4096ff; }
+    .custom-add-row svg { flex-shrink: 0; }
+
+    /* ── 底部提示 ── */
+    .hint { font-size: 12px; color: #aaa; }
+    .hint strong { color: #555; }
+  </style>
+</head>
+<body>
+
+<h1>请选择分类</h1>
+
+<div class="select-wrapper" id="selectWrapper">
+
+  <div class="select-trigger" id="selectTrigger" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+    <span class="trigger-text" id="triggerText"><span class="placeholder">请选择…</span></span>
+    <svg class="arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="4 6 8 10 12 6"/>
+    </svg>
+  </div>
+
+  <input class="custom-input-field" id="customInputField" type="text" placeholder="输入自定义内容…" maxlength="60" />
+
+  <div class="select-dropdown" id="selectDropdown" role="listbox">
+    <!-- 固定选项 -->
+    <div id="fixedOptionList"></div>
+    <!-- 用户自定义选项（可删除） -->
+    <div id="customOptionList"></div>
+    <!-- 永远在最后的"自定义输入"行 -->
+    <div class="custom-add-row" id="customAddRow">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      自定义输入…
+    </div>
+  </div>
+</div>
+
+<!-- 确认删除弹窗 -->
+<div class="confirm-mask" id="confirmMask">
+  <div class="confirm-box">
+    <div class="confirm-title">删除后不可恢复</div>
+    <div class="confirm-body">确认删除 <strong id="confirmTarget"></strong> 吗？</div>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="confirmCancelBtn">取消</button>
+      <button class="btn-delete" id="confirmDeleteBtn">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const FIXED_OPTIONS = ['选项 A', '选项 B', '选项 C', '选项 D'];
+
+  let selectedValue  = null;   // 当前选中值
+  let customValues   = [];     // 用户添加的自定义选项列表
+  let isOpen         = false;
+
+  const wrapper          = document.getElementById('selectWrapper');
+  const trigger          = document.getElementById('selectTrigger');
+  const triggerText      = document.getElementById('triggerText');
+  const dropdown         = document.getElementById('selectDropdown');
+  const fixedList        = document.getElementById('fixedOptionList');
+  const customList       = document.getElementById('customOptionList');
+  const customAddRow     = document.getElementById('customAddRow');
+  const inputField       = document.getElementById('customInputField');
+  const confirmMask      = document.getElementById('confirmMask');
+  const confirmTarget    = document.getElementById('confirmTarget');
+  const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+  let pendingDeleteVal = null;  // 待确认删除的值
+
+  /* ── 渲染固定选项 ── */
+  function renderFixed() {
+    fixedList.innerHTML = '';
+    FIXED_OPTIONS.forEach(val => {
+      fixedList.appendChild(makeOptionEl(val, false));
+    });
+  }
+
+  /* ── 渲染自定义选项 ── */
+  function renderCustom() {
+    customList.innerHTML = '';
+    customValues.forEach(val => {
+      const el = makeOptionEl(val, true);
+      customList.appendChild(el);
+    });
+  }
+
+  /* ── 构建一个选项 DOM ── */
+  function makeOptionEl(val, deletable) {
+    const div = document.createElement('div');
+    div.className = 'option-item' + (selectedValue === val ? ' selected' : '');
+
+    div.innerHTML = `
+      <svg class="check" width="15" height="15" viewBox="0 0 24 24" fill="none"
+        stroke="#4096ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span class="label">${escHtml(val)}</span>
+      ${deletable ? `
+      <span class="delete-btn" title="删除">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </span>` : ''}`;
+
+    // 点击选项主体 → 自定义项进入编辑，普通项直接选中
+    div.addEventListener('click', (e) => {
+      if (deletable && e.target.closest('.delete-btn')) return;
+      if (deletable) {
+        enterEditMode(val);   // 自定义项：可编辑
+      } else {
+        selectValue(val);     // 固定项：直接选中
+      }
+    });
+
+    // 点击删除按钮
+    if (deletable) {
+      div.querySelector('.delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        showDeleteConfirm(val);
+      });
+    }
+
+    return div;
+  }
+
+  /* ── 选中某个值 ── */
+  function selectValue(val) {
+    selectedValue = val;
+    setTriggerLabel(val);
+    renderFixed();
+    renderCustom();
+    closeDropdown();
+  }
+
+  /* ── 删除自定义选项：先弹窗确认 ── */
+  function showDeleteConfirm(val) {
+    pendingDeleteVal = val;
+    confirmTarget.textContent = val;
+    confirmMask.classList.add('visible');
+  }
+
+  function hideDeleteConfirm() {
+    pendingDeleteVal = null;
+    confirmMask.classList.remove('visible');
+  }
+
+  function doDelete() {
+    const val = pendingDeleteVal;
+    hideDeleteConfirm();
+    customValues = customValues.filter(v => v !== val);
+    if (selectedValue === val) {
+      selectedValue = null;
+      resetTriggerLabel();
+    }
+    renderCustom();
+  }
+
+  confirmCancelBtn.addEventListener('click', hideDeleteConfirm);
+  confirmDeleteBtn.addEventListener('click', doDelete);
+  confirmMask.addEventListener('click', e => { if (e.target === confirmMask) hideDeleteConfirm(); });
+
+  /* ── 触发器文本 ── */
+  function setTriggerLabel(val) {
+    triggerText.textContent = val;
+    triggerText.style.color = '#333';
+  }
+  function resetTriggerLabel() {
+    triggerText.innerHTML = '<span class="placeholder">请选择…</span>';
+  }
+
+  /* ── 开 / 关 ── */
+  function openDropdown() {
+    if (isOpen) return;
+    isOpen = true;
+    renderFixed();
+    renderCustom();
+    dropdown.classList.add('open');
+    trigger.classList.add('open');
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+  function closeDropdown() {
+    if (!isOpen) return;
+    isOpen = false;
+    dropdown.classList.remove('open');
+    trigger.classList.remove('open');
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  /* ── 进入输入模式 ── */
+  // existingVal: 编辑已有自定义项时传入旧值，新增时不传
+  let editingOldVal = null;
+
+  function enterEditMode(existingVal) {
+    editingOldVal = existingVal ?? null;
+    closeDropdown();
+    wrapper.classList.add('editing');
+    inputField.value = existingVal ?? '';
+    setTimeout(() => { inputField.focus(); inputField.select(); }, 0);
+  }
+
+  /* ── 退出输入模式 ── */
+  function exitEditMode(confirm) {
+    if (confirm) {
+      const val = inputField.value.trim();
+      if (val) {
+        if (editingOldVal !== null) {
+          // 编辑已有自定义项：替换旧值，并始终选中新值
+          const idx = customValues.indexOf(editingOldVal);
+          if (idx !== -1) customValues[idx] = val;
+          else if (!customValues.includes(val)) customValues.push(val);
+          selectValue(val);  // 统一走 selectValue，触发器恢复正常显示
+        } else {
+          // 新增自定义项
+          if (!FIXED_OPTIONS.includes(val) && !customValues.includes(val)) {
+            customValues.push(val);
+          }
+          selectValue(val);
+        }
+      }
+    }
+    editingOldVal = null;
+    wrapper.classList.remove('editing');
+    trigger.focus();
+  }
+
+  /* ── HTML 转义 ── */
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── 事件 ── */
+  trigger.addEventListener('click', () => isOpen ? closeDropdown() : openDropdown());
+  trigger.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isOpen ? closeDropdown() : openDropdown(); }
+    if (e.key === 'Escape') closeDropdown();
+  });
+
+  customAddRow.addEventListener('click', e => {
+    e.stopPropagation();
+    enterEditMode();
+  });
+
+  inputField.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); exitEditMode(true); }
+    if (e.key === 'Escape') exitEditMode(false);
+  });
+  inputField.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (wrapper.classList.contains('editing')) exitEditMode(true);
+    }, 100);
+  });
+
+  dropdown.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', e => {
+    if (!wrapper.contains(e.target)) closeDropdown();
+  });
+
+  /* ── 初始化 ── */
+  renderFixed();
+</script>
+</body>
+</html>

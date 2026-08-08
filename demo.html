@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听 - 下拉选项演示</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f5f7;
+      color: #1d2129;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .page-container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      position: relative;
+    }
+
+    /* 底部输入框容器 */
+    .input-wrapper {
+      background: #ffffff;
+      border: 1px solid #e5e6eb;
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #165dff;
+      box-shadow: 0 4px 20px rgba(22, 93, 255, 0.12);
+    }
+
+    .input-wrapper textarea {
+      width: 100%;
+      height: 72px; /* 3行高度 */
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 14px;
+      line-height: 24px;
+      color: #1d2129;
+      font-family: inherit;
+      background: transparent;
+    }
+
+    .input-wrapper textarea::placeholder {
+      color: #86909c;
+    }
+
+    .input-bottom-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid #f2f3f5;
+    }
+
+    /* 帮我听 按钮及定位容器 */
+    .listen-btn-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .listen-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background-color: #f2f3f5;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1d2129;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .listen-btn:hover {
+      background-color: #e5e6eb;
+      color: #165dff;
+    }
+
+    .listen-btn.active {
+      background-color: #e8f3ff;
+      color: #165dff;
+      border-color: #bedaff;
+    }
+
+    .listen-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+    }
+
+    /* 下拉弹窗框 - 从按钮正上方弹出 */
+    .dropdown-popup {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 0;
+      width: 380px;
+      max-height: 440px;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 100;
+      transform-origin: bottom left;
+      animation: popupSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popupSlide {
+      from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .dropdown-popup.show {
+      display: flex;
+    }
+
+    /* 一级 Header - 分段式 Tab (Segmented Control) */
+    .level1-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f2f3f5;
+      background: #fafafa;
+    }
+
+    .tab-segmented {
+      display: flex;
+      background: #eef0f3;
+      border-radius: 8px;
+      padding: 2px;
+    }
+
+    .tab-item {
+      flex: 1;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #4e5969;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-item.active {
+      color: #1d2129;
+      background: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 二级 Header - 标题/返回 + 搜索框 */
+    .level2-header {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid #f2f3f5;
+      background: #fafafa;
+    }
+
+    .level2-top-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: #f2f3f5;
+      cursor: pointer;
+      border-radius: 6px;
+      color: #4e5969;
+      transition: all 0.15s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #e5e6eb;
+      color: #1d2129;
+    }
+
+    .level2-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d2129;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .search-box {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #e5e6eb;
+      border-radius: 8px;
+      padding: 6px 10px;
+      transition: border-color 0.15s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: #165dff;
+    }
+
+    .search-box svg {
+      width: 14px;
+      height: 14px;
+      fill: #86909c;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .search-box input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 13px;
+      color: #1d2129;
+    }
+
+    /* 列表内容区 */
+    .list-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+    }
+
+    /* 自定义滚动条 */
+    .list-content::-webkit-scrollbar {
+      width: 5px;
+    }
+    .list-content::-webkit-scrollbar-thumb {
+      background: #e5e6eb;
+      border-radius: 4px;
+    }
+
+    /* 一级列表项 */
+    .level1-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .level1-item:hover {
+      background-color: #f4f5f7;
+    }
+
+    .item-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #e8f3ff;
+      color: #165dff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .item-title {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #1d2129;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-date {
+      font-size: 12px;
+      color: #86909c;
+    }
+
+    /* 二级与三级组 */
+    .level2-group {
+      border-bottom: 1px solid #f7f8fa;
+    }
+
+    .level2-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #1d2129;
+      transition: background-color 0.15s ease;
+    }
+
+    .level2-item:hover {
+      background-color: #f4f5f7;
+    }
+
+    .arrow-icon {
+      width: 16px;
+      height: 16px;
+      fill: #86909c;
+      transition: transform 0.2s ease;
+    }
+
+    .level2-group.open .arrow-icon {
+      transform: rotate(90deg);
+    }
+
+    /* 三级列表 */
+    .level3-list {
+      display: none;
+      background-color: #fafafa;
+      padding: 2px 0;
+    }
+
+    .level2-group.open .level3-list {
+      display: block;
+    }
+
+    .level3-item {
+      padding: 8px 14px 8px 32px;
+      font-size: 13px;
+      color: #4e5969;
+      cursor: pointer;
+      line-height: 1.4;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .level3-item:hover {
+      background-color: #e8f3ff;
+      color: #165dff;
+    }
+
+    .empty-tip {
+      padding: 28px 16px;
+      text-align: center;
+      font-size: 13px;
+      color: #86909c;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-container">
+
+    <!-- 底部输入区域 -->
+    <div class="input-wrapper">
+      <textarea id="mainInput" placeholder="请输入内容..."></textarea>
+      
+      <div class="input-bottom-bar">
+        <!-- 帮我听 按钮及其挂载定位容器 -->
+        <div class="listen-btn-wrapper">
+          <button class="listen-btn" id="listenBtn">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+            帮我听
+          </button>
+
+          <!-- 下拉弹窗框：挂载在按钮正上方 -->
+          <div class="dropdown-popup" id="dropdownPopup">
+            <!-- 视图由 JS 动态填充 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 模拟数据 (三级议题可以带时间，也可以纯议题名称)
+    const data = {
+      meeting: [
+        {
+          id: 'm1',
+          title: '2026智源大会',
+          date: '2026.7.11 - 2026.7.12',
+          icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>`,
+          children: [
+            {
+              id: 'm1-1',
+              title: '主论坛',
+              children: [
+                { id: 'm1-1-1', title: '开幕致辞与具身智能突破报告' },
+                { id: 'm1-1-2', title: '10:00 - 泛化大模型架构演进思考' },
+                { id: 'm1-1-3', title: '圆桌对话：AI Next Frontier' }
+              ]
+            },
+            {
+              id: 'm1-2',
+              title: '人工智能前沿论坛',
+              children: [
+                { id: 'm1-2-1', title: '超大规模并行训练实践' },
+                { id: 'm1-2-2', title: '15:30 - 基础模型评测标准与应用' }
+              ]
+            },
+            {
+              id: 'm1-3',
+              title: 'AI Safety & Governance 论坛',
+              children: [
+                { id: 'm1-3-1', title: '大模型对齐与安全防护技术' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'm2',
+          title: '2026全球数字经济大会',
+          date: '2026.8.05 - 2026.8.07',
+          icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>`,
+          children: [
+            {
+              id: 'm2-1',
+              title: '数字技术产业峰会',
+              children: [
+                { id: 'm2-1-1', title: '数据要素流通与基础设施构建' },
+                { id: 'm2-1-2', title: '11:00 - 算力网络与云原生架构实践' }
+              ]
+            },
+            {
+              id: 'm2-2',
+              title: '智能制造与工业互联网论坛',
+              children: [
+                { id: 'm2-2-1', title: '工业大模型在智能工厂落地' }
+              ]
+            }
+          ]
+        }
+      ],
+      course: [
+        {
+          id: 'c1',
+          title: '大模型系统工程实战课',
+          date: '2026.7.15 - 2026.8.15',
+          icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>`,
+          children: [
+            {
+              id: 'c1-1',
+              title: '第一章节：模型架构与预训练',
+              children: [
+                { id: 'c1-1-1', title: 'Transformer 核心机制剖析' },
+                { id: 'c1-1-2', title: '分布式训练并行策略' }
+              ]
+            },
+            {
+              id: 'c1-2',
+              title: '第二章节：微调与对齐技术',
+              children: [
+                { id: 'c1-2-1', title: 'SFT 数据构建与清洗' },
+                { id: 'c1-2-2', title: 'Direct Preference Optimization (DPO)' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'c2',
+          title: '具身智能与机器人前沿课程',
+          date: '2026.9.01 - 2026.9.30',
+          icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2v2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2V4a2 2 0 0 1 2-2h4zm-3 10a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>`,
+          children: [
+            {
+              id: 'c2-1',
+              title: '第一模块：视觉语言动作模型 (VLA)',
+              children: [
+                { id: 'c2-1-1', title: 'VLA 统一表示学习与动作输出' }
+              ]
+            },
+            {
+              id: 'c2-2',
+              title: '第二模块：强化学习与控制',
+              children: [
+                { id: 'c2-2-1', title: 'Sim-to-Real 跨域迁移' }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // 状态
+    let isOpen = false;
+    let currentTab = 'meeting'; // 'meeting' | 'course'
+    let selectedLevel1Item = null; // null: 一级视图, item对象: 二/三级视图
+    let searchQuery = '';
+    let expandedLevel2Ids = new Set();
+
+    // DOM
+    const listenBtn = document.getElementById('listenBtn');
+    const dropdownPopup = document.getElementById('dropdownPopup');
+    const mainInput = document.getElementById('mainInput');
+
+    // 切换弹窗显示/隐藏
+    listenBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isOpen = !isOpen;
+      if (isOpen) {
+        listenBtn.classList.add('active');
+        dropdownPopup.classList.add('show');
+        render();
+      } else {
+        closePopup();
+      }
+    });
+
+    function closePopup() {
+      isOpen = false;
+      listenBtn.classList.remove('active');
+      dropdownPopup.classList.remove('show');
+    }
+
+    // 点击外部关闭弹窗
+    document.addEventListener('click', (e) => {
+      if (isOpen && !dropdownPopup.contains(e.target) && !listenBtn.contains(e.target)) {
+        closePopup();
+      }
+    });
+
+    // 解析开始日期用于倒序排序
+    function parseStartDate(dateStr) {
+      if (!dateStr) return 0;
+      const match = dateStr.match(/(\d{4})\.(\d{1,2})\.(\d{1,2})/);
+      if (!match) return 0;
+      return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3])).getTime();
+    }
+
+    // 渲染主流程
+    function render() {
+      if (!selectedLevel1Item) {
+        renderLevel1();
+      } else {
+        renderLevel2And3();
+      }
+    }
+
+    // 渲染第一级（按时间倒序排列）
+    function renderLevel1() {
+      const rawData = data[currentTab] || [];
+      // 按时间倒序排序 (最新在前)
+      const listData = [...rawData].sort((a, b) => parseStartDate(b.date) - parseStartDate(a.date));
+
+      dropdownPopup.innerHTML = `
+        <div class="level1-header">
+          <div class="tab-segmented">
+            <div class="tab-item ${currentTab === 'meeting' ? 'active' : ''}" data-tab="meeting">会议</div>
+            <div class="tab-item ${currentTab === 'course' ? 'active' : ''}" data-tab="course">课程</div>
+          </div>
+        </div>
+        <div class="list-content">
+          ${listData.map(item => `
+            <div class="level1-item" data-id="${item.id}">
+              <div class="item-icon">${item.icon}</div>
+              <div class="item-info">
+                <div class="item-title">${item.title}</div>
+                <div class="item-date">${item.date}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      // Tab 切换事件
+      dropdownPopup.querySelectorAll('.tab-item').forEach(tabEl => {
+        tabEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          currentTab = tabEl.dataset.tab;
+          renderLevel1();
+        });
+      });
+
+      // 点击一级项目进入二级
+      dropdownPopup.querySelectorAll('.level1-item').forEach(itemEl => {
+        itemEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const itemId = itemEl.dataset.id;
+          const found = listData.find(d => d.id === itemId);
+          if (found) {
+            selectedLevel1Item = found;
+            searchQuery = '';
+            // 默认展开第一个二级
+            expandedLevel2Ids.clear();
+            if (found.children && found.children.length > 0) {
+              expandedLevel2Ids.add(found.children[0].id);
+            }
+            renderLevel2And3();
+          }
+        });
+      });
+    }
+
+    // 渲染第二级和第三级
+    function renderLevel2And3() {
+      const level2List = selectedLevel1Item.children || [];
+
+      dropdownPopup.innerHTML = `
+        <div class="level2-header">
+          <div class="level2-top-bar">
+            <button class="back-btn" id="backBtn" title="返回">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+              </svg>
+            </button>
+            <div class="level2-title">${selectedLevel1Item.title}</div>
+          </div>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="搜索主题/议程..." value="${escapeHtml(searchQuery)}">
+          </div>
+        </div>
+        <div class="list-content" id="level2Container">
+          ${renderLevel2Items(level2List)}
+        </div>
+      `;
+
+      // 返回按钮事件
+      dropdownPopup.querySelector('#backBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedLevel1Item = null;
+        searchQuery = '';
+        renderLevel1();
+      });
+
+      // 搜索框输入事件
+      const searchInput = dropdownPopup.querySelector('#searchInput');
+      searchInput.focus();
+      searchInput.setSelectionRange(searchQuery.length, searchQuery.length);
+
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        const container = dropdownPopup.querySelector('#level2Container');
+        container.innerHTML = renderLevel2Items(level2List);
+        bindLevel2Events();
+      });
+
+      bindLevel2Events();
+    }
+
+    // 渲染 Level 2 & Level 3 HTML
+    function renderLevel2Items(level2List) {
+      const q = searchQuery.trim().toLowerCase();
+
+      // 过滤与匹配
+      const filtered = level2List.map(lvl2 => {
+        const lvl2Match = lvl2.title.toLowerCase().includes(q);
+        const matchedChildren = (lvl2.children || []).filter(lvl3 => 
+          lvl3.title.toLowerCase().includes(q)
+        );
+
+        if (!q || lvl2Match || matchedChildren.length > 0) {
+          return {
+            ...lvl2,
+            displayChildren: q && !lvl2Match ? matchedChildren : lvl2.children,
+            isForceOpen: !!q // 搜索状态下默认展开
+          };
+        }
+        return null;
+      }).filter(Boolean);
+
+      if (filtered.length === 0) {
+        return `<div class="empty-tip">未找到匹配的内容</div>`;
+      }
+
+      return filtered.map(lvl2 => {
+        const isOpenGroup = lvl2.isForceOpen || expandedLevel2Ids.has(lvl2.id);
+        return `
+          <div class="level2-group ${isOpenGroup ? 'open' : ''}" data-id="${lvl2.id}">
+            <div class="level2-item" data-action="toggle">
+              <span>${highlightText(lvl2.title, q)}</span>
+              <svg class="arrow-icon" viewBox="0 0 24 24">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+              </svg>
+            </div>
+            <div class="level3-list">
+              ${(lvl2.displayChildren || []).map(lvl3 => `
+                <div class="level3-item" data-id="${lvl3.id}" data-title="${escapeHtml(lvl3.title)}">
+                  ${highlightText(lvl3.title, q)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 绑定 Level 2 & Level 3 的折叠与选中事件
+    function bindLevel2Events() {
+      // 展开/收起 Toggle
+      dropdownPopup.querySelectorAll('.level2-item[data-action="toggle"]').forEach(itemEl => {
+        itemEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const groupEl = itemEl.closest('.level2-group');
+          const groupId = groupEl.dataset.id;
+
+          if (expandedLevel2Ids.has(groupId)) {
+            expandedLevel2Ids.delete(groupId);
+            groupEl.classList.remove('open');
+          } else {
+            expandedLevel2Ids.add(groupId);
+            groupEl.classList.add('open');
+          }
+        });
+      });
+
+      // 选中 Level 3 项目
+      dropdownPopup.querySelectorAll('.level3-item').forEach(itemEl => {
+        itemEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const title = itemEl.dataset.title;
+          mainInput.value = `[${selectedLevel1Item.title}] ${title}`;
+          closePopup();
+        });
+      });
+    }
+
+    // 辅助工具
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function highlightText(text, query) {
+      if (!query) return escapeHtml(text);
+      const escaped = escapeHtml(text);
+      const reg = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      return escaped.replace(reg, '<span style="color: #165dff; font-weight: 600;">$1</span>');
+    }
+  </script>
+</body>
+</html>

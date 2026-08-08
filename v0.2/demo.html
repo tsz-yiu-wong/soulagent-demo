@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulAgent 原型</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #ffffff;
+      color: #333333;
+    }
+
+    /* 侧边栏样式 */
+    .sidebar {
+      width: 260px;
+      background-color: #f7f7f8;
+      border-right: 1px solid #e5e5e5;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      user-select: none;
+      position: relative;
+    }
+
+    .logo-area {
+      font-size: 20px;
+      font-weight: bold;
+      color: #111;
+      padding: 8px 12px 16px 12px;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #444;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .nav-item:hover {
+      background-color: #eaeaea;
+    }
+
+    .nav-item.active {
+      background-color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    .divider {
+      height: 1px;
+      background-color: #e0e0e0;
+      margin: 8px 0;
+    }
+
+    .history-title {
+      font-size: 12px;
+      color: #888;
+      padding: 8px 12px 4px 12px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+      flex: 1;
+      margin-bottom: 12px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #555;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover {
+      background-color: #eaeaea;
+    }
+
+    .history-item.active {
+      background-color: #e0e0e0;
+      color: #111;
+    }
+
+    .expert-tag {
+      background-color: #3b82f6;
+      color: #ffffff;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+      flex-shrink: 0;
+    }
+
+    /* 底部用户登录状态区 */
+    .user-profile-wrapper {
+      position: relative;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .user-profile-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .user-profile-bar:hover {
+      background-color: #eaeaea;
+    }
+
+    .user-avatar-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #3b82f6;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .user-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-arrow {
+      color: #888;
+      font-size: 12px;
+    }
+
+    /* 用户弹出菜单 */
+    .user-menu-popover {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      display: none;
+      flex-direction: column;
+      padding: 6px 0;
+      z-index: 100;
+    }
+
+    .user-menu-popover.show {
+      display: flex;
+    }
+
+    .menu-item {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #333333;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .menu-item:hover {
+      background-color: #f3f4f6;
+    }
+
+    .menu-item.danger {
+      color: #333333;
+    }
+
+    .menu-item.danger:hover {
+      color: #ef4444;
+      background-color: #fef2f2;
+    }
+
+    .submenu-arrow {
+      color: #999999;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    .submenu-popover {
+      position: absolute;
+      left: calc(100% + 2px);
+      top: 0;
+      background-color: #ffffff;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      display: none;
+      flex-direction: column;
+      padding: 6px 0;
+      min-width: 120px;
+      z-index: 101;
+    }
+
+    .submenu-popover::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+    }
+
+    .menu-item.has-submenu:hover > .submenu-popover {
+      display: flex;
+    }
+
+    /* 正文区域样式 */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background-color: #fff;
+    }
+
+    .view-section {
+      display: none;
+      height: 100%;
+      width: 100%;
+    }
+
+    .view-section.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 样式2a: 新建对话 */
+    .new-chat-view {
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 20px;
+    }
+
+    .new-chat-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    .new-chat-input-wrapper {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    /* 推荐提问区域 */
+    .recommend-section {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .recommend-header {
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 2px;
+    }
+
+    .recommend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .recommend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #374151;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .recommend-item:hover {
+      background-color: #f8fafc;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .recommend-item-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .recommend-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .recommend-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recommend-arrow {
+      color: #9ca3af;
+      font-size: 14px;
+      transition: transform 0.2s ease, color 0.2s ease;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+
+    .recommend-item:hover .recommend-arrow {
+      color: #2563eb;
+      transform: translateX(3px);
+    }
+
+    /* 统一复合输入框卡片 */
+    .input-card {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      background-color: #ffffff;
+      padding: 12px 14px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: border-color 0.2s;
+    }
+
+    .input-card:focus-within {
+      border-color: #3b82f6;
+    }
+
+    .input-textarea {
+      width: 100%;
+      height: 96px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: inherit;
+      background: transparent;
+      color: #1f2937;
+    }
+
+    .input-actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px solid #f3f4f6;
+    }
+
+    .actions-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .actions-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-add {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background-color: #f9fafb;
+      color: #4b5563;
+      font-size: 16px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .btn-add:hover {
+      background-color: #f3f4f6;
+    }
+
+    .btn-skill {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background-color: #f9fafb;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .btn-skill:hover {
+      background-color: #f3f4f6;
+    }
+
+    .model-select {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background-color: #ffffff;
+      color: #374151;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-send {
+      padding: 5px 14px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: none;
+      background-color: #3b82f6;
+      color: #ffffff;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-send:hover {
+      background-color: #2563eb;
+    }
+
+    /* 对话列表通用样式 (2b & 2c) */
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 20%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* 带头像的 Agent 消息行 (专家对话) */
+    .message-row-agent-expert {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .expert-avatar-left {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #eff6ff;
+      border: 1px solid #dbeafe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* 用户消息：浅灰色背景气泡 */
+    .message-user {
+      align-self: flex-end;
+      background-color: #f3f4f6;
+      color: #1f2937;
+      padding: 12px 18px;
+      border-radius: 12px;
+      max-width: 80%;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* Agent消息：无气泡 */
+    .message-agent {
+      align-self: flex-start;
+      color: #1f2937;
+      padding: 4px 0;
+      max-width: 90%;
+      font-size: 15px;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    /* 底部输入框区域 */
+    .chat-input-area {
+      padding: 16px 20%;
+      background-color: #fff;
+    }
+
+    /* 专家列表页样式 */
+    .expert-list-view {
+      padding: 40px 60px;
+      overflow-y: auto;
+    }
+
+    .expert-list-header {
+      margin-bottom: 32px;
+    }
+
+    .expert-list-header h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .expert-list-header p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .expert-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .expert-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .expert-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+      border-color: #3b82f6;
+    }
+
+    .expert-card-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background-color: #eff6ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .expert-card-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .expert-card-title {
+      font-size: 12px;
+      color: #3b82f6;
+      background-color: #eff6ff;
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .expert-card-desc {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+
+    .expert-card-btn {
+      width: 100%;
+      padding: 8px 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #3b82f6;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      background-color: #f8fafc;
+      transition: background 0.2s;
+    }
+
+    .expert-card:hover .expert-card-btn {
+      background-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    /* 专家介绍页样式 */
+    .expert-detail-view {
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .expert-detail-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 20%;
+    }
+
+    .expert-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #eeeeee;
+      margin-bottom: 24px;
+    }
+
+    .expert-detail-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background-color: #eff6ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #dbeafe;
+    }
+
+    .expert-detail-name {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .expert-detail-sub {
+      font-size: 14px;
+      color: #3b82f6;
+    }
+
+    .expert-detail-content h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #222;
+      margin: 20px 0 10px 0;
+    }
+
+    .expert-detail-content p {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.7;
+    }
+
+    .expert-skills-list {
+      list-style-type: disc;
+      padding-left: 20px;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    /* 专家介绍页底部：单行输入框 */
+    .single-line-input-area {
+      padding: 16px 20%;
+      background-color: #ffffff;
+      border-top: 1px solid #f3f4f6;
+    }
+
+    .single-line-input-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 24px;
+      padding: 6px 8px 6px 18px;
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .single-line-input-box:focus-within {
+      border-color: #3b82f6;
+    }
+
+    .single-line-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    .btn-send-single {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 18px;
+      border: none;
+      background-color: #3b82f6;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .btn-send-single:hover {
+      background-color: #2563eb;
+    }
+
+    /* 帮我听 页面样式 */
+    .listen-header h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 6px;
+    }
+
+    .listen-header p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .listen-list-view {
+      padding: 40px 60px;
+      overflow-y: auto;
+      gap: 24px;
+    }
+
+    .listen-subscribe-bar {
+      display: flex;
+      gap: 12px;
+      max-width: 720px;
+    }
+
+    .listen-input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .listen-input:focus {
+      border-color: #3b82f6;
+    }
+
+    .btn-subscribe {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      background-color: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-subscribe:hover {
+      background-color: #2563eb;
+    }
+
+    .listen-tabs {
+      display: flex;
+      gap: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 8px;
+      margin-top: 8px;
+    }
+
+    .listen-tab {
+      font-size: 15px;
+      color: #666;
+      cursor: pointer;
+      padding-bottom: 6px;
+      position: relative;
+    }
+
+    .listen-tab.active {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+
+    .listen-tab.active::after {
+      content: "";
+      position: absolute;
+      bottom: -9px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #3b82f6;
+    }
+
+    /* 大会级别的卡片网格 (每行最多3个，最多2行) */
+    .listen-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1080px;
+      margin-top: 8px;
+    }
+
+    .listen-card {
+      background-color: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .listen-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+      border-color: #3b82f6;
+    }
+
+    /* 大会卡片主图区域 */
+    .listen-card-banner {
+      height: 104px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #ffffff;
+      position: relative;
+    }
+
+    .banner-baai { background: linear-gradient(135deg, #1e3a8a, #3b82f6); }
+    .banner-waic { background: linear-gradient(135deg, #4c1d95, #8b5cf6); }
+    .banner-gdec { background: linear-gradient(135deg, #065f46, #10b981); }
+    .banner-gtc  { background: linear-gradient(135deg, #15803d, #84cc16); }
+    .banner-cncc { background: linear-gradient(135deg, #991b1b, #ef4444); }
+    .banner-aws  { background: linear-gradient(135deg, #9a3412, #f97316); }
+
+    .listen-card-banner .badge {
+      align-self: flex-start;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(4px);
+      font-weight: 500;
+    }
+
+    .listen-card-banner .conf-code {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .listen-card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .listen-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+      line-height: 1.4;
+    }
+
+    .listen-card-meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .listen-card-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .listen-card-city {
+      font-weight: 500;
+      color: #3b82f6;
+    }
+
+    /* 重构：听会详情页样式 (核心总结 + 推荐提问交互) */
+    .listen-detail-view {
+      padding: 30px 48px;
+      overflow-y: auto;
+    }
+
+    .btn-back-link {
+      border: none;
+      background: transparent;
+      color: #3b82f6;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-back-link:hover {
+      text-decoration: underline;
+    }
+
+    .listen-detail-card-header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 22px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+    }
+
+    .listen-detail-card-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .listen-detail-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .live-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(4px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    /* 总结核心 + 推荐提问两列布局 */
+    .listen-detail-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+    }
+
+    .summary-main-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .card-section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 600;
+      color: #111;
+      border-bottom: 1px solid #f3f4f6;
+      padding-bottom: 12px;
+    }
+
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      color: #374151;
+      cursor: pointer;
+    }
+
+    .btn-sm:hover {
+      background: #f3f4f6;
+    }
+
+    .summary-body {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .summary-block {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 16px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .block-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e3a8a;
+      margin-bottom: 6px;
+    }
+
+    .summary-block p {
+      font-size: 13px;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
+    /* 右侧推荐提问与金句列 */
+    .interaction-side-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .prompt-box {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .expert-prompt-bg {
+      background: #eff6ff;
+      border-color: #dbeafe;
+    }
+
+    .prompt-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .tip-tag {
+      font-size: 11px;
+      color: #3b82f6;
+      font-weight: normal;
+    }
+
+    .prompt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .prompt-item {
+      padding: 10px 12px;
+      font-size: 13px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .prompt-item:hover {
+      background: #ffffff;
+      border-color: #3b82f6;
+      color: #3b82f6;
+      transform: translateX(2px);
+    }
+
+    .prompt-item.expert-item {
+      background: #ffffff;
+      border-color: #bfdbfe;
+    }
+
+    .prompt-item.expert-item:hover {
+      border-color: #2563eb;
+      color: #1d4ed8;
+    }
+
+    .golden-quotes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .golden-quote-item {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .quote-text {
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+
+    .quote-author {
+      font-size: 11px;
+      color: #b45309;
+      text-align: right;
+      margin-bottom: 8px;
+    }
+
+    .quote-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .quote-actions button {
+      padding: 2px 8px;
+      font-size: 11px;
+      border: 1px solid #fde68a;
+      background: #ffffff;
+      color: #b45309;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .quote-actions button:hover {
+      background: #fef3c7;
+    }
+
+    /* 底部实时问答交互弹框 */
+    .detail-qa-interactive-bar {
+      margin-top: 20px;
+      background: #ffffff;
+      border: 1px solid #3b82f6;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
+    }
+
+    .qa-bar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 14px;
+      color: #3b82f6;
+      margin-bottom: 10px;
+    }
+
+    .btn-close-qa {
+      border: none;
+      background: transparent;
+      color: #888;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .qa-bar-content {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #1f2937;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 侧边栏 -->
+  <div class="sidebar">
+    <!-- 1a. Logo区 -->
+    <div class="logo-area">SoulAgent</div>
+
+    <!-- 1b. 导航标签 -->
+    <div class="nav-list">
+      <div class="nav-item active" id="nav-new-chat" onclick="showView('new')">新建对话</div>
+      <div class="nav-item" id="nav-expert-avatar" onclick="showView('expert-list')">专家分身</div>
+      <div class="nav-item" id="nav-listen" onclick="showView('listen-list')">帮我听</div>
+      <div class="nav-item" onclick="alert('进入 [知识库]')">知识库</div>
+      <div class="nav-item" onclick="alert('进入 [档案库]')">档案库</div>
+      <div class="divider"></div>
+    </div>
+
+    <!-- 1c. 历史对话列表 -->
+    <div class="history-title">历史对话</div>
+    <div class="history-list" id="history-list">
+      <!-- 带专家标签对话 -->
+      <div class="history-item" id="item-expert-1" onclick="showView('expert')">
+        <span class="expert-tag">王仲远</span>
+        <span>大模型长上下文与Memory架构...</span>
+      </div>
+      <!-- 普通对话 -->
+      <div class="history-item" id="item-agent-1" onclick="showView('agent')">
+        <span>前端原型开发规范与交互</span>
+      </div>
+      <!-- 带专家标签对话 -->
+      <div class="history-item" id="item-expert-2" onclick="showView('expert')">
+        <span class="expert-tag">王仲远</span>
+        <span>Embodied AI 未来技术路线研讨</span>
+      </div>
+      <!-- 普通对话 -->
+      <div class="history-item" id="item-agent-2" onclick="showView('agent')">
+        <span>周报总结与Agent多轮对话</span>
+      </div>
+    </div>
+
+    <!-- 1d. 侧边栏底部：登录状态区 -->
+    <div class="user-profile-wrapper">
+      <div class="user-profile-bar" onclick="toggleUserMenu(event)">
+        <div class="user-avatar-icon">S</div>
+        <div class="user-info">
+          <div class="user-name">SoulUser</div>
+        </div>
+        <div class="user-arrow">▲</div>
+      </div>
+
+      <!-- 点击后弹出的选项菜单 -->
+      <div class="user-menu-popover" id="user-menu">
+        <div class="menu-item" onclick="alert('切换语言')">切换语言</div>
+        <div class="menu-item" onclick="alert('问题反馈')">问题反馈</div>
+        <div class="menu-item has-submenu">
+          <span>用户协议</span>
+          <span class="submenu-arrow">›</span>
+          <div class="submenu-popover">
+            <div class="menu-item" onclick="alert('用户协议')">用户协议</div>
+            <div class="menu-item" onclick="alert('隐私政策')">隐私政策</div>
+          </div>
+        </div>
+        <div class="menu-item danger" onclick="alert('登出')">登出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 正文区域 -->
+  <div class="main-area">
+
+    <!-- 2a. 新建对话 View -->
+    <div class="view-section new-chat-view active" id="view-new">
+      <div class="new-chat-title">早上好，需要我帮你做什么</div>
+      <div class="new-chat-input-wrapper">
+        <div class="input-card">
+          <textarea class="input-textarea" placeholder="给 SoulAgent 发送消息..."></textarea>
+          <div class="input-actions-bar">
+            <div class="actions-left">
+              <button class="btn-add" onclick="alert('点击加号')">+</button>
+              <button class="btn-skill" onclick="alert('选择技能')">技能</button>
+              <button class="btn-skill" onclick="alert('选择帮我听')">帮我听</button>
+              <button class="btn-skill" onclick="alert('选择问专家')">问专家</button>
+            </div>
+            <div class="actions-right">
+              <select class="model-select">
+                <option value="fast">极速</option>
+                <option value="think">思考</option>
+                <option value="multimodal">多模态</option>
+              </select>
+              <button class="btn-send" onclick="alert('发送消息')">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 推荐提问 (一行一个) -->
+      <div class="recommend-section">
+        <div class="recommend-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+          <span>试试问</span>
+        </div>
+        <div class="recommend-list">
+          <div class="recommend-item" onclick="fillPrompt('帮我整理本周 Embodied AI 团队的项目进展与周报要点')">
+            <div class="recommend-item-content">
+              <span class="recommend-icon">💡</span>
+              <span class="recommend-text">帮我整理本周 Embodied AI 团队的项目进展与周报要点</span>
+            </div>
+            <span class="recommend-arrow">→</span>
+          </div>
+          <div class="recommend-item" onclick="fillPrompt('如何使用 AI 实时语音听会并自动提炼核心结论与金句？')">
+            <div class="recommend-item-content">
+              <span class="recommend-icon">🎙️</span>
+              <span class="recommend-text">如何使用 AI 实时语音听会并自动提炼核心结论与金句？</span>
+            </div>
+            <span class="recommend-arrow">→</span>
+          </div>
+          <div class="recommend-item" onclick="fillPrompt('向王仲远专家分身咨询具身智能物理直觉与长泛化能力突破')">
+            <div class="recommend-item-content">
+              <span class="recommend-icon">👤</span>
+              <span class="recommend-text">向王仲远专家分身咨询具身智能物理直觉与长泛化能力突破</span>
+            </div>
+            <span class="recommend-arrow">→</span>
+          </div>
+          <div class="recommend-item" onclick="fillPrompt('在知识库中查找关于分层记忆架构（Working & Episodic Memory）的资料')">
+            <div class="recommend-item-content">
+              <span class="recommend-icon">📚</span>
+              <span class="recommend-text">在知识库中查找关于分层记忆架构（Working & Episodic Memory）的资料</span>
+            </div>
+            <span class="recommend-arrow">→</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2b. 普通 Agent 对话 View -->
+    <div class="view-section" id="view-agent">
+      <div class="chat-container">
+        <!-- 第一轮 -->
+        <div class="message-row">
+          <div class="message-user">请简述一下 SoulAgent 的核心功能定位。</div>
+        </div>
+        <div class="message-row">
+          <div class="message-agent">
+            SoulAgent 是一个专注于智能体协同与专家知识沉淀的 Agent 平台。提供实时语音听会、知识库管理、个人档案库以及可自定义的专家分身等功能，帮助企业与个人构建高效的 AI 工作流。
+          </div>
+        </div>
+
+        <!-- 第二轮 -->
+        <div class="message-row">
+          <div class="message-user">普通对话与专家对话有什么差别？</div>
+        </div>
+        <div class="message-row">
+          <div class="message-agent">
+            普通对话由通用 SoulAgent 基础大模型回答；而专家对话由特定专家分身承接，附带专属专家标识与知识沉淀，回答更加专业且具备人设风采。
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="input-card">
+          <textarea class="input-textarea" placeholder="给 SoulAgent 发送消息..."></textarea>
+          <div class="input-actions-bar">
+            <div class="actions-left">
+              <button class="btn-add" onclick="alert('点击加号')">+</button>
+              <button class="btn-skill" onclick="alert('选择技能')">技能</button>
+              <button class="btn-skill" onclick="alert('选择帮我听')">帮我听</button>
+              <button class="btn-skill" onclick="alert('选择问专家')">问专家</button>
+            </div>
+            <div class="actions-right">
+              <select class="model-select">
+                <option value="fast">极速</option>
+                <option value="think">思考</option>
+                <option value="multimodal">多模态</option>
+              </select>
+              <button class="btn-send" onclick="alert('发送消息')">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2c. 专家对话 View -->
+    <div class="view-section" id="view-expert">
+      <div class="chat-container">
+        <!-- 第一轮 -->
+        <div class="message-row">
+          <div class="message-user">王总，关于 Embodied AI 方向，今年团队应该重点突破什么？</div>
+        </div>
+        <div class="message-row-agent-expert">
+          <div class="expert-avatar-left">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="message-agent">
+            结合目前的技术演进，具身智能的核心突破在于将多模态大模型的物理直觉与高频闭环控制深度融合。我们应当优先攻克复杂真实环境下的长泛化能力与多任务指令理解。
+          </div>
+        </div>
+
+        <!-- 第二轮 -->
+        <div class="message-row">
+          <div class="message-user">那对于上下文记忆（Memory）这一块，有什么具体落地的建议吗？</div>
+        </div>
+        <div class="message-row-agent-expert">
+          <div class="expert-avatar-left">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="message-agent">
+            建议采用分层记忆架构：短期工作记忆（Working Memory）结合向量检索的长期情景记忆（Episodic Memory）。针对专家对话场景，还要引入知识图谱来保证推导逻辑的一致性。
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="input-card">
+          <textarea class="input-textarea" placeholder="向 王仲远 专家分身提问..."></textarea>
+          <div class="input-actions-bar">
+            <div class="actions-left">
+              <button class="btn-skill" onclick="alert('选择问课程')">问课程</button>
+            </div>
+            <div class="actions-right">
+              <button class="btn-send" onclick="alert('发送消息')">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2d. 专家列表 View (竖着的大卡片) -->
+    <div class="view-section expert-list-view" id="view-expert-list">
+      <div class="expert-list-header">
+        <h2>专家分身列表</h2>
+        <p>选择行业顶尖专家分身，开启深度对话与知识沉淀</p>
+      </div>
+      <div class="expert-cards-grid">
+        <!-- 专家卡片 1 -->
+        <div class="expert-card" onclick="showView('expert-detail')">
+          <div class="expert-card-avatar">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="expert-card-name">王仲远</div>
+          <div class="expert-card-title">智源研究院院长 / 具身智能</div>
+          <div class="expert-card-desc">深度聚焦大模型架构、具身智能（Embodied AI）及 Agent 分层记忆系统研究。</div>
+          <div class="expert-card-btn">查看详情 & 对话</div>
+        </div>
+
+        <!-- 专家卡片 2 -->
+        <div class="expert-card" onclick="showView('expert-detail')">
+          <div class="expert-card-avatar">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="expert-card-name">张大模</div>
+          <div class="expert-card-title">LLM 架构专家</div>
+          <div class="expert-card-desc">擅长 Transformer 算法优化、长文本上下文拓展及模型高性能推理部署。</div>
+          <div class="expert-card-btn">查看详情 & 对话</div>
+        </div>
+
+        <!-- 专家卡片 3 -->
+        <div class="expert-card" onclick="showView('expert-detail')">
+          <div class="expert-card-avatar">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="expert-card-name">李智能</div>
+          <div class="expert-card-title">Multi-Agent 工作流专家</div>
+          <div class="expert-card-desc">专注多智能体协同规划、复杂 Tool Use 工具链集成与自动化工作流落地。</div>
+          <div class="expert-card-btn">查看详情 & 对话</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2e. 专家介绍页 View -->
+    <div class="view-section expert-detail-view" id="view-expert-detail">
+      <div class="expert-detail-container">
+        <div class="expert-detail-header">
+          <div class="expert-detail-avatar">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div>
+            <div class="expert-detail-name">王仲远 专家分身</div>
+            <div class="expert-detail-sub">智源研究院院长 / 具身智能专家</div>
+          </div>
+        </div>
+
+        <div class="expert-detail-content">
+          <h3>专家简介</h3>
+          <p>王仲远博士，人工智能领域资深专家，现任北京智源人工智能研究院院长。主要研究方向包括大语言模型、具身智能（Embodied AI）以及智能体分层记忆系统。在国际顶尖学术会议发表论文数十篇，具备丰富的学术突破与工业落地经验。</p>
+
+          <h3>核心擅长领域</h3>
+          <ul class="expert-skills-list">
+            <li>具身智能与物理直觉多模态闭环控制</li>
+            <li>大模型长上下文（Long-Context）与 Memory 机制设计</li>
+            <li>AI Agent 架构规划与行业专家知识库沉淀</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 底部一行过的输入框 -->
+      <div class="single-line-input-area">
+        <div class="single-line-input-box">
+          <input type="text" class="single-line-input" placeholder="向 王仲远 专家分身提问..." id="expert-detail-input_text">
+          <button class="btn-send-single" onclick="sendFromExpertDetail()">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2f. 帮我听 - 会议广场 View -->
+    <div class="view-section listen-list-view" id="view-listen-list">
+      <!-- 页面标题区 -->
+      <div class="listen-header">
+        <h2>帮我听</h2>
+        <p>AI帮我听，捕捉现场关键信息</p>
+      </div>
+
+      <!-- 顶部：订阅听会输入框 -->
+      <div class="listen-subscribe-bar">
+        <input type="text" class="listen-input" placeholder="输入即将开始的直播网址">
+        <button class="btn-subscribe" onclick="alert('已成功订阅听会！')">订阅帮我听</button>
+      </div>
+
+      <!-- 中间：Tab 标签切换 -->
+      <div class="listen-tabs">
+        <div class="listen-tab active" onclick="switchListenTab(this)">会议广场</div>
+        <div class="listen-tab" onclick="switchListenTab(this)">课程广场</div>
+        <div class="listen-tab" onclick="switchListenTab(this)">个人添加</div>
+      </div>
+
+      <!-- 下面：顶级大会卡片网格 (每行最多3个，最多两行) -->
+      <div class="listen-cards-grid">
+
+        <!-- 大会卡片 1: 智源大会 -->
+        <div class="listen-card" onclick="openConferenceDetail('2026 北京智源大会 (BAAI 2026)', '2026.06.05 - 06.07', '北京·中关村')">
+          <div class="listen-card-banner banner-baai">
+            <span class="badge">直播中</span>
+            <div class="conf-code">BAAI 2026</div>
+          </div>
+          <div class="listen-card-body">
+            <div class="listen-card-title">2026 北京智源大会</div>
+            <div class="listen-card-meta-list">
+              <div class="listen-card-meta-item">📅 2026.06.05 - 06.07</div>
+              <div class="listen-card-meta-item listen-card-city">📍 北京</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 大会卡片 2: WAIC 世界人工智能大会 -->
+        <div class="listen-card" onclick="openConferenceDetail('WAIC 2026 世界人工智能大会', '2026.07.04 - 07.07', '上海·世博中心')">
+          <div class="listen-card-banner banner-waic">
+            <span class="badge">即将开始</span>
+            <div class="conf-code">WAIC 2026</div>
+          </div>
+          <div class="listen-card-body">
+            <div class="listen-card-title">WAIC 世界人工智能大会</div>
+            <div class="listen-card-meta-list">
+              <div class="listen-card-meta-item">📅 2026.07.04 - 07.07</div>
+              <div class="listen-card-meta-item listen-card-city">📍 上海</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 大会卡片 3: GDEC 全球数字经济大会 -->
+        <div class="listen-card" onclick="openConferenceDetail('GDEC 全球数字经济大会', '2026.07.02 - 07.05', '北京·国家会议中心')">
+          <div class="listen-card-banner banner-gdec">
+            <span class="badge">即将开始</span>
+            <div class="conf-code">GDEC 2026</div>
+          </div>
+          <div class="listen-card-body">
+            <div class="listen-card-title">GDEC 全球数字经济大会</div>
+            <div class="listen-card-meta-list">
+              <div class="listen-card-meta-item">📅 2026.07.02 - 07.05</div>
+              <div class="listen-card-meta-item listen-card-city">📍 北京</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 大会卡片 4: NVIDIA GTC -->
+        <div class="listen-card" onclick="openConferenceDetail('NVIDIA GTC 2026 全球 AI 技术大会', '2026.03.18 - 03.21', '旧金山 / 线上直播')">
+          <div class="listen-card-banner banner-gtc">
+            <span class="badge">精彩回放</span>
+            <div class="conf-code">NVIDIA GTC</div>
+          </div>
+          <div class="listen-card-body">
+            <div class="listen-card-title">NVIDIA GTC AI 大会</div>
+            <div class="listen-card-meta-list">
+              <div class="listen-card-meta-item">📅 2026.03.18 - 03.21</div>
+              <div class="listen-card-meta-item listen-card-city">📍 旧金山 / 线上</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 大会卡片 5: CNCC 中国计算机大会 -->
+        <div class="listen-card" onclick="openConferenceDetail('CNCC 2026 中国计算机大会', '2026.10.24 - 10.26', '浙江·横店')">
+          <div class="listen-card-banner banner-cncc">
+            <span class="badge">预告预约</span>
+            <div class="conf-code">CNCC 2026</div>
+          </div>
+          <div class="listen-card-body">
+            <div class="listen-card-title">CNCC 中国计算机大会</div>
+            <div class="listen-card-meta-list">
+              <div class="listen-card-meta-item">📅 2026.10.24 - 10.26</div>
+              <div class="listen-card-meta-item listen-card-city">📍 横店</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 大会卡片 6: AWS Summit -->
+        <div class="listen-card" onclick="openConferenceDetail('AWS Summit 2026 云计算峰会', '2026.05.20 - 05.21', '深圳·会展中心')">
+          <div class="listen-card-banner banner-aws">
+            <span class="badge">精彩回放</span>
+            <div class="conf-code">AWS SUMMIT</div>
+          </div>
+          <div class="listen-card-body">
+            <div class="listen-card-title">AWS Summit 2026</div>
+            <div class="listen-card-meta-list">
+              <div class="listen-card-meta-item">📅 2026.05.20 - 05.21</div>
+              <div class="listen-card-meta-item listen-card-city">📍 深圳</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 2g. 帮我听 - 重构：交互式听会总结详情 View (总结为核心，金句为补充，可玩交互) -->
+    <div class="view-section listen-detail-view" id="view-listen-detail">
+      <button class="btn-back-link" onclick="showView('listen-list')">← 返回会议广场</button>
+
+      <!-- 顶栏大会信息头部 -->
+      <div class="listen-detail-card-header">
+        <div>
+          <h2 id="conf-detail-title">2026 北京智源大会 (BAAI 2026)</h2>
+          <div class="listen-detail-meta">
+            <span id="conf-detail-date">📅 2026.06.05 - 06.07</span>
+            <span id="conf-detail-location">📍 北京·中关村</span>
+          </div>
+        </div>
+        <div class="live-status-pill">
+          <div class="live-dot"></div>
+          <span>AI 总结提炼完毕</span>
+        </div>
+      </div>
+
+      <!-- 总结核心 + 推荐提问交互网格 -->
+      <div class="listen-detail-grid">
+        <!-- 左侧 60%：核心总结卡片 (总结是核心) -->
+        <div class="summary-main-card">
+          <div class="card-section-title">
+            <span>✨ AI 核心会议总结简报</span>
+            <button class="btn-sm" onclick="alert('已将全文总结导出为 PDF')">📄 导出总结</button>
+          </div>
+
+          <div class="summary-body">
+            <div class="summary-block">
+              <div class="block-label">一、 具身智能与大模型物理直觉闭环</div>
+              <p>大会明确具身智能（Embodied AI）已跨越单一多模态感知阶段，进入“物理直觉 + 高频闭环控制”双核驱动时代。重点在于解决复杂真实环境下的长序列指令理解与长泛化成功率。</p>
+            </div>
+
+            <div class="summary-block">
+              <div class="block-label">二、 分层 Memory 记忆架构方案</div>
+              <p>针对智能体上下文爆炸与推导开销，提出了基于短期工作记忆（Working Memory）与向量检索长期情景记忆（Episodic Memory）的分层模型，大幅提升智能体长程任务的一致性。</p>
+            </div>
+
+            <div class="summary-block">
+              <div class="block-label">三、 Multi-Agent 专家分身工作流</div>
+              <p>未来的企业级 AI 平台将演进为多个行业专家分身协作模式，通过 Tool Use 工具链自动化拆解企业复杂任务流。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧 40%：交互引导列 (推荐问Agent + 推荐问专家 + 金句补充) -->
+        <div class="interaction-side-column">
+
+          <!-- 推荐提问 1: 问 Agent (点击即刻交互) -->
+          <div class="prompt-box">
+            <div class="prompt-box-header">
+              <span>🤖 推荐问 SoulAgent</span>
+              <span class="tip-tag">点击即刻提问</span>
+            </div>
+            <div class="prompt-list">
+              <div class="prompt-item" onclick="askDetailQuestion('SoulAgent', '帮我对比具身智能与传统机器人的本质区别')">
+                💬 帮我对比具身智能与传统机器人的本质区别
+              </div>
+              <div class="prompt-item" onclick="askDetailQuestion('SoulAgent', '本次智源大会关于 Memory 架构给出了哪些具体落地方案？')">
+                💬 本次大会关于 Memory 架构给出了哪些落地方案？
+              </div>
+            </div>
+          </div>
+
+          <!-- 推荐提问 2: 问专家 (点击跳转专家对话) -->
+          <div class="prompt-box expert-prompt-bg">
+            <div class="prompt-box-header">
+              <span>👤 推荐问专家 (王仲远)</span>
+              <span class="tip-tag">点击跳转专家对话</span>
+            </div>
+            <div class="prompt-list">
+              <div class="prompt-item expert-item" onclick="askExpertFromDetail('王总，高频闭环控制在真实物理场景下的成功率目标是多少？')">
+                🎯 问王仲远：高频闭环控制的成功率目标是多少？
+              </div>
+              <div class="prompt-item expert-item" onclick="askExpertFromDetail('王总，对于团队而言，Memory 架构优先做哪一层性价比更高？')">
+                🎯 问王仲远：Memory 架构优先做哪一层性价比更高？
+              </div>
+            </div>
+          </div>
+
+          <!-- 补充区：大会精选金句 (金句是补充) -->
+          <div class="prompt-box">
+            <div class="prompt-box-header">
+              <span>💡 大会精选金句</span>
+              <span class="tip-tag">可收藏/引用</span>
+            </div>
+            <div class="golden-quotes-list">
+              <div class="golden-quote-item">
+                <div class="quote-text">“具身智能的核心突破在于物理直觉与高频闭环控制的深度融合。”</div>
+                <div class="quote-author">— 王仲远 智源研究院院长</div>
+                <div class="quote-actions">
+                  <button onclick="alert('已成功收藏金句到个人档案库！')">⭐ 收藏</button>
+                  <button onclick="alert('已复制金句到剪贴板！')">📋 复制</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 底部即时问答交互展示区 (点推荐词后直接展现交互结果) -->
+      <div class="detail-qa-interactive-bar" id="detail-qa-bar" style="display:none;">
+        <div class="qa-bar-header">
+          <span id="qa-target-label">🤖 SoulAgent 实时解答：</span>
+          <button class="btn-close-qa" onclick="closeDetailQA()">✕ 关闭</button>
+        </div>
+        <div class="qa-bar-content" id="qa-bar-content">
+          <!-- 动态填充问答回复 -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showView(type) {
+      // 切换视图
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-' + type).classList.add('active');
+
+      // 切换导航高亮状态
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+
+      // 根据页面判断是否需要对侧边栏历史对话进行筛选 (仅保留带有专家标签的)
+      const filterExpertOnly = (type === 'expert-list' || type === 'expert-detail');
+      updateHistoryFilter(filterExpertOnly);
+
+      if (type === 'new') {
+        document.getElementById('nav-new-chat').classList.add('active');
+      } else if (type === 'agent') {
+        document.getElementById('item-agent-1').classList.add('active');
+      } else if (type === 'expert') {
+        document.getElementById('item-expert-1').classList.add('active');
+      } else if (type === 'expert-list') {
+        document.getElementById('nav-expert-avatar').classList.add('active');
+      } else if (type === 'listen-list' || type === 'listen-detail') {
+        document.getElementById('nav-listen').classList.add('active');
+      }
+    }
+
+    // Tab 标签切换
+    function switchListenTab(el) {
+      document.querySelectorAll('.listen-tab').forEach(tab => tab.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // 筛选侧边栏历史对话
+    function updateHistoryFilter(filterExpertOnly) {
+      const historyItems = document.querySelectorAll('.history-item');
+      historyItems.forEach(item => {
+        const hasExpertTag = item.querySelector('.expert-tag') !== null;
+        if (filterExpertOnly) {
+          item.style.display = hasExpertTag ? 'flex' : 'none';
+        } else {
+          item.style.display = 'flex';
+        }
+      });
+    }
+
+    // 从专家详情页发送消息跳转至带标签的专家对话
+    function sendFromExpertDetail() {
+      showView('expert');
+    }
+
+    // 打开大会听会详情
+    function openConferenceDetail(name, date, location) {
+      document.getElementById('conf-detail-title').innerText = name;
+      document.getElementById('conf-detail-date').innerText = '📅 ' + date;
+      document.getElementById('conf-detail-location').innerText = '📍 ' + location;
+      // 关闭弹出的问答栏
+      closeDetailQA();
+      showView('listen-detail');
+    }
+
+    // 推荐问 Agent
+    function askDetailQuestion(target, questionText) {
+      const bar = document.getElementById('detail-qa-bar');
+      const label = document.getElementById('qa-target-label');
+      const content = document.getElementById('qa-bar-content');
+
+      label.innerText = '🤖 ' + target + ' 针对问句的即时解答：';
+      content.innerHTML = `
+        <div style="font-weight:600; color:#111; margin-bottom:4px;">提问: "${questionText}"</div>
+        <div style="color:#4b5563;"><b>AI 回复:</b> 结合本次大会的完整提炼结论，${questionText.includes('Memory') ? 'Memory 架构核心在于区分工作记忆与情景记忆，避免单次 Token 窗口爆炸，同时保障长程推导一致性。' : '具身智能相比传统机器人的本质在于具备了物理直觉与长序列泛化能力，能够自主理解环境变化并完成闭环操控。'}</div>
+      `;
+      bar.style.display = 'block';
+    }
+
+    // 推荐问专家 (跳转专家对话)
+    function askExpertFromDetail(questionText) {
+      showView('expert');
+    }
+
+    // 关闭底部问答栏
+    function closeDetailQA() {
+      const bar = document.getElementById('detail-qa-bar');
+      if (bar) bar.style.display = 'none';
+    }
+
+    // 自动填充推荐问题至输入框
+    function fillPrompt(text) {
+      const textarea = document.querySelector('#view-new .input-textarea');
+      if (textarea) {
+        textarea.value = text;
+        textarea.focus();
+      }
+    }
+
+    function toggleUserMenu(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('user-menu');
+      menu.classList.toggle('show');
+    }
+
+    // 点击其他地方收起菜单
+    document.addEventListener('click', function() {
+      const menu = document.getElementById('user-menu');
+      if (menu && menu.classList.contains('show')) {
+        menu.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

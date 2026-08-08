@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>领取你的专属 Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:         #09070f;
+      --accent:     #a78bfa;
+      --accent-rgb: 167, 139, 250;
+      --text:       #f0f0f5;
+      --muted:      rgba(255,255,255,0.28);
+      --font:       'Outfit', 'Noto Sans SC', -apple-system, sans-serif;
+      --ease:       cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; background: var(--bg); font-family: var(--font); color: var(--text); overflow: hidden; }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 30%, rgba(109,40,217,.32), transparent),
+        radial-gradient(ellipse 50% 40% at 80% 70%, rgba(14,116,144,.22), transparent);
+      transition: opacity 0.8s;
+    }
+
+    /* ── 左上角模式切换 ── */
+    .mode-toggle {
+      position: fixed; top: 24px; left: 24px; z-index: 100;
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .mode-btn {
+      padding: 5px 13px;
+      border-radius: 16px;
+      border: none; background: transparent;
+      font-size: 12px; font-family: var(--font);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.25s var(--ease);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .mode-btn.active {
+      background: rgba(var(--accent-rgb), 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(var(--accent-rgb), 0.25);
+    }
+    .mode-btn:not(.active):hover { color: rgba(255,255,255,.6); }
+
+    /* ── 上一步按钮（内嵌于 panel） ── */
+    .btn-back {
+      display: flex; align-items: center; gap: 5px;
+      background: transparent; border: none;
+      font-size: 12px; font-family: var(--font);
+      color: rgba(255,255,255,.22); cursor: pointer;
+      transition: color 0.2s;
+      letter-spacing: 0.03em;
+      margin-top: 24px; padding: 4px 0;
+    }
+    .btn-back:hover { color: rgba(255,255,255,.55); }
+    .btn-back svg { width: 13px; height: 13px; }
+
+    /* ── 进度线 ── */
+    .progress { position: fixed; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.05); }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #22d3ee); transition: width 0.65s var(--ease); box-shadow: 0 0 8px rgba(var(--accent-rgb),.45); }
+
+    /* ── 全屏视口 ── */
+    .viewport { position: relative; z-index: 1; width: 100%; height: 100%; overflow: hidden; }
+
+    .panel {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 0 32px;
+      transition: transform 0.6s var(--ease), opacity 0.45s ease;
+      will-change: transform, opacity;
+    }
+    .panel.pre      { transform: translateY(48px);  opacity: 0; pointer-events: none; }
+    .panel.on       { transform: translateY(0);       opacity: 1; pointer-events: all; }
+    .panel.past     { transform: translateY(-40px);   opacity: 0; pointer-events: none; }
+    /* 反向（返回）动画 */
+    .panel.pre-back  { transform: translateY(-48px); opacity: 0; pointer-events: none; }
+    .panel.past-back { transform: translateY(40px);  opacity: 0; pointer-events: none; }
+
+    /* ── 问题文字 ── */
+    .question {
+      font-size: clamp(24px, 5vw, 38px);
+      font-weight: 600; text-align: center;
+      line-height: 1.35; letter-spacing: -0.02em;
+      margin-bottom: 40px; max-width: 520px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .question.switching { opacity: 0; transform: translateY(6px); }
+    .question em { font-style: normal; color: var(--accent); }
+
+    /* ── 下划线输入框 ── */
+    .field-wrap { position: relative; width: 100%; max-width: 380px; }
+    .field {
+      width: 100%; background: transparent; border: none;
+      border-bottom: 1.5px solid rgba(255,255,255,0.15);
+      padding: 14px 44px 14px 0;
+      font-size: 20px; font-family: var(--font); font-weight: 500;
+      color: var(--text); outline: none;
+      transition: border-color 0.25s;
+      text-align: center; letter-spacing: 0.01em;
+    }
+    .field::placeholder { color: var(--muted); font-weight: 400; font-size: 17px; }
+    .field:focus { border-color: rgba(var(--accent-rgb),.65); }
+
+    .btn-go {
+      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(var(--accent-rgb),.12);
+      border: 1px solid rgba(var(--accent-rgb),.2);
+      color: var(--accent); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s, background 0.2s, transform 0.2s;
+    }
+    .btn-go.ready { opacity: 1; }
+    .btn-go.ready:hover { background: rgba(var(--accent-rgb),.25); transform: translateY(-50%) scale(1.1); }
+    .btn-go svg { width: 16px; height: 16px; }
+
+    .hint { margin-top: 14px; font-size: 11.5px; color: rgba(255,255,255,.16); letter-spacing: 0.04em; opacity: 0; transition: opacity 0.3s; }
+    .hint.show { opacity: 1; }
+
+    /* ── 职业磁贴 ── */
+    .role-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      width: 100%; max-width: 500px;
+    }
+    @media (max-width: 480px) { .role-grid { grid-template-columns: repeat(3,1fr); } }
+    .role-tile {
+      border: 1.5px solid rgba(255,255,255,0.07); border-radius: 14px;
+      padding: 16px 8px 12px; text-align: center; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.025);
+      transition: all 0.22s var(--ease); user-select: none;
+    }
+    .role-tile:hover { border-color: rgba(var(--accent-rgb),.35); background: rgba(var(--accent-rgb),.07); transform: translateY(-2px); }
+    .role-tile.selected { border-color: var(--accent); background: rgba(var(--accent-rgb),.12); box-shadow: 0 0 0 1px rgba(var(--accent-rgb),.2); transform: translateY(-2px); }
+    .role-em  { font-size: 26px; line-height: 1; }
+    .role-lbl { font-size: 12px; color: rgba(255,255,255,.45); transition: color 0.2s; }
+    .role-tile:hover .role-lbl, .role-tile.selected .role-lbl { color: var(--text); }
+
+    .role-tile.custom-tile { grid-column: span 2; flex-direction: row; justify-content: center; gap: 8px; padding: 14px; }
+    .custom-field-row { display: none; grid-column: 1/-1; }
+    .custom-field-row.visible { display: block; }
+    .custom-field-row .field { font-size: 16px; padding: 10px 0; text-align: left; border-bottom-color: rgba(var(--accent-rgb),.35); }
+
+    /* ── 激活按钮 ── */
+    .btn-activate {
+      display: none; margin-top: 24px;
+      padding: 14px 40px; border-radius: 50px; border: none;
+      background: linear-gradient(135deg, #6d28d9, var(--accent));
+      color: #fff; font-size: 16px; font-weight: 700; font-family: var(--font);
+      cursor: pointer; letter-spacing: 0.02em;
+      box-shadow: 0 4px 24px rgba(var(--accent-rgb),.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-activate.visible { display: block; }
+    .btn-activate:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(var(--accent-rgb),.5); }
+
+    /* ── 完成 ── */
+    .done-title {
+      font-size: clamp(26px, 6vw, 44px); font-weight: 700; text-align: center;
+      background: linear-gradient(135deg, #fff 20%, var(--accent) 60%, #22d3ee);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 14px;
+    }
+    .done-sub { font-size: 16px; color: rgba(255,255,255,.4); text-align: center; line-height: 1.8; max-width: 340px; }
+    .done-sub strong { color: rgba(255,255,255,.75); font-weight: 500; }
+    .btn-restart {
+      margin-top: 40px; background: transparent;
+      border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.3);
+      border-radius: 8px; padding: 8px 20px;
+      font-size: 13px; font-family: var(--font); cursor: pointer; transition: all 0.2s;
+    }
+    .btn-restart:hover { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.6); }
+  </style>
+</head>
+<body>
+
+  <!-- 模式切换 -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeA" onclick="switchMode('A')">用户视角</button>
+    <button class="mode-btn"        id="modeB" onclick="switchMode('B')">Agent 视角</button>
+  </div>
+
+  <!-- 进度线 -->
+  <div class="progress">
+    <div class="progress-fill" id="prog" style="width:0%"></div>
+  </div>
+
+  <div class="viewport">
+
+    <!-- Step 1 -->
+    <div class="panel pre" id="p1">
+      <h1 class="question" id="q1"></h1>
+      <div class="field-wrap">
+        <input class="field" id="f1" type="text" maxlength="15" autocomplete="off"
+          oninput="onF1(this.value)"
+          onkeydown="if(event.key==='Enter')goS2()"/>
+        <button class="btn-go" id="go1" onclick="goS2()">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+      <p class="hint" id="hint1">按 Enter 继续</p>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="panel pre" id="p2">
+      <h1 class="question" id="q2"></h1>
+      <div class="field-wrap">
+        <input class="field" id="f2" type="text" maxlength="15" autocomplete="off"
+          oninput="onF2(this.value)"
+          onkeydown="if(event.key==='Enter')goS3()"/>
+        <button class="btn-go" id="go2" onclick="goS3()">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+      <p class="hint" id="hint2">按 Enter 继续</p>
+      <button class="btn-back" onclick="goBack()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        上一步
+      </button>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="panel pre" id="p3">
+      <h1 class="question" id="q3" style="margin-bottom:28px"></h1>
+      <div class="role-grid" id="roleGrid"></div>
+      <button class="btn-activate" id="btnAct" onclick="goDone()">激活 →</button>
+      <button class="btn-back" onclick="goBack()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        上一步
+      </button>
+    </div>
+
+    <!-- 完成 -->
+    <div class="panel pre" id="pDone">
+      <h2 class="done-title" id="doneTitle"></h2>
+      <p class="done-sub" id="doneSub"></p>
+      <button class="btn-restart" onclick="restart()">重新体验</button>
+    </div>
+
+  </div>
+
+  <script>
+    /* ── 状态 ── */
+    const S = { agentName:'', userName:'', roleName:'', roleEmoji:'', mode:'A' };
+    let curPanel = null;
+    let curStep  = 1;
+
+    /* 两套问题 */
+    const QUESTIONS = {
+      A: {
+        q1: () => '给你的 Agent<br>起个名字',
+        q2: () => `你希望 <em>${S.agentName}</em><br>怎么称呼你？`,
+        q3: () => '你是做什么的？',
+        p1: '例如：小助手，小智宝，小灵宝',
+        p2: '例如：陛下，老板，铲屎官',
+      },
+      B: {
+        q1: () => '帮我起个名字',
+        q2: () => '我该怎么称呼你？',
+        q3: () => '你是做什么工作的？',
+        p1: '例如：小助手，小智宝，小灵宝',
+        p2: '例如：陛下，老板，铲屎官',
+      },
+    };
+
+    /* ── 渲染当前步骤的问题文字 ── */
+    function renderQuestions(animate) {
+      const Q = QUESTIONS[S.mode];
+      const pairs = [
+        { el: document.getElementById('q1'), html: Q.q1(), ph: Q.p1, fid: 'f1' },
+        { el: document.getElementById('q2'), html: Q.q2(), ph: Q.p2, fid: 'f2' },
+        { el: document.getElementById('q3'), html: Q.q3() },
+      ];
+
+      pairs.forEach(({ el, html, ph, fid }) => {
+        if (animate) {
+          el.classList.add('switching');
+          setTimeout(() => {
+            el.innerHTML = html;
+            el.classList.remove('switching');
+          }, 200);
+        } else {
+          el.innerHTML = html;
+        }
+        if (fid && ph) {
+          const input = document.getElementById(fid);
+          if (input) input.placeholder = ph;
+        }
+      });
+    }
+
+    /* ── 模式切换 ── */
+    function switchMode(m) {
+      if (S.mode === m) return;
+      S.mode = m;
+      document.getElementById('modeA').className = 'mode-btn' + (m === 'A' ? ' active' : '');
+      document.getElementById('modeB').className = 'mode-btn' + (m === 'B' ? ' active' : '');
+      renderQuestions(true);
+    }
+
+    /* ── 面板切换 ── */
+    function showPanel(id, pct, back = false) {
+      if (curPanel) curPanel.className = back ? 'panel past-back' : 'panel past';
+      const p = document.getElementById(id);
+      p.className = back ? 'panel pre-back' : 'panel pre';
+      requestAnimationFrame(() => requestAnimationFrame(() => { p.className = 'panel on'; }));
+      curPanel = p;
+      document.getElementById('prog').style.width = pct + '%';
+    }
+
+    /* ── 输入监听 ── */
+    function onF1(v) {
+      const t = v.trim();
+      document.getElementById('go1').className = 'btn-go' + (t ? ' ready' : '');
+      document.getElementById('hint1').className = 'hint' + (t ? ' show' : '');
+    }
+    function onF2(v) {
+      const t = v.trim();
+      document.getElementById('go2').className = 'btn-go' + (t ? ' ready' : '');
+      document.getElementById('hint2').className = 'hint' + (t ? ' show' : '');
+    }
+
+    /* ── 步骤推进 ── */
+    function goS2() {
+      const v = document.getElementById('f1').value.trim();
+      if (!v) return;
+      S.agentName = v;
+      curStep = 2;
+      document.getElementById('q2').innerHTML = QUESTIONS[S.mode].q2();
+      showPanel('p2', 33);
+      setTimeout(() => document.getElementById('f2').focus(), 500);
+    }
+
+    function goS3() {
+      const v = document.getElementById('f2').value.trim();
+      if (!v) return;
+      S.userName = v;
+      curStep = 3;
+      document.getElementById('q3').innerHTML = QUESTIONS[S.mode].q3();
+      showPanel('p3', 66);
+    }
+
+    /* ── 上一步 ── */
+    function goBack() {
+      if (curStep === 2) {
+        curStep = 1;
+        showPanel('p1', 0, true);
+        setTimeout(() => document.getElementById('f1').focus(), 500);
+      } else if (curStep === 3) {
+        curStep = 2;
+        // 恢复 step2 输入值
+        const f2 = document.getElementById('f2');
+        f2.value = S.userName;
+        onF2(S.userName);
+        showPanel('p2', 33, true);
+        setTimeout(() => f2.focus(), 500);
+      }
+    }
+
+    /* ── 职业磁贴 ── */
+    const ROLES = [
+      {e:'💻',l:'程序员'},{e:'🎨',l:'设计师'},
+      {e:'🎓',l:'学生'},{e:'✍️',l:'文案'},
+      {e:'📊',l:'产品经理'},{e:'🎥',l:'创作者'},
+      {e:'🏢',l:'管理者'},{e:'🔬',l:'研究员'},
+      {e:'💼',l:'自由职业'},{e:'🛠️',l:'其他…', custom:true},
+    ];
+
+    const grid = document.getElementById('roleGrid');
+    ROLES.forEach(r => {
+      const t = document.createElement('div');
+      t.className = 'role-tile' + (r.custom ? ' custom-tile' : '');
+      t.innerHTML = `<span class="role-em">${r.e}</span><span class="role-lbl">${r.l}</span>`;
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.role-tile').forEach(x => x.classList.remove('selected'));
+        t.classList.add('selected');
+        if (r.custom) {
+          customRow.classList.add('visible');
+          document.getElementById('customF').focus();
+          document.getElementById('btnAct').className = 'btn-activate';
+        } else {
+          customRow.classList.remove('visible');
+          S.roleName = r.l; S.roleEmoji = r.e;
+          document.getElementById('btnAct').className = 'btn-activate visible';
+        }
+      });
+      grid.appendChild(t);
+    });
+
+    /* 自定义职业 */
+    const customRow = document.createElement('div');
+    customRow.className = 'custom-field-row';
+    customRow.innerHTML = `<input class="field" id="customF" type="text" maxlength="20" placeholder="输入你的职业…" oninput="onCustom(this.value)"/>`;
+    grid.parentNode.insertBefore(customRow, grid.nextSibling);
+
+    function onCustom(v) {
+      S.roleName = v.trim(); S.roleEmoji = '🛠️';
+      document.getElementById('btnAct').className = 'btn-activate' + (v.trim() ? ' visible' : '');
+    }
+
+    /* ── 完成 ── */
+    function goDone() {
+      if (!S.roleName) return;
+      document.getElementById('doneTitle').textContent = `${S.agentName} 已就位`;
+      document.getElementById('doneSub').innerHTML =
+        `你好，<strong>${S.userName}</strong>。<br>正在为你（${S.roleEmoji} ${S.roleName}）加载定制知识库…`;
+      showPanel('pDone', 100);
+    }
+
+    /* ── 重置 ── */
+    function restart() {
+      Object.assign(S, { agentName:'', userName:'', roleName:'', roleEmoji:'' });
+      curStep = 1;
+      ['f1','f2','customF'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+      document.querySelectorAll('.role-tile').forEach(t => t.classList.remove('selected'));
+      customRow.classList.remove('visible');
+      document.getElementById('btnAct').className = 'btn-activate';
+      onF1(''); onF2('');
+      renderQuestions(false);
+      showPanel('p1', 0);
+      setTimeout(() => document.getElementById('f1').focus(), 500);
+    }
+
+    /* ── 初始化 ── */
+    renderQuestions(false);
+    showPanel('p1', 0);
+    setTimeout(() => document.getElementById('f1').focus(), 300);
+  </script>
+</body>
+</html>

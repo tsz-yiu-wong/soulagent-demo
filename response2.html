@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent 回复气泡模拟</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7fa;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chat-bubble {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .process-area {
+            border: 1px solid #ebedf0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #fafafa;
+        }
+
+        .process-header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            color: #666;
+            font-size: 14px;
+            background-color: #ffffff;
+            border-bottom: 1px solid transparent;
+            transition: background-color 0.2s;
+        }
+
+        .process-header:hover {
+            background-color: #f9f9f9;
+        }
+
+        .process-header.expanded {
+            border-bottom-color: #ebedf0;
+        }
+
+        .process-header svg.icon-tool {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            fill: #888;
+        }
+
+        .process-header .arrow {
+            width: 16px;
+            height: 16px;
+            fill: #999;
+            margin-left: auto;
+            transition: transform 0.3s;
+        }
+
+        .process-header.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        .process-body {
+            padding: 16px;
+            display: none;
+            background-color: #ffffff;
+        }
+
+        .process-body.expanded {
+            display: block;
+        }
+
+        .step-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .step-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #555;
+            background-color: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .step-tag:hover {
+            background-color: #eeeeee;
+        }
+
+        .step-tag.active {
+            background-color: #f0f7ff;
+            color: #1677ff;
+        }
+        
+        .step-tag .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .step-tag.thought .dot {
+            background-color: #9c27b0; /* 紫色代表思考 */
+        }
+
+        .step-tag.tool .dot {
+            background-color: #52c41a; /* 绿色代表工具 */
+        }
+
+        .step-details {
+            font-size: 13px;
+            color: #666;
+            background-color: #fafafa;
+            border-radius: 6px;
+            padding: 16px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .step-details::-webkit-scrollbar {
+            width: 4px;
+        }
+        .step-details::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 4px;
+        }
+
+        .detail-section {
+            margin-bottom: 12px;
+        }
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+        .detail-title {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+        }
+        
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            color: #888;
+        }
+
+        .content-area {
+            font-size: 15px;
+            color: #222;
+            line-height: 1.7;
+            min-height: 25px;
+        }
+
+        .content-area.interim {
+            color: #666; /* 过程正文稍微灰一点，体现不是最终结果 */
+            font-style: italic;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background-color: #222;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .replay-btn {
+            align-self: flex-start;
+            padding: 10px 20px;
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.015);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .replay-btn:hover {
+            color: #1677ff;
+            border-color: #1677ff;
+        }
+        
+        .process-time-badge {
+            margin-left: 8px;
+            color: #8c8c8c;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div style="display: flex; gap: 12px;">
+            <button class="replay-btn" onclick="startSimulation(1)">播放方案1</button>
+            <button class="replay-btn" onclick="startSimulation(2)">播放方案2</button>
+        </div>
+        
+        <div class="chat-bubble">
+            <!-- 过程区 -->
+            <div class="process-area" id="processArea" style="display: none;">
+                <div class="process-header expanded" id="processHeader">
+                    <svg class="icon-tool" viewBox="0 0 1024 1024"><path d="M898.3 430.2l-137.9-20.2c-15.3-2.2-28.7-11-37.4-24.1-8.7-13.1-11.7-29.2-8.3-44.6l32-135.5c4.6-19.4-1.3-39.7-15.5-53.9-14.2-14.2-34.5-20.1-53.9-15.5l-135.5 32c-15.4 3.4-31.5.4-44.6-8.3-13.1-8.7-21.9-22.1-24.1-37.4L452.9 84.8C450 64.9 434 50 414 50h-4c-20 0-36 14.9-38.9 34.8l-20.2 137.9c-2.2 15.3-11 28.7-24.1 37.4-13.1 8.7-29.2 11.7-44.6 8.3l-135.5-32c-19.4-4.6-39.7 1.3-53.9 15.5-14.2 14.2-20.1 34.5-15.5 53.9l32 135.5c3.4 15.4.4 31.5-8.3 44.6-8.7 13.1-22.1 21.9-37.4 24.1L84.8 529.1C64.9 532 50 548 50 568v4c0 20 14.9 36 34.8 38.9l137.9 20.2c15.3 2.2 28.7 11 37.4 24.1 8.7 13.1 11.7 29.2 8.3 44.6l-32 135.5c-4.6 19.4 1.3 39.7 15.5 53.9 14.2 14.2 34.5 20.1 53.9 15.5l135.5-32c15.4-3.4 31.5-.4 44.6 8.3 13.1 8.7 21.9 22.1 24.1 37.4l20.2 137.9c2.9 19.9 18.9 34.8 38.9 34.8h4c20 0 36-14.9 38.9-34.8l20.2-137.9c2.2-15.3 11-28.7 24.1-37.4 13.1-8.7 29.2-11.7 44.6-8.3l135.5 32c19.4 4.6 39.7-1.3 53.9-15.5 14.2-14.2 20.1-34.5 15.5-53.9l-32-135.5c-3.4-15.4-.4-31.5 8.3-44.6 8.7-13.1 22.1-21.9 37.4-24.1l137.9-20.2c19.9-2.9 34.8-18.9 34.8-38.9v-4c0-20-14.9-36-34.8-38.9z"></path></svg>
+                    <span id="processCount">努力干活中...</span>
+                    <span id="processTime" class="process-time-badge">0s</span>
+                    <svg class="arrow" viewBox="0 0 1024 1024"><path d="M859.9 382.5c-16.7-16.7-43.7-16.7-60.3 0L512 669.5 224.4 382.5c-16.7-16.7-43.7-16.7-60.3 0-16.7 16.7-16.7 43.7 0 60.3l317.7 317.7c16.7 16.7 43.7 16.7 60.3 0l317.7-317.7c16.6-16.7 16.6-43.7.1-60.3z"></path></svg>
+                </div>
+                <div class="process-body expanded" id="processBody">
+                    <div class="step-tags" id="stepTags"></div>
+                    <div class="step-details" id="stepDetails" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- 正文区 -->
+            <div class="content-area interim" id="contentArea">
+                <span id="textContent"></span><span class="cursor" id="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定义模拟的数据流
+        const simulationSteps = [
+            {
+                type: 'thought',
+                name: '思考',
+                details: {
+                    "思考内容": "意图分析：用户希望规划周末去奥林匹克森林公园的行程。\n\n提取实体：\n- 目标地点：奥林匹克森林公园\n- 时间范围：本周末\n\n执行策略规划：\n1. 户外活动受天气影响巨大，第一步必须调用天气 API 确认周末的气象条件（温度、降水概率、风力、紫外线强度等）。\n2. 考虑到该公园面积很大，如果天气炎热或紫外线强，需要给用户防晒提示。\n3. 如果天气不适合，可能需要提供备选的室内方案。\n4. 天气确认适宜后，为了提供更贴心的服务，我应该再搜索一下最近公园是否有特色的展览、花季（比如向日葵展）或者文化活动。\n5. 综合天气和活动两方面的信息，组织成一段富有感情色彩、口语化的回复。\n\n目前准备开始执行第1步：调用天气查询工具..."
+                }
+            },
+            {
+                type: 'tool',
+                name: '调用技能',
+                interimText: '正在为您查阅本周末北京的天气预报以及公园活动情况...',
+                details: {
+                    "参数": "{\n  \"api_version\": \"v3.5\",\n  \"service\": \"weather.forecast.hourly\",\n  \"location\": {\n    \"city\": \"北京市\",\n    \"district\": \"朝阳区\",\n    \"poi\": \"奥林匹克森林公园\"\n  },\n  \"time_range\": {\n    \"start\": \"2026-07-18T00:00:00Z\",\n    \"end\": \"2026-07-19T23:59:59Z\"\n  },\n  \"options\": {\n    \"include_aqi\": true,\n    \"include_uv\": true,\n    \"include_wind\": true,\n    \"language\": \"zh-CN\"\n  }\n}",
+                    "结果": "{\n  \"status\": \"success\",\n  \"request_id\": \"req-8f92-4b2a-b129-9e8c7a6d5f4e\",\n  \"data\": {\n    \"location\": \"奥林匹克森林公园\",\n    \"summary\": \"周末整体天气晴朗，气温适宜，适合户外活动。\",\n    \"forecast\": [\n      {\n        \"date\": \"2026-07-18\",\n        \"overview\": \"晴转多云\",\n        \"temp_range\": \"18°C ~ 25°C\",\n        \"uv_index\": \"中等 (4.5)\",\n        \"aqi\": \"优 (35)\",\n        \"wind\": \"东南风 2-3级\",\n        \"sunrise\": \"05:12\",\n        \"sunset\": \"19:35\",\n        \"hourly\": [\n          {\"time\": \"08:00\", \"temp\": \"19°C\", \"condition\": \"晴\"},\n          {\"time\": \"12:00\", \"temp\": \"23°C\", \"condition\": \"晴\"},\n          {\"time\": \"16:00\", \"temp\": \"25°C\", \"condition\": \"多云\"},\n          {\"time\": \"20:00\", \"temp\": \"21°C\", \"condition\": \"多云\"}\n        ]\n      },\n      {\n        \"date\": \"2026-07-19\",\n        \"overview\": \"晴朗无云\",\n        \"temp_range\": \"20°C ~ 26°C\",\n        \"uv_index\": \"强 (6.8)\",\n        \"aqi\": \"良 (52)\",\n        \"wind\": \"南风 3-4级\",\n        \"sunrise\": \"05:13\",\n        \"sunset\": \"19:34\",\n        \"hourly\": [\n          {\"time\": \"08:00\", \"temp\": \"21°C\", \"condition\": \"晴\"},\n          {\"time\": \"12:00\", \"temp\": \"25°C\", \"condition\": \"晴\"},\n          {\"time\": \"16:00\", \"temp\": \"26°C\", \"condition\": \"晴\"},\n          {\"time\": \"20:00\", \"temp\": \"22°C\", \"condition\": \"晴\"}\n        ]\n      }\n    ],\n    \"advisories\": [\n      \"紫外线较强，建议佩戴太阳镜并涂抹防晒霜。\",\n      \"周日风力稍大，可适当增减衣物。\"\n    ]\n  }\n}"
+                }
+            },
+            {
+                type: 'thought',
+                name: '思考',
+                details: {
+                    "思考内容": "天气查询结果返回成功。从数据来看，本周末奥林匹克森林公园区域天气总体晴朗，气温在18度至26度左右，体感非常舒适，是个绝佳的出行时机。不过由于周日紫外线指数偏高，防晒提醒是必须要加上的。既然天气如此完美，仅仅去公园散步可能有些单调，我应当去网上检索一下该公园近期是否有特殊的花展或者音乐节等文化活动。如果能找到相关活动，就可以给用户带来额外的惊喜。现在开始执行网络检索..."
+                }
+            },
+            {
+                type: 'tool',
+                name: '网络搜索',
+                interimText: '天气很不错！正在进一步检索奥森公园近期的特色活动...',
+                details: {
+                    "参数": "{\n  \"query\": \"奥林匹克森林公园 最近活动 展览\"\n}",
+                    "结果": "检索到相关信息：本周六至下周日，奥森公园南门区域正在举办一年一度的“向日葵花展”，目前正是盛花期，免费对游客开放。"
+                }
+            },
+            {
+                type: 'thought',
+                name: '思考',
+                interimText: '资料收集完毕，正在整理最终的出行建议。',
+                details: {
+                    "思考内容": "网络搜索完成。太棒了，正好在这周末，奥林匹克森林公园南门区域正在举办一年一度的“向日葵花展”，目前花开正盛，而且是对公众免费开放的。结合前面的天气数据，我已经掌握了所有必要的信息。现在需要把这些零散的信息整合起来，撰写一段最终的出行建议。在回复中，我要优先告知天气状况和适宜的衣着建议，然后重点推荐南门的向日葵花展，最后用轻松愉快的口吻提醒用户注意防晒和出行安全。"
+                }
+            },
+            {
+                type: 'final',
+                text: '帮您查好啦！这个周末北京天气晴朗，气温在 18-26°C 之间，非常适合去奥林匹克森林公园散步游玩。☀️\n\n另外还有一个好消息：目前公园南门正在举办“向日葵花展”，现在正是盛花期，建议您可以直接从南门进入赏花。紫外线指数中等，出门记得涂点防晒霜哦，祝您周末玩得开心！🌻'
+            }
+        ];
+
+        let currentStepIndex = 0;
+        let startTime = 0;
+        let timerInterval = null;
+        let currentScheme = 1; // 默认方案1
+        
+        const processArea = document.getElementById('processArea');
+        const processHeader = document.getElementById('processHeader');
+        const processCount = document.getElementById('processCount');
+        const processTime = document.getElementById('processTime');
+        const processBody = document.getElementById('processBody');
+        const stepTags = document.getElementById('stepTags');
+        const stepDetails = document.getElementById('stepDetails');
+        const contentArea = document.getElementById('contentArea');
+        const textContent = document.getElementById('textContent');
+        const cursor = document.getElementById('cursor');
+
+        // 处理折叠/展开
+        processHeader.addEventListener('click', () => {
+            processHeader.classList.toggle('expanded');
+            processBody.classList.toggle('expanded');
+        });
+
+        // 打字机效果
+        async function typeText(text, clear = true, targetElement = textContent, charsPerFrame = 2, delay = 15) {
+            if (clear) targetElement.innerText = '';
+            for (let i = 0; i < text.length; i += charsPerFrame) {
+                targetElement.innerText += text.substring(i, i + charsPerFrame);
+                await new Promise(r => setTimeout(r, delay)); 
+            }
+        }
+
+        async function renderDetailsAnim(step, container) {
+            container.style.display = 'block';
+            container.innerHTML = '';
+            
+            const isThought = step.type === 'thought';
+            
+            for (const [key, value] of Object.entries(step.details)) {
+                const section = document.createElement('div');
+                section.className = 'detail-section';
+                
+                if (!isThought && key !== '思考内容') {
+                    const title = document.createElement('div');
+                    title.className = 'detail-title';
+                    title.innerText = key;
+                    section.appendChild(title);
+                }
+                
+                const pre = document.createElement('pre');
+                section.appendChild(pre);
+                container.appendChild(section);
+
+                if (isThought) {
+                    for (let i = 0; i < value.length; i += 2) {
+                        pre.innerText += value.substring(i, i + 2);
+                        container.scrollTop = container.scrollHeight; 
+                        await new Promise(r => setTimeout(r, 15)); 
+                    }
+                } else {
+                    for (let i = 0; i < value.length; i += 4) {
+                        pre.innerText += value.substring(i, i + 4);
+                        container.scrollTop = container.scrollHeight; 
+                        await new Promise(r => setTimeout(r, 2)); 
+                    }
+                }
+            }
+        }
+
+        // 显示步骤详情
+        function showStepDetails(step) {
+            if (!step.details) {
+                stepDetails.style.display = 'none';
+                return;
+            }
+            stepDetails.style.display = 'block';
+            let html = '';
+            const isThought = step.type === 'thought';
+            for (const [key, value] of Object.entries(step.details)) {
+                let titleHtml = (!isThought && key !== '思考内容') ? `<div class="detail-title">${key}</div>` : '';
+                html += `<div class="detail-section">
+                            ${titleHtml}
+                            <pre>${value}</pre>
+                         </div>`;
+            }
+            stepDetails.innerHTML = html;
+        }
+
+        async function runEngine() {
+            if (currentStepIndex >= simulationSteps.length) {
+                cursor.style.display = 'none';
+                return;
+            }
+
+            const step = simulationSteps[currentStepIndex];
+
+            if (step.type === 'thought' || step.type === 'tool') {
+                processArea.style.display = 'block';
+                contentArea.classList.add('interim'); // 过程正文样式
+                
+                // 确保过程区展开
+                if (!processHeader.classList.contains('expanded')) {
+                    processHeader.classList.add('expanded');
+                    processBody.classList.add('expanded');
+                }
+
+                // 增加 Tag
+                const tag = document.createElement('div');
+                tag.className = `step-tag ${step.type}`;
+                tag.innerHTML = `<div class="dot"></div>${step.name}`;
+                
+                // 点击 Tag 切换详情
+                tag.onclick = () => {
+                    Array.from(stepTags.children).forEach(child => child.classList.remove('active'));
+                    tag.classList.add('active');
+                    showStepDetails(step);
+                };
+
+                // 移除之前的 active 状态
+                Array.from(stepTags.children).forEach(child => child.classList.remove('active'));
+                tag.classList.add('active');
+                
+                stepTags.appendChild(tag);
+                
+                const anims = [];
+                // 细节打字动画
+                if (step.details) {
+                    anims.push(renderDetailsAnim(step, stepDetails));
+                } else {
+                    stepDetails.style.display = 'none';
+                }
+
+                // 覆盖更新过程正文
+                if (step.interimText) {
+                    if (currentScheme === 1) {
+                        anims.push(typeText(step.interimText, true, processCount, 1, 40));
+                    } else {
+                        cursor.style.display = 'inline-block';
+                        anims.push(typeText(step.interimText, true));
+                    }
+                }
+                
+                // 等待动画完成
+                await Promise.all(anims);
+                
+            } else if (step.type === 'final') {
+                // 结束计时
+                if (timerInterval) clearInterval(timerInterval);
+                let elapsed = Math.floor((Date.now() - startTime) / 1000);
+                processCount.innerText = `任务完成`;
+                processTime.innerText = `${elapsed}s`;
+
+                // 最终正文：收起过程区，取消斜体样式，输出最终结果
+                processHeader.classList.remove('expanded');
+                processBody.classList.remove('expanded');
+                contentArea.classList.remove('interim');
+                
+                cursor.style.display = 'inline-block';
+                await typeText(step.text, true);
+            }
+
+            currentStepIndex++;
+            runEngine(); // 继续 Loop
+        }
+
+        function startSimulation(scheme = 1) {
+            currentScheme = scheme;
+            // 重置状态
+            currentStepIndex = 0;
+            processArea.style.display = 'none';
+            stepTags.innerHTML = '';
+            stepDetails.innerHTML = '';
+            stepDetails.style.display = 'none';
+            textContent.innerText = '';
+            cursor.style.display = 'none';
+            processHeader.classList.add('expanded');
+            processBody.classList.add('expanded');
+            
+            processCount.innerText = '努力干活中...';
+            processTime.innerText = '0s';
+            startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsed = Math.floor((Date.now() - startTime) / 1000);
+                processTime.innerText = `${elapsed}s`;
+            }, 100);
+
+            runEngine();
+        }
+
+        // 页面加载后启动
+        startSimulation(1);
+    </script>
+</body>
+</html>

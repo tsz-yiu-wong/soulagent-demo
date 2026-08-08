@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Initialization - Gemini 3.1 UX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --secondary: #a855f7;
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Background Blobs */
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.6;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .blob-1 {
+            width: 40vw;
+            height: 40vw;
+            max-width: 400px;
+            max-height: 400px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            top: -10%;
+            left: -10%;
+        }
+        .blob-2 {
+            width: 50vw;
+            height: 50vw;
+            max-width: 500px;
+            max-height: 500px;
+            background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+            bottom: -20%;
+            right: -10%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 30px) scale(1.1); }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 540px;
+            padding: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 420px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Agent Orb */
+        .orb-container {
+            margin-bottom: 30px;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .orb {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 30px var(--primary-glow);
+            animation: pulse 2s infinite alternate;
+        }
+        .orb::after {
+            content: '';
+            position: absolute;
+            top: -5px; left: -5px; right: -5px; bottom: -5px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            z-index: -1;
+            filter: blur(15px);
+            opacity: 0.7;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 20px var(--primary-glow); }
+            100% { transform: scale(1.05); box-shadow: 0 0 40px var(--secondary); }
+        }
+
+        /* Text Content */
+        .step-content {
+            width: 100%;
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.4s ease;
+        }
+        .step-content.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+            position: absolute;
+        }
+        .step-content.fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .agent-message {
+            font-size: 1.4rem;
+            font-weight: 300;
+            line-height: 1.5;
+            margin-bottom: 40px;
+            min-height: 85px; /* prevent layout shift */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .highlight {
+            font-weight: 600;
+            background: linear-gradient(90deg, #c084fc, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding: 0 4px;
+        }
+
+        /* Input Area */
+        .input-group {
+            width: 100%;
+            position: relative;
+        }
+        
+        input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 50px 16px 20px;
+            font-size: 1.1rem;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+        }
+        
+        input::placeholder {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Chips for Profession */
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease 0.2s;
+        }
+        .chips.show {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .chip:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Action Button */
+        .btn-next {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            opacity: 0.6;
+        }
+        .btn-next:hover {
+            opacity: 1;
+            background: rgba(99, 102, 241, 0.15);
+        }
+        
+        /* Final Card Details */
+        .final-card {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: fadeInScale 0.6s ease forwards;
+        }
+        
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .relationship-viz {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 35px;
+            width: 100%;
+        }
+        .entity {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+            padding: 24px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            width: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+        .entity::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        .entity-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        .entity-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+        .entity-role {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        .connection {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .connection-line {
+            height: 2px;
+            width: 50px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            position: relative;
+        }
+        .connection-icon {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-color);
+            border-radius: 50%;
+            padding: 4px;
+            font-size: 0.8rem;
+            color: var(--secondary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+            letter-spacing: 1px;
+        }
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(99, 102, 241, 0.4);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container" id="mainCard">
+        <div class="orb-container" id="orbContainer">
+            <div class="orb"></div>
+        </div>
+
+        <div class="step-content" id="stepContent">
+            <div class="agent-message" id="messageText">
+                <div>你好，我是你的专属AI助理。<br>我还不知道自己叫什么，<br>你想给我起个什么名字？</div>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="输入Agent名称，例如：贾维斯" autocomplete="off" autofocus>
+                <button class="btn-next" id="btnNext">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div class="chips" id="professionChips">
+                <div class="chip">程序员</div>
+                <div class="chip">设计师</div>
+                <div class="chip">产品经理</div>
+                <div class="chip">学生</div>
+                <div class="chip">运营</div>
+            </div>
+        </div>
+
+        <div class="final-card" id="finalCard">
+            <div class="agent-message" style="margin-bottom: 25px; font-size: 1.6rem;">
+                <div>配置完成，连接已建立。</div>
+            </div>
+            <div class="relationship-viz">
+                <div class="entity">
+                    <div class="entity-icon">👤</div>
+                    <div class="entity-name" id="finalUserName">托尼</div>
+                    <div class="entity-role" id="finalUserRole">工程师</div>
+                </div>
+                <div class="connection">
+                    <div class="connection-line"></div>
+                    <div class="connection-icon">⚡️</div>
+                </div>
+                <div class="entity">
+                    <div class="entity-icon">✨</div>
+                    <div class="entity-name" id="finalAgentName">贾维斯</div>
+                    <div class="entity-role">专属Agent</div>
+                </div>
+            </div>
+            <button class="btn-start" onclick="alert('进入主界面流程...')">进入工作台</button>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            step: 1,
+            agentName: '',
+            userName: '',
+            profession: ''
+        };
+
+        const elements = {
+            content: document.getElementById('stepContent'),
+            message: document.getElementById('messageText'),
+            input: document.getElementById('userInput'),
+            btnNext: document.getElementById('btnNext'),
+            chips: document.getElementById('professionChips'),
+            finalCard: document.getElementById('finalCard'),
+            finalUserName: document.getElementById('finalUserName'),
+            finalUserRole: document.getElementById('finalUserRole'),
+            finalAgentName: document.getElementById('finalAgentName'),
+            orbContainer: document.getElementById('orbContainer')
+        };
+
+        const steps = {
+            1: {
+                message: "<div>你好，我是你的专属AI助理。<br>我还不知道自己叫什么，<br>你想给我起个什么名字？</div>",
+                placeholder: "输入Agent名称，例如：贾维斯"
+            },
+            2: {
+                getMessage: () => `<div>好的！以后我就叫 <span class="highlight">${state.agentName}</span> 了。<br>那么作为我的创造者，我该怎么称呼您呢？</div>`,
+                placeholder: "输入您的称呼，例如：托尼"
+            },
+            3: {
+                getMessage: () => `<div>很高兴为您服务，<span class="highlight">${state.userName}</span>。<br>最后，为了让我更懂您，<br>能告诉我您的职业或主要身份吗？</div>`,
+                placeholder: "输入或选择职业"
+            }
+        };
+
+        function transitionToStep(newStep) {
+            elements.content.classList.add('fade-out');
+            
+            setTimeout(() => {
+                if (newStep <= 3) {
+                    const stepData = steps[newStep];
+                    elements.message.innerHTML = typeof stepData.message === 'function' ? stepData.message() : (stepData.getMessage ? stepData.getMessage() : stepData.message);
+                    elements.input.value = '';
+                    elements.input.placeholder = stepData.placeholder;
+                    
+                    if (newStep === 3) {
+                        elements.chips.classList.add('show');
+                    } else {
+                        elements.chips.classList.remove('show');
+                    }
+
+                    elements.content.classList.remove('fade-out');
+                    elements.content.classList.add('fade-in');
+                    
+                    // Force reflow
+                    void elements.content.offsetWidth;
+                    
+                    elements.content.classList.remove('fade-in');
+                    elements.input.focus();
+                } else {
+                    // Show final card
+                    elements.content.style.display = 'none';
+                    elements.orbContainer.style.display = 'none'; // Hide orb on final step
+                    elements.finalCard.style.display = 'flex';
+                    elements.finalUserName.textContent = state.userName;
+                    elements.finalUserRole.textContent = state.profession;
+                    elements.finalAgentName.textContent = state.agentName;
+                }
+            }, 400); // Wait for fade-out to complete
+        }
+
+        function handleNext() {
+            const val = elements.input.value.trim();
+            if (!val) {
+                // simple shake effect for empty input
+                elements.input.style.transform = 'translateX(10px)';
+                setTimeout(() => elements.input.style.transform = 'translateX(-10px)', 100);
+                setTimeout(() => elements.input.style.transform = 'translateX(0)', 200);
+                return;
+            }
+
+            if (state.step === 1) state.agentName = val;
+            if (state.step === 2) state.userName = val;
+            if (state.step === 3) state.profession = val;
+
+            state.step++;
+            transitionToStep(state.step);
+        }
+
+        elements.input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleNext();
+        });
+        
+        elements.btnNext.addEventListener('click', handleNext);
+
+        // Chip selection
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                elements.input.value = chip.textContent;
+                handleNext();
+            });
+        });
+    </script>
+</body>
+</html>

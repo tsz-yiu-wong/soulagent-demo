@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>专家分身协同对话模拟 - SoulAgent</title>
+  
+  <!-- Google Fonts: Outfit & Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── 核心设计系统与变量 ── */
+    :root {
+      --bg-gradient: radial-gradient(circle at 50% 0%, #120f26 0%, #080613 60%, #030208 100%);
+      --accent-agent: #06b6d4;      /* 主 Agent 颜色：青色 */
+      --accent-agent-rgb: 6, 182, 212;
+      
+      /* 专家分身主题色 (动态切换) */
+      --accent-expert: #f59e0b;     /* 财务专家 Alex：琥珀金 */
+      --accent-expert-rgb: 245, 158, 11;
+      --expert-bg-gradient: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.02) 100%);
+      
+      --text-main: #f3f4f6;
+      --text-muted: #8e8a9f;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.07);
+      --glass-blur: blur(16px);
+      --font-family: 'Outfit', 'Noto Sans SC', -apple-system, sans-serif;
+      --transition-normal: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      font-family: var(--font-family);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    /* ── 全局背景光晕 ── */
+    .bg-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: rgba(139, 92, 246, 0.07);
+      filter: blur(120px);
+      top: -10%;
+      left: 15%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .bg-glow-expert {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: rgba(var(--accent-expert-rgb), 0.06);
+      filter: blur(120px);
+      bottom: 10%;
+      right: 15%;
+      pointer-events: none;
+      z-index: 0;
+      transition: background-color 0.5s ease;
+    }
+
+    /* ── 主应用网格布局 ── */
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10;
+      position: relative;
+    }
+
+    /* ── 左侧对话模拟区域 ── */
+    .chat-section {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-right: 1px solid var(--card-border);
+      position: relative;
+    }
+
+    /* 对话区域头部 */
+    .chat-header {
+      padding: 20px 32px;
+      background: rgba(8, 6, 19, 0.4);
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .agent-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .agent-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-agent), #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(var(--accent-agent-rgb), 0.3);
+      position: relative;
+    }
+
+    .agent-avatar svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+
+    .agent-status-dot {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid #080613;
+    }
+
+    .agent-meta h2 {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-badge {
+      font-size: 11px;
+      background: rgba(var(--accent-agent-rgb), 0.15);
+      color: var(--accent-agent);
+      padding: 2px 8px;
+      border-radius: 99px;
+      border: 1px solid rgba(var(--accent-agent-rgb), 0.25);
+    }
+
+    .agent-meta p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* 对话历史流 */
+    .chat-messages {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      scroll-behavior: smooth;
+    }
+
+    /* 消息气泡通用结构 */
+    .message-row {
+      display: flex;
+      gap: 16px;
+      max-width: 85%;
+      position: relative;
+    }
+
+    .message-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-row.agent {
+      align-self: flex-start;
+    }
+
+    /* 气泡头像 */
+    .msg-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .message-row.user .msg-avatar {
+      background: #2e2a47;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .message-row.agent .msg-avatar {
+      background: linear-gradient(135deg, rgba(var(--accent-agent-rgb), 0.2), rgba(59, 130, 246, 0.2));
+      border: 1.5px solid var(--accent-agent);
+      box-shadow: 0 4px 12px rgba(var(--accent-agent-rgb), 0.15);
+    }
+
+    /* 消息主体气泡 */
+    .msg-bubble {
+      padding: 16px 20px;
+      border-radius: 18px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    .message-row.user .msg-bubble {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      border-top-right-radius: 4px;
+      color: #fff;
+    }
+
+    .message-row.agent .msg-bubble {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-top-left-radius: 4px;
+      color: var(--text-main);
+    }
+
+    /* 用户气泡内的附加标签：代表提问时选择的配置 */
+    .user-msg-meta {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .user-meta-pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .user-meta-pill.expert-selected {
+      background: rgba(var(--accent-expert-rgb), 0.12);
+      color: var(--accent-expert);
+      border: 1px solid rgba(var(--accent-expert-rgb), 0.3);
+      font-weight: 500;
+    }
+
+    /* ───────── 核心设计 1: 专家回复气泡 ───────── */
+    .message-row.expert {
+      align-self: flex-start;
+    }
+
+    /* 联合头像设计：专家为主，Agent 为角标 */
+    .hybrid-avatar-container {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .expert-main-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-expert), #e67e22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--accent-expert);
+      box-shadow: 0 4px 16px rgba(var(--accent-expert-rgb), 0.4);
+      z-index: 2;
+      position: relative;
+      transition: all 0.5s ease;
+    }
+
+    .expert-main-avatar svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+
+    /* 叠加在右下角的 Agent 徽标，指示这是通过 Agent 对话流调用的 */
+    .agent-sub-badge {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-agent);
+      border: 1.5px solid #080613;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .agent-sub-badge svg {
+      width: 10px;
+      height: 10px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2.5;
+    }
+
+    /* 专家回复气泡主体 */
+    .expert-bubble {
+      background: var(--expert-bg-gradient) !important;
+      border: 1px solid rgba(var(--accent-expert-rgb), 0.3) !important;
+      box-shadow: 0 8px 32px rgba(var(--accent-expert-rgb), 0.05), inset 0 1px 1px rgba(255,255,255,0.05);
+      border-top-left-radius: 4px;
+      padding: 0 !important; /* 内部做分栏 */
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: all 0.5s ease;
+    }
+
+    /* 流光边框动画效果（可选或常亮） */
+    .expert-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-agent) 0%, var(--accent-expert) 50%, var(--accent-agent) 100%);
+      background-size: 200% auto;
+      animation: gradientFlow 4s linear infinite;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* 专家气泡头部 */
+    .expert-bubble-header {
+      padding: 14px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(var(--accent-expert-rgb), 0.12);
+    }
+
+    .expert-title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .expert-name {
+      font-weight: 700;
+      color: #fff;
+      font-size: 14.5px;
+      letter-spacing: 0.2px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .expert-tag {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(var(--accent-expert-rgb), 0.15);
+      color: var(--accent-expert);
+      border: 1px solid rgba(var(--accent-expert-rgb), 0.25);
+      font-weight: 500;
+    }
+
+    .expert-status-badge {
+      font-size: 11px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-expert), #e67e22);
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(var(--accent-expert-rgb), 0.3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 专家回复气泡内容区 */
+    .expert-bubble-body {
+      padding: 20px;
+    }
+
+    .expert-bubble-body p {
+      margin-bottom: 14px;
+    }
+
+    .expert-bubble-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 模拟专业报告格式的数据展示 */
+    .expert-report-card {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(var(--accent-expert-rgb), 0.15);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+
+    .report-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-expert);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .report-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .report-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .report-value {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .text-green { color: #10b981; }
+    .text-red { color: #ef4444; }
+
+    /* ───────── 核心设计 2: 展开式调用链路面板 (Invocation Trace Accordion) ───────── */
+    .trace-accordion {
+      border-top: 1px solid rgba(var(--accent-expert-rgb), 0.12);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .trace-trigger {
+      width: 100%;
+      padding: 12px 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-family: var(--font-family);
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: var(--transition-normal);
+    }
+
+    .trace-trigger:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .trace-trigger-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .trace-trigger svg.chevron {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+      fill: none;
+      transition: transform 0.3s ease;
+    }
+
+    .trace-accordion.expanded .trace-trigger svg.chevron {
+      transform: rotate(180deg);
+    }
+
+    .trace-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      padding: 0 20px;
+    }
+
+    .trace-accordion.expanded .trace-content {
+      max-height: 250px;
+      padding: 4px 20px 18px;
+    }
+
+    .trace-timeline {
+      position: relative;
+      margin-top: 8px;
+      padding-left: 16px;
+      border-left: 1px solid rgba(var(--accent-expert-rgb), 0.15);
+    }
+
+    .trace-step {
+      position: relative;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .trace-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .trace-step::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .trace-step.active::before {
+      background: var(--accent-expert);
+      box-shadow: 0 0 8px var(--accent-expert);
+    }
+
+    .trace-step.success::before {
+      background: #10b981;
+    }
+
+    .trace-step-title {
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .trace-step-meta {
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* 专家签名落款 */
+    .expert-signature {
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-top: 1px solid rgba(var(--accent-expert-rgb), 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .signature-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: rgba(var(--accent-expert-rgb), 0.8);
+      font-weight: 500;
+    }
+
+    /* ───────── 核心设计 3: 路由中转卡片 ───────── */
+    .routing-trace-card {
+      align-self: center;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(8, 6, 19, 0.6);
+      border: 1px dashed rgba(var(--accent-expert-rgb), 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: cardPulse 3s infinite ease-in-out;
+    }
+
+    @keyframes cardPulse {
+      0%, 100% { border-color: rgba(var(--accent-expert-rgb), 0.2); }
+      50% { border-color: rgba(var(--accent-expert-rgb), 0.5); box-shadow: 0 0 16px rgba(var(--accent-expert-rgb), 0.05); }
+    }
+
+    .routing-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-expert);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .routing-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 320px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .flow-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .node-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: var(--transition-normal);
+    }
+
+    .node-icon.active {
+      background: rgba(var(--accent-agent-rgb), 0.15);
+      border-color: var(--accent-agent);
+      color: var(--accent-agent);
+      box-shadow: 0 0 10px rgba(var(--accent-agent-rgb), 0.3);
+    }
+
+    .node-icon.expert-node {
+      background: rgba(var(--accent-expert-rgb), 0.15);
+      border-color: var(--accent-expert);
+      color: var(--accent-expert);
+      box-shadow: 0 0 10px rgba(var(--accent-expert-rgb), 0.3);
+    }
+
+    .node-name {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .node-icon.expert-node + .node-name {
+      color: var(--accent-expert);
+    }
+
+    .flow-connector {
+      position: absolute;
+      top: 16px;
+      left: 32px;
+      right: 32px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 1;
+    }
+
+    .connector-progress {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--accent-agent), var(--accent-expert));
+      position: relative;
+      animation: connectorAnim 2s infinite linear;
+    }
+
+    @keyframes connectorAnim {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* ── 输入框底栏 ── */
+    .chat-input-area {
+      padding: 24px 32px 32px;
+      background: rgba(8, 6, 19, 0.5);
+      backdrop-filter: var(--glass-blur);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* 筛选配置区 */
+    .selector-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* 自定义下拉菜单容器 */
+    .custom-select-container {
+      position: relative;
+    }
+
+    .custom-select-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: var(--transition-normal);
+      user-select: none;
+    }
+
+    .custom-select-trigger:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .custom-select-trigger.active-highlight {
+      border-color: var(--accent-expert);
+      background: rgba(var(--accent-expert-rgb), 0.08);
+      box-shadow: 0 0 10px rgba(var(--accent-expert-rgb), 0.15);
+    }
+
+    .custom-select-trigger svg.chevron-down {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+    }
+
+    /* 下拉面板 */
+    .custom-options-panel {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      width: 280px;
+      background: #0f0d22;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      padding: 6px;
+      display: none;
+      z-index: 50;
+    }
+
+    .custom-options-panel.show {
+      display: block;
+      animation: panelFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes panelFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition-normal);
+    }
+
+    .option-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .option-item.selected {
+      background: rgba(var(--accent-expert-rgb), 0.1);
+    }
+
+    .option-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .option-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .option-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .option-desc {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    /* 输入框容器 */
+    .input-box-wrapper {
+      position: relative;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      transition: var(--transition-normal);
+    }
+
+    .input-box-wrapper:focus-within {
+      border-color: rgba(var(--accent-agent-rgb), 0.4);
+      box-shadow: 0 0 16px rgba(var(--accent-agent-rgb), 0.1);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .input-box-wrapper.expert-active {
+      border-color: rgba(var(--accent-expert-rgb), 0.4);
+      box-shadow: 0 0 16px rgba(var(--accent-expert-rgb), 0.1);
+    }
+
+    .input-box-wrapper textarea {
+      flex: 1;
+      height: 44px;
+      background: transparent;
+      border: none;
+      resize: none;
+      outline: none;
+      color: #fff;
+      font-family: var(--font-family);
+      font-size: 14.5px;
+      padding: 10px 8px;
+      line-height: 1.4;
+    }
+
+    .input-box-wrapper textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent-agent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      box-shadow: 0 4px 12px rgba(var(--accent-agent-rgb), 0.3);
+    }
+
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(var(--accent-agent-rgb), 0.45);
+    }
+
+    .input-box-wrapper.expert-active .send-btn {
+      background: var(--accent-expert);
+      box-shadow: 0 4px 12px rgba(var(--accent-expert-rgb), 0.3);
+    }
+
+    .input-box-wrapper.expert-active .send-btn:hover {
+      box-shadow: 0 6px 16px rgba(var(--accent-expert-rgb), 0.45);
+    }
+
+    .send-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2.2;
+    }
+
+    /* 提示信息 */
+    .input-helper-tip {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 8px;
+      transition: var(--transition-normal);
+    }
+
+    .input-helper-tip.expert-active {
+      color: var(--accent-expert);
+    }
+
+    .input-helper-tip svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+    }
+
+    /* ── 右侧：高保真交互模拟器与设计解析面板 ── */
+    .simulator-section {
+      background: rgba(10, 8, 22, 0.7);
+      backdrop-filter: var(--glass-blur);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      overflow-y: auto;
+      border-left: 1px solid var(--card-border);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--accent-expert);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .simulator-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .block-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 场景切换按钮样式 */
+    .scene-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: var(--text-main);
+      font-family: var(--font-family);
+      text-align: left;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .scene-btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateX(4px);
+    }
+
+    .scene-btn.active {
+      background: rgba(var(--accent-expert-rgb), 0.08);
+      border-color: var(--accent-expert);
+      box-shadow: inset 0 0 10px rgba(var(--accent-expert-rgb), 0.1);
+    }
+
+    .scene-btn.active .scene-dot {
+      background: var(--accent-expert);
+      box-shadow: 0 0 8px var(--accent-expert);
+    }
+
+    .scene-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+      transition: var(--transition-normal);
+    }
+
+    .scene-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .scene-title {
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .scene-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 设计亮点卡片列表 */
+    .design-features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      transition: var(--transition-normal);
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .feature-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--accent-agent);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .feature-card.expert-themed .feature-badge {
+      background: rgba(var(--accent-expert-rgb), 0.12);
+      color: var(--accent-expert);
+    }
+
+    .feature-content h4 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-content p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* 设计标注高亮开关 */
+    .switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+
+    .switch-label-area {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .switch-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .switch-desc {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    /* Toggle 开关按钮 */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      top: 2px;
+      left: 2px;
+      transition: var(--transition-normal);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch.active {
+      background: var(--accent-agent);
+    }
+
+    .toggle-switch.active::after {
+      left: 22px;
+    }
+
+    /* ───────── 核心设计 4: 设计热点锚点与批注 (Design Annotation Tooltips) ───────── */
+    .design-hotspot {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #f59e0b;
+      color: #000;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2), 0 0 10px rgba(245, 158, 11, 0.5);
+      z-index: 100;
+      animation: hotspotPulse 1.5s infinite;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .design-hotspot.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    @keyframes hotspotPulse {
+      0% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.4), 0 0 8px rgba(245, 158, 11, 0.6); }
+      100% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0), 0 0 8px rgba(245, 158, 11, 0); }
+    }
+
+    /* 批注弹出层 */
+    .hotspot-tooltip {
+      position: absolute;
+      background: #181432;
+      border: 1.5px solid var(--accent-expert);
+      border-radius: 10px;
+      padding: 12px 14px;
+      width: 240px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 101;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .hotspot-tooltip.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .tooltip-num {
+      display: inline-block;
+      background: var(--accent-expert);
+      color: #000;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+
+    .tooltip-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .tooltip-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* 锚点绝对定位 */
+    #hotspot-1 { top: calc(100% - 15px); left: 160px; } /* 输入框里的专家选择器 */
+    #hotspot-2 { top: -8px; left: -8px; } /* 专家气泡的联合头像 */
+    #hotspot-3 { top: -8px; right: 40px; } /* 专家回复高亮条 */
+    #hotspot-4 { bottom: -8px; left: 140px; } /* 链路图上的路由走向 */
+    #hotspot-5 { bottom: 6px; right: 20px; } /* 专家气泡内部的调用链路展开 */
+
+    /* 针对不同专家的头像自定义 SVG */
+    .avatar-expert-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* 隐藏的动画用类 */
+    .hidden {
+      display: none !important;
+    }
+
+    .fade-in {
+      animation: elementFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes elementFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 自定义美化的滚动条 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 背景光影层 -->
+  <div class="bg-glow"></div>
+  <div class="bg-glow-expert" id="theme-glow"></div>
+
+  <!-- 应用容器 -->
+  <div class="app-container">
+    
+    <!-- ── 左侧：对话模拟界面 ── -->
+    <div class="chat-section">
+      
+      <!-- 对话头部 -->
+      <header class="chat-header">
+        <div class="agent-info">
+          <div class="agent-avatar">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12c0-3.328 1.62-6.277 4.11-8.11" />
+              <path d="M12 6a6 6 0 0 1 6 6c0 3.314-2.686 6-6 6s-6-2.686-6-6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            <div class="agent-status-dot"></div>
+          </div>
+          <div class="agent-meta">
+            <h2>SoulAgent Core <span class="agent-badge">主控 Agent</span></h2>
+            <p>决策调度与多专家协同架构平台</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- 消息历史记录流 -->
+      <div class="chat-messages" id="message-container">
+        
+        <!-- 消息 1: 正常对话(用户) -->
+        <div class="message-row user">
+          <div class="msg-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="msg-bubble">
+            你好，SoulAgent。我想知道我目前集成的这个平台主要有哪些核心能力？
+          </div>
+        </div>
+
+        <!-- 消息 2: 正常对话(主Agent直回) -->
+        <div class="message-row agent">
+          <div class="msg-avatar">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12c0-3.328 1.62-6.277 4.11-8.11" />
+              <path d="M12 6a6 6 0 0 1 6 6c0 3.314-2.686 6-6 6s-6-2.686-6-6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+          </div>
+          <div class="msg-bubble">
+            你好！我是 <strong>SoulAgent Core</strong>。我目前集成了跨模型调用、复杂技能工具加载（如网页搜索、代码执行）等能力。
+            <br><br>
+            更重要的是，我新增了<strong>“专家分身委派”</strong>技能。当你遇到特别深度的行业难题时（如深度财务审计、法律合规审核、技术架构评估），你可以在底栏选择指派对应的专家分身。我将作为协调中心，将任务转达给对应的专家回复你。
+          </div>
+        </div>
+
+        <!-- 消息 3: 委派任务(用户) -->
+        <div class="message-row user" id="msg-user-delegate">
+          <div class="msg-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="msg-bubble">
+            帮我分析一下这两家头部新能源汽车企业（A公司和B公司）上季度的财报数据，并帮我评估它们的财务健康状况与潜在的投资风险。
+            
+            <div class="user-msg-meta">
+              <span class="user-meta-pill">🤖 Gemini 3.5 Flash</span>
+              <span class="user-meta-pill">🛠️ 财务工具箱</span>
+              <span class="user-meta-pill expert-selected" id="user-selected-expert-badge">
+                👤 专家分身: Alex (财务专家)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 消息 4: 路由中转卡片 (中转态展示) -->
+        <div class="routing-trace-card" id="routing-trace">
+          <div class="routing-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            SoulAgent 协作链路指派中
+          </div>
+          <div class="routing-flow">
+            <div class="flow-node">
+              <div class="node-icon active" title="主控Agent接收请求">🤖</div>
+              <div class="node-name">主控 Core</div>
+            </div>
+            
+            <div class="flow-connector">
+              <div class="connector-progress"></div>
+            </div>
+
+            <div class="flow-node">
+              <div class="node-icon expert-node" id="routing-expert-avatar" title="指派财务分析专家">👤</div>
+              <div class="node-name" id="routing-expert-name">专家 Alex</div>
+            </div>
+          </div>
+          <!-- 设计热点 4 -->
+          <div class="design-hotspot" id="hotspot-4" onclick="showHotspotInfo(4, event)">4</div>
+        </div>
+
+        <!-- 消息 5: 专家回复气泡 (专家产出) -->
+        <div class="message-row expert" id="msg-expert-reply">
+          <!-- 联合头像：左侧专家大头像，右下角叠主 Agent 标志 -->
+          <div class="hybrid-avatar-container">
+            <div class="expert-main-avatar" id="reply-expert-avatar">
+              <!-- Alex 专属 SVG 简笔人物头像 -->
+              <svg id="expert-avatar-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <polyline points="17 11 19 13 23 9"></polyline>
+              </svg>
+            </div>
+            <!-- 小的 Agent 叠加标 -->
+            <div class="agent-sub-badge" title="通过主控 Agent 调用">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12c0-3.328 1.62-6.277 4.11-8.11" />
+                <path d="M12 6a6 6 0 0 1 6 6c0 3.314-2.686 6-6 6s-6-2.686-6-6" />
+                <circle cx="12" cy="12" r="2" />
+              </svg>
+            </div>
+            <!-- 设计热点 2 -->
+            <div class="design-hotspot" id="hotspot-2" onclick="showHotspotInfo(2, event)">2</div>
+          </div>
+
+          <!-- 专家专属气泡主体 -->
+          <div class="msg-bubble expert-bubble" id="expert-bubble-box">
+            <!-- 头部标志栏 -->
+            <div class="expert-bubble-header">
+              <div class="expert-title-area">
+                <span class="expert-name" id="expert-reply-name">财务分析专家 · Alex</span>
+                <span class="expert-tag" id="expert-reply-tag">公司金融与风险控制</span>
+              </div>
+              <div class="expert-status-badge">
+                <span>✦ 专家分身回复</span>
+              </div>
+              <!-- 设计热点 3 -->
+              <div class="design-hotspot" id="hotspot-3" onclick="showHotspotInfo(3, event)">3</div>
+            </div>
+
+            <!-- 回复正文 -->
+            <div class="expert-bubble-body">
+              <p>你好，我是财务分析专家 <strong>Alex</strong>。收到主控 Agent <strong>SoulAgent Core</strong> 的任务分派，我已提取了 A 公司与 B 公司的最新财务报表数据并为您完成了对比分析：</p>
+              
+              <div class="expert-report-card">
+                <div class="report-title">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  关键财务对比指标 (单位：亿元)
+                </div>
+                <div class="report-grid">
+                  <div class="report-item">
+                    <div class="report-label">A 公司上季度营收</div>
+                    <div class="report-value text-green">¥ 485.2 <small>(+14.2%)</small></div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">B 公司上季度营收</div>
+                    <div class="report-value text-red">¥ 310.8 <small>(-2.4%)</small></div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">A 公司资产负债率</div>
+                    <div class="report-value">58.4% <small>(健康)</small></div>
+                  </div>
+                  <div class="report-item">
+                    <div class="report-label">B 公司资产负债率</div>
+                    <div class="report-value text-red">72.1% <small>(偏高)</small></div>
+                  </div>
+                </div>
+              </div>
+
+              <p><strong>投资风险评估与诊断结论：</strong></p>
+              <p>1. <strong>A 公司</strong> 的经营现金流依然充沛，资本开支与研发投入增速合理，其成长韧性较好，投资风险级别划定为<strong>【低-中风险】</strong>。</p>
+              <p>2. <strong>B 公司</strong> 目前面临较大的短期偿债压力，且季度营收增幅首次转负，销售利润率受行业价格战影响下滑严重。建议密切关注其下季度应收账款周转率变化，防范流动性危机，目前建议审慎对待，投资风险级别定为<strong>【高风险】</strong>。</p>
+            </div>
+
+            <!-- 调用链路折叠面板 -->
+            <div class="trace-accordion" id="trace-panel">
+              <button class="trace-trigger" onclick="toggleTraceAccordion()">
+                <span class="trace-trigger-left">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <span>查看 Agent 决策链路与专家调用详情</span>
+                </span>
+                <svg class="chevron" viewBox="0 0 24 24">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="trace-content">
+                <div class="trace-timeline">
+                  <div class="trace-step success">
+                    <div class="trace-step-title">
+                      <span>1. 主控 Agent 意图识别</span>
+                      <span class="trace-step-meta">15:14:02.12</span>
+                    </div>
+                    <div>用户输入涉及深层公司金融分析，决策模块触发“跨域指派”策略。</div>
+                  </div>
+                  <div class="trace-step success">
+                    <div class="trace-step-title">
+                      <span>2. 分派至专属技能专家</span>
+                      <span class="trace-step-meta">15:14:02.35</span>
+                    </div>
+                    <div>成功匹配专家知识库与金融策略模型，指派引擎路由至 <strong id="trace-expert-target">Finance.Alex.Agent</strong></div>
+                  </div>
+                  <div class="trace-step active">
+                    <div class="trace-step-title">
+                      <span>3. 专家回复生成与合规校验</span>
+                      <span class="trace-step-meta">15:14:03.96</span>
+                    </div>
+                    <div>已验证专家数据安全策略，Token 消耗：584, 耗时：1.84s</div>
+                  </div>
+                </div>
+              </div>
+              <!-- 设计热点 5 -->
+              <div class="design-hotspot" id="hotspot-5" onclick="showHotspotInfo(5, event)">5</div>
+            </div>
+
+            <!-- 专家签名落款 -->
+            <div class="expert-signature">
+              <span id="signature-text">© Alex.Finance / 驱动引擎: Expert-LLM-Pro-70B</span>
+              <span class="signature-badge">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                数据已受专家签名保护
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 输入框底栏区域 -->
+      <div class="chat-input-area">
+        
+        <!-- 下拉选择器栏 -->
+        <div class="selector-bar">
+          
+          <!-- 模型选择 -->
+          <div class="custom-select-container">
+            <div class="custom-select-trigger" onclick="toggleDropdown('model-dropdown')">
+              <span style="font-size:14px">🤖</span>
+              <span id="selected-model-text">Gemini 3.5 Flash (默认)</span>
+              <svg class="chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="custom-options-panel" id="model-dropdown">
+              <div class="panel-header-title">选择运行模型</div>
+              <div class="option-item selected" onclick="selectModel('Gemini 3.5 Flash (默认)')">
+                <div class="option-info">
+                  <div class="option-name">Gemini 3.5 Flash</div>
+                  <div class="option-desc">高性价比、快速响应、适合常规任务</div>
+                </div>
+              </div>
+              <div class="option-item" onclick="selectModel('Gemini 3.5 Pro (超强)')">
+                <div class="option-info">
+                  <div class="option-name">Gemini 3.5 Pro</div>
+                  <div class="option-desc">强逻辑推理、适合深度复杂分析</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 技能选择 -->
+          <div class="custom-select-container">
+            <div class="custom-select-trigger" onclick="toggleDropdown('skill-dropdown')">
+              <span style="font-size:14px">🛠️</span>
+              <span id="selected-skill-text">基础工具箱</span>
+              <svg class="chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="custom-options-panel" id="skill-dropdown">
+              <div class="panel-header-title">选择预载技能</div>
+              <div class="option-item selected" onclick="selectSkill('基础工具箱')">
+                <div class="option-info">
+                  <div class="option-name">默认基础工具箱</div>
+                  <div class="option-desc">包含网页检索、计算器与代码沙箱</div>
+                </div>
+              </div>
+              <div class="option-item" onclick="selectSkill('数据清洗与图表绘制')">
+                <div class="option-info">
+                  <div class="option-name">数据分析增强包</div>
+                  <div class="option-desc">CSV/Excel数据自动化加工与图表渲染</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 专家分身选择 (核心新增功能) -->
+          <div class="custom-select-container" style="position: relative;">
+            <div class="custom-select-trigger active-highlight" id="expert-trigger-btn" onclick="toggleDropdown('expert-dropdown')">
+              <span style="font-size:14px">👤</span>
+              <span id="selected-expert-text">专家分身: Alex (财务专家)</span>
+              <svg class="chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="custom-options-panel" id="expert-dropdown" style="width: 320px;">
+              <div class="panel-header-title">指派专家分身协同提问</div>
+              
+              <!-- 选项 0: 无专家 -->
+              <div class="option-item" onclick="selectExpert('none', '不指派专家分身', '使用主控 Agent 的通用知识进行标准回复')">
+                <div class="option-avatar" style="background: rgba(255,255,255,0.06); color: #fff;">🤖</div>
+                <div class="option-info">
+                  <div class="option-name">不指派专家分身</div>
+                  <div class="option-desc">使用通用基座模型回复，不调用专家技能</div>
+                </div>
+              </div>
+              
+              <!-- 选项 1: 财务专家 Alex -->
+              <div class="option-item selected" onclick="selectExpert('alex', 'Alex (财务分析专家)', '擅长公司财报、风险评估与投资组合')">
+                <div class="option-avatar" style="background: #f59e0b; color: #fff;">A</div>
+                <div class="option-info">
+                  <div class="option-name">Alex · 财务分析专家</div>
+                  <div class="option-desc">擅长公司财报、风险评估与投资组合</div>
+                </div>
+              </div>
+
+              <!-- 选项 2: 法律专家 Sofia -->
+              <div class="option-item" onclick="selectExpert('sofia', 'Sofia (高级法律顾问)', '擅长合同审核、合规审计与法律条款')">
+                <div class="option-avatar" style="background: #3b82f6; color: #fff;">S</div>
+                <div class="option-info">
+                  <div class="option-name">Sofia · 高级法律顾问</div>
+                  <div class="option-desc">擅长合同审核、合规审计与法律风险规避</div>
+                </div>
+              </div>
+
+              <!-- 选项 3: 技术专家 Leo -->
+              <div class="option-item" onclick="selectExpert('leo', 'Leo (首席系统架构师)', '擅长高并发分布式设计与技术栈重构')">
+                <div class="option-avatar" style="background: #8b5cf6; color: #fff;">L</div>
+                <div class="option-info">
+                  <div class="option-name">Leo · 首席系统架构师</div>
+                  <div class="option-desc">擅长高并发分布式设计与技术栈选型</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 设计热点 1 -->
+            <div class="design-hotspot" id="hotspot-1" onclick="showHotspotInfo(1, event)">1</div>
+          </div>
+
+        </div>
+
+        <!-- 文字输入框 -->
+        <div class="input-box-wrapper expert-active" id="input-container">
+          <textarea id="chat-textarea" placeholder="输入问题指派专家进行分析... (按 Enter 发送模拟回复)">帮我分析一下这两家新能源汽车企业上季度的财报数据...</textarea>
+          <button class="send-btn" onclick="triggerSimulationFlow()" title="发送消息，模拟调用链路">
+            <svg viewBox="0 0 24 24">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+
+        <!-- 轻量提示 -->
+        <div class="input-helper-tip expert-active" id="helper-tip-box">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span id="helper-tip-text">当前已指派【财务专家 · Alex】分身，提问将通过 Agent 触发对应专家回复。</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ── 右侧：高保真交互模拟器与设计解析 ── -->
+    <div class="simulator-section">
+      
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span>SoulAgent 设计控制台</span>
+      </div>
+
+      <!-- 模块 1: 演示控制中心 -->
+      <div class="simulator-block">
+        <div class="block-label">
+          <span>模拟场景演示控制</span>
+          <span style="font-size:10px; color:#10b981; font-weight:normal;">点击触发动效</span>
+        </div>
+        
+        <button class="scene-btn" id="scene-btn-standard" onclick="loadScene('standard')">
+          <div class="scene-dot"></div>
+          <div class="scene-info">
+            <div class="scene-title">场景 A：常规 Agent 对话</div>
+            <div class="scene-desc">不使用任何专家分身，由主 Agent 知识直回</div>
+          </div>
+        </button>
+
+        <button class="scene-btn active" id="scene-btn-expert" onclick="loadScene('expert')">
+          <div class="scene-dot"></div>
+          <div class="scene-info">
+            <div class="scene-title">场景 B：指派专家协同对话</div>
+            <div class="scene-desc">体现 Agent 中转、路由过渡、及专家专属气泡</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 模块 2: 高亮控制开关 -->
+      <div class="simulator-block">
+        <div class="block-label">标注工具</div>
+        <div class="switch-container">
+          <div class="switch-label-area">
+            <div class="switch-title">设计要点批注</div>
+            <div class="switch-desc">在左侧界面中高亮展现具体的设计决策</div>
+          </div>
+          <div class="toggle-switch" id="annotation-toggle" onclick="toggleAnnotations()"></div>
+        </div>
+      </div>
+
+      <!-- 模块 3: 核心设计重点拆解 -->
+      <div class="simulator-block">
+        <div class="block-label">关键功能点详解</div>
+        
+        <div class="design-features-list">
+          
+          <div class="feature-card" onclick="triggerHotspotClick(1)">
+            <div class="feature-badge">1</div>
+            <div class="feature-content">
+              <h4>输入框新增选择维度</h4>
+              <p>在传统的【模型】和【技能】选择之外，加入【专家分身】指派下拉，使用户无需退出当前会话即可享受专业分身的解答。</p>
+            </div>
+          </div>
+
+          <div class="feature-card expert-themed" onclick="triggerHotspotClick(2)">
+            <div class="feature-badge">2</div>
+            <div class="feature-content">
+              <h4>双头像重叠联合设计</h4>
+              <p>专家大头像处于上层，主 Agent 小标紧随右下。直观表现“专家解答，但仍在 Agent 会话体系内监督运行”的代理心智模型。</p>
+            </div>
+          </div>
+
+          <div class="feature-card expert-themed" onclick="triggerHotspotClick(3)">
+            <div class="feature-badge">3</div>
+            <div class="feature-content">
+              <h4>专属光环边框与主题样式</h4>
+              <p>专家气泡采用独特微弱发光边框，配以“专家分身回复”的亮金色标签，一眼区别于主 Agent 的常规纯白/灰色对话泡。</p>
+            </div>
+          </div>
+
+          <div class="feature-card" onclick="triggerHotspotClick(4)">
+            <div class="feature-badge">4</div>
+            <div class="feature-content">
+              <h4>任务指派过渡卡片 (Trace)</h4>
+              <p>当指令下发时，显示中转动画，让用户感知到 Agent 正在调度底层专家技能进行思考，缓解回答延迟焦虑并建立专业度心智。</p>
+            </div>
+          </div>
+
+          <div class="feature-card expert-themed" onclick="triggerHotspotClick(5)">
+            <div class="feature-badge">5</div>
+            <div class="feature-content">
+              <h4>可查看的调用链路面板</h4>
+              <p>气泡底端支持展开查看详细的技术调用 Trace，包括调用的函数、底层大模型、耗时及 Token，做到黑盒过程透明化。</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 批注悬浮展示器 -->
+  <div class="hotspot-tooltip" id="tooltip-box">
+    <div class="tooltip-num" id="tooltip-num">1</div>
+    <div class="tooltip-title" id="tooltip-title">批注标题</div>
+    <div class="tooltip-text" id="tooltip-text">批注详细描述内容。</div>
+  </div>
+
+  <!-- JavaScript 交互控制 -->
+  <script>
+    // 专家配置预设
+    const EXPERT_DATA = {
+      alex: {
+        name: '财务分析专家 · Alex',
+        desc: '擅长公司财报、风险评估与投资组合',
+        tag: '公司金融与风险控制',
+        color: '#f59e0b',
+        rgb: '245, 158, 11',
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <polyline points="17 11 19 13 23 9"></polyline>
+              </svg>`,
+        signature: '© Alex.Finance / 驱动引擎: Expert-LLM-Pro-70B',
+        reportHtml: `
+          <div class="expert-report-card">
+            <div class="report-title">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              关键财务对比指标 (单位：亿元)
+            </div>
+            <div class="report-grid">
+              <div class="report-item">
+                <div class="report-label">A 公司上季度营收</div>
+                <div class="report-value text-green">¥ 485.2 <small>(+14.2%)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">B 公司上季度营收</div>
+                <div class="report-value text-red">¥ 310.8 <small>(-2.4%)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">A 公司资产负债率</div>
+                <div class="report-value">58.4% <small>(健康)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">B 公司资产负债率</div>
+                <div class="report-value text-red">72.1% <small>(偏高)</small></div>
+              </div>
+            </div>
+          </div>
+          <p><strong>投资风险评估与诊断结论：</strong></p>
+          <p>1. <strong>A 公司</strong> 的经营现金流依然充沛，资本开支与研发投入增速合理，其成长韧性较好，投资风险级别划定为<strong>【低-中风险】</strong>。</p>
+          <p>2. <strong>B 公司</strong> 目前面临较大的短期偿债压力，且季度营收增幅首次转负，销售利润率受行业价格战影响下滑严重。建议密切关注其下季度流动性变化。</p>
+        `
+      },
+      sofia: {
+        name: '高级法律顾问 · Sofia',
+        desc: '擅长合同审核、合规审计与法律条款',
+        tag: '商业合规与劳动法专家',
+        color: '#3b82f6',
+        rgb: '59, 130, 246',
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <circle cx="12" cy="11" r="3"></circle>
+                <path d="M8 17h8"></path>
+              </svg>`,
+        signature: '© Sofia.Legal / 法律合规验证器 v2.4',
+        reportHtml: `
+          <div class="expert-report-card" style="border-color: rgba(59, 130, 246, 0.3)">
+            <div class="report-title" style="color: #3b82f6">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              合规性风险排查项 (已扫描 18 项)
+            </div>
+            <div class="report-grid">
+              <div class="report-item">
+                <div class="report-label">知识产权归属条款</div>
+                <div class="report-value text-green">已通过验证 <small>(无隐藏瑕疵)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">竞业限制违约金</div>
+                <div class="report-value text-red">需警惕风险 <small>(赔偿金额上限超标)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">保密协议期限</div>
+                <div class="report-value">永久有效 <small>(行业常规)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">争议管辖地约定</div>
+                <div class="report-value text-red">异地管辖 <small>(诉讼成本偏高)</small></div>
+              </div>
+            </div>
+          </div>
+          <p><strong>合规评估报告与修改建议：</strong></p>
+          <p>1. <strong>第 4 条“竞业避让补偿”条款：</strong> 约定的违约金是原标准薪资的 3 倍，明显超出了司法裁判实践中的合理范围。建议将其调整为 1.5 倍以防止被法院认定为无效加重条款。</p>
+          <p>2. <strong>第 9 条“争议解决”条款：</strong> 建议将争议管辖地由对方所在地，协调修改为“本协议签署地或原告所在地法院”，以最大程度降低我方后续维权诉讼成本。</p>
+        `
+      },
+      leo: {
+        name: '首席系统架构师 · Leo',
+        desc: '擅长系统架构设计、算法优化与技术选型',
+        tag: '分布式系统与高并发架构',
+        color: '#8b5cf6',
+        rgb: '139, 92, 246',
+        svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>`,
+        signature: '© Leo.Arch / 架构审核置信度: 99.1%',
+        reportHtml: `
+          <div class="expert-report-card" style="border-color: rgba(139, 92, 246, 0.3)">
+            <div class="report-title" style="color: #8b5cf6">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              系统拓扑性能诊断
+            </div>
+            <div class="report-grid">
+              <div class="report-item">
+                <div class="report-label">理论最大并发承受</div>
+                <div class="report-value text-green">120,000 QPS <small>(已压测)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">数据库慢查询风险</div>
+                <div class="report-value text-red">有隐患 <small>(高并发时索引失效)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">缓存击穿防范率</div>
+                <div class="report-value">99.9% <small>(采用布隆过滤器)</small></div>
+              </div>
+              <div class="report-item">
+                <div class="report-label">平均网络时延(RTT)</div>
+                <div class="report-value text-green">12ms <small>(极优)</small></div>
+              </div>
+            </div>
+          </div>
+          <p><strong>系统技术选型与重构建议：</strong></p>
+          <p>1. <strong>针对数据持久层：</strong> 高并发写操作应使用 Redis 消息队列进行流量削峰。直接写入 MySQL 会在高峰期造成连接池耗尽，拖垮系统吞吐。</p>
+          <p>2. <strong>网络数据交互：</strong> 建议在核心网关层强制启用 HTTP/3，同时通过 Gzip 强压缩，经估算可减少约 40% 的首字节载入时长，大幅提升用户感知速度。</p>
+        `
+      }
+    };
+
+    // 标注点解释文字
+    const HOTSPOT_EXPLANATIONS = {
+      1: {
+        title: "入口：专家分身选择器",
+        text: "输入框顶部集成了【模型】、【技能】与新增的【专家分身】。选择后，用户发送的问题会以特定结构派发给专家，并在底栏和消息行同步体现，操作逻辑高度契合用户原有心智。"
+      },
+      2: {
+        title: "身份：重叠双头像设计",
+        text: "左侧专家头像为主，在其右下角叠放主控 Agent 的圆形角标。这意味着：虽然回复是由专家分身产出，但用户仍然处于和主控 Agent 的会话容器之中，完美契合了【主 Agent 委派专家技能】的底层业务逻辑。"
+      },
+      3: {
+        title: "区隔：专家气泡专属质感",
+        text: "专家气泡带有独特的流光渐变线（结合了 Agent 青色与专家主色），并带有高亮的『专家分身回复』标签和专业领域徽章，能在长对话流中一秒识别出专家产出的权威分析。"
+      },
+      4: {
+        title: "透明：路由中转状态卡片 (Trace)",
+        text: "当用户触发专家调用时，系统会在气泡生成前展示指派链路图。动态流光的进度条代表主控 Agent 正在把任务路由给对应分身。这向用户提供了直接的视觉反馈，同时增加了系统架构的通透感。"
+      },
+      5: {
+        title: "黑盒白盒化：详细调用链折叠面板",
+        text: "点击气泡底部的折叠面板，可以展开查看主控 Agent 决策调用专家的整个后台 Trace 详情。将系统底层的运行逻辑以友好的方式展示出来，不仅增加了可信度，也便于极客用户核对决策链路。"
+      }
+    };
+
+    let activeExpert = 'alex';
+    let isAnnotationsOn = false;
+
+    // 全局下拉菜单开关
+    function toggleDropdown(dropdownId) {
+      // 关闭其他
+      const allPanels = document.querySelectorAll('.custom-options-panel');
+      allPanels.forEach(panel => {
+        if (panel.id !== dropdownId) {
+          panel.classList.remove('show');
+        }
+      });
+      // 切换自身
+      document.getElementById(dropdownId).classList.toggle('show');
+    }
+
+    // 关闭所有下拉菜单的点击监听
+    window.addEventListener('click', function(e) {
+      if (!e.target.closest('.custom-select-container')) {
+        document.querySelectorAll('.custom-options-panel').forEach(panel => {
+          panel.classList.remove('show');
+        });
+      }
+    });
+
+    // 更改模型选择
+    function selectModel(modelName) {
+      document.getElementById('selected-model-text').innerText = modelName;
+    }
+
+    // 更改技能选择
+    function selectSkill(skillName) {
+      document.getElementById('selected-skill-text').innerText = skillName;
+    }
+
+    // 核心交互：更改专家分身
+    function selectExpert(expertId, expertDisplayName, expertShortDesc) {
+      activeExpert = expertId;
+      
+      // 更新下拉选择触发按钮文字
+      const triggerBtn = document.getElementById('expert-trigger-btn');
+      const textSpan = document.getElementById('selected-expert-text');
+      const inputContainer = document.getElementById('input-container');
+      const helperTipBox = document.getElementById('helper-tip-box');
+      const helperTipText = document.getElementById('helper-tip-text');
+      const textArea = document.getElementById('chat-textarea');
+      const userSelectedBadge = document.getElementById('user-selected-expert-badge');
+      
+      // 取消下拉高亮及移除选中态
+      document.querySelectorAll('#expert-dropdown .option-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // 重新加上被选中项的样式
+      const activeOption = event.currentTarget;
+      if (activeOption) activeOption.classList.add('selected');
+
+      if (expertId === 'none') {
+        // 无专家分身状态
+        triggerBtn.classList.remove('active-highlight');
+        textSpan.innerText = '指派专家分身 (未选择)';
+        inputContainer.classList.remove('expert-active');
+        helperTipBox.classList.remove('expert-active');
+        helperTipText.innerText = '当前提问将直接由 SoulAgent Core 使用默认基座模型回复。';
+        textArea.placeholder = '输入您的问题...';
+        userSelectedBadge.classList.add('hidden');
+      } else {
+        // 选中了某个专家分身
+        triggerBtn.classList.add('active-highlight');
+        textSpan.innerText = `专家分身: ${expertDisplayName}`;
+        inputContainer.classList.add('expert-active');
+        helperTipBox.classList.add('expert-active');
+        helperTipText.innerText = `当前已指派【${expertDisplayName}】分身，提问将通过 Agent 触发对应专家回复。`;
+        textArea.placeholder = `输入问题指派给${expertDisplayName}进行专业诊断...`;
+        
+        userSelectedBadge.classList.remove('hidden');
+        userSelectedBadge.innerHTML = `👤 专家分身: ${expertDisplayName.split(' ')[0]}`;
+        
+        // 动态修改全局变量及主题色
+        const exp = EXPERT_DATA[expertId];
+        document.documentElement.style.setProperty('--accent-expert', exp.color);
+        document.documentElement.style.setProperty('--accent-expert-rgb', exp.rgb);
+        document.documentElement.style.setProperty('--expert-bg-gradient', `linear-gradient(135deg, rgba(${exp.rgb}, 0.12) 0%, rgba(${exp.rgb}, 0.02) 100%)`);
+        
+        // 联动修改对话气泡里的展示
+        updateExpertBubbleUI(expertId);
+      }
+    }
+
+    // 动态更新气泡UI内容
+    function updateExpertBubbleUI(expertId) {
+      const exp = EXPERT_DATA[expertId];
+      if (!exp) return;
+      
+      // 修改气泡名字 and 标签
+      document.getElementById('expert-reply-name').innerText = exp.name;
+      document.getElementById('expert-reply-tag').innerText = exp.tag;
+      
+      // 修改头像 SVG
+      document.getElementById('reply-expert-avatar').innerHTML = exp.svg;
+      
+      // 修改报告卡片 HTML 内容
+      const bodyContainer = document.querySelector('#msg-expert-reply .expert-bubble-body');
+      bodyContainer.innerHTML = `<p>你好，我是专家 <strong>${exp.name.split(' ')[0]}</strong>。收到主控 Agent <strong>SoulAgent Core</strong> 的任务分派，我已针对您的问题生成了以下专业诊断建议：</p>` + exp.reportHtml;
+      
+      // 修改 Trace 面板里的名称
+      document.getElementById('trace-expert-target').innerText = `${expertId.toUpperCase()}.${exp.name.split(' ')[0]}.Agent`;
+      
+      // 修改签名落款
+      document.getElementById('signature-text').innerText = exp.signature;
+      
+      // 修改路由过渡图的目标
+      document.getElementById('routing-expert-name').innerText = `专家 ${exp.name.split(' ')[0]}`;
+      document.getElementById('routing-expert-name').style.color = exp.color;
+      document.getElementById('routing-expert-avatar').style.borderColor = exp.color;
+      document.getElementById('routing-expert-avatar').style.boxShadow = `0 0 10px rgba(${exp.rgb}, 0.3)`;
+    }
+
+    // 折叠调用链
+    function toggleTraceAccordion() {
+      const panel = document.getElementById('trace-panel');
+      panel.classList.toggle('expanded');
+    }
+
+    // 模拟场景切换（左侧消息区展现）
+    function loadScene(scene) {
+      const standardBtn = document.getElementById('scene-btn-standard');
+      const expertBtn = document.getElementById('scene-btn-expert');
+      
+      const userMsgDelegate = document.getElementById('msg-user-delegate');
+      const routingTrace = document.getElementById('routing-trace');
+      const expertReply = document.getElementById('msg-expert-reply');
+      
+      if (scene === 'standard') {
+        standardBtn.classList.add('active');
+        expertBtn.classList.remove('active');
+        
+        // 隐藏专家链路及气泡，仅显示常规直回
+        userMsgDelegate.classList.add('hidden');
+        routingTrace.classList.add('hidden');
+        expertReply.classList.add('hidden');
+        
+        // 隐藏所有设计标注点
+        if (isAnnotationsOn) {
+          toggleAnnotations();
+        }
+      } else {
+        standardBtn.classList.remove('active');
+        expertBtn.classList.add('active');
+        
+        // 显示专家链路气泡
+        userMsgDelegate.classList.remove('hidden');
+        routingTrace.classList.remove('hidden');
+        expertReply.classList.remove('hidden');
+        
+        // 滚动到最底端
+        const container = document.getElementById('message-container');
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 100);
+      }
+    }
+
+    // 开关设计批注高亮
+    function toggleAnnotations() {
+      isAnnotationsOn = !isAnnotationsOn;
+      const toggle = document.getElementById('annotation-toggle');
+      const hotspots = document.querySelectorAll('.design-hotspot');
+      
+      if (isAnnotationsOn) {
+        toggle.classList.add('active');
+        hotspots.forEach(h => h.classList.add('show'));
+      } else {
+        toggle.classList.remove('active');
+        hotspots.forEach(h => h.classList.remove('show'));
+        hideTooltip();
+      }
+    }
+
+    // 交互设计：点击批注或列表卡片，展示批注提示框
+    function showHotspotInfo(num, event) {
+      event.stopPropagation();
+      const exp = HOTSPOT_EXPLANATIONS[num];
+      if (!exp) return;
+      
+      const hotspot = document.getElementById(`hotspot-${num}`);
+      const rect = hotspot.getBoundingClientRect();
+      const tooltip = document.getElementById('tooltip-box');
+      
+      document.getElementById('tooltip-num').innerText = `设计点 0${num}`;
+      document.getElementById('tooltip-title').innerText = exp.title;
+      document.getElementById('tooltip-text').innerText = exp.text;
+      
+      // 定位 tooltip (放置在热点左下方)
+      tooltip.style.left = (hotspot.offsetLeft - 100) + 'px';
+      tooltip.style.top = (hotspot.offsetTop + 28) + 'px';
+      tooltip.classList.add('show');
+    }
+
+    function triggerHotspotClick(num) {
+      // 如果没有开启标注，则自动开启
+      if (!isAnnotationsOn) {
+        toggleAnnotations();
+      }
+      
+      const hotspot = document.getElementById(`hotspot-${num}`);
+      if (hotspot) {
+        // 触发对应的点击
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        hotspot.dispatchEvent(event);
+        
+        // 滚动使该热点可见
+        hotspot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function hideTooltip() {
+      document.getElementById('tooltip-box').classList.remove('show');
+    }
+
+    // 点击空白处关闭批注浮层
+    window.addEventListener('click', function(e) {
+      if (!e.target.closest('.design-hotspot')) {
+        hideTooltip();
+      }
+    });
+
+    // 模拟发送及链路动画运行
+    function triggerSimulationFlow() {
+      // 场景 B 必须是打开的
+      loadScene('expert');
+      
+      const routingCard = document.getElementById('routing-trace');
+      const expertBubble = document.getElementById('msg-expert-reply');
+      
+      // 播放闪烁和进入动画
+      routingCard.style.opacity = '0.3';
+      expertBubble.style.opacity = '0.2';
+      expertBubble.style.transform = 'translateY(15px)';
+      
+      setTimeout(() => {
+        routingCard.style.opacity = '1';
+        routingCard.style.transition = 'all 0.5s ease';
+      }, 300);
+      
+      setTimeout(() => {
+        expertBubble.style.opacity = '1';
+        expertBubble.style.transform = 'translateY(0)';
+        expertBubble.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
+        
+        // 自动滚动到底端
+        const container = document.getElementById('message-container');
+        container.scrollTop = container.scrollHeight;
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

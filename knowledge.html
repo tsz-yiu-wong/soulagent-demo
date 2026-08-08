@@ -1,666 +1,3514 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>知识库 - SoulAgent</title>
-    <script src="nav-bar.js"></script>
-    <style>
-        :root {
-            --primary-color: #F37021;
-            --primary-light: #FFF7F2;
-            --bg-color: #FFFBF9;
-            --text-color: #333333;
-            --text-secondary: #666666;
-            --border-color: #FEE7DB;
-            --card-bg: #FFFFFF;
-            --radius-lg: 20px;
-            --radius-md: 12px;
-            --shadow-sm: 0 4px 16px rgba(243, 112, 33, 0.05);
-            --shadow-md: 0 8px 24px rgba(243, 112, 33, 0.08);
-        }
 
-        body, html {
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>知识库 · SoulAgent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
         }
 
-        /* --- App Shell (sidebar + main) --- */
-        .app-shell {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
+        :root {
+            --bg: #f5f6fa;
+            --surface: #fff;
+            --border: #e5e7eb;
+            --border-hover: #d1d5db;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
         }
 
-        /* --- Sidebar --- */
-        .sidebar {
-            width: 240px;
-            flex-shrink: 0;
-            background: #FFFFFF;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 16px 12px;
-            box-sizing: border-box;
-            gap: 4px;
+        html,
+        body {
+            height: 100%;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text-primary);
+            background: var(--bg);
         }
 
-        .sidebar-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #555555;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px 24px;
         }
 
-        .sidebar-nav-item:hover {
-            background: #FFF7F5;
-            color: var(--primary-color);
-        }
-
-        .sidebar-nav-item.active {
-            background: #FFF7F5;
-            color: var(--primary-color);
-        }
-
-        .sidebar-nav-item svg {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-            color: #9CA3AF;
-            transition: color 0.2s;
-        }
-
-        .sidebar-nav-item:hover svg, .sidebar-nav-item.active svg {
-            color: var(--primary-color);
-        }
-
-        .sidebar-divider {
-            margin: 8px 0;
-            border: none;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .sidebar-section-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #C0C0C0;
-            letter-spacing: 0.5px;
-            padding: 4px 12px 2px;
-            text-transform: uppercase;
-        }
-
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            padding-right: 4px;
-        }
-
-        .history-list::-webkit-scrollbar { width: 4px; }
-        .history-list::-webkit-scrollbar-track { background: transparent; }
-        .history-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
-
-        .history-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .history-item:hover {
-            background: #F9F9F9;
-        }
-
-        .history-item-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #F37021, #FF9B6A);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-        }
-
-        .history-item-text {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .history-item-title {
-            font-size: 13px;
-            font-weight: 500;
-            color: #333333;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .history-item-subtitle {
-            font-size: 11px;
-            color: #9CA3AF;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .new-chat-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: 12px;
-            border: 1.5px dashed var(--border-color);
-            background: transparent;
-            color: var(--primary-color);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 12px;
-        }
-
-        .new-chat-btn:hover {
-            background: #FFF7F5;
-            border-color: var(--primary-color);
-        }
-
-        .new-chat-btn svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        /* --- Main Column --- */
-        .main-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 40px;
-            overflow-y: auto;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- Header --- */
-        .header-section {
-            margin-bottom: 32px;
-        }
-
-        .title-group h1 {
-            font-size: 28px;
-            font-weight: 800;
-            margin: 0 0 6px 0;
-            letter-spacing: -0.5px;
-        }
-
-        .title-group p {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin: 0 0 24px 0;
-        }
-
-        /* Knowledge Base Styles (Transplanted from twin-manage.html) */
-        .kb-container {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            overflow: hidden;
-            background: white;
-            height: calc(100vh - 280px);
-            min-height: 500px;
-            box-shadow: 0 4px 20px rgba(243, 112, 33, 0.05);
-        }
-
-        .kb-sidebar {
-            background: #FAFAFA;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .kb-search-container {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            background: white;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .kb-search-box {
-            display: flex;
-            align-items: center;
-            background: #F5F5F5;
-            border-radius: 10px;
-            padding: 8px 12px;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .kb-search-box input {
-            border: none;
-            background: transparent;
-            outline: none;
-            font-size: 13px;
-            flex: 1;
-            color: #333;
-        }
-
-        .btn-upload {
-            background: white;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-upload:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .kb-file-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 8px;
-        }
-
-        .kb-file-item {
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        /* ── Header ── */
+        .kb-header {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 4px;
-            position: relative;
-        }
-
-        .kb-file-item:hover {
-            background: #FFF3E0;
-        }
-
-        .kb-file-item.active {
-            background: white;
-            border: 1px solid var(--primary-color);
-            box-shadow: 0 2px 8px rgba(243, 112, 33, 0.1);
-        }
-
-        .kb-file-icon {
-            width: 36px;
-            height: 36px;
-            background: white;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            flex-shrink: 0;
-        }
-
-        .kb-file-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .kb-file-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 2px;
-        }
-
-        .kb-file-meta {
-            font-size: 11px;
-            color: #999;
-        }
-
-        .kb-preview-area {
-            background: white;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .kb-preview-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            background: white;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .kb-preview-title {
-            font-size: 15px;
+        .kb-header-left h1 {
+            font-size: 24px;
             font-weight: 700;
-            color: var(--text-color);
+        }
+
+        .kb-header-left p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .kb-header-right {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .kb-preview-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 40px;
-            background: #F8F9FA;
-            display: flex;
-            justify-content: center;
-        }
-
-        .kb-document-page {
-            background: white;
-            width: 100%;
-            max-width: 700px;
-            min-height: 800px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            padding: 60px 50px;
-            color: #222;
-        }
-
-        .kb-doc-h1 { font-size: 26px; font-weight: 800; margin-bottom: 12px; text-align: center; color: #111; }
-        .kb-doc-h2 { font-size: 17px; font-weight: 700; margin-top: 28px; margin-bottom: 14px; border-bottom: 1px solid #EEE; padding-bottom: 6px; }
-        .kb-doc-p { font-size: 14px; line-height: 1.8; margin-bottom: 16px; color: #444; }
-        .kb-doc-tag { font-size: 12px; color: #888; text-align: center; margin-bottom: 40px; }
-
-        .btn-delete {
-            padding: 6px 14px;
-            font-size: 12px;
-            background: white;
-            border: 1px solid #FF4D4F;
-            color: #FF4D4F;
-            border-radius: 8px;
+        /* ── Buttons ── */
+        .kb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            font-family: inherit;
+            transition: all 0.15s;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-primary);
+            white-space: nowrap;
         }
 
-        .btn-delete:hover {
-            background: #FFF1F0;
+        .kb-btn:hover {
+            border-color: #d1d5db;
+            background: #f9fafb;
         }
 
-        .eye-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #AAA;
-            display: none;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-            z-index: 5;
-        }
-
-        .kb-file-item.active .eye-toggle,
-        .kb-file-item.is-hidden .eye-toggle {
-            display: flex;
-        }
-
-        .eye-toggle:hover {
-            background: #FEE7DB;
-            color: var(--primary-color);
-        }
-
-        .blur-effect {
-            filter: blur(6px);
-            transition: filter 0.3s ease;
+        .kb-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
             pointer-events: none;
+        }
+
+        .kb-btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .kb-btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .kb-btn svg {
+            flex-shrink: 0;
+        }
+
+        .kb-btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* ── Search ── */
+        .kb-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .kb-search:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .kb-search svg {
+            flex-shrink: 0;
+            width: 15px;
+            height: 15px;
+            stroke: var(--text-muted);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .kb-search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-primary);
+            width: 160px;
+        }
+
+        .kb-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* ── Card ── */
+        .main-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        /* ── Breadcrumb ── */
+        .kb-breadcrumb-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 0 16px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .kb-breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+
+        .kb-breadcrumb-item:hover {
+            color: var(--accent);
+        }
+
+        .kb-breadcrumb-item.active {
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: default;
+        }
+
+        .kb-breadcrumb-separator {
+            color: var(--text-muted);
+            font-size: 10px;
+        }
+
+        /* ── Table scroll + sticky header ── */
+        .kb-table-wrap {
+            max-height: calc(100vh - 200px);
+            overflow: auto;
+        }
+
+        .kb-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+        }
+
+        .kb-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 12px 16px;
+            text-align: left;
+            background: #fafbfc;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
             user-select: none;
         }
 
-        .hidden { display: none !important; }
+        .kb-table thead th:first-child {
+            padding-left: 20px;
+        }
+
+        .kb-table thead th:last-child {
+            width: 80px;
+        }
+
+        /* ── Sortable ── */
+        .sortable {
+            cursor: pointer;
+        }
+
+        .sortable:hover {
+            color: var(--text-secondary);
+        }
+
+        .sort-icon {
+            display: inline-flex;
+            flex-direction: column;
+            margin-left: 4px;
+            vertical-align: middle;
+            gap: 1px;
+        }
+
+        .sort-icon .arrow {
+            font-size: 8px;
+            line-height: 1;
+            color: var(--text-muted);
+            opacity: 0.3;
+            transition: opacity 0.15s, color 0.15s;
+        }
+
+        .sort-icon .arrow.active {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        /* ── Filterable ── */
+        .filterable {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .filterable:hover {
+            color: var(--text-secondary);
+        }
+
+        .filter-caret {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 9px;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .filterable.open .filter-caret {
+            transform: rotate(180deg);
+        }
+
+        .filterable.filtered {
+            color: var(--accent);
+        }
+
+        .filter-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            min-width: 130px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            z-index: 50;
+            padding: 4px 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .filter-dropdown.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .filter-dropdown .filter-item {
+            padding: 7px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .filter-dropdown .filter-item:hover {
+            background: #f3f4f6;
+        }
+
+        .filter-dropdown .filter-item.active {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ── Table body ── */
+        .kb-table tbody tr {
+            border-bottom: 1px solid #f0f1f3;
+            transition: background 0.1s;
+        }
+
+        .kb-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .kb-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .kb-table tbody tr.row-active {
+            background: rgba(79, 70, 229, 0.04);
+            outline: 1px solid var(--accent);
+            outline-offset: -1px;
+        }
+
+        .kb-table tbody tr.row-active td {
+            border-bottom-color: transparent;
+        }
+
+        .kb-table tbody td {
+            padding: 10px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f1f3;
+        }
+
+        .kb-table tbody td:first-child {
+            padding-left: 20px;
+        }
+
+        /* ── Row check & layout ── */
+        .kb-cell-name {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .kb-name-text {
+            white-space: nowrap;
+        }
+
+        .kb-chevron {
+            width: 22px;
+            display: inline-flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .kb-chevron svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-muted);
+            stroke-width: 2.2;
+            fill: none;
+        }
+
+        .folder-row.expanded .kb-chevron {
+            transform: rotate(90deg);
+        }
+
+        .kb-spacer {
+            width: 22px;
+            flex-shrink: 0;
+        }
+
+        .kb-child-spacer {
+            width: 34px;
+            flex-shrink: 0;
+        }
+
+        /* indented for child files */
+
+        /* ── Hover Checkbox (Replaces Icon) ── */
+        .kb-icon {
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            border-radius: 5px;
+            margin-right: 8px;
+            position: relative;
+        }
+
+        .kb-icon.folder {
+            background: transparent;
+        }
+
+        .kb-icon.folder .icon-svg {
+            width: 18px;
+            height: 18px;
+            fill: #f59e0b;
+            stroke: none;
+        }
+
+        .kb-icon.doc {
+            background: #eff6ff;
+        }
+
+        .kb-icon.doc .icon-svg {
+            stroke: #3b82f6;
+        }
+
+        .kb-icon.table {
+            background: #f0fdf4;
+        }
+
+        .kb-icon.table .icon-svg {
+            stroke: #22c55e;
+        }
+
+        .kb-icon.text {
+            background: #faf5ff;
+        }
+
+        .kb-icon.text .icon-svg {
+            stroke: #a855f7;
+        }
+
+        .kb-icon .icon-svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 1.8;
+            fill: none;
+            transition: opacity 0.15s;
+        }
+
+        .kb-icon-switchable input[type="checkbox"] {
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            opacity: 0;
+            cursor: pointer;
+            accent-color: var(--accent);
+            width: 15px;
+            height: 15px;
+            transition: opacity 0.15s;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        tr:hover .kb-icon-switchable input[type="checkbox"],
+        .kb-icon-switchable input[type="checkbox"]:checked,
+        .kb-icon-switchable input[type="checkbox"]:indeterminate,
+        body.multi-select .kb-icon-switchable input[type="checkbox"] {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        tr:hover .kb-icon-switchable .icon-svg,
+        .kb-icon-switchable input[type="checkbox"]:checked+.icon-svg,
+        .kb-icon-switchable input[type="checkbox"]:indeterminate+.icon-svg,
+        body.multi-select .kb-icon-switchable .icon-svg {
+            opacity: 0;
+        }
+
+        .name-text {
+            font-weight: 500;
+        }
+
+        .folder-row .name-text {
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ── Badges ── */
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .type-badge.doc {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .type-badge.table {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .type-badge.text {
+            background: #faf5ff;
+            color: #9333ea;
+        }
+
+        .source-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .source-badge.crawl {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .source-badge.chat {
+            background: #eef2ff;
+            color: #6366f1;
+        }
+
+        .source-badge.upload {
+            background: #f0f9ff;
+            color: #0284c7;
+        }
+
+        /* ── Actions ── */
+        .action-cell {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            justify-content: flex-end;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s;
+        }
+
+        tr:hover .action-cell,
+        tr.row-active .action-cell,
+        tr.is-anonymous .action-cell {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        body.multi-select .action-cell {
+            display: none !important;
+        }
+
+        tr.is-anonymous .action-cell .act-btn:not(.anon-btn) {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        tr.is-anonymous:hover .action-cell .act-btn:not(.anon-btn) {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        tr.is-anonymous .name-text,
+        tr.is-anonymous .type-badge,
+        tr.is-anonymous .source-badge,
+        tr.is-anonymous .kb-icon {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+
+        .act-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: background 0.12s, color 0.12s, opacity 0.15s;
+            position: relative;
+        }
+
+        .act-btn:hover {
+            background: #f3f4f6;
+            color: var(--text-secondary);
+        }
+
+        .act-btn svg {
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .anon-btn svg {
+            stroke-width: 1.8;
+        }
+
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: #1f2937;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 100;
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        [data-tooltip-bottom] {
+            position: relative;
+        }
+
+        [data-tooltip-bottom]::after {
+            content: attr(data-tooltip-bottom);
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-4px);
+            background: #1f2937;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 100;
+        }
+
+        [data-tooltip-bottom]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── More menu ── */
+        .more-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            min-width: 140px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            z-index: 60;
+            padding: 4px 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 0.15s, transform 0.15s;
+            text-align: left;
+        }
+
+        .more-menu.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.1s;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .menu-item svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            flex-shrink: 0;
+        }
+
+        .menu-item.danger {
+            color: #ef4444;
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ── Submenu (move to folder) ── */
+        .submenu-trigger {
+            position: relative;
+        }
+
+        .submenu {
+            position: absolute;
+            right: 100%;
+            top: -4px;
+            min-width: 130px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            padding: 4px 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(8px);
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 70;
+        }
+
+        .submenu::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: -8px;
+            width: 8px;
+        }
+
+        .submenu-trigger:hover>.submenu {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0);
+        }
+
+        .submenu .submenu-item {
+            padding: 7px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.1s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .submenu .submenu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .submenu .submenu-item svg {
+            width: 14px;
+            height: 14px;
+            fill: #f59e0b;
+            stroke: none;
+            flex-shrink: 0;
+        }
+
+        /* ── Multi-select interactions ── */
+        body.multi-select tr {
+            cursor: pointer;
+        }
+
+        /* ── Batch action bar ── */
+        .batch-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: var(--text-primary);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            font-size: 13px;
+            font-weight: 500;
+            animation: batchBarIn 0.25s ease;
+        }
+
+        .batch-bar .kb-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .batch-bar .kb-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .batch-bar .kb-btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .batch-bar .kb-btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .batch-bar .kb-btn-danger {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        .batch-bar .kb-btn-danger:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .batch-move-wrap {
+            position: relative;
+        }
+
+        .batch-move-dd {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            min-width: 150px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            padding: 4px 0;
+            color: var(--text-primary);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(4px);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .batch-move-dd.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .batch-move-dd .submenu-item {
+            padding: 7px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.1s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .batch-move-dd .submenu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .batch-move-dd .submenu-item svg {
+            width: 14px;
+            height: 14px;
+            fill: #f59e0b;
+            stroke: none;
+        }
+
+        @keyframes batchBarIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            width: 100%;
+            max-width: 460px;
+            padding: 28px;
+            position: relative;
+            transform: translateY(12px) scale(0.97);
+            transition: transform 0.22s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.2s;
+            opacity: 0;
+        }
+
+        .modal-overlay.open .modal-box {
+            transform: none;
+            opacity: 1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: background 0.12s;
+        }
+
+        .modal-close:hover {
+            background: #e5e7eb;
+            color: var(--text-primary);
+        }
+
+        .modal-close svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            fill: none;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .modal-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .modal-field {
+            margin-bottom: 16px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .modal-field input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .modal-field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-btn-cancel {
+            padding: 8px 18px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.12s;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #f9fafb;
+        }
+
+        .modal-btn-confirm {
+            padding: 8px 18px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.12s;
+        }
+
+        .modal-btn-confirm:hover {
+            background: var(--accent-hover);
+        }
+
+        .modal-btn-confirm.btn-danger {
+            background: #ef4444;
+        }
+
+        .modal-btn-confirm.btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .modal-btn-confirm:disabled {
+            background: var(--border) !important;
+            color: var(--text-muted) !important;
+            cursor: not-allowed !important;
+        }
+
+        /* ── Drop zone ── */
+        .drop-zone {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            background: #fafbfc;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(79, 70, 229, 0.04);
+        }
+
+        .drop-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 24px;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .drop-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #eef2ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .drop-zone:hover .drop-icon-wrap {
+            transform: translateY(-2px);
+        }
+
+        .drop-icon-wrap svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--accent);
+            stroke-width: 1.8;
+            fill: none;
+        }
+
+        .drop-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .drop-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ── Toast ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--text-primary);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            animation: toastIn 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .toast.success {
+            border-left: 3px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 3px solid #ef4444;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes toastOut {
+            to {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+        }
+
+        .kb-empty {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-muted);
+            font-size: 14px;
+            display: none;
+        }
+
+        .child-row.hidden,
+        .folder-row.hidden {
+            display: none !important;
+        }
+
+        /* ── Chat Page ── */
+        .chat-page {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 40px;
+            position: relative;
+        }
+
+        .chat-page.active {
+            display: flex;
+        }
+
+        .page.hidden {
+            display: none !important;
+        }
+
+        .chat-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            gap: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            cursor: text;
+            position: relative;
+        }
+
+        .ref-menu {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            width: 300px;
+            max-height: 240px;
+            overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 4px 0;
+        }
+
+        .ref-menu.active {
+            display: flex;
+        }
+
+        .ref-menu-item {
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+        }
+
+        .ref-menu-item:hover, .ref-menu-item.highlighted {
+            background: #f3f4f6;
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .chat-editor {
+            flex: 1;
+            min-height: 120px;
+            max-height: 300px;
+            overflow-y: auto;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            line-height: 1.6;
+            padding: 4px 0;
+        }
+
+        .chat-editor:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .inline-ref-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            user-select: none;
+            vertical-align: baseline;
+            margin: 0 4px 0 0;
+            border: 1px solid transparent;
+            transition: box-shadow 0.15s, border-color 0.15s;
+        }
+
+        .inline-ref-chip svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            display: block;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .inline-ref-chip.highlighted {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .inline-ref-chip.folder svg { fill: #f59e0b; stroke: none; }
+        .inline-ref-chip.doc { background: #eff6ff; color: #2563eb; }
+        .inline-ref-chip.doc svg { stroke: #3b82f6; }
+        .inline-ref-chip.table { background: #f0fdf4; color: #16a34a; }
+        .inline-ref-chip.table svg { stroke: #22c55e; }
+        .inline-ref-chip.text { background: #faf5ff; color: #9333ea; }
+        .inline-ref-chip.text svg { stroke: #a855f7; }
+
+        .chat-send-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .chat-send-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+        }
+        /* ── Preview Mode ── */
+        body.preview-mode .kb-header {
+            display: none;
+        }
+
+        body.preview-mode .page {
+            max-width: 100%;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kb-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        body.preview-mode .kb-content {
+            height: 100vh;
+        }
+
+        .kb-left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            transition: width 0.2s, border-right 0.2s;
+        }
+
+        body.preview-mode .kb-left-panel {
+            flex: none;
+            width: 280px;
+            border-right: 1px solid var(--border);
+            background: #fafbfc;
+        }
+
+        body.preview-mode .kb-breadcrumb-wrap {
+            padding: 16px;
+            margin: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            height: 72px;
+            box-sizing: border-box;
+            display: flex !important;
+        }
+
+        body.preview-mode .main-card {
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: transparent;
+        }
+
+        body.preview-mode .kb-table-wrap {
+            max-height: none;
+            flex: 1;
+            overflow: auto;
+        }
+
+        body.preview-mode .kb-table thead {
+            display: none;
+        }
+
+        body.preview-mode .kb-table td:not(:first-child) {
+            display: none;
+        }
+        
+        body.preview-mode .kb-table td {
+            padding: 6px 16px;
+            border-bottom: none;
+        }
+
+        body.preview-mode .kb-table tbody tr {
+            border-bottom: none;
+        }
+
+        body.preview-mode .kb-table tbody tr.row-active {
+            background: rgba(79, 70, 229, 0.08);
+            outline: none;
+        }
+
+        body.preview-mode tr:hover .kb-icon-switchable input[type="checkbox"] {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        body.preview-mode tr:hover .kb-icon-switchable .icon-svg,
+        body.preview-mode .kb-icon-switchable input[type="checkbox"]:checked+.icon-svg,
+        body.preview-mode .kb-icon-switchable input[type="checkbox"]:indeterminate+.icon-svg {
+            opacity: 1 !important;
+        }
+
+        /* Preview Right Panel */
+        .kb-right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--surface);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            height: 72px;
+            box-sizing: border-box;
+        }
+
+        .preview-header-left h2 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .preview-header-left p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .preview-header-left.is-anonymous {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+
+        .preview-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preview-close {
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            transition: background 0.15s;
+            margin-left: 8px;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        .preview-close:hover {
+            background: #f3f4f6;
+            color: var(--text-primary);
+        }
+
+        .preview-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: 32px;
+            overflow: auto;
+        }
+
+        .markdown-body {
+            max-width: 760px;
+            margin: 0 auto;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .markdown-body h1 {
+            font-size: 24px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            margin-top: 24px;
+        }
+        
+        .markdown-body h1:first-child {
+            margin-top: 0;
+        }
+
+        .markdown-body h2 {
+            font-size: 20px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+            margin-bottom: 16px;
+            margin-top: 24px;
+        }
+
+        .markdown-body p {
+            margin-bottom: 16px;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin-bottom: 16px;
+            padding-left: 24px;
+        }
+
+        .markdown-body li {
+            margin-bottom: 4px;
+        }
+
+        .markdown-body code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .preview-unsupported {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+        }
+
+        .feedback-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body>
-    <nav-bar active="agent"></nav-bar>
 
-    <div class="app-shell">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <!-- New Chat Button -->
-            <button class="new-chat-btn" id="new-chat-btn" onclick="newChat()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                新建对话
-            </button>
-
-            <!-- Navigation -->
-            <a class="sidebar-nav-item" href="skill-center.html" id="nav-skill-plaza">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                技能广场
-            </a>
-            <a class="sidebar-nav-item" href="agent-archives.html" id="nav-archive">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                档案库
-            </a>
-            <a class="sidebar-nav-item active" href="knowledge.html" id="nav-kb">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                知识库
-            </a>
-
-            <hr class="sidebar-divider">
-
-            <!-- History -->
-            <span class="sidebar-section-label">历史对话</span>
-            <div class="history-list" id="history-list">
-                <div class="history-item" onclick="loadHistory('介绍一下本次智源大会的主题')">
-                    <div class="history-item-text">
-                        <div class="history-item-title">介绍智源大会主题</div>
-                        <div class="history-item-subtitle">今天 13:27</div>
-                    </div>
+    <div class="page" id="kb-page">
+        <div class="kb-header">
+            <div class="kb-header-left">
+                <h1>知识库</h1>
+                <p>管理SoulAgent的文档</p>
+            </div>
+            <div class="kb-header-right">
+                <div class="kb-search">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" placeholder="搜索文件…" id="kb-search-input" oninput="handleSearch()" />
                 </div>
-                <div class="history-item" onclick="loadHistory('SoulAgent和数字世界是什么')">
-                    <div class="history-item-text">
-                        <div class="history-item-title">SoulAgent和数字世界是什么</div>
-                        <div class="history-item-subtitle">昨天</div>
-                    </div>
-                </div>
-                <div class="history-item" onclick="loadHistory('为我提供智源大会的最佳浏览线路')">
-                    <div class="history-item-text">
-                        <div class="history-item-title">智源大会最佳浏览线路</div>
-                        <div class="history-item-subtitle">5月10日</div>
+                <button id="new-folder-btn" class="kb-btn" onclick="openFolderModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    新建文件夹
+                </button>
+                <button class="kb-btn kb-btn-primary" onclick="openUploadModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    上传
+                </button>
+            </div>
+        </div>
+
+        <div class="kb-content" id="kb-content">
+            <div class="kb-left-panel">
+                <div class="kb-breadcrumb-wrap" id="kb-breadcrumb" style="display:none;"></div>
+                <div class="main-card">
+                    <div class="kb-table-wrap">
+                        <table class="kb-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" onclick="toggleSort('name')" style="min-width:300px;">
+                                        名称
+                                        <span class="sort-icon"><span class="arrow" id="sort-name-asc">▲</span><span
+                                                class="arrow" id="sort-name-desc">▼</span></span>
+                                    </th>
+                                    <th class="filterable" id="th-type" onclick="toggleFilterDropdown('type')">
+                                        全部类型 <span class="filter-caret">▼</span>
+                                        <div class="filter-dropdown" id="dropdown-type">
+                                            <div class="filter-item active" data-value=""
+                                                onclick="selectFilter(event,'type','')">全部类型</div>
+                                            <div class="filter-item" data-value="table"
+                                                onclick="selectFilter(event,'type','table')">表格</div>
+                                            <div class="filter-item" data-value="text"
+                                                onclick="selectFilter(event,'type','text')">文本</div>
+                                            <div class="filter-item" data-value="doc"
+                                                onclick="selectFilter(event,'type','doc')">文档</div>
+                                        </div>
+                                    </th>
+                                    <th class="filterable" id="th-source" onclick="toggleFilterDropdown('source')">
+                                        全部来源 <span class="filter-caret">▼</span>
+                                        <div class="filter-dropdown" id="dropdown-source">
+                                            <div class="filter-item active" data-value=""
+                                                onclick="selectFilter(event,'source','')">全部来源</div>
+                                            <div class="filter-item" data-value="chat"
+                                                onclick="selectFilter(event,'source','chat')">对话生成</div>
+                                            <div class="filter-item" data-value="crawl"
+                                                onclick="selectFilter(event,'source','crawl')">公开检索</div>
+                                            <div class="filter-item" data-value="upload"
+                                                onclick="selectFilter(event,'source','upload')">用户上传</div>
+                                        </div>
+                                    </th>
+                                    <th>文件大小</th>
+                                    <th class="sortable" onclick="toggleSort('time')" style="min-width:130px;">
+                                        更新时间
+                                        <span class="sort-icon"><span class="arrow" id="sort-time-asc">▲</span><span
+                                                class="arrow" id="sort-time-desc">▼</span></span>
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="kb-tbody"></tbody>
+                        </table>
+                        <div class="kb-empty" id="kb-empty">
+                            <div style="font-size:36px; margin-bottom:12px;">📂</div>
+                            <div>暂无文件</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </aside>
-
-        <!-- Main Column -->
-        <div class="main-column">
-            <div class="main-content">
-                <div class="header-section">
-                    <div class="title-group">
-                        <h1>知识库</h1>
-                        <p>管理小小曜引用的外部文档与专业知识</p>
+            
+            <div class="kb-right-panel" id="preview-panel" style="display: none;">
+                <div class="preview-header">
+                    <div class="preview-header-left">
+                        <h2 id="preview-title">文件名 <span id="preview-source" class="source-badge"></span></h2>
+                        <p id="preview-subtitle">大小 - 时间</p>
                     </div>
-                </div>
-
-                <div class="kb-container">
-                    <div class="kb-sidebar">
-                        <div class="kb-search-container">
-                            <div class="kb-search-box">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="text" placeholder="搜索文件...">
-                            </div>
-                            <button class="btn-upload">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                上传
-                            </button>
+                    <div class="preview-header-right">
+                        <button class="kb-btn kb-btn-sm" id="preview-btn-anon" onclick="togglePreviewAnonymous()" data-tooltip-bottom="可见性切换"></button>
+                        <button class="kb-btn kb-btn-sm" onclick="addToChatFromPreview()">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+                            添加到对话
+                        </button>
+                        <div style="position:relative;">
+                            <button class="kb-btn kb-btn-sm" onclick="togglePreviewMoreMenu(event)">更多</button>
+                            <div class="more-menu" id="preview-more-menu" style="right:0;"></div>
                         </div>
-                        <div class="kb-file-list">
-                            <div class="kb-file-item active">
-                                <div class="kb-file-icon">📄</div>
-                                <div class="kb-file-info">
-                                    <div class="kb-file-name">2024科研成果汇总.pdf</div>
-                                    <div class="kb-file-meta">1.2 MB · 2天前更新</div>
-                                </div>
-                                <div class="eye-toggle" title="隐藏文件内容">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                </div>
-                            </div>
-                            <div class="kb-file-item">
-                                <div class="kb-file-icon">📝</div>
-                                <div class="kb-file-info">
-                                    <div class="kb-file-name">具身智能第一性原理.docx</div>
-                                    <div class="kb-file-meta">856 KB · 5天前更新</div>
-                                </div>
-                                <div class="eye-toggle" title="隐藏文件内容">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                </div>
-                            </div>
-                            <div class="kb-file-item">
-                                <div class="kb-file-icon">📑</div>
-                                <div class="kb-file-info">
-                                    <div class="kb-file-name">通用人工智能 (AGI) 路线图.pdf</div>
-                                    <div class="kb-file-meta">3.4 MB · 1周前更新</div>
-                                </div>
-                                <div class="eye-toggle" title="隐藏文件内容">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                </div>
-                            </div>
-                            <div class="kb-file-item">
-                                <div class="kb-file-icon">📘</div>
-                                <div class="kb-file-info">
-                                    <div class="kb-file-name">个人简历与成就.pdf</div>
-                                    <div class="kb-file-meta">2.1 MB · 2周前更新</div>
-                                </div>
-                                <div class="eye-toggle" title="隐藏文件内容">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="kb-preview-area">
-                        <div class="kb-preview-header">
-                            <div class="kb-preview-title">
-                                <span>📄 2024科研成果汇总.pdf</span>
-                            </div>
-                            <div style="display: flex; gap: 12px;">
-                                <button class="btn-delete">删除文件</button>
-                            </div>
-                        </div>
-                        <div class="kb-preview-body">
-                            <div class="kb-document-page">
-                                <div class="kb-doc-h1">2024 年度科研成果与技术前瞻汇总</div>
-                                <div class="kb-doc-tag">发布日期：2024年5月 · 首席科学家办公室</div>
-                                
-                                <div class="kb-doc-h2">1. 通用具身智能大模型</div>
-                                <div class="kb-doc-p">我们在 2024 年第一季度成功研发了首个具备跨场景泛化能力的具身大模型。该模型通过 5000 小时的多样化物理环境模拟训练，实现了在未见场景下的物体识别与精准抓取，成功率提升了 35%。</div>
-                                
-                                <div class="kb-doc-h2">2. 符号逻辑与神经网络的深度融合</div>
-                                <div class="kb-doc-p">针对大语言模型在复杂推理任务中的“幻觉”问题，我们提出了一种基于一阶逻辑约束的神经架构。该成果已发表于顶级期刊，并有效解决了模型在长程因果推理中的逻辑崩塌现象。</div>
-                                
-                                <div class="kb-doc-h2">3. 脑机接口与意图识别</div>
-                                <div class="kb-doc-p">在非侵入式脑机接口领域，我们的算法团队在信号降噪方面取得了重大突破。目前已能实现对人类复杂意图的毫秒级识别，准确率达到 92%，为未来的数字化共生奠定了技术基础。</div>
-                            </div>
+                        <div class="preview-close" onclick="exitPreview()">
+                            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                         </div>
                     </div>
                 </div>
+                <div class="preview-content" id="preview-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 新建文件夹 -->
+    <div class="modal-overlay" id="modal-folder" onclick="handleOverlayClick(event,'modal-folder')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-folder')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title">新建文件夹</div>
+            <div class="modal-desc">创建一个新文件夹来组织您的知识库文档。</div>
+            <div class="modal-field">
+                <label for="folder-name">文件夹名称 <span style="color:#ef4444">*</span></label>
+                <input id="folder-name" type="text" placeholder="请输入文件夹名称" maxlength="50"
+                    onkeydown="if(event.key==='Enter')confirmNewFolder()" />
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-folder')">取消</button>
+                <button class="modal-btn-confirm" onclick="confirmNewFolder()">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 上传文件 -->
+    <div class="modal-overlay" id="modal-upload" onclick="handleOverlayClick(event,'modal-upload')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-upload')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title">上传</div>
+            <div class="modal-desc">将文件或文件夹拖拽到下方区域或点击选择上传</div>
+            <div class="drop-zone" id="upload-drop-zone" onclick="document.getElementById('upload-file-input').click()">
+                <input type="file" id="upload-file-input"
+                    style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;"
+                    onchange="handleUploadFile(event)" multiple />
+                <div class="drop-inner">
+                    <div class="drop-icon-wrap">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                    </div>
+                    <div class="drop-title">拖拽文件到此处，或点击上传</div>
+                </div>
+            </div>
+            <div id="upload-file-list"
+                style="font-size:12px; color:var(--text-muted); margin-top:8px; min-height:16px;"></div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-upload')">取消</button>
+                <button class="modal-btn-confirm" onclick="confirmUpload()">确认上传</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 重命名 -->
+    <div class="modal-overlay" id="modal-rename" onclick="handleOverlayClick(event,'modal-rename')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-rename')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title">重命名</div>
+            <div class="modal-field">
+                <label for="rename-input">名称 <span style="color:#ef4444">*</span></label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input id="rename-input" type="text" placeholder="请输入名称" maxlength="100"
+                        onkeydown="if(event.key==='Enter')confirmRename()" style="flex: 1;" />
+                    <span id="rename-ext" style="color: var(--text-muted); font-size: 14px; white-space: nowrap; display: none;"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-rename')">取消</button>
+                <button class="modal-btn-confirm" onclick="confirmRename()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 删除确认 (普通) -->
+    <div class="modal-overlay" id="modal-delete" onclick="handleOverlayClick(event,'modal-delete')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-delete')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title">确认删除</div>
+            <div class="modal-desc" id="delete-desc">确定要删除该项吗？删除后不可恢复。</div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-delete')">取消</button>
+                <button class="modal-btn-confirm btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 移动确认 (文件夹) -->
+    <div class="modal-overlay" id="modal-move-folder" onclick="handleOverlayClick(event,'modal-move-folder')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-move-folder')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title">确认移动</div>
+            <div class="modal-desc" id="move-folder-desc">该文件夹下的所有内容将一并移动到「...」，确定移动吗？</div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-move-folder')">取消</button>
+                <button class="modal-btn-confirm" onclick="confirmMoveFolder()">确认移动</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 删除确认 (文件夹) -->
+    <div class="modal-overlay" id="modal-delete-folder" onclick="handleOverlayClick(event,'modal-delete-folder')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-delete-folder')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title" id="delete-folder-title">删除文件夹</div>
+            <div class="modal-desc" id="delete-folder-desc">删除文件夹时，您希望如何处理文件夹中的内容？</div>
+
+            <div style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="radio" name="folder-delete-action" value="move"
+                        onchange="document.getElementById('btn-confirm-folder').disabled = false" />
+                    <span>仅删除文件夹，将文件移至根目录</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="radio" name="folder-delete-action" value="delete"
+                        onchange="document.getElementById('btn-confirm-folder').disabled = false" />
+                    <span style="color:#ef4444">一并删除文件夹内的所有文件</span>
+                </label>
+            </div>
+
+            <div class="modal-footer" style="margin-top:24px;">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-delete-folder')">取消</button>
+                <button id="btn-confirm-folder" class="modal-btn-confirm btn-danger" onclick="confirmDeleteFolder()"
+                    disabled>确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 反馈 -->
+    <div class="modal-overlay" id="modal-feedback" onclick="handleOverlayClick(event,'modal-feedback')">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-feedback')"><svg viewBox="0 0 24 24">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+            <div class="modal-title">意见反馈</div>
+            <div class="modal-desc">当前文件格式暂不支持预览。请告诉我们您希望支持哪种格式的预览。</div>
+            <div class="modal-field">
+                <input id="feedback-input" type="text" placeholder="例如：PDF, Excel, PPTX..." onkeydown="if(event.key==='Enter')confirmFeedback()" />
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" onclick="closeModal('modal-feedback')">取消</button>
+                <button class="modal-btn-confirm" onclick="confirmFeedback()">提交</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch action bar -->
+    <div class="batch-bar" id="batch-bar">
+        <span id="batch-count">已选择 0 个文件</span>
+        <button class="kb-btn kb-btn-primary kb-btn-sm" onclick="batchAction('download')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            下载
+        </button>
+        <div class="batch-move-wrap">
+            <button class="kb-btn kb-btn-primary kb-btn-sm" onclick="toggleBatchMoveDd(event)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3" />
+                </svg>
+                移动到
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;">
+                    <polyline points="6 15 12 9 18 15" />
+                </svg>
+            </button>
+            <div class="batch-move-dd" id="batch-move-dd"></div>
+        </div>
+        <button class="kb-btn kb-btn-danger kb-btn-sm" onclick="batchAction('delete')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            删除
+        </button>
+        <div style="width:1px; height:16px; background:rgba(255,255,255,0.3); margin:0 4px;"></div>
+        <button class="kb-btn kb-btn-sm" onclick="cancelMultiSelect()">取消选择</button>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Chat Page View -->
+    <div class="chat-page" id="chat-page">
+        <div class="chat-header">
+            <button class="back-btn" onclick="backToKb()">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+                返回知识库
+            </button>
+        </div>
+        <div style="width: 100%; max-width: 800px; padding: 0 24px;">
+            <div class="chat-input-wrapper" onclick="document.getElementById('chat-input').focus()">
+                <div class="ref-menu" id="ref-menu"></div>
+                <div id="chat-input" class="chat-editor" contenteditable="true" data-placeholder="输入你想问的问题..."></div>
+                <button class="chat-send-btn">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        function newChat() {
-            window.location.href = 'agent.html';
+        /* ═══════════════════════════════════════
+           Data & Constants
+        ═══════════════════════════════════════ */
+        var TYPE_MAP = { table: { label: '表格', cls: 'table' }, doc: { label: '文档', cls: 'doc' }, text: { label: '文本', cls: 'text' } };
+        var SOURCE_MAP = { crawl: { label: '公开检索', cls: 'crawl' }, chat: { label: '对话生成', cls: 'chat' }, upload: { label: '用户上传', cls: 'upload' } };
+        var idCounter = 100;
+
+        var kbData = [
+            {
+                id: ++idCounter, isFolder: true, name: '产品文档', expanded: true, children: [
+                    { id: ++idCounter, name: '产品需求说明书.docx', type: 'doc', source: 'upload', size: '2.4 MB', time: '2026-07-14 10:30', ts: 20260714.1030 },
+                    { id: ++idCounter, name: '用户调研数据.xlsx', type: 'table', source: 'upload', size: '1.1 MB', time: '2026-07-13 16:22', ts: 20260713.1622 },
+                    { id: ++idCounter, name: 'API接口文档.md', type: 'text', source: 'chat', size: '86 KB', time: '2026-07-12 09:15', ts: 20260712.0915 },
+                ]
+            },
+            {
+                id: ++idCounter, isFolder: true, name: '多级目录测试', expanded: true, children: [
+                    {
+                        id: ++idCounter, isFolder: true, name: '层级 2', expanded: true, children: [
+                            {
+                                id: ++idCounter, isFolder: true, name: '层级 3', expanded: true, children: [
+                                    {
+                                        id: ++idCounter, isFolder: true, name: '层级 4', expanded: true, children: [
+                                            {
+                                                id: ++idCounter, isFolder: true, name: '层级 5', expanded: true, children: [
+                                                    { id: ++idCounter, name: '最深层文档.txt', type: 'text', source: 'upload', size: '10 KB', time: '2026-07-15 10:00', ts: 20260715.1000 }
+                                                ]
+                                            },
+                                            { id: ++idCounter, name: '第四层文档.md', type: 'text', source: 'chat', size: '20 KB', time: '2026-07-15 09:30', ts: 20260715.0930 }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: ++idCounter, isFolder: true, name: '会议记录', expanded: false, children: [
+                    { id: ++idCounter, name: '周会纪要 0708.docx', type: 'doc', source: 'chat', size: '320 KB', time: '2026-07-08 18:00', ts: 20260708.1800 },
+                    { id: ++idCounter, name: '项目评审记录.txt', type: 'text', source: 'chat', size: '45 KB', time: '2026-07-07 14:30', ts: 20260707.1430 },
+                ]
+            },
+            {
+                id: ++idCounter, isFolder: true, name: '数据报表', expanded: false, children: [
+                    { id: ++idCounter, name: '6月运营数据.xlsx', type: 'table', source: 'crawl', size: '3.8 MB', time: '2026-07-01 08:00', ts: 20260701.0800 },
+                    { id: ++idCounter, name: '用户活跃分析.csv', type: 'table', source: 'crawl', size: '780 KB', time: '2026-06-30 17:45', ts: 20260630.1745 },
+                    { id: ++idCounter, name: '转化漏斗报告.docx', type: 'doc', source: 'crawl', size: '1.5 MB', time: '2026-06-28 11:20', ts: 20260628.1120 },
+                ]
+            },
+            {
+                id: ++idCounter, isFolder: true, name: '培训材料', expanded: false, children: [
+                    { id: ++idCounter, name: '新员工入职手册.pdf', type: 'doc', source: 'upload', size: '5.2 MB', time: '2026-06-25 09:00', ts: 20260625.0900 },
+                    { id: ++idCounter, name: '系统操作指南.txt', type: 'text', source: 'upload', size: '128 KB', time: '2026-06-20 15:30', ts: 20260620.1530 },
+                ]
+            },
+            { id: ++idCounter, name: '公司介绍.pdf', type: 'doc', source: 'upload', size: '4.2 MB', time: '2026-07-15 09:00', ts: 20260715.0900 },
+            { id: ++idCounter, name: '竞品分析报告.docx', type: 'doc', source: 'chat', size: '1.8 MB', time: '2026-07-14 15:40', ts: 20260714.1540 },
+            { id: ++idCounter, name: '用户反馈汇总.xlsx', type: 'table', source: 'crawl', size: '560 KB', time: '2026-07-10 11:00', ts: 20260710.1100 },
+            { id: ++idCounter, name: '部署说明.md', type: 'text', source: 'upload', size: '32 KB', time: '2026-07-09 08:45', ts: 20260709.0845 },
+        ];
+
+        /* ═══════════════════════════════════════
+           State
+        ═══════════════════════════════════════ */
+        var currentSort = { field: null, dir: null };
+        var currentFilter = { type: '', source: '' };
+        var searchQuery = '';
+        var selectedFiles = {};  // fileId -> true
+        var selectedCount = 0;
+        var currentPath = []; // Breadcrumb path array
+        var currentPreviewId = null;
+
+        /* ═══════════════════════════════════════
+        SVG snippets
+        ═══════════════════════════════════════ */
+        var SVG = {
+            chevron: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+            folderSm: '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+            chatAdd: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="8" x2="12" y2="14"/><line x1="9" y1="11" x2="15" y2="11"/></svg>',
+            eyeOpen: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+            eyeClosed: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+            dots: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>',
+            download: '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+            chat: '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+            rename: '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+            move: '<svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/></svg>',
+            del: '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+        };
+
+        function fileIconSvg(t) {
+            if (t === 'table') return '<svg class="icon-svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>';
+            if (t === 'doc') return '<svg class="icon-svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+            return '<svg class="icon-svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
         }
 
-        function loadHistory(text) {
-            window.location.href = 'agent.html';
+        /* ═══════════════════════════════════════
+           Helpers
+        ═══════════════════════════════════════ */
+        function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function getFolderTs(folder) { return folder.children.length ? Math.max.apply(null, folder.children.map(function (c) { return c.isFolder ? getFolderTs(c) : c.ts; })) : 0; }
+
+        function findItemById(id, list) {
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === id) return list[i];
+                if (list[i].isFolder) {
+                    var found = findItemById(id, list[i].children);
+                    if (found) return found;
+                }
+            }
+            return null;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // 知识库文件切换模拟
-            document.querySelectorAll('.kb-file-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    if (e.target.closest('.eye-toggle')) return;
+        function findItemAndPath(id, list, currentPathAcc) {
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === id) return { item: list[i], path: currentPathAcc };
+                if (list[i].isFolder) {
+                    var res = findItemAndPath(id, list[i].children, currentPathAcc.concat(list[i].name));
+                    if (res) return res;
+                }
+            }
+            return null;
+        }
 
-                    document.querySelectorAll('.kb-file-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    
-                    const fileName = item.querySelector('.kb-file-name').innerText;
-                    document.querySelector('.kb-preview-title span').innerText = fileName;
+        function removeItemById(id, list) {
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === id) return list.splice(i, 1)[0];
+                if (list[i].isFolder) {
+                    var removed = removeItemById(id, list[i].children);
+                    if (removed) return removed;
+                }
+            }
+            return null;
+        }
 
-                    const previewBody = document.querySelector('.kb-preview-body');
-                    const previewTitle = document.querySelector('.kb-preview-title');
-                    if (item.classList.contains('is-hidden')) {
-                        previewBody.classList.add('blur-effect');
-                        previewTitle.classList.add('blur-effect');
+        function getAllFolders(list, result) {
+            list = list || kbData;
+            if (!result) result = [];
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].isFolder) {
+                    result.push(list[i]);
+                    getAllFolders(list[i].children, result);
+                }
+            }
+            return result;
+        }
+
+        function removeFileById(fileId) {
+            return removeItemById(fileId, kbData);
+        }
+
+        function updateFolderSelectionStates(list) {
+            var allSelected = true;
+            if (!list || list.length === 0) return true;
+            
+            list.forEach(function(item) {
+                if (item.isFolder) {
+                    if (item.children && item.children.length > 0) {
+                        var childrenSelected = updateFolderSelectionStates(item.children);
+                        if (!childrenSelected) {
+                            if (selectedFiles[item.id]) {
+                                delete selectedFiles[item.id];
+                                selectedCount--;
+                            }
+                        }
+                    }
+                    if (!selectedFiles[item.id]) allSelected = false;
+                } else {
+                    if (!selectedFiles[item.id]) allSelected = false;
+                }
+            });
+            return allSelected;
+        }
+
+        function getFolderCheckState(folder) {
+            if (!folder.children || folder.children.length === 0) {
+                return selectedFiles[folder.id] ? 2 : 0;
+            }
+            if (selectedFiles[folder.id]) return 2;
+            
+            var hasSelectedDescendant = function(f) {
+                for (var i = 0; i < f.children.length; i++) {
+                    var c = f.children[i];
+                    if (selectedFiles[c.id]) return true;
+                    if (c.isFolder && hasSelectedDescendant(c)) return true;
+                }
+                return false;
+            };
+            
+            if (hasSelectedDescendant(folder)) return 1;
+            return 0;
+        }
+
+        function toggleAnonymous(event, type, id) {
+            event.stopPropagation();
+            var item = findItemById(id, kbData);
+            if (item) {
+                item.isAnonymous = !item.isAnonymous;
+                renderTable();
+            }
+        }
+
+        function renderBreadcrumb() {
+            var bc = document.getElementById('kb-breadcrumb');
+            bc.style.display = 'flex';
+            
+            var newFolderBtn = document.getElementById('new-folder-btn');
+            if (newFolderBtn) {
+                newFolderBtn.disabled = currentPath.length >= 5;
+                if (currentPath.length >= 5) {
+                    newFolderBtn.title = "已达到最大嵌套层数 (5层)";
+                } else {
+                    newFolderBtn.title = "";
+                }
+            }
+
+            if (currentPath.length === 0) {
+                bc.innerHTML = '<span class="kb-breadcrumb-item active">根目录</span>';
+                return;
+            }
+            var html = '<span class="kb-breadcrumb-item" onclick="navigateTo(-1)">根目录</span>';
+            
+            if (currentPath.length <= 2) {
+                currentPath.forEach(function(folder, index) {
+                    html += '<span class="kb-breadcrumb-separator">▶</span>';
+                    if (index === currentPath.length - 1) {
+                        html += '<span class="kb-breadcrumb-item active">' + esc(folder.name) + '</span>';
                     } else {
-                        previewBody.classList.remove('blur-effect');
-                        previewTitle.classList.remove('blur-effect');
+                        html += '<span class="kb-breadcrumb-item" onclick="navigateTo(' + index + ')">' + esc(folder.name) + '</span>';
                     }
                 });
+            } else {
+                html += '<span class="kb-breadcrumb-separator">▶</span>';
+                html += '<span class="kb-breadcrumb-item" style="cursor:default;color:var(--text-muted);max-width:30px;">...</span>';
+                for (var i = currentPath.length - 2; i < currentPath.length; i++) {
+                    var folder = currentPath[i];
+                    html += '<span class="kb-breadcrumb-separator">▶</span>';
+                    if (i === currentPath.length - 1) {
+                        html += '<span class="kb-breadcrumb-item active">' + esc(folder.name) + '</span>';
+                    } else {
+                        html += '<span class="kb-breadcrumb-item" onclick="navigateTo(' + i + ')">' + esc(folder.name) + '</span>';
+                    }
+                }
+            }
+            
+            bc.innerHTML = html;
+        }
+
+        function navigateTo(index) {
+            if (index === -1) {
+                currentPath = [];
+            } else {
+                currentPath = currentPath.slice(0, index + 1);
+            }
+            renderBreadcrumb();
+            renderTable();
+        }
+
+        function getFolderObjectPath(id, list, currentPathAcc) {
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === id) return currentPathAcc.concat(list[i]);
+                if (list[i].isFolder) {
+                    var res = getFolderObjectPath(id, list[i].children, currentPathAcc.concat(list[i]));
+                    if (res) return res;
+                }
+            }
+            return null;
+        }
+
+        function enterFolder(folderId) {
+            if (document.body.classList.contains('multi-select')) return;
+            var fullPath = getFolderObjectPath(folderId, kbData, []);
+            if (fullPath) {
+                currentPath = fullPath;
+                renderBreadcrumb();
+                renderTable();
+            }
+        }
+
+        /* ═══════════════════════════════════════
+           Build menus
+        ═══════════════════════════════════════ */
+        function buildFolderMenu(folderId, parentFolderId) {
+            var html = '<div class="menu-item">' + SVG.download + '下载</div>'
+                + '<div class="menu-item" onclick="openRenameModal(event, \'folder\', ' + folderId + ')">' + SVG.rename + '重命名</div>';
+                
+            var folders = getAllFolders();
+            if (folders.length > 0 || parentFolderId) {
+                html += '<div class="menu-item submenu-trigger">' + SVG.move + '移动到'
+                html += '<div class="submenu">';
+                folders.forEach(function (f) {
+                    html += '<div class="submenu-item" onclick="openMoveFolderModal(event,' + folderId + ',' + f.id + ')">' + SVG.folderSm + esc(f.name) + '</div>';
+                });
+                if (parentFolderId) {
+                    html += '<div class="submenu-item" onclick="openMoveFolderModal(event,' + folderId + ', 0)">根目录</div>';
+                }
+                html += '</div></div>';
+            }
+
+            html += '<div class="menu-divider"></div>'
+                + '<div class="menu-item danger" onclick="openDeleteModal(event, \'folder\', ' + folderId + ')">' + SVG.del + '删除</div>';
+            return html;
+        }
+
+        function buildFileMenu(fileId, source, parentFolderId) {
+            var html = '<div class="menu-item">' + SVG.download + '下载</div>';
+            html += '<div class="menu-item" onclick="openRenameModal(event, \'file\', ' + fileId + ')">' + SVG.rename + '重命名</div>';
+            if (source === 'chat') html += '<div class="menu-item">' + SVG.chat + '回到对话</div>';
+
+            var folders = getAllFolders();
+            var targets = [];
+            folders.forEach(function (f) { if (f.id !== parentFolderId) targets.push(f); });
+            if (parentFolderId) targets.push({ id: 0, name: '根目录', _isRoot: true });
+
+            if (targets.length) {
+                html += '<div class="menu-item submenu-trigger">' + SVG.move + '移动到'
+                    + '<div class="submenu">';
+                targets.forEach(function (t) {
+                    var icon = t._isRoot ? '' : SVG.folderSm;
+                    html += '<div class="submenu-item" onclick="moveFile(event,' + fileId + ',' + t.id + ')">' + icon + esc(t.name) + '</div>';
+                });
+                html += '</div></div>';
+            }
+            html += '<div class="menu-divider"></div>';
+            html += '<div class="menu-item danger" onclick="openDeleteModal(event, \'file\', ' + fileId + ')">' + SVG.del + '删除</div>';
+            return html;
+        }
+
+        /* ═══════════════════════════════════════
+           Render Table
+        ═══════════════════════════════════════ */
+        function filterList(list) {
+            var isFiltered = !!(currentFilter.type || currentFilter.source || searchQuery);
+            if (!isFiltered) return list.slice();
+
+            var result = [];
+            list.forEach(function(item) {
+                if (item.isFolder) {
+                    var folderMatchesSearch = searchQuery ? item.name.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1 : false;
+                    var filteredChildren = filterList(item.children);
+                    
+                    if (folderMatchesSearch || filteredChildren.length > 0) {
+                        var cloned = Object.assign({}, item);
+                        cloned.children = filteredChildren;
+                        cloned._filterExpanded = true; 
+                        result.push(cloned);
+                    }
+                } else {
+                    var matchType = !currentFilter.type || item.type === currentFilter.type;
+                    var matchSource = !currentFilter.source || item.source === currentFilter.source;
+                    var matchSearch = !searchQuery || item.name.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1;
+                    if (matchType && matchSource && matchSearch) {
+                        result.push(item);
+                    }
+                }
+            });
+            return result;
+        }
+
+        function renderTable() {
+            var tbody = document.getElementById('kb-tbody');
+            var currentList = currentPath.length > 0 ? currentPath[currentPath.length - 1].children : kbData;
+            var filteredList = filterList(currentList);
+            var hasVisible = filteredList.length > 0;
+
+            function renderNodes(nodes, hiddenCls, depth, parentId) {
+                var items = nodes.map(function (item) {
+                    return { ref: item, sortName: item.name, sortTs: item.isFolder ? getFolderTs(item) : item.ts };
+                });
+
+                if (currentSort.field) {
+                    items.sort(function (a, b) {
+                        var va = (currentSort.field === 'name') ? a.sortName : a.sortTs;
+                        var vb = (currentSort.field === 'name') ? b.sortName : b.sortTs;
+                        var cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
+                        return currentSort.dir === 'desc' ? -cmp : cmp;
+                    });
+                }
+
+                var nodeHtml = '';
+                items.forEach(function (wrapper) {
+                    var item = wrapper.ref;
+                    var parentAttr = parentId ? ' data-parent="' + parentId + '"' : '';
+
+                    if (item.isFolder) {
+                        var isFiltered = !!(currentFilter.type || currentFilter.source || searchQuery);
+                        var isExpanded = isFiltered ? item._filterExpanded : item.expanded;
+                        var fCls = 'folder-row' + (isExpanded ? ' expanded' : '') + hiddenCls;
+                        if (item.isAnonymous) fCls += ' is-anonymous';
+                        var state = getFolderCheckState(item);
+                        var checkedStr = state === 2 ? ' checked' : '';
+                        var indetStr = state === 1 ? ' data-indeterminate="true"' : '';
+                        
+                        var folderSpacer = depth > 0 ? '<span style="display:inline-block; width:' + (depth * 22) + 'px; flex-shrink:0;"></span>' : '';
+
+                        nodeHtml += '<tr class="' + fCls + '" data-folder-id="' + item.id + '"' + parentAttr + ' onclick="handleRowClick(event, \'folder\', ' + item.id + ')" ondblclick="enterFolder(' + item.id + ')">'
+                            + '<td><div class="kb-cell-name">'
+                            + folderSpacer
+                            + '<span class="kb-chevron" onclick="handleFolderChevron(event, ' + item.id + ')" ondblclick="event.stopPropagation()">' + SVG.chevron + '</span>'
+                            + '<span class="kb-icon folder kb-icon-switchable">'
+                            + '<input type="checkbox" onclick="handleCheckClick(event, \'folder\', ' + item.id + ')"' + checkedStr + indetStr + ' />'
+                            + '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
+                            + '</span>'
+                            + '<span class="name-text">' + esc(item.name) + '</span>'
+                            + ' <span style="color:var(--text-muted);font-weight:400;font-size:12px;margin-left:4px;">(' + item.children.length + ')</span>'
+                            + '</div></td>'
+                            + '<td></td><td></td><td></td><td></td>'
+                            + '<td><div class="action-cell" onclick="event.stopPropagation()">'
+                            + (item.isAnonymous ?
+                                '<button class="act-btn anon-btn" onclick="toggleAnonymous(event, \'folder\', ' + item.id + ')" data-tooltip="仅AI助手可访问">' + SVG.eyeClosed + '</button>' :
+                                '<button class="act-btn anon-btn" onclick="toggleAnonymous(event, \'folder\', ' + item.id + ')" data-tooltip="AI助手和数字分身可访问">' + SVG.eyeOpen + '</button>')
+                            + '<button class="act-btn" onclick="addToChat(event, \'folder\', ' + item.id + ')" data-tooltip="添加到对话">' + SVG.chatAdd + '</button>'
+                            + '<button class="act-btn" onclick="toggleMoreMenu(event,' + item.id + ')" data-tooltip="更多">' + SVG.dots
+                            + '<div class="more-menu" id="menu-' + item.id + '">' + buildFolderMenu(item.id, parentId) + '</div>'
+                            + '</button></div></td></tr>';
+
+                        var childHidden = hiddenCls ? hiddenCls : (isExpanded ? '' : ' hidden');
+                        nodeHtml += renderNodes(item.children, childHidden, depth + 1, item.id);
+                    } else {
+                        var tm = TYPE_MAP[item.type] || { label: item.type, cls: '' };
+                        var sm = SOURCE_MAP[item.source] || { label: item.source, cls: '' };
+                        var checked = selectedFiles[item.id] ? ' checked' : '';
+                        var rCls = 'file-row child-row' + hiddenCls + (item.isAnonymous ? ' is-anonymous' : '');
+                        
+                        var fileSpacer = '<span style="display:inline-block; width:' + ((depth * 22) + 22) + 'px; flex-shrink:0;"></span>';
+
+                        nodeHtml += '<tr class="' + rCls + '" data-file-id="' + item.id + '"' + parentAttr + ' onclick="handleRowClick(event, \'file\', ' + item.id + ')" ondblclick="enterPreview(' + item.id + ')">'
+                            + '<td><div class="kb-cell-name">'
+                            + fileSpacer
+                            + '<span class="kb-icon ' + tm.cls + ' kb-icon-switchable">'
+                            + '<input type="checkbox" onclick="handleCheckClick(event, \'file\', ' + item.id + ')"' + checked + ' />'
+                            + fileIconSvg(item.type)
+                            + '</span>'
+                            + '<span class="name-text">' + esc(item.name) + '</span>'
+                            + '</div></td>'
+                            + '<td><span class="type-badge ' + tm.cls + '">' + tm.label + '</span></td>'
+                            + '<td><span class="source-badge ' + sm.cls + '">' + sm.label + '</span></td>'
+                            + '<td style="color:var(--text-secondary);">' + item.size + '</td>'
+                            + '<td style="color:var(--text-secondary);">' + item.time + '</td>'
+                            + '<td><div class="action-cell" onclick="event.stopPropagation()">'
+                            + (item.isAnonymous ?
+                                '<button class="act-btn anon-btn" onclick="toggleAnonymous(event, \'file\', ' + item.id + ')" data-tooltip="仅AI助手可访问">' + SVG.eyeClosed + '</button>' :
+                                '<button class="act-btn anon-btn" onclick="toggleAnonymous(event, \'file\', ' + item.id + ')" data-tooltip="AI助手和数字分身可访问">' + SVG.eyeOpen + '</button>')
+                            + '<button class="act-btn" onclick="addToChat(event, \'file\', ' + item.id + ')" data-tooltip="添加到对话">' + SVG.chatAdd + '</button>'
+                            + '<button class="act-btn" onclick="toggleMoreMenu(event,' + item.id + ')" data-tooltip="更多">' + SVG.dots
+                            + '<div class="more-menu" id="menu-' + item.id + '">' + buildFileMenu(item.id, item.source, parentId) + '</div>'
+                            + '</button></div></td></tr>';
+                    }
+                });
+                return nodeHtml;
+            }
+
+            tbody.innerHTML = renderNodes(filteredList, '', 0, null);
+            document.getElementById('kb-empty').style.display = hasVisible ? 'none' : 'block';
+
+            document.querySelectorAll('input[data-indeterminate="true"]').forEach(function (el) { el.indeterminate = true; });
+
+            updateSortArrows();
+            document.body.classList.toggle('multi-select', selectedCount > 0);
+        }
+
+        /* ═══════════════════════════════════════
+           Row Interactions & Multi-select
+        ═══════════════════════════════════════ */
+        function handleRowClick(e, type, id) {
+            if (document.body.classList.contains('multi-select')) {
+                e.preventDefault();
+                if (type === 'folder') toggleFolderSelect(id);
+                else toggleFileSelect(id);
+            } else {
+                document.querySelectorAll('tr.row-active').forEach(function (el) { el.classList.remove('row-active'); });
+                var row = e.currentTarget;
+                if (row) row.classList.add('row-active');
+                
+                if (document.body.classList.contains('preview-mode') && type === 'file') {
+                    enterPreview(id);
+                }
+            }
+        }
+
+        function handleCheckClick(e, type, id) {
+            e.stopPropagation();
+            if (type === 'folder') toggleFolderSelect(id);
+            else toggleFileSelect(id);
+        }
+
+        function handleFolderChevron(e, id) {
+            e.stopPropagation();
+            toggleFolder(id);
+        }
+
+        function toggleFolderSelect(folderId) {
+            var folder = findItemById(folderId, kbData);
+            if (!folder) return;
+            
+            var state = getFolderCheckState(folder);
+            var isChecked = state === 2;
+            
+            function setSelection(item, val) {
+                if (val) {
+                    if (!selectedFiles[item.id]) {
+                        selectedFiles[item.id] = true;
+                        selectedCount++;
+                    }
+                } else {
+                    if (selectedFiles[item.id]) {
+                        delete selectedFiles[item.id];
+                        selectedCount--;
+                    }
+                }
+                if (item.isFolder && item.children) {
+                    item.children.forEach(function(c) { setSelection(c, val); });
+                }
+            }
+            
+            setSelection(folder, !isChecked);
+            updateFolderSelectionStates(kbData);
+            
+            updateBatchBar();
+            document.body.classList.toggle('multi-select', selectedCount > 0);
+            renderTable();
+        }
+
+        function toggleFileSelect(fileId) {
+            if (selectedFiles[fileId]) { delete selectedFiles[fileId]; selectedCount--; }
+            else { selectedFiles[fileId] = true; selectedCount++; }
+            
+            updateFolderSelectionStates(kbData);
+            
+            updateBatchBar();
+            document.body.classList.toggle('multi-select', selectedCount > 0);
+            renderTable();
+        }
+
+        function cancelMultiSelect() {
+            selectedFiles = {}; selectedCount = 0;
+            updateBatchBar();
+            document.body.classList.remove('multi-select');
+            closeBatchMoveDd();
+            renderTable();
+        }
+
+        function getRootSelectedIds() {
+            var ids = Object.keys(selectedFiles).map(Number);
+            return ids.filter(function(id) {
+                return !ids.some(function(parentId) {
+                    return parentId !== id && isDescendant(id, parentId);
+                });
+            });
+        }
+
+        function updateBatchBar() {
+            var bar = document.getElementById('batch-bar');
+            bar.style.display = selectedCount > 0 ? 'flex' : 'none';
+            
+            var folderCount = 0;
+            var fileCount = 0;
+            var rootIds = getRootSelectedIds();
+            rootIds.forEach(function(fid) {
+                var item = findItemById(fid, kbData);
+                if (item) {
+                    if (item.isFolder) folderCount++;
+                    else fileCount++;
+                }
+            });
+            
+            var text = '已选择 ';
+            if (folderCount > 0 && fileCount > 0) {
+                text += folderCount + ' 个文件夹 + ' + fileCount + ' 个文件';
+            } else if (folderCount > 0) {
+                text += folderCount + ' 个文件夹';
+            } else {
+                text += fileCount + ' 个文件';
+            }
+            document.getElementById('batch-count').textContent = text;
+        }
+
+        function batchAction(action) {
+            var rootIds = getRootSelectedIds();
+            if (action === 'download') showToast('已开始下载 ' + rootIds.length + ' 个项目', 'success');
+            if (action === 'delete') {
+                var hasFolder = rootIds.some(function(fid) {
+                    var item = findItemById(fid, kbData);
+                    return item && item.isFolder;
+                });
+                if (hasFolder) {
+                    currentDeleteType = 'batch';
+                    var radios = document.getElementsByName('folder-delete-action');
+                    radios.forEach(function (r) { r.checked = false; });
+                    document.getElementById('btn-confirm-folder').disabled = true;
+                    var folderDesc = document.getElementById('delete-folder-desc');
+                    if (folderDesc) folderDesc.textContent = '选中的内容中包含文件夹，您希望怎么处理文件夹内的文件？';
+                    var folderTitle = document.getElementById('delete-folder-title');
+                    if (folderTitle) folderTitle.textContent = '确认删除';
+                    openModal('modal-delete-folder');
+                } else {
+                    currentDeleteType = 'batch';
+                    var desc = document.getElementById('delete-desc');
+                    if (desc) desc.textContent = '确定要删除选中的 ' + rootIds.length + ' 个项目吗？删除后不可恢复。';
+                    openModal('modal-delete');
+                }
+            }
+        }
+
+        /* ═══════════════════════════════════════
+           Batch move dropdown
+        ═══════════════════════════════════════ */
+        function toggleBatchMoveDd(e) {
+            e.stopPropagation();
+            var dd = document.getElementById('batch-move-dd');
+            if (dd.classList.contains('open')) { closeBatchMoveDd(); return; }
+
+            var html = '';
+            getAllFolders().forEach(function (f) {
+                html += '<div class="submenu-item" onclick="batchMove(event,' + f.id + ')">' + SVG.folderSm + esc(f.name) + '</div>';
+            });
+            html += '<div class="submenu-item" onclick="batchMove(event,0)">根目录</div>';
+            dd.innerHTML = html;
+            dd.classList.add('open');
+        }
+
+        function closeBatchMoveDd() {
+            var dd = document.getElementById('batch-move-dd');
+            if (dd) dd.classList.remove('open');
+        }
+
+        function isDescendant(childId, parentId) {
+            var parent = findItemById(parentId, kbData);
+            if (!parent || !parent.isFolder) return false;
+            return !!findItemById(childId, parent.children);
+        }
+
+        function batchMove(e, targetFolderId) {
+            e.stopPropagation();
+            var rootIds = getRootSelectedIds();
+            
+            for (var i = 0; i < rootIds.length; i++) {
+                var fid = rootIds[i];
+                var itemToMove = findItemById(fid, kbData);
+                if (itemToMove && targetFolderId !== 0 && itemToMove.isFolder) {
+                    if (fid === targetFolderId || isDescendant(targetFolderId, fid)) {
+                        showToast('无法将文件夹移动到其自身或子文件夹中', 'error');
+                        return;
+                    }
+                }
+            }
+
+            var hasFolder = rootIds.some(function(fid) {
+                var item = findItemById(fid, kbData);
+                return item && item.isFolder;
             });
 
-            // 隐私切换逻辑
-            document.querySelectorAll('.eye-toggle').forEach(eye => {
-                eye.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const item = eye.closest('.kb-file-item');
-                    item.classList.toggle('is-hidden');
-                    
-                    const previewBody = document.querySelector('.kb-preview-body');
-                    const previewTitle = document.querySelector('.kb-preview-title');
-                    
-                    if (item.classList.contains('active')) {
-                        if (item.classList.contains('is-hidden')) {
-                            previewBody.classList.add('blur-effect');
-                            previewTitle.classList.add('blur-effect');
+            var targetName = targetFolderId === 0 ? '根目录' : (findItemById(targetFolderId, kbData) || {}).name || '';
+
+            if (hasFolder) {
+                currentMoveType = 'batch';
+                currentTargetFolderId = targetFolderId;
+                var desc = document.getElementById('move-folder-desc');
+                if (desc) desc.textContent = '选中的内容包含文件夹，文件夹下的所有内容将一并移动到「' + targetName + '」，确定移动吗？';
+                openModal('modal-move-folder');
+            } else {
+                var moved = 0;
+                rootIds.forEach(function (fid) {
+                    var file = removeFileById(fid);
+                    if (!file) return;
+                    if (targetFolderId === 0) { kbData.push(file); }
+                    else {
+                        var folder = findItemById(targetFolderId, kbData);
+                        if (folder) { folder.children.push(file); folder.expanded = true; }
+                    }
+                    moved++;
+                });
+                cancelMultiSelect();
+                if (moved > 0) showToast('已将 ' + moved + ' 个项目移动到「' + targetName + '」', 'success');
+            }
+        }
+
+        /* ═══════════════════════════════════════
+           Preview Mode
+        ═══════════════════════════════════════ */
+        function enterPreview(fileId) {
+            var item = findItemById(fileId, kbData);
+            if (!item || item.isFolder) return;
+            
+            currentPreviewId = fileId;
+            document.body.classList.add('preview-mode');
+            document.getElementById('preview-panel').style.display = 'flex';
+            
+            var sm = SOURCE_MAP[item.source] || { label: item.source, cls: '' };
+            document.getElementById('preview-title').innerHTML = esc(item.name);
+            document.getElementById('preview-subtitle').innerHTML = '<span class="source-badge ' + sm.cls + '" style="margin-right:8px;">' + sm.label + '</span>' + item.size + ' • ' + item.time;
+            
+            var headerLeft = document.querySelector('.preview-header-left');
+            if (item.isAnonymous) {
+                headerLeft.classList.add('is-anonymous');
+            } else {
+                headerLeft.classList.remove('is-anonymous');
+            }
+            
+            var btnAnon = document.getElementById('preview-btn-anon');
+            var iconHtml = (item.isAnonymous ? SVG.eyeClosed : SVG.eyeOpen).replace('<svg ', '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;" ');
+            if (item.isAnonymous) {
+                btnAnon.innerHTML = iconHtml + '保密';
+                btnAnon.setAttribute('data-tooltip-bottom', '仅AI助手可访问');
+            } else {
+                btnAnon.innerHTML = iconHtml + '公开';
+                btnAnon.setAttribute('data-tooltip-bottom', 'AI助手和数字分身可访问');
+            }
+            
+            function findParentFolder(id, list, parentId) {
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].id === id) return parentId;
+                    if (list[i].isFolder) {
+                        var res = findParentFolder(id, list[i].children, list[i].id);
+                        if (res !== undefined) return res;
+                    }
+                }
+                return undefined;
+            }
+            var pId = findParentFolder(fileId, kbData, null);
+            document.getElementById('preview-more-menu').innerHTML = buildFileMenu(fileId, item.source, pId);
+            
+            var content = document.getElementById('preview-content');
+            if (item.type === 'text' || item.type === 'doc') {
+                content.innerHTML = '<div class="markdown-body"><h1>' + esc(item.name) + '</h1><p>这里是文件的预览内容。这是模拟的 Markdown 渲染效果。</p><h2>内容概要</h2><ul><li>支持实时展示文件正文</li><li>提供沉浸式的阅读体验</li></ul><p>文件大小：' + item.size + '，最后更新于：' + item.time + '</p></div>';
+            } else {
+                content.innerHTML = '<div class="preview-unsupported"><div style="font-size:48px; margin-bottom:16px;">📄</div><p style="margin-bottom: 8px;font-size:15px;font-weight:500;color:var(--text-primary);">当前格式暂不支持预览</p><p style="font-size:13px;"><span class="feedback-link" onclick="openFeedbackModal()">反馈给我们</span></p></div>';
+            }
+            
+            document.querySelectorAll('tr.row-active').forEach(function (el) { el.classList.remove('row-active'); });
+            var row = document.querySelector('tr[data-file-id="' + fileId + '"]');
+            if (row) row.classList.add('row-active');
+            
+            updateSortArrows();
+        }
+
+        function exitPreview() {
+            currentPreviewId = null;
+            document.body.classList.remove('preview-mode');
+            document.getElementById('preview-panel').style.display = 'none';
+        }
+        
+        function togglePreviewAnonymous() {
+            if (currentPreviewId) {
+                var item = findItemById(currentPreviewId, kbData);
+                if (item) {
+                    item.isAnonymous = !item.isAnonymous;
+                    enterPreview(currentPreviewId);
+                    renderTable();
+                }
+            }
+        }
+        
+        function addToChatFromPreview() {
+            if (currentPreviewId) {
+                addToChat({stopPropagation: function(){}}, 'file', currentPreviewId);
+            }
+        }
+        
+        function togglePreviewMoreMenu(e) {
+            e.stopPropagation();
+            var menu = document.getElementById('preview-more-menu');
+            var isOpen = menu.classList.contains('open');
+            document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+            if (!isOpen) menu.classList.add('open');
+        }
+
+        function openFeedbackModal() {
+            document.getElementById('feedback-input').value = '';
+            openModal('modal-feedback');
+            setTimeout(function () { document.getElementById('feedback-input').focus(); }, 80);
+        }
+        
+        function confirmFeedback() {
+            var val = document.getElementById('feedback-input').value.trim();
+            if (!val) { showToast('请输入您希望支持的格式', 'error'); return; }
+            closeModal('modal-feedback');
+            showToast('感谢您的反馈！', 'success');
+        }
+
+        /* ═══════════════════════════════════════
+           Sort & Filter
+        ═══════════════════════════════════════ */
+        function toggleSort(field) {
+            if (currentSort.field === field) {
+                currentSort.dir = currentSort.dir === 'asc' ? 'desc' : currentSort.dir === 'desc' ? null : 'asc';
+                if (!currentSort.dir) currentSort.field = null;
+            } else { currentSort.field = field; currentSort.dir = 'asc'; }
+            renderTable();
+        }
+        function updateSortArrows() {
+            ['name', 'time'].forEach(function (f) {
+                var a = document.getElementById('sort-' + f + '-asc'), d = document.getElementById('sort-' + f + '-desc');
+                if (a) a.classList.toggle('active', currentSort.field === f && currentSort.dir === 'asc');
+                if (d) d.classList.toggle('active', currentSort.field === f && currentSort.dir === 'desc');
+            });
+        }
+
+        function toggleFilterDropdown(key) {
+            var dd = document.getElementById('dropdown-' + key), th = document.getElementById('th-' + key);
+            var isOpen = dd.classList.contains('open');
+            closeAllDropdowns();
+            if (!isOpen) { dd.classList.add('open'); th.classList.add('open'); }
+        }
+        function selectFilter(e, key, value) {
+            e.stopPropagation();
+            currentFilter[key] = value;
+            var dd = document.getElementById('dropdown-' + key);
+            dd.querySelectorAll('.filter-item').forEach(function (el) { el.classList.toggle('active', el.getAttribute('data-value') === value); });
+            var th = document.getElementById('th-' + key);
+            var label = value ? dd.querySelector('[data-value="' + value + '"]').textContent : (key === 'type' ? '全部类型' : '全部来源');
+            th.childNodes[0].textContent = label + ' ';
+            th.classList.toggle('filtered', !!value);
+            dd.classList.remove('open'); th.classList.remove('open');
+            renderTable();
+        }
+        function handleSearch() { searchQuery = document.getElementById('kb-search-input').value.trim(); renderTable(); }
+
+        /* ═══════════════════════════════════════
+           Folder toggle & More Menu
+        ═══════════════════════════════════════ */
+        function toggleFolder(id) {
+            var f = findItemById(id, kbData);
+            if (f) {
+                var isFiltered = !!(currentFilter.type || currentFilter.source || searchQuery);
+                var isExpanded;
+                if (isFiltered) {
+                    if (typeof f._filterExpanded === 'undefined') f._filterExpanded = true;
+                    f._filterExpanded = !f._filterExpanded;
+                    isExpanded = f._filterExpanded;
+                } else {
+                    f.expanded = !f.expanded;
+                    isExpanded = f.expanded;
+                }
+
+                // Toggle DOM classes directly to prevent complete recreation of the table body (which causes hover flashes)
+                var folderRow = document.querySelector('tr[data-folder-id="' + id + '"]');
+                if (folderRow) {
+                    folderRow.classList.toggle('expanded', isExpanded);
+                }
+                
+                function setVisibility(parentId, visible) {
+                    var childRows = document.querySelectorAll('tr[data-parent="' + parentId + '"]');
+                    childRows.forEach(function (row) {
+                        if (visible) {
+                            row.classList.remove('hidden');
+                            if (row.hasAttribute('data-folder-id') && row.classList.contains('expanded')) {
+                                setVisibility(row.getAttribute('data-folder-id'), true);
+                            }
                         } else {
-                            previewBody.classList.remove('blur-effect');
-                            previewTitle.classList.remove('blur-effect');
+                            row.classList.add('hidden');
+                            if (row.hasAttribute('data-folder-id')) {
+                                setVisibility(row.getAttribute('data-folder-id'), false);
+                            }
+                        }
+                    });
+                }
+                
+                setVisibility(id, isExpanded);
+            }
+        }
+
+        function toggleMoreMenu(e, id) {
+            e.stopPropagation();
+            var menu = document.getElementById('menu-' + id);
+            var isOpen = menu.classList.contains('open');
+            document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+            document.querySelectorAll('tr.row-active').forEach(function (el) { el.classList.remove('row-active'); });
+            if (!isOpen) {
+                menu.classList.add('open');
+                var tr = menu.closest('tr');
+                if (tr) tr.classList.add('row-active');
+            }
+        }
+
+        function moveFile(e, fileId, targetFolderId) {
+            e.stopPropagation();
+            var file = removeFileById(fileId);
+            if (!file) return;
+            if (targetFolderId === 0) { kbData.push(file); }
+            else {
+                var folder = findItemById(targetFolderId, kbData);
+                if (folder) { folder.children.push(file); folder.expanded = true; }
+            }
+            document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+            renderTable();
+            var targetName = targetFolderId === 0 ? '根目录' : findItemById(targetFolderId, kbData).name;
+            showToast('已移动到「' + targetName + '」', 'success');
+        }
+
+        /* ═══════════════════════════════════════
+           Add to Chat
+        ═══════════════════════════════════════ */
+        function addToChat(e, type, id) {
+            e.stopPropagation();
+            var refName = '';
+            var refType = type;
+            var res = findItemAndPath(id, kbData, []);
+            if (res) {
+                refName = res.path.length > 0 ? (res.path.join('/') + '/' + res.item.name) : res.item.name;
+                refType = res.item.isFolder ? 'folder' : res.item.type;
+            }
+
+            if (refName) {
+                document.getElementById('kb-page').classList.add('hidden');
+                document.getElementById('chat-page').classList.add('active');
+
+                var chatEditor = document.getElementById('chat-input');
+                chatEditor.innerHTML = '';
+
+                var span = document.createElement('span');
+                span.className = 'inline-ref-chip ' + refType;
+                span.contentEditable = 'false';
+
+                var iconSvg = refType === 'folder' ? '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' : fileIconSvg(refType);
+                span.innerHTML = iconSvg + ' ' + esc(refName);
+
+                chatEditor.appendChild(span);
+                chatEditor.appendChild(document.createTextNode('\u00A0'));
+
+                chatEditor.focus();
+
+                var range = document.createRange();
+                range.selectNodeContents(chatEditor);
+                range.collapse(false);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+
+        function backToKb() {
+            document.getElementById('chat-page').classList.remove('active');
+            document.getElementById('kb-page').classList.remove('hidden');
+        }
+
+        /* ═══════════════════════════════════════
+           Modals & Global clicks
+        ═══════════════════════════════════════ */
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        function handleOverlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+
+        function showToast(msg, type) {
+            var el = document.createElement('div'); el.className = 'toast ' + (type || 'info'); el.textContent = msg;
+            document.getElementById('toast-container').appendChild(el);
+            setTimeout(function () { el.style.animation = 'toastOut 0.3s forwards'; setTimeout(function () { el.remove(); }, 300); }, 2500);
+        }
+
+        function openFolderModal() {
+            document.getElementById('folder-name').value = '';
+            openModal('modal-folder');
+            setTimeout(function () { document.getElementById('folder-name').focus(); }, 80);
+        }
+        function confirmNewFolder() {
+            var name = document.getElementById('folder-name').value.trim();
+            if (!name) { showToast('请输入文件夹名称', 'error'); return; }
+            
+            var targetList = currentPath.length > 0 ? currentPath[currentPath.length - 1].children : kbData;
+            targetList.unshift({ id: ++idCounter, isFolder: true, name: name, expanded: true, children: [] });
+            
+            renderTable(); closeModal('modal-folder'); showToast('文件夹「' + name + '」创建成功', 'success');
+        }
+
+        var uploadFiles = [];
+        function openUploadModal() { uploadFiles = []; document.getElementById('upload-file-list').innerHTML = ''; document.getElementById('upload-file-input').value = ''; openModal('modal-upload'); }
+        function handleUploadFile(e) { uploadFiles = Array.from(e.target.files); renderUploadList(); }
+        function renderUploadList() { document.getElementById('upload-file-list').innerHTML = uploadFiles.map(function (f) { return '📎 ' + esc(f.name) + '（' + (f.size / 1024).toFixed(1) + ' KB）'; }).join('<br>'); }
+        function confirmUpload() {
+            if (!uploadFiles.length) { showToast('请先选择文件', 'error'); return; }
+            var now = new Date();
+            var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            var ts = parseFloat(String(now.getFullYear()) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + '.' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0'));
+            
+            var targetList = currentPath.length > 0 ? currentPath[currentPath.length - 1].children : kbData;
+            
+            uploadFiles.forEach(function (f) {
+                var ext = f.name.split('.').pop().toLowerCase();
+                var type = ['xlsx', 'xls', 'csv'].indexOf(ext) >= 0 ? 'table' : ['doc', 'docx', 'pdf'].indexOf(ext) >= 0 ? 'doc' : 'text';
+                targetList.push({ id: ++idCounter, name: f.name, type: type, source: 'upload', size: f.size > 1048576 ? (f.size / 1048576).toFixed(1) + ' MB' : (f.size / 1024).toFixed(1) + ' KB', time: timeStr, ts: ts });
+            });
+            renderTable(); closeModal('modal-upload'); showToast('成功上传 ' + uploadFiles.length + ' 个文件', 'success');
+        }
+        (function () {
+            var dz = document.getElementById('upload-drop-zone');
+            dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.classList.add('dragover'); });
+            dz.addEventListener('dragleave', function () { dz.classList.remove('dragover'); });
+            dz.addEventListener('drop', function (e) { e.preventDefault(); dz.classList.remove('dragover'); uploadFiles = Array.from(e.dataTransfer.files); renderUploadList(); });
+        })();
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.filter-dropdown').forEach(function (el) { el.classList.remove('open'); });
+            document.querySelectorAll('.filterable').forEach(function (el) { el.classList.remove('open'); });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.filterable')) closeAllDropdowns();
+            if (!e.target.closest('.act-btn')) {
+                document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+                if (!e.target.closest('.kb-table tbody tr')) {
+                    document.querySelectorAll('tr.row-active').forEach(function (el) { el.classList.remove('row-active'); });
+                }
+            }
+            if (!e.target.closest('.batch-move-wrap')) closeBatchMoveDd();
+        });
+
+        var refState = {
+            active: false,
+            path: [], 
+            items: [], 
+            search: '',
+            selectedIndex: 0,
+            contextNode: null,
+            contextStart: 0,
+            contextEnd: 0
+        };
+
+        function getHashContext() {
+            var sel = window.getSelection();
+            if (!sel.rangeCount) return null;
+            var range = sel.getRangeAt(0);
+            var chatInput = document.getElementById('chat-input');
+            if (!chatInput.contains(range.startContainer)) return null;
+
+            var node = range.startContainer;
+            if (node.nodeType !== 3) return null; 
+            
+            var textBeforeCursor = node.textContent.substring(0, range.startOffset);
+            var match = /(^|\s)#([^\s]*)$/.exec(textBeforeCursor);
+            if (match) {
+                return {
+                    node: node,
+                    offsetStart: range.startOffset - match[2].length - 1, 
+                    offsetEnd: range.startOffset,
+                    search: match[2]
+                };
+            }
+            return null;
+        }
+
+        function checkHashContext() {
+            var ctx = getHashContext();
+            if (ctx) {
+                if (!refState.active) {
+                    refState.active = true;
+                    refState.path = [];
+                }
+                refState.contextNode = ctx.node;
+                refState.contextStart = ctx.offsetStart;
+                refState.contextEnd = ctx.offsetEnd;
+                refState.search = ctx.search;
+                updateRefMenuItems();
+            } else {
+                closeRefMenu();
+            }
+        }
+
+        function closeRefMenu() {
+            refState.active = false;
+            document.getElementById('ref-menu').classList.remove('active');
+        }
+
+        function updateRefMenuItems() {
+            var list = refState.path.length > 0 ? refState.path[refState.path.length - 1].children : kbData;
+            var searchLower = refState.search.toLowerCase();
+            
+            refState.items = list.filter(function(item) {
+                return item.name.toLowerCase().indexOf(searchLower) !== -1;
+            });
+
+            refState.selectedIndex = 0;
+            renderRefMenu();
+        }
+
+        function renderRefMenu() {
+            var menu = document.getElementById('ref-menu');
+            if (!refState.active) {
+                menu.classList.remove('active');
+                return;
+            }
+            
+            var html = '';
+            
+            if (refState.path.length > 0) {
+                html += '<div class="ref-menu-item" style="color:var(--text-muted);" onmousedown="event.preventDefault(); refMenuGoBack()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> 返回上一级</div>';
+            }
+            
+            if (refState.items.length === 0) {
+                html += '<div style="padding: 8px 14px; color: var(--text-muted); font-size: 13px;">无匹配结果</div>';
+            } else {
+                refState.items.forEach(function(item, idx) {
+                    var iconWrapperClass = 'kb-icon ' + (item.isFolder ? 'folder' : item.type);
+                    var iconSvgHtml = item.isFolder ? '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' : fileIconSvg(item.type);
+                    
+                    var highlight = idx === refState.selectedIndex ? ' highlighted' : '';
+                    html += '<div class="ref-menu-item' + highlight + '" onmousedown="event.preventDefault(); refMenuClick(' + idx + ')">';
+                    html += '<span class="' + iconWrapperClass + '" style="margin-right:8px; flex-shrink:0;">' + iconSvgHtml + '</span>';
+                    html += '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(item.name) + '</span>';
+                    if (item.isFolder) {
+                        html += '<svg style="margin-left:auto;stroke:var(--text-muted);width:14px;height:14px;fill:none;stroke-width:2;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+                    }
+                    html += '</div>';
+                });
+            }
+            
+            menu.innerHTML = html;
+            menu.classList.add('active');
+        }
+
+        function refMenuGoBack() {
+            refState.path.pop();
+            refState.search = ''; 
+            var node = refState.contextNode;
+            var text = node.textContent;
+            var newText = text.substring(0, refState.contextStart) + '#' + text.substring(refState.contextEnd);
+            node.textContent = newText;
+            
+            var sel = window.getSelection();
+            var range = document.createRange();
+            range.setStart(node, refState.contextStart + 1); 
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+
+            refState.contextEnd = refState.contextStart + 1;
+            updateRefMenuItems();
+            document.getElementById('chat-input').focus();
+        }
+
+        function refMenuClick(idx) {
+            refState.selectedIndex = idx;
+            confirmRefSelection(false);
+        }
+
+        function confirmRefSelection(forceInsert) {
+            var item = refState.items[refState.selectedIndex];
+            if (!item) return;
+
+            if (item.isFolder && !forceInsert) {
+                refState.path.push(item);
+                
+                var node = refState.contextNode;
+                var text = node.textContent;
+                var newText = text.substring(0, refState.contextStart) + '#' + text.substring(refState.contextEnd);
+                node.textContent = newText;
+                
+                var sel = window.getSelection();
+                var range = document.createRange();
+                range.setStart(node, refState.contextStart + 1); 
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                
+                refState.search = '';
+                refState.contextEnd = refState.contextStart + 1; 
+                updateRefMenuItems();
+            } else {
+                insertRefChip(item);
+            }
+        }
+
+        function insertRefChip(item) {
+            var node = refState.contextNode;
+            var text = node.textContent;
+            
+            var beforeText = text.substring(0, refState.contextStart);
+            var afterText = text.substring(refState.contextEnd);
+            
+            node.textContent = beforeText;
+            
+            var span = document.createElement('span');
+            span.className = 'inline-ref-chip ' + (item.isFolder ? 'folder' : item.type);
+            span.contentEditable = 'false';
+            var iconSvg = item.isFolder ? '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' : fileIconSvg(item.type);
+            
+            var fullPathName = '';
+            refState.path.forEach(function(f) { fullPathName += f.name + '/'; });
+            fullPathName += item.name;
+
+            span.innerHTML = iconSvg + ' ' + esc(fullPathName);
+            
+            var afterNode = document.createTextNode(afterText);
+            var parent = node.parentNode;
+            
+            if (node.nextSibling) {
+                parent.insertBefore(span, node.nextSibling);
+            } else {
+                parent.appendChild(span);
+            }
+            
+            var spaceNode = document.createTextNode('\u00A0');
+            parent.insertBefore(spaceNode, span.nextSibling);
+            parent.insertBefore(afterNode, spaceNode.nextSibling);
+            
+            var sel = window.getSelection();
+            var range = document.createRange();
+            range.setStart(spaceNode, 1);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            
+            closeRefMenu();
+        }
+
+        var chatEditor = document.getElementById('chat-input');
+        
+        chatEditor.addEventListener('input', function(e) {
+            checkHashContext();
+        });
+
+        chatEditor.addEventListener('keydown', function (e) {
+            if (refState.active) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (refState.items.length > 0) {
+                        refState.selectedIndex = (refState.selectedIndex + 1) % refState.items.length;
+                        renderRefMenu();
+                    }
+                    return;
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (refState.items.length > 0) {
+                        refState.selectedIndex = (refState.selectedIndex - 1 + refState.items.length) % refState.items.length;
+                        renderRefMenu();
+                    }
+                    return;
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmRefSelection(false);
+                    return;
+                } else if (e.key === ' ') {
+                    if (refState.items.length > 0) {
+                        e.preventDefault();
+                        confirmRefSelection(true);
+                        return;
+                    } else {
+                        closeRefMenu();
+                    }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeRefMenu();
+                    return;
+                }
+            }
+
+            if (e.key === 'Backspace') {
+                var sel = window.getSelection();
+                if (sel.rangeCount > 0 && sel.isCollapsed) {
+                    var range = sel.getRangeAt(0);
+                    var container = range.startContainer;
+                    var offset = range.startOffset;
+                    var prevNode = null;
+
+                    if (container === this && offset > 0) {
+                        prevNode = this.childNodes[offset - 1];
+                    } else if (container.nodeType === 3 && offset === 0) {
+                        prevNode = container.previousSibling;
+                    }
+
+                    if (prevNode && prevNode.nodeType === 1 && prevNode.classList.contains('inline-ref-chip')) {
+                        if (!prevNode.classList.contains('highlighted')) {
+                            e.preventDefault();
+                            document.querySelectorAll('.inline-ref-chip.highlighted').forEach(function (el) { el.classList.remove('highlighted'); });
+                            prevNode.classList.add('highlighted');
+                        } else {
+                            e.preventDefault();
+                            prevNode.parentNode.removeChild(prevNode);
+                            setTimeout(checkHashContext, 0);
+                        }
+                        return;
+                    } else {
+                        document.querySelectorAll('.inline-ref-chip.highlighted').forEach(function (el) { el.classList.remove('highlighted'); });
+                    }
+                }
+            } else {
+                document.querySelectorAll('.inline-ref-chip.highlighted').forEach(function (el) { el.classList.remove('highlighted'); });
+            }
+        });
+
+        chatEditor.addEventListener('mousedown', function () {
+            document.querySelectorAll('.inline-ref-chip.highlighted').forEach(function (el) { el.classList.remove('highlighted'); });
+            setTimeout(checkHashContext, 0);
+        });
+
+        var currentRenameType = null;
+        var currentRenameId = null;
+
+        function openRenameModal(e, type, id) {
+            e.stopPropagation();
+            currentRenameType = type;
+            currentRenameId = id;
+            document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+
+            var item = findItemById(id, kbData);
+            var name = item ? item.name : '';
+            var ext = '';
+
+            if (item && !item.isFolder) {
+                var lastDotIndex = name.lastIndexOf('.');
+                if (lastDotIndex > 0) {
+                    ext = name.substring(lastDotIndex);
+                    name = name.substring(0, lastDotIndex);
+                }
+            }
+
+            document.getElementById('rename-input').value = name;
+            var extEl = document.getElementById('rename-ext');
+            if (ext) {
+                extEl.textContent = ext;
+                extEl.style.display = 'block';
+            } else {
+                extEl.textContent = '';
+                extEl.style.display = 'none';
+            }
+            openModal('modal-rename');
+            setTimeout(function () { document.getElementById('rename-input').focus(); }, 80);
+        }
+
+        function confirmRename() {
+            var newName = document.getElementById('rename-input').value.trim();
+            if (!newName) { showToast('请输入名称', 'error'); return; }
+
+            var extEl = document.getElementById('rename-ext');
+            var ext = extEl.style.display !== 'none' ? extEl.textContent : '';
+            var fullName = newName + ext;
+
+            var item = findItemById(currentRenameId, kbData);
+            if (item) {
+                item.name = fullName;
+                renderTable();
+                closeModal('modal-rename');
+                showToast('重命名成功', 'success');
+                if (document.body.classList.contains('preview-mode') && currentPreviewId === currentRenameId) {
+                    enterPreview(currentPreviewId);
+                }
+            }
+        }
+
+        var currentDeleteType = null;
+        var currentDeleteId = null;
+        var currentMoveType = null;
+        var currentMoveFolderId = null;
+        var currentTargetFolderId = null;
+
+        function openMoveFolderModal(e, folderId, targetFolderId) {
+            e.stopPropagation();
+            var itemToMove = findItemById(folderId, kbData);
+            if (itemToMove && targetFolderId !== 0) {
+                if (folderId === targetFolderId || isDescendant(targetFolderId, folderId)) {
+                    showToast('无法将文件夹移动到其自身或子文件夹中', 'error');
+                    return;
+                }
+            }
+            var targetName = targetFolderId === 0 ? '根目录' : (findItemById(targetFolderId, kbData) || {}).name || '';
+            currentMoveType = 'single';
+            currentMoveFolderId = folderId;
+            currentTargetFolderId = targetFolderId;
+            var desc = document.getElementById('move-folder-desc');
+            if (desc) desc.textContent = '该文件夹下的所有内容将一并移动到「' + targetName + '」，确定移动吗？';
+            
+            document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+            openModal('modal-move-folder');
+        }
+
+        function confirmMoveFolder() {
+            if (currentMoveType === 'single') {
+                var file = removeFileById(currentMoveFolderId);
+                if (file) {
+                    if (currentTargetFolderId === 0) {
+                        kbData.push(file);
+                    } else {
+                        var folder = findItemById(currentTargetFolderId, kbData);
+                        if (folder) {
+                            folder.children.push(file);
+                            folder.expanded = true;
+                        }
+                    }
+                    renderTable();
+                    var targetName = currentTargetFolderId === 0 ? '根目录' : (findItemById(currentTargetFolderId, kbData) || {}).name || '';
+                    showToast('已移动到「' + targetName + '」', 'success');
+                }
+            } else if (currentMoveType === 'batch') {
+                var rootIds = getRootSelectedIds();
+                var moved = 0;
+                rootIds.forEach(function (fid) {
+                    var file = removeFileById(fid);
+                    if (!file) return;
+                    if (currentTargetFolderId === 0) { kbData.push(file); }
+                    else {
+                        var folder = findItemById(currentTargetFolderId, kbData);
+                        if (folder) { folder.children.push(file); folder.expanded = true; }
+                    }
+                    moved++;
+                });
+                var targetName = currentTargetFolderId === 0 ? '根目录' : (findItemById(currentTargetFolderId, kbData) || {}).name || '';
+                renderTable();
+                cancelMultiSelect();
+                if (moved > 0) showToast('已将 ' + moved + ' 个项目移动到「' + targetName + '」', 'success');
+            }
+            closeModal('modal-move-folder');
+        }
+
+        function openDeleteModal(e, type, id) {
+            e.stopPropagation();
+            currentDeleteType = type;
+            currentDeleteId = id;
+            document.querySelectorAll('.more-menu').forEach(function (el) { el.classList.remove('open'); });
+
+            if (type === 'folder') {
+                var radios = document.getElementsByName('folder-delete-action');
+                radios.forEach(function (r) { r.checked = false; });
+                document.getElementById('btn-confirm-folder').disabled = true;
+                var folderDesc = document.getElementById('delete-folder-desc');
+                if (folderDesc) folderDesc.textContent = '删除文件夹时，您希望如何处理文件夹中的内容？';
+                var folderTitle = document.getElementById('delete-folder-title');
+                if (folderTitle) folderTitle.textContent = '确认删除';
+                openModal('modal-delete-folder');
+            } else {
+                var desc = document.getElementById('delete-desc');
+                if (desc) desc.textContent = '确定要删除该项吗？删除后不可恢复。';
+                openModal('modal-delete');
+            }
+        }
+
+        function confirmDelete() {
+            if (currentDeleteType === 'file') {
+                removeFileById(currentDeleteId);
+                renderTable();
+                closeModal('modal-delete');
+                showToast('已删除文件', 'success');
+                if (document.body.classList.contains('preview-mode') && currentPreviewId === currentDeleteId) {
+                    exitPreview();
+                }
+            } else if (currentDeleteType === 'batch') {
+                var rootIds = getRootSelectedIds();
+                rootIds.forEach(function (fid) { removeFileById(fid); });
+                renderTable();
+                closeModal('modal-delete');
+                showToast('已删除 ' + rootIds.length + ' 个项目', 'success');
+                if (document.body.classList.contains('preview-mode') && rootIds.indexOf(currentPreviewId) !== -1) {
+                    exitPreview();
+                }
+                cancelMultiSelect();
+            }
+        }
+
+        function confirmDeleteFolder() {
+            var action = document.querySelector('input[name="folder-delete-action"]:checked').value;
+            
+            function findParentListAndIndex(id, list) {
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].id === id) return { list: list, index: i };
+                    if (list[i].isFolder) {
+                        var res = findParentListAndIndex(id, list[i].children);
+                        if (res) return res;
+                    }
+                }
+                return null;
+            }
+
+            if (currentDeleteType === 'batch') {
+                var rootIds = getRootSelectedIds();
+                var count = rootIds.length;
+                rootIds.forEach(function(fid) {
+                    var pInfo = findParentListAndIndex(fid, kbData);
+                    if (pInfo) {
+                        var item = pInfo.list[pInfo.index];
+                        if (item.isFolder && action === 'move') {
+                            var childrenFiles = item.children || [];
+                            pInfo.list.splice(pInfo.index, 1);
+                            Array.prototype.push.apply(pInfo.list, childrenFiles);
+                        } else {
+                            pInfo.list.splice(pInfo.index, 1);
+                        }
+                        
+                        var pathIdx = currentPath.findIndex(function(p) { return p.id === fid; });
+                        if (pathIdx >= 0) {
+                            currentPath = currentPath.slice(0, pathIdx);
+                            renderBreadcrumb();
                         }
                     }
                 });
-            });
+                renderTable();
+                closeModal('modal-delete-folder');
+                showToast('已删除 ' + count + ' 个项目', 'success');
+                cancelMultiSelect();
+                return;
+            }
+
+            var parentInfo = findParentListAndIndex(currentDeleteId, kbData);
+            if (parentInfo) {
+                var folder = parentInfo.list[parentInfo.index];
+                if (action === 'move') {
+                    var files = folder.children || [];
+                    parentInfo.list.splice(parentInfo.index, 1);
+                    Array.prototype.push.apply(parentInfo.list, files);
+                    showToast('已删除文件夹，文件移至上级目录', 'success');
+                } else {
+                    parentInfo.list.splice(parentInfo.index, 1);
+                    showToast('已删除文件夹及其包含的文件', 'success');
+                }
+                
+                var inPathIndex = currentPath.findIndex(function(p) { return p.id === currentDeleteId; });
+                if (inPathIndex >= 0) {
+                    currentPath = currentPath.slice(0, inPathIndex);
+                    renderBreadcrumb();
+                }
+                
+                renderTable();
+            }
+            closeModal('modal-delete-folder');
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            renderBreadcrumb();
+            renderTable();
         });
     </script>
 </body>
+
 </html>
