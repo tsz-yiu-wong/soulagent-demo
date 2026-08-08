@@ -456,6 +456,9 @@
     </div>
 
     <script>
+        // Reset agent name on landing page to ensure fresh start
+        localStorage.removeItem('agentName');
+        
         function showLogin() {
             document.querySelector('.hero').classList.add('shrink');
             document.querySelector('.features').classList.add('hide');
@@ -464,7 +467,7 @@
             const btn = document.querySelector('.claim-button');
             btn.textContent = '登录 / 注册';
             btn.onclick = function () {
-                window.location.href = 'survey.html';
+                window.location.href = 'agent.html';
             };
         }
     </script>

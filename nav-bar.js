@@ -13,13 +13,17 @@ class NavBar extends HTMLElement {
         window.addEventListener('user-mode-changed', () => {
             this.render(this.getAttribute('active'));
         });
+        window.addEventListener('agent-name-changed', () => {
+            this.render(this.getAttribute('active'));
+        });
     }
 
     render(activeTab) {
         const theme = this.getAttribute('theme') || 'light';
         const userMode = localStorage.getItem('userMode') || 'normal';
         const isExpert = userMode.startsWith('expert');
-        const agentTabName = (userMode === 'expert') ? 'AI助手' : '小小曜';
+        const agentName = localStorage.getItem('agentName') || 'AI助手';
+        const agentTabName = agentName;
         const twinTab = isExpert ? `<a href="twin-manage.html" class="nav-tab ${activeTab === 'twin-manage' ? 'active' : ''}">我的分身</a>` : '';
 
         this.shadowRoot.innerHTML = `

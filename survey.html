@@ -541,6 +541,9 @@
     </div>
 
     <script>
+        // Reset agent name on survey start
+        localStorage.removeItem('agentName');
+
         const btn3 = document.getElementById('btn3');
         const radios = document.querySelectorAll('input[name="q3"]');
         radios.forEach(radio => {
@@ -644,8 +647,12 @@
                 overlay.offsetHeight; // force reflow
                 overlay.classList.add('active');
 
+                // Save to localStorage
+                const agentName = agentInput.value.trim();
+                localStorage.setItem('agentName', agentName);
+
                 // Prepare certificate data
-                document.getElementById('cert-agent-name').textContent = agentInput.value.trim();
+                document.getElementById('cert-agent-name').textContent = agentName;
                 document.getElementById('cert-user-name').textContent = userInput.value.trim();
                 document.getElementById('cert-date').textContent = new Date().toISOString().split('T')[0];
 

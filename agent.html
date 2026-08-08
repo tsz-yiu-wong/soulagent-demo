@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoulAgent - 小小曜</title>
+    <title>SoulAgent</title>
     <script src="nav-bar.js"></script>
     <style>
         :root {
-            --primary-color: #F37021; /* 爱马仕橙 */
+            --primary-color: #F37021;
+            /* 爱马仕橙 */
             --bg-color: #FFFBF9;
             --text-color: #333333;
             --border-color: #FEE7DB;
             --radius-md: 16px;
         }
 
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -101,9 +104,18 @@
             padding-right: 4px;
         }
 
-        .history-list::-webkit-scrollbar { width: 4px; }
-        .history-list::-webkit-scrollbar-track { background: transparent; }
-        .history-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        .history-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
 
         .history-item {
             display: flex;
@@ -297,7 +309,8 @@
             border: 2px solid var(--border-color);
             padding: 12px 18px;
             border-radius: 18px;
-            border-top-right-radius: 4px; /* Slightly rounded right angle for user */
+            border-top-right-radius: 4px;
+            /* Slightly rounded right angle for user */
             max-width: 85%;
             color: var(--text-color);
             font-size: 15px;
@@ -313,7 +326,8 @@
             margin-top: 6px;
             color: #9CA3AF;
             font-size: 12px;
-            margin-right: 48px; /* Offset for avatar width + gap */
+            margin-right: 48px;
+            /* Offset for avatar width + gap */
         }
 
         .user-message-row {
@@ -346,7 +360,10 @@
             justify-content: center;
         }
 
-        .meta-btn svg { width: 14px; height: 14px; }
+        .meta-btn svg {
+            width: 14px;
+            height: 14px;
+        }
 
         /* Agent 消息容器 */
         .agent-message-wrapper {
@@ -382,11 +399,12 @@
             background: white;
             border: 2px solid var(--border-color);
             border-radius: var(--radius-md);
-            border-top-left-radius: 4px; /* Slightly rounded right angle for AI */
+            border-top-left-radius: 4px;
+            /* Slightly rounded right angle for AI */
             padding: 14px 18px;
             width: 100%;
             max-width: 650px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             border-bottom: 4px solid var(--border-color);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow: hidden;
@@ -441,8 +459,13 @@
             transition: transform 0.3s ease;
         }
 
-        .collapsed .toggle-arrow { transform: rotate(-90deg); }
-        .collapsed .bubble-body { display: none; }
+        .collapsed .toggle-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .collapsed .bubble-body {
+            display: none;
+        }
 
         .bubble-body {
             margin-top: 8px;
@@ -507,7 +530,22 @@
             color: var(--text-color);
         }
 
-        .action-icon svg { width: 14px; height: 14px; }
+        .action-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .token-usage {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #9CA3AF;
+            height: 28px;
+            margin-left: 4px;
+            padding: 0 4px;
+            white-space: nowrap;
+            user-select: none;
+        }
 
         /* Dropdown - 改为右侧弹出，顶部对齐 */
         .dropdown-menu {
@@ -518,7 +556,7 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 6px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
             display: none;
             flex-direction: column;
             gap: 2px;
@@ -556,7 +594,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.4);
             display: none;
             align-items: center;
             justify-content: center;
@@ -573,12 +611,13 @@
             border-radius: 20px;
             width: 360px;
             padding: 32px 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             gap: 20px;
             border: 2px solid var(--border-color);
-            text-align: center; /* 整体居中 */
+            text-align: center;
+            /* 整体居中 */
         }
 
         .modal-title {
@@ -587,7 +626,8 @@
             color: var(--primary-color);
             display: flex;
             align-items: center;
-            justify-content: center; /* 标题居中 */
+            justify-content: center;
+            /* 标题居中 */
             gap: 10px;
         }
 
@@ -610,13 +650,15 @@
             outline: none;
             background: #FFFBF9;
             box-sizing: border-box;
-            text-align: left; /* 文本框内部还是靠左 */
+            text-align: left;
+            /* 文本框内部还是靠左 */
         }
 
         .modal-footer {
             display: flex;
             gap: 12px;
-            justify-content: center; /* 按钮居中 */
+            justify-content: center;
+            /* 按钮居中 */
             margin-top: 4px;
         }
 
@@ -660,15 +702,23 @@
         .modal-loading-step {
             display: flex;
             align-items: center;
-            justify-content: center; /* 加载步也居中 */
+            justify-content: center;
+            /* 加载步也居中 */
             gap: 12px;
             padding: 10px 0;
             font-weight: 500;
             color: #9CA3AF;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
 
         /* --- Footer & Input --- */
         .bottom-area {
@@ -699,7 +749,7 @@
             font-size: 15px;
             font-weight: 500;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         }
 
         .input-container-bubble {
@@ -712,7 +762,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
         }
 
         .input-main-area {
@@ -737,7 +787,8 @@
             border-top: 1px solid #FEE7DB;
         }
 
-        .actions-left, .actions-right {
+        .actions-left,
+        .actions-right {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -764,7 +815,10 @@
             border-color: var(--border-color);
         }
 
-        .input-action-btn svg { width: 16px; height: 16px; }
+        .input-action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
 
         .send-btn {
             width: 32px;
@@ -779,7 +833,11 @@
             border: none;
         }
 
-        .send-btn svg { width: 18px; height: 18px; margin-left: 2px; }
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            margin-left: 2px;
+        }
 
         /* Transplanted from user.html */
         .bg-blobs {
@@ -819,8 +877,13 @@
         }
 
         @keyframes move {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(50px, 50px) scale(1.1); }
+            from {
+                transform: translate(0, 0) scale(1);
+            }
+
+            to {
+                transform: translate(50px, 50px) scale(1.1);
+            }
         }
 
         .user-layout-container {
@@ -853,7 +916,8 @@
             letter-spacing: -0.02em;
         }
 
-        .hero h2, .hero p {
+        .hero h2,
+        .hero p {
             font-size: clamp(1.1rem, 4vw, 1.35rem);
             color: #666666;
             max-width: 600px;
@@ -862,66 +926,52 @@
             line-height: 1.6;
         }
 
-        /* Features Section */
-        .features {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            width: 100%;
-            margin-bottom: 3rem;
-        }
-
+        /* Feature Card Section */
         .feature-card {
-            background: rgba(255, 255, 255, 0.8);
-            padding: 2.5rem;
-            border-radius: 24px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            backdrop-filter: blur(10px);
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            animation: fadeInUp 0.8s ease-out forwards;
-            opacity: 0;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(243, 112, 33, 0.15);
+            border-radius: 28px;
+            padding: 2rem 2rem;
+            max-width: 420px;
+            margin: 1rem auto 2.5rem;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 320px;
-            flex: 1;
+            box-shadow: 
+                0 12px 30px rgba(243, 112, 33, 0.06),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            animation: fadeInUp 0.8s ease-out forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
         }
-
-        .feature-card:nth-child(1) { animation-delay: 0.2s; }
-        .feature-card:nth-child(2) { animation-delay: 0.3s; }
 
         .feature-card:hover {
-            transform: translateY(-10px);
-            background: white;
-            box-shadow: 0 20px 40px rgba(243, 112, 33, 0.08);
-            border-color: rgba(243, 112, 33, 0.2);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, rgba(243, 112, 33, 0.1) 0%, rgba(243, 112, 33, 0.05) 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            color: var(--primary-color);
+            transform: translateY(-5px) scale(1.01);
+            border-color: rgba(243, 112, 33, 0.3);
+            box-shadow: 
+                0 20px 45px rgba(243, 112, 33, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.7);
         }
 
         .feature-card h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
+            font-size: 1.4rem;
+            font-weight: 800;
             margin-bottom: 1rem;
             color: var(--text-color);
+            background: linear-gradient(135deg, var(--text-color) 0%, #D15918 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.01em;
         }
 
         .feature-card p {
-            font-size: 1rem;
-            color: #666666;
+            font-size: 0.95rem;
+            color: #555555;
             line-height: 1.7;
             margin: 0;
+            font-weight: 450;
         }
 
         /* Action Button */
@@ -934,8 +984,8 @@
 
         .claim-button {
             display: inline-block;
-            padding: 1.25rem 3rem;
-            font-size: 1.2rem;
+            padding: 0.75rem 2.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: white;
             text-decoration: none;
@@ -973,44 +1023,360 @@
             transform: scale(0.98);
         }
 
+        .claim-button:disabled {
+            background: #E5E7EB;
+            color: #9CA3AF;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .queue-info {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .switch-link {
+            font-size: 13px;
+            color: #9CA3AF;
+            margin-top: 16px;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s;
+            user-select: none;
+        }
+
+        .switch-link:hover {
+            color: var(--primary-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
+
+        /* ===== Survey Overlay ===== */
+        #survey-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 251, 249, 0.97);
+            backdrop-filter: blur(8px);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        #survey-overlay.active {
+            display: flex;
+        }
+
+        .sv-container {
+            max-width: 600px;
+            width: 100%;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sv-box {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .sv-box.active {
+            display: block;
+            animation: svSlideUp 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        @keyframes svSlideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sv-box h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1.8rem;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .sv-input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: #FFFBF9;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .sv-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(243, 112, 33, 0.1);
+        }
+
+        .sv-radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .sv-radio-label {
+            display: flex;
+            align-items: center;
+            padding: 0.9rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #FFFBF9;
+            font-weight: 500;
+        }
+
+        .sv-radio-label:hover {
+            border-color: var(--primary-color);
+        }
+
+        .sv-radio-label input {
+            margin-right: 0.8rem;
+            accent-color: var(--primary-color);
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+
+        .sv-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #FF9F45 100%);
+            border-radius: 100px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(243, 112, 33, 0.25);
+            transition: all 0.3s;
+        }
+
+        .sv-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(243, 112, 33, 0.4);
+        }
+
+        .sv-btn:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #sv-loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        #sv-loading.active {
+            display: flex;
+        }
+
+        .sv-spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid rgba(243, 112, 33, 0.15);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .sv-loading-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        #sv-cert {
+            width: 100%;
+            max-width: 560px;
+            background: white;
+            padding: 36px;
+            border-radius: 8px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.1);
+            border: 8px double #C5A059;
+            position: relative;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            display: none;
+        }
+
+        #sv-cert.active {
+            display: block;
+            transform: scale(1);
+        }
+
+        .sv-cert-header {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            display: inline-block;
+            padding-bottom: 8px;
+            letter-spacing: 3px;
+        }
+
+        .sv-cert-body {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+        .sv-cert-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary-color), #FF9F45);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .sv-cert-info {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .sv-cert-item label {
+            display: block;
+            font-size: 0.65rem;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 800;
+            margin-bottom: 3px;
+        }
+
+        .sv-cert-item span {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            display: block;
+            padding-bottom: 3px;
+        }
+
+        .sv-cert-slogan {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+            border-top: 1px dashed #eee;
+            padding-top: 16px;
+            margin-bottom: 24px;
+        }
+
+        .sv-cert-actions {
+            display: none;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+            width: 100%;
+        }
     </style>
 </head>
+
 <body>
 
     <nav-bar active="agent"></nav-bar>
 
     <div class="app-shell">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar" style="display:none">
             <!-- New Chat Button -->
             <button class="new-chat-btn" id="new-chat-btn" onclick="newChat()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
                 新建对话
             </button>
 
             <!-- Navigation -->
             <a class="sidebar-nav-item" href="skill-center.html" id="nav-skill-plaza">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                    </polygon>
+                </svg>
                 技能广场
             </a>
             <a class="sidebar-nav-item" href="agent-archives.html" id="nav-archive">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
                 档案库
             </a>
             <a class="sidebar-nav-item" href="knowledge.html" id="nav-kb">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
                 知识库
             </a>
 
@@ -1044,9 +1410,29 @@
         <div class="main-column">
             <!-- Main Content -->
             <div class="main-content" id="main-content">
-                <div class="agent-container" id="agent-welcome">
-                    <div class="welcome-bubble">
-                        大曜你好呀，今天是6月13号，也是一年一度的智源大会！需要我帮你做什么？
+                <!-- ★ 未领取 Agent 状态（默认显示） -->
+                <div id="unclaimed-view"
+                    style="width:100%;display:flex;flex-direction:column;align-items:center;position:relative;overflow-y:auto;padding-bottom:40px;">
+                    <div class="bg-blobs">
+                        <div class="blob blob-1"></div>
+                        <div class="blob blob-2"></div>
+                    </div>
+                    <div class="user-layout-container">
+                        <div class="feature-card">
+                            <h3>你的专属AI助手</h3>
+                            <p>聊聊天、查资料、理思路，生活里的大事小事，我都能搭把手。<br>我会记得你的习惯，理解你的想法，甚至比你更了解你自己。</p>
+                        </div>
+                        <div class="cta-section">
+                            <div id="queue-message" class="queue-info" style="display: block;">1000+人正在排队，申请后将逐步发放体验名额</div>
+                            <button class="claim-button" id="claim-btn">申请体验</button>
+                            <div class="switch-link" id="switch-mode-btn">[切换]</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="agent-container" id="agent-welcome" style="display:none">
+                    <div class="welcome-bubble" id="welcome-text">
+                        你好呀！需要我帮你做什么？
                     </div>
                     <div class="main-logo-placeholder">Logo</div>
                 </div>
@@ -1055,36 +1441,60 @@
             </div>
 
             <!-- Bottom Area -->
-            <div class="bottom-area">
+            <div class="bottom-area" id="bottom-area" style="display:none">
                 <div class="quick-actions" id="quick-actions">
-                    <button class="quick-action-btn" onclick="startChat('SoulAgent和数字世界是什么')">SoulAgent和数字世界是什么</button>
-                    <button class="quick-action-btn" onclick="startChat('介绍一下本次智源大会的主题')">介绍一下本次智源大会的主题</button>
-                    <button class="quick-action-btn" onclick="startChat('为我提供智源大会的最佳浏览线路')">为我提供智源大会的最佳浏览线路</button>
+                    <button class="quick-action-btn" id="qa1"
+                        onclick="startChat(this.textContent)">SoulAgent和数字世界是什么</button>
+                    <button class="quick-action-btn" id="qa2"
+                        onclick="startChat(this.textContent)">介绍一下本次智源大会的主题</button>
+                    <button class="quick-action-btn" id="qa3"
+                        onclick="startChat(this.textContent)">为我提供智源大会的最佳浏览线路</button>
                 </div>
-                
+
                 <div class="input-container-bubble">
                     <textarea class="input-main-area" placeholder="输入消息..."></textarea>
                     <div class="input-bottom-actions">
                         <div class="actions-left">
                             <div class="input-action-btn" title="添加附件">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path
+                                        d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48">
+                                    </path>
+                                </svg>
                             </div>
                             <div class="input-action-btn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M9 3v18"></path><path d="M15 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <path d="M9 3v18"></path>
+                                    <path d="M15 3v18"></path>
+                                    <path d="M3 9h18"></path>
+                                    <path d="M3 15h18"></path>
+                                </svg>
                                 <span>DeepSeek V4 pro</span>
                             </div>
                             <div class="input-action-btn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path
+                                        d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                                    </path>
+                                </svg>
                                 <span>Skill技能</span>
                             </div>
                             <div class="input-action-btn active">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                </svg>
                                 <span>知识库已开启</span>
                             </div>
                         </div>
                         <div class="actions-right">
                             <button class="send-btn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -1100,67 +1510,219 @@
         </div>
     </div>
 
+    <!-- Survey Overlay -->
+    <div id="survey-overlay">
+        <div class="sv-container">
+            <!-- Step 1: Agent 名字 -->
+            <div class="sv-box active" id="sv-step1">
+                <h2>给AI伙伴取个名字吧～</h2>
+                <input type="text" class="sv-input" id="sv-agent-name" placeholder="输入它的名字" autocomplete="off">
+                <button class="sv-btn" id="sv-btn1" disabled>就叫...</button>
+            </div>
+            <!-- Step 2: 用户名字 -->
+            <div class="sv-box" id="sv-step2">
+                <h2>希望<span id="sv-display-name" style="color:var(--primary-color)">Agent</span>怎么称呼你？</h2>
+                <input type="text" class="sv-input" id="sv-user-name" placeholder="输入你的名字" autocomplete="off">
+                <button class="sv-btn" id="sv-btn2" disabled>叫我...</button>
+            </div>
+            <!-- Step 3: 使用场景 -->
+            <div class="sv-box" id="sv-step3">
+                <h2>你主要想用它来做什么？</h2>
+                <div class="sv-radio-group">
+                    <label class="sv-radio-label"><input type="radio" name="svq3" value="学习成长"> 📚 学习成长</label>
+                    <label class="sv-radio-label"><input type="radio" name="svq3" value="工作效率"> 💼 工作效率</label>
+                    <label class="sv-radio-label"><input type="radio" name="svq3" value="日常生活"> 🌱 日常生活</label>
+                </div>
+                <button class="sv-btn" id="sv-btn3" disabled>下一步</button>
+            </div>
+            <!-- Loading -->
+            <div id="sv-loading">
+                <div class="sv-spinner"></div>
+                <div class="sv-loading-text" id="sv-loading-text">正在生成你的专属AI伙伴...</div>
+            </div>
+            <!-- 出生证明 -->
+            <div id="sv-cert">
+                <div class="sv-cert-header">✨ 出生证明 ✨</div>
+                <div class="sv-cert-body">
+                    <div class="sv-cert-avatar">🤖</div>
+                    <div class="sv-cert-info">
+                        <div class="sv-cert-item"><label>名字</label><span id="sv-cert-name">-</span></div>
+                        <div class="sv-cert-item"><label>编号</label><span>SA-2026-0001</span></div>
+                        <div class="sv-cert-item"><label>领养人</label><span id="sv-cert-user">-</span></div>
+                        <div class="sv-cert-item"><label>出生日期</label><span id="sv-cert-date">-</span></div>
+                    </div>
+                </div>
+                <div class="sv-cert-slogan">"每一次对话，都是我在训练自己的灵魂。"</div>
+            </div>
+            <div class="sv-cert-actions" id="sv-cert-actions">
+                <button class="sv-btn" style="max-width:160px; background: #FFFFFF; color: var(--primary-color); border: 2px solid var(--border-color); box-shadow: none;" id="sv-save-btn">保存图片</button>
+                <button class="sv-btn" style="max-width:160px" id="sv-start-btn">开启对话 →</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ===== Survey Flow =====
         document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('userMode') === 'expert') {
-                const agentWelcome = document.getElementById('agent-welcome');
-                const chatMessages = document.getElementById('chat-messages');
-                const bottomArea = document.querySelector('.bottom-area');
-                
-                if (agentWelcome) agentWelcome.style.display = 'none';
-                if (chatMessages) chatMessages.style.display = 'none';
-                if (bottomArea) bottomArea.style.display = 'none';
-                
-                const sidebar = document.querySelector('.sidebar');
-                if (sidebar) sidebar.style.display = 'none';
-                
-                const mainContent = document.getElementById('main-content');
-                mainContent.style.justifyContent = 'flex-start';
-                const claimContainer = document.createElement('div');
-                claimContainer.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; padding-bottom: 40px;';
-                claimContainer.innerHTML = `
-                    <div class="bg-blobs">
-                        <div class="blob blob-1"></div>
-                        <div class="blob blob-2"></div>
-                    </div>
-                    <div class="user-layout-container">
-                        <header class="hero">
-                            <h1>SoulAgent</h1>
-                            <h2>你的AI全能助手</h2>
-                        </header>
-                        
-                        <div class="content-area">
-                            <section class="features">
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                                    </div>
-                                    <h3>日常陪伴</h3>
-                                    <p>聊聊天、查资料、理思路，生活里的大事小事，它都能搭把手。</p>
-                                </div>
+            // Reset agent name on refresh to match the unclaimed state
+            localStorage.removeItem('agentName');
+            window.dispatchEvent(new CustomEvent('agent-name-changed'));
 
-                                <div class="feature-card">
-                                    <div class="feature-icon">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
-                                    </div>
-                                    <h3>越用越好用</h3>
-                                    <p>它会记得你的习惯，理解你的想法，甚至比你更了解你自己。</p>
-                                </div>
-                            </section>
-                        </div>
-                        <div class="cta-section">
-                            <button class="claim-button">立即领取</button>
-                        </div>
-                    </div>
-                `;
-                mainContent.appendChild(claimContainer);
+            // Always default to unclaimed state - no localStorage check needed
+            const claimBtn = document.getElementById('claim-btn');
+            const switchModeBtn = document.getElementById('switch-mode-btn');
+            const queueMsg = document.getElementById('queue-message');
+            let isWaitingState = true;
+            let hasApplied = false;
 
-                claimContainer.querySelector('.claim-button').addEventListener('click', () => {
-                    localStorage.setItem('userMode', 'expert-claimed');
-                    window.location.href = 'survey.html';
-                });
-            }
+            claimBtn.addEventListener('click', () => {
+                if (!isWaitingState) {
+                    // Normal state: Go to survey
+                    svShowStep('sv-step1');
+                    document.getElementById('survey-overlay').classList.add('active');
+                } else if (!hasApplied) {
+                    // Waiting state: Apply
+                    hasApplied = true;
+                    claimBtn.textContent = '已申请，请耐心等待';
+                    claimBtn.disabled = true;
+                }
+            });
+
+            switchModeBtn.addEventListener('click', () => {
+                isWaitingState = !isWaitingState;
+                if (isWaitingState) {
+                    queueMsg.style.display = 'block';
+                    claimBtn.textContent = hasApplied ? '已申请，请耐心等待' : '申请体验';
+                    claimBtn.disabled = hasApplied;
+                } else {
+                    queueMsg.style.display = 'none';
+                    claimBtn.textContent = '立即领取';
+                    claimBtn.disabled = false;
+                }
+            });
+
+            // Step 1 input
+            const svAgentInput = document.getElementById('sv-agent-name');
+            const svBtn1 = document.getElementById('sv-btn1');
+            svAgentInput.addEventListener('input', () => {
+                const v = svAgentInput.value.trim();
+                svBtn1.textContent = v ? `就叫${v}吧` : '就叫...';
+                svBtn1.disabled = !v;
+            });
+            svAgentInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !svBtn1.disabled) svNext(1); });
+            svBtn1.addEventListener('click', () => svNext(1));
+
+            // Step 2 input
+            const svUserInput = document.getElementById('sv-user-name');
+            const svBtn2 = document.getElementById('sv-btn2');
+            svUserInput.addEventListener('input', () => {
+                const v = svUserInput.value.trim();
+                svBtn2.textContent = v ? `叫我${v}吧` : '叫我...';
+                svBtn2.disabled = !v;
+            });
+            svUserInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !svBtn2.disabled) svNext(2); });
+            svBtn2.addEventListener('click', () => svNext(2));
+
+            // Step 3 radios
+            const svBtn3 = document.getElementById('sv-btn3');
+            document.querySelectorAll('input[name="svq3"]').forEach(r => {
+                r.addEventListener('change', () => { svBtn3.disabled = false; });
+            });
+            svBtn3.addEventListener('click', svShowLoading);
+
+            // Final buttons
+            document.getElementById('sv-save-btn').addEventListener('click', () => {
+                alert('正在为您生成高清出生证明图片...');
+            });
+            document.getElementById('sv-start-btn').addEventListener('click', () => {
+                const agentName = document.getElementById('sv-agent-name').value.trim();
+                const userName = document.getElementById('sv-user-name').value.trim();
+                activateChatMode(agentName, userName);
+            });
         });
+
+        function svShowStep(stepId) {
+            ['sv-step1', 'sv-step2', 'sv-step3'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.remove('active');
+                el.style.display = 'none';
+            });
+            const target = document.getElementById(stepId);
+            target.style.display = 'block';
+            target.offsetHeight; // reflow for animation
+            target.classList.add('active');
+        }
+
+        function svNext(step) {
+            if (step === 1) {
+                const name = document.getElementById('sv-agent-name').value.trim();
+                document.getElementById('sv-display-name').textContent = name;
+                svShowStep('sv-step2');
+                setTimeout(() => document.getElementById('sv-user-name').focus(), 400);
+            } else if (step === 2) {
+                svShowStep('sv-step3');
+            }
+        }
+
+        function svShowLoading() {
+            ['sv-step1', 'sv-step2', 'sv-step3'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            const loading = document.getElementById('sv-loading');
+            loading.classList.add('active');
+
+            const agentName = document.getElementById('sv-agent-name').value.trim();
+            window._svAgentName = agentName; // save globally for openModal
+            document.getElementById('sv-loading-text').textContent = `专属AI伙伴「${agentName}」正在火速赶来...`;
+            document.getElementById('sv-cert-name').textContent = agentName;
+            document.getElementById('sv-cert-user').textContent = document.getElementById('sv-user-name').value.trim();
+            document.getElementById('sv-cert-date').textContent = new Date().toISOString().split('T')[0];
+
+            setTimeout(() => {
+                loading.classList.remove('active');
+                const cert = document.getElementById('sv-cert');
+                const actions = document.getElementById('sv-cert-actions');
+                cert.style.display = 'block';
+                actions.style.display = 'flex';
+                cert.offsetHeight;
+                cert.classList.add('active');
+            }, 1500);
+        }
+
+        function activateChatMode(agentName, userName) {
+            // Save to localStorage and notify navbar
+            if (agentName) {
+                localStorage.setItem('agentName', agentName);
+                window.dispatchEvent(new CustomEvent('agent-name-changed'));
+            }
+            // Hide overlay
+            document.getElementById('survey-overlay').classList.remove('active');
+            // Hide unclaimed view
+            document.getElementById('unclaimed-view').style.display = 'none';
+            // Show sidebar
+            document.getElementById('sidebar').style.display = 'flex';
+            // Show bottom area
+            document.getElementById('bottom-area').style.display = 'flex';
+            // Update welcome text
+            const greeting = userName
+                ? `${userName}你好！我是${agentName || 'SoulAgent'}，今天想聊点什么？`
+                : `你好！我是${agentName || 'SoulAgent'}，今天想聊点什么？`;
+            document.getElementById('welcome-text').textContent = greeting;
+            document.getElementById('agent-welcome').style.display = 'flex';
+            // Personalize quick actions if there's a usage type
+            const usage = document.querySelector('input[name="svq3"]:checked');
+            if (usage && usage.value === '工作效率') {
+                document.getElementById('qa1').textContent = '帮我整理今天的会议纪要';
+                document.getElementById('qa2').textContent = '拆解一个复杂项目的任务清单';
+                document.getElementById('qa3').textContent = '写一封专业的商务邮件';
+            } else if (usage && usage.value === '日常生活') {
+                document.getElementById('qa1').textContent = '推荐今天适合做什么';
+                document.getElementById('qa2').textContent = '帮我规划周末行程';
+                document.getElementById('qa3').textContent = '聊聊最近有什么有趣的事';
+            }
+            // Align main-content to center (welcome state)
+            document.getElementById('main-content').style.justifyContent = 'center';
+        }
 
         const chatMessages = document.getElementById('chat-messages');
         const agentWelcome = document.getElementById('agent-welcome');
@@ -1300,6 +1862,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="token-usage">Token消耗：12k</div>
                             </div>
                         `;
                         const bubble = document.getElementById(bubbleId);
@@ -1328,15 +1891,16 @@
             event.stopPropagation();
         }
 
-        window.onclick = function() {
+        window.onclick = function () {
             document.querySelectorAll('.dropdown-menu, .avatar-dropdown').forEach(m => m.classList.remove('active'));
         }
 
         function openModal(type, isRetry = false) {
             modalOverlay.classList.add('active');
+            const agentName = window._svAgentName || 'SoulAgent';
             const title = type === 'memory' ? '识别记忆' : '识别个人Skill';
-            const step1Txt = type === 'memory' ? '小小曜努力识别中...' : '小小曜努力总结中...';
-            const step2Txt = type === 'memory' ? '小小曜正在整合...' : '小小曜正在封装Skill...';
+            const step1Txt = type === 'memory' ? `${agentName}努力识别中...` : `${agentName}努力总结中...`;
+            const step2Txt = type === 'memory' ? `${agentName}正在整合...` : `${agentName}正在封装Skill...`;
 
             modalCard.innerHTML = `
                 <div class="modal-title">${title}</div>
@@ -1359,7 +1923,7 @@
 
                 setTimeout(() => {
                     if (!isRetry) {
-                        const errorMsg = type === 'memory' ? '小小曜捕捉内容失败，多跟我聊聊再来保存记忆吧！' : '小小曜封装Skill失败，换个任务试试吧！';
+                        const errorMsg = type === 'memory' ? `${agentName}捕捉内容失败，多跟我聊聊再来保存记忆吧！` : `${agentName}封装Skill失败，换个任务试试吧！`;
                         modalCard.innerHTML = `
                             <div class="modal-title" style="color:#EF4444">识别失败</div>
                             <div class="modal-body">${errorMsg}</div>
@@ -1373,7 +1937,7 @@
                             modalCard.innerHTML = `
                                 <div class="modal-title">识别成功</div>
                                 <div class="modal-body">
-                                    <div style="margin-bottom:12px; font-weight:500">小小曜成功总结以下信息！可以直接编辑修改哦</div>
+                                    <div style="margin-bottom:12px; font-weight:500">${agentName}成功总结以下信息！可以直接编辑修改哦</div>
                                     <textarea class="modal-textarea">用户对“智源大会主题”表现出浓厚兴趣，重点关注人工智能未来十年的趋势。建议后续对话中主动提及大会的具体分论坛议程。</textarea>
                                 </div>
                                 <div class="modal-footer">
@@ -1385,7 +1949,7 @@
                             modalCard.innerHTML = `
                                 <div class="modal-title">封装完毕</div>
                                 <div class="modal-body">
-                                    <div style="margin-bottom:12px; font-weight:bold; color:var(--text-color)">小小曜为您沉淀了专属Skill！</div>
+                                    <div style="margin-bottom:12px; font-weight:bold; color:var(--text-color)">${agentName}为您沉淀了专属Skill！</div>
                                     <div style="background:#FFF7F5; padding:16px; border-radius:16px; border:1px solid var(--border-color); text-align:left">
                                         <div style="font-weight:800; color:var(--primary-color); margin-bottom:4px; font-size:15px">大会速递专家</div>
                                         <div style="font-size:12px; color:#6B7280; line-height:1.5">自动抓取智源大会最新资讯，并根据用户画像进行个性化议程推荐。</div>
@@ -1407,4 +1971,5 @@
         }
     </script>
 </body>
+
 </html>
