@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulAgent - 定时任务</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f7f8fa;
+      color: #1d2129;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ================= 侧边栏 ================= */
+    .sidebar {
+      width: 240px;
+      background-color: #ffffff;
+      border-right: 1px solid #e5e6eb;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px;
+      margin-bottom: 24px;
+    }
+
+    .sidebar-logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #165dff 0%, #722ed1 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .sidebar-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #4e5969;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .nav-item:hover {
+      background-color: #f2f3f5;
+    }
+
+    .nav-item.active {
+      background-color: #e8f3ff;
+      color: #165dff;
+      font-weight: 500;
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      height: 1px;
+      background-color: #e5e6eb;
+      margin: 16px 8px;
+    }
+
+    .section-header {
+      font-size: 12px;
+      color: #86909c;
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #4e5969;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .history-item:hover {
+      background-color: #f2f3f5;
+      color: #1d2129;
+    }
+
+    /* ================= 主内容区域封装 ================= */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background-color: #f7f8fa;
+    }
+
+    /* 顶部标题区 */
+    .page-header {
+      padding: 24px 32px 20px 32px;
+      background-color: #ffffff;
+      border-bottom: 1px solid #e5e6eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-text h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1d2129;
+      margin-bottom: 4px;
+    }
+
+    .header-text p {
+      font-size: 14px;
+      color: #86909c;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* 强视觉按钮 */
+    .btn {
+      height: 40px;
+      padding: 0 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: none;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn:disabled {
+      background-color: #f2f3f5 !important;
+      color: #c9cdd4 !important;
+      border-color: transparent !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+      opacity: 1 !important;
+    }
+
+    /* 对话创建：炫彩/品牌主色按钮 */
+    .btn-chat {
+      background: linear-gradient(135deg, #165dff 0%, #722ed1 100%);
+      color: #ffffff;
+    }
+    .btn-chat:hover {
+      opacity: 0.92;
+      box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+    }
+
+    /* 手动设置：深色高对比强视觉按钮 */
+    .btn-manual {
+      background-color: #1d2129;
+      color: #ffffff;
+    }
+    .btn-manual:hover:not(:disabled) {
+      background-color: #333842;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-secondary {
+      background-color: #ffffff;
+      border: 1px solid #e5e6eb;
+      color: #1d2129;
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      background-color: #f2f3f5;
+    }
+
+    /* 页面主体内容容器 */
+    .page-body {
+      padding: 32px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ================= 空态视图 ================= */
+    .empty-state {
+      background-color: #ffffff;
+      border: 1px dashed #c9cdd4;
+      border-radius: 16px;
+      padding: 48px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      background-color: #e8f3ff;
+      color: #165dff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1d2129;
+      margin-bottom: 24px;
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 14px;
+    }
+
+    /* ================= 已添加任务列表 ================= */
+    .tasks-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 定时任务卡片 */
+    .task-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e6eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .task-card:hover {
+      border-color: #c9cdd4;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .task-card.paused {
+      background-color: #fcfcfd;
+      opacity: 0.75;
+    }
+
+    .task-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      padding-right: 20px;
+    }
+
+    .task-line1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .task-next-run {
+      font-size: 13px;
+      color: #86909c;
+      background-color: #f2f3f5;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .status-tag-paused {
+      font-size: 12px;
+      color: #f53f3f;
+      background-color: #ffece8;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .status-tag-running {
+      font-size: 12px;
+      color: #00b42a;
+      background-color: #e8ffea;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+    }
+
+    .running-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #00b42a;
+      display: inline-block;
+      animation: pulse-dot 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.3; transform: scale(0.8); }
+    }
+
+    .task-line2 {
+      font-size: 13px;
+      color: #86909c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task-actions {
+      position: relative;
+    }
+
+    .icon-btn-more {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #4e5969;
+      background: transparent;
+      border: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .icon-btn-more:hover {
+      background-color: #f2f3f5;
+      color: #1d2129;
+    }
+
+    .icon-btn-more:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+      background-color: transparent;
+    }
+
+    /* 三点操作下拉菜单 */
+    .dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 36px;
+      background-color: #ffffff;
+      border: 1px solid #e5e6eb;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 6px 0;
+      width: 120px;
+      z-index: 100;
+      display: none;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #1d2129;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.15s ease;
+    }
+
+    .dropdown-item:hover {
+      background-color: #f2f3f5;
+    }
+
+    .dropdown-item.danger {
+      color: #f53f3f;
+    }
+
+    .dropdown-item.danger:hover {
+      background-color: #ffece8;
+    }
+
+    /* ================= 推荐任务区域 ================= */
+    .recommended-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .divider-line {
+      height: 1px;
+      background-color: #e5e6eb;
+      width: 100%;
+    }
+
+    .recommended-header {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .recommended-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .recommended-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e6eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .recommended-card:hover {
+      border-color: #165dff;
+      background-color: #fcfcfd;
+    }
+
+    .rec-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .rec-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .rec-desc {
+      font-size: 13px;
+      color: #86909c;
+    }
+
+    .btn-add-rec {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #f2f3f5;
+      color: #1d2129;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      opacity: 0;
+    }
+
+    .recommended-card:hover .btn-add-rec {
+      opacity: 1;
+    }
+
+    .btn-add-rec:hover {
+      background-color: #165dff;
+      color: #ffffff;
+    }
+
+    /* ================= 右侧抽屉（手动设置 560px） ================= */
+    .drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.4);
+      z-index: 500;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .drawer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -580px;
+      width: 560px;
+      height: 100vh;
+      background-color: #ffffff;
+      z-index: 501;
+      box-shadow: -6px 0 32px rgba(0, 0, 0, 0.12);
+      display: flex;
+      flex-direction: column;
+      visibility: hidden;
+      pointer-events: none;
+      transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+      border-top-left-radius: 20px;
+      border-bottom-left-radius: 20px;
+    }
+
+    .drawer.active {
+      right: 0;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .drawer-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid #e5e6eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #ffffff;
+    }
+
+    .drawer-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .drawer-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #86909c;
+      cursor: pointer;
+      padding: 0 4px;
+      transition: color 0.15s ease;
+    }
+
+    .drawer-close:hover {
+      color: #1d2129;
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background-color: #ffffff;
+    }
+
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d2129;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1d2129;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      border: 1px solid #e5e6eb;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #1d2129;
+      outline: none;
+      background-color: #ffffff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: #165dff;
+      box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    /* ================= 表单与 Apple 风组件 ================= */
+    /* 苹果风 Segmented Control (Tab切换) */
+    .segmented-control {
+      display: flex;
+      background-color: #f2f2f7;
+      border-radius: 14px;
+      padding: 3px;
+      gap: 2px;
+      user-select: none;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      margin-bottom: 4px;
+    }
+
+    .segmented-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #48484a;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      outline: none;
+      text-align: center;
+    }
+
+    .segmented-tab:hover:not(.active) {
+      color: #1c1c1e;
+    }
+
+    .segmented-tab.active {
+      background-color: #ffffff;
+      color: #1c1c1e;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 表单卡片容器：加大圆角 (14px) */
+    .form-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e6eb;
+      border-radius: 14px;
+      padding: 4px 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      transition: border-color 0.15s ease;
+    }
+
+    .form-card:hover {
+      border-color: #c9cdd4;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      font-size: 14px;
+      color: #1d2129;
+      border-bottom: 1px solid #f2f3f5;
+    }
+
+    .form-row.block-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .form-row:last-child {
+      border-bottom: none;
+    }
+
+    .form-row-label {
+      font-weight: 500;
+      color: #1d2129;
+    }
+
+    /* 开关 Toggle Switch (Apple 绿/蓝风) */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #e5e5ea;
+      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+      background-color: #1d2129;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .date-inputs-inline {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .date-input-mini {
+      height: 34px;
+      line-height: 32px;
+      border: 1px solid #e5e6eb;
+      border-radius: 10px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: #1d2129;
+      background-color: #ffffff;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .date-input-mini:focus {
+      border-color: #165dff;
+      box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
+    }
+
+    /* 隐藏所有时间/日期输入框内部的默认闹钟/时间图标 */
+    .no-icon-time::-webkit-calendar-picker-indicator {
+      background: none !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      cursor: pointer;
+    }
+    .no-icon-time::-webkit-inner-spin-button,
+    .no-icon-time::-webkit-clear-button {
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* 多选胶囊按钮（特定星期 / 特定日期） */
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .pill-btn {
+      padding: 6px 14px;
+      border-radius: 10px;
+      border: 1px solid #e5e6eb;
+      background-color: #ffffff;
+      color: #4e5969;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .pill-btn:hover {
+      background-color: #f2f3f5;
+      border-color: #c9cdd4;
+    }
+
+    .pill-btn.active {
+      background-color: #e8f3ff;
+      color: #165dff;
+      border-color: #165dff;
+      font-weight: 600;
+    }
+
+    /* 日期数字小胶囊 */
+    .day-pill-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+
+    .day-pill {
+      height: 32px;
+      border-radius: 10px;
+      border: 1px solid #e5e6eb;
+      background-color: #ffffff;
+      color: #4e5969;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .day-pill:hover {
+      background-color: #f2f3f5;
+    }
+
+    .day-pill.active {
+      background-color: #e8f3ff;
+      color: #165dff;
+      border-color: #165dff;
+      font-weight: 600;
+    }
+
+    .sub-setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 13px;
+      color: #4e5969;
+      margin-top: 4px;
+    }
+
+    .drawer-footer {
+      padding: 20px 32px;
+      border-top: 1px solid #e5e6eb;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background-color: #ffffff;
+    }
+
+    /* ================= 极简置中对话界面 ================= */
+    .centered-input-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background-color: #f7f8fa;
+    }
+
+    .centered-input-card {
+      width: 100%;
+      max-width: 680px;
+      background-color: #ffffff;
+      border: 1px solid #e5e6eb;
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .centered-textarea {
+      width: 100%;
+      height: 120px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 15px;
+      line-height: 1.6;
+      font-family: inherit;
+      color: #1d2129;
+      background: transparent;
+    }
+
+    .centered-input-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #f2f3f5;
+      padding-top: 14px;
+    }
+
+    .input-tip {
+      font-size: 13px;
+      color: #86909c;
+    }
+
+    .btn-send-chat {
+      background: linear-gradient(135deg, #165dff 0%, #722ed1 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn-send-chat:hover {
+      opacity: 0.9;
+    }
+
+    /* Toast 轻提示 */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: #1d2129;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <!-- 顶部 SoulAgent 标题 -->
+    <div class="sidebar-header">
+      <div class="sidebar-logo">S</div>
+      <div class="sidebar-title">SoulAgent</div>
+    </div>
+
+    <!-- 菜单项目 -->
+    <ul class="nav-list">
+      <li class="nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 6V42M6 24H42" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        新建对话
+      </li>
+      <li class="nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12C5 10.8954 5.89543 10 7 10H19L24 16H41C42.1046 16 43 16.8954 43 18V38C43 39.1046 42.1046 40 41 40H7C5.89543 40 5 39.1046 5 38V12Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        档案库
+      </li>
+      <li class="nav-item">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 40V8C8 6.89543 8.89543 6 10 6H38C39.1046 6 40 6.89543 40 8V40L24 32L8 40Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        知识库
+      </li>
+      <li class="nav-item active" id="navTasks">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M24 44C35.0457 44 44 35.0457 44 24C44 12.9543 35.0457 4 24 4C12.9543 4 4 12.9543 4 24C4 35.0457 12.9543 44 24 44Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M24 12V24L32 28" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        定时任务
+      </li>
+    </ul>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 历史对话 -->
+    <div class="section-header">历史对话</div>
+    <ul class="history-list">
+      <li class="history-item">竞品分析与总结报告</li>
+      <li class="history-item">智源周报生成指令</li>
+      <li class="history-item">数据库自动备份策略</li>
+      <li class="history-item">每日新闻简报整理</li>
+    </ul>
+  </aside>
+
+  <!-- 主内容区域封装 -->
+  <div class="main-wrapper">
+    
+    <!-- 视图 1：定时任务主页面 -->
+    <main class="main-content" id="tasksMainView">
+      <!-- 顶部标题区 -->
+      <header class="page-header">
+        <div class="header-text">
+          <h1>定时任务</h1>
+          <p>给SoulAgent安排自动化任务、设置提醒或监测更新</p>
+        </div>
+        <div class="header-actions" id="headerActions" style="display: none;">
+          <button class="btn btn-chat" id="btnChatCreateTop">
+            <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 12C4 9.79086 5.79086 8 8 8H40C42.2091 8 44 9.79086 44 12V32C44 34.2091 42.2091 36 40 36H14L4 44V12Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+            </svg>
+            通过对话创建
+          </button>
+          <button class="btn btn-manual" id="btnManualCreateTop">
+            <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 6V42M6 24H42" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+            手动设置
+          </button>
+        </div>
+      </header>
+
+      <!-- 页面主体 -->
+      <div class="page-body">
+        
+        <!-- 已添加任务列表区域 -->
+        <div class="tasks-section" id="tasksSection" style="display: none;">
+          <div class="section-title">我的定时任务</div>
+          <div class="tasks-list" id="tasksContainer"></div>
+        </div>
+
+        <!-- 空态展示区域 -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 44C35.0457 44 44 35.0457 44 24C44 12.9543 35.0457 4 24 4C12.9543 4 4 12.9543 4 24C4 35.0457 12.9543 44 24 44Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+              <path d="M24 12V24L32 28" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="empty-title">设置你的第一个定时任务</div>
+          <div class="empty-actions">
+            <button class="btn btn-chat" id="btnChatCreateEmpty">
+              <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 12C4 9.79086 5.79086 8 8 8H40C42.2091 8 44 9.79086 44 12V32C44 34.2091 42.2091 36 40 36H14L4 44V12Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+              </svg>
+              通过对话创建
+            </button>
+            <button class="btn btn-manual" id="btnManualCreateEmpty">
+              <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 6V42M6 24H42" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+              </svg>
+              手动设置
+            </button>
+          </div>
+        </div>
+
+        <!-- 推荐任务区域 -->
+        <div class="recommended-section" id="recommendedSection">
+          <div class="divider-line"></div>
+          <div class="recommended-header">推荐定时任务</div>
+          <div class="recommended-list" id="recommendedContainer"></div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 视图 2：对话创建 - 极简置中输入界面 -->
+    <main class="main-content" id="chatMainView" style="display: none;">
+      <div class="centered-input-container">
+        <div class="centered-input-card">
+          <textarea class="centered-textarea" id="chatTextarea" placeholder="发送指令给 SoulAgent..."></textarea>
+          <div class="centered-input-footer">
+            <span class="input-tip"> </span>
+            <button class="btn-send-chat" id="btnSendMessage">发送</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- 手动设置右侧抽屉（560px） -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="manualDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title">新建定时任务</div>
+      <button class="drawer-close" id="btnCloseDrawer">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <form id="taskForm" style="display: flex; flex-direction: column; gap: 24px;" onsubmit="event.preventDefault(); saveTaskForm();">
+        
+        <!-- 任务信息基础字段 -->
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">任务标题</label>
+            <input type="text" class="form-input" id="formTitle" placeholder="例如：每日 AI 新闻推送" required>
+          </div>
+
+          <div class="form-group" style="margin-top: 8px;">
+            <label class="form-label">任务内容描述</label>
+            <textarea class="form-textarea" id="formDesc" rows="3" placeholder="请详细描述 SoulAgent 应该执行的具体内容与操作步骤..." required></textarea>
+          </div>
+        </div>
+
+        <!-- 频率设置（Tab切换：周期 / 间隔 / 单次） -->
+        <div class="form-section">
+          <div class="form-section-title">频率设置</div>
+          
+          <!-- 苹果风 Segmented Control / Tab 切换 -->
+          <div class="segmented-control" id="freqTabGroup">
+            <button type="button" class="segmented-tab active" data-tab="cycle">周期</button>
+            <button type="button" class="segmented-tab" data-tab="interval">间隔</button>
+            <button type="button" class="segmented-tab" data-tab="single">单次</button>
+          </div>
+
+          <!-- 统一白底卡片与圆角，苹果风 -->
+          <div class="form-card freq-card">
+            
+            <!-- Tab 1: 周期 -->
+            <div id="tabPanelCycle" class="tab-panel active">
+              <!-- 生效日期范围 (周期下的第一个) -->
+              <div class="form-row">
+                <span class="form-row-label">长期有效</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="formPermanentCycle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="form-row" id="datePickerRowCycle" style="display: none;">
+                <span class="form-row-label">起止时间</span>
+                <div class="date-inputs-inline">
+                  <input type="date" class="date-input-mini" id="formStartDateCycle" value="2026-08-10">
+                  <span style="color:#86909c;">至</span>
+                  <input type="date" class="date-input-mini" id="formEndDateCycle" value="2026-12-31">
+                </div>
+              </div>
+
+              <!-- 重复周期 -->
+              <div class="form-row">
+                <span class="form-row-label">重复周期</span>
+                <select class="date-input-mini" id="formRepeatCycle" style="width: 190px;">
+                  <option value="每天">每天</option>
+                  <option value="工作日（含调休）" selected>工作日（含调休）</option>
+                  <option value="每周">每周</option>
+                  <option value="每双周">每双周</option>
+                  <option value="每月">每月</option>
+                </select>
+              </div>
+
+              <!-- 特定星期多选（每周 / 每双周） -->
+              <div class="form-row block-row" id="weekDayRow" style="display: none;">
+                <span class="form-row-label">特定星期（可多选）</span>
+                <div class="pill-group" id="weekDayPills">
+                  <button type="button" class="pill-btn active" data-val="周一">周一</button>
+                  <button type="button" class="pill-btn" data-val="周二">周二</button>
+                  <button type="button" class="pill-btn" data-val="周三">周三</button>
+                  <button type="button" class="pill-btn" data-val="周四">周四</button>
+                  <button type="button" class="pill-btn active" data-val="周五">周五</button>
+                  <button type="button" class="pill-btn" data-val="周六">周六</button>
+                  <button type="button" class="pill-btn" data-val="周日">周日</button>
+                </div>
+              </div>
+
+              <!-- 特定日期多选（每月） -->
+              <div class="form-row block-row" id="monthDayRow" style="display: none;">
+                <span class="form-row-label">特定日期（可多选）</span>
+                <div class="day-pill-grid" id="monthDayGrid"></div>
+                
+                <!-- 缺日规则设置：仅在选中29/30/31号时显示 -->
+                <div class="sub-setting-row" id="monthEndStrategyRow" style="display: none; margin-top: 8px; border-top: 1px dashed #e5e6eb; padding-top: 10px;">
+                  <span>若当月无此日期（如2月无31号）：</span>
+                  <select class="date-input-mini" id="monthEndStrategy" style="width: 180px; font-size: 12px;">
+                    <option value="提前至当月最后一天" selected>提前至当月最后一天</option>
+                    <option value="当月不运行">当月不运行</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 运行时间 -->
+              <div class="form-row" id="runTimeRowCycle">
+                <span class="form-row-label">运行时间</span>
+                <input type="time" class="date-input-mini no-icon-time" id="formTimeCycle" value="08:00">
+              </div>
+            </div>
+
+            <!-- Tab 2: 间隔 -->
+            <div id="tabPanelInterval" class="tab-panel" style="display: none;">
+              <!-- 生效日期范围 (间隔下的第一个) -->
+              <div class="form-row">
+                <span class="form-row-label">长期有效</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="formPermanentInterval" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="form-row" id="datePickerRowInterval" style="display: none;">
+                <span class="form-row-label">起止时间</span>
+                <div class="date-inputs-inline">
+                  <input type="date" class="date-input-mini" id="formStartDateInterval" value="2026-08-10">
+                  <span style="color:#86909c;">至</span>
+                  <input type="date" class="date-input-mini" id="formEndDateInterval" value="2026-12-31">
+                </div>
+              </div>
+
+              <!-- 间隔时长 -->
+              <div class="form-row" id="intervalRow">
+                <span class="form-row-label">间隔时长</span>
+                <div class="date-inputs-inline">
+                  <input type="number" class="date-input-mini" id="intervalVal" value="1" min="1" style="width: 70px;">
+                  <select class="date-input-mini" id="intervalUnit" style="width: 90px;">
+                    <option value="分钟">分钟</option>
+                    <option value="小时" selected>小时</option>
+                    <option value="天">天</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: 单次 -->
+            <div id="tabPanelSingle" class="tab-panel" style="display: none;">
+              <div class="form-row">
+                <span class="form-row-label">运行日期</span>
+                <input type="date" class="date-input-mini" id="singleRunDate" value="2026-08-10">
+              </div>
+              <div class="form-row">
+                <span class="form-row-label">运行时间</span>
+                <input type="time" class="date-input-mini no-icon-time" id="singleRunTime" value="09:00">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </form>
+    </div>
+    
+    <div class="drawer-footer">
+      <button type="button" class="btn btn-secondary" id="btnCancelDrawer">取消</button>
+      <button type="button" class="btn btn-manual" id="btnSubmitDrawer" disabled>保存设置</button>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ================= 状态数据 =================
+    let tasks = []; // 已添加的任务列表
+
+    let recommendedTasks = [
+      {
+        id: 'rec-1',
+        title: '每日 AI 新闻推送',
+        desc: '每天早上 8:00 自动搜集并生成 AI 行业最新动态简报',
+        scheduleText: '工作日（含调休） · 早上 8 点',
+        nextRun: '11小时后运行',
+        permanent: true
+      },
+      {
+        id: 'rec-2',
+        title: '每周总结汇报',
+        desc: '每周五晚 10:00 提醒并整理本周工作产出与下周计划',
+        scheduleText: '长期有效 · 每周五 · 晚上 10 点',
+        nextRun: '4天后运行',
+        permanent: true
+      },
+      {
+        id: 'rec-3',
+        title: '监测公众号、小红书账号内容更新',
+        desc: '每 3 小时监测关注账号，有新动态时及时推送汇总通知',
+        scheduleText: '长期有效 · 间隔每 3 小时自动监测',
+        nextRun: '2小时后运行',
+        permanent: true
+      }
+    ];
+
+    // ================= DOM 元素获取 & 全局状态 =================
+    let currentTab = 'cycle'; // 'cycle' | 'interval' | 'single'
+
+    const tasksMainView = document.getElementById('tasksMainView');
+    const chatMainView = document.getElementById('chatMainView');
+    const navTasks = document.getElementById('navTasks');
+
+    const tasksSection = document.getElementById('tasksSection');
+    const tasksContainer = document.getElementById('tasksContainer');
+    const emptyState = document.getElementById('emptyState');
+    const headerActions = document.getElementById('headerActions');
+    const recommendedSection = document.getElementById('recommendedSection');
+    const recommendedContainer = document.getElementById('recommendedContainer');
+
+    const drawerOverlay = document.getElementById('drawerOverlay');
+    const manualDrawer = document.getElementById('manualDrawer');
+    const formTitle = document.getElementById('formTitle');
+    const formDesc = document.getElementById('formDesc');
+
+    const formPermanentCycle = document.getElementById('formPermanentCycle');
+    const datePickerRowCycle = document.getElementById('datePickerRowCycle');
+    const formPermanentInterval = document.getElementById('formPermanentInterval');
+    const datePickerRowInterval = document.getElementById('datePickerRowInterval');
+    const formRepeatCycle = document.getElementById('formRepeatCycle');
+
+    const weekDayRow = document.getElementById('weekDayRow');
+    const monthDayRow = document.getElementById('monthDayRow');
+    const monthEndStrategyRow = document.getElementById('monthEndStrategyRow');
+    const btnSubmitDrawer = document.getElementById('btnSubmitDrawer');
+
+    const chatTextarea = document.getElementById('chatTextarea');
+
+    // Apple 风 Tab 切换绑定
+    document.querySelectorAll('#freqTabGroup .segmented-tab').forEach(tabBtn => {
+      tabBtn.addEventListener('click', () => {
+        document.querySelectorAll('#freqTabGroup .segmented-tab').forEach(b => b.classList.remove('active'));
+        tabBtn.classList.add('active');
+        
+        currentTab = tabBtn.dataset.tab;
+
+        document.getElementById('tabPanelCycle').style.display = (currentTab === 'cycle') ? 'block' : 'none';
+        document.getElementById('tabPanelInterval').style.display = (currentTab === 'interval') ? 'block' : 'none';
+        document.getElementById('tabPanelSingle').style.display = (currentTab === 'single') ? 'block' : 'none';
+
+        validateForm();
+      });
+    });
+
+    // 校验表单是否填写完整以控制保存按钮的置灰/启用状态
+    function validateForm() {
+      const hasTitle = formTitle ? formTitle.value.trim() !== '' : false;
+      const hasDesc = formDesc ? formDesc.value.trim() !== '' : false;
+      let hasSelection = true;
+
+      if (currentTab === 'cycle') {
+        const isPermanent = formPermanentCycle ? formPermanentCycle.checked : true;
+        if (!isPermanent) {
+          const startDate = document.getElementById('formStartDateCycle').value;
+          const endDate = document.getElementById('formEndDateCycle').value;
+          if (!startDate || !endDate) hasSelection = false;
+        }
+        const repeatVal = formRepeatCycle ? formRepeatCycle.value : '';
+        if (repeatVal === '每周' || repeatVal === '每双周') {
+          const selectedWeek = document.querySelectorAll('#weekDayPills .pill-btn.active');
+          hasSelection = hasSelection && (selectedWeek.length > 0);
+        } else if (repeatVal === '每月') {
+          const selectedMonth = document.querySelectorAll('#monthDayGrid .day-pill.active');
+          hasSelection = hasSelection && (selectedMonth.length > 0);
+        }
+        const timeVal = document.getElementById('formTimeCycle').value;
+        if (!timeVal) hasSelection = false;
+      } else if (currentTab === 'interval') {
+        const isPermanent = formPermanentInterval ? formPermanentInterval.checked : true;
+        if (!isPermanent) {
+          const startDate = document.getElementById('formStartDateInterval').value;
+          const endDate = document.getElementById('formEndDateInterval').value;
+          if (!startDate || !endDate) hasSelection = false;
+        }
+        const val = document.getElementById('intervalVal').value;
+        hasSelection = hasSelection && val !== '' && parseInt(val, 10) > 0;
+      } else if (currentTab === 'single') {
+        const dateVal = document.getElementById('singleRunDate').value;
+        const timeVal = document.getElementById('singleRunTime').value;
+        hasSelection = dateVal !== '' && timeVal !== '';
+      }
+
+      btnSubmitDrawer.disabled = !(hasTitle && hasDesc && hasSelection);
+    }
+
+    // 检查每月是否选中了 29 / 30 / 31 号，若选中才显示“缺日规则设置”
+    function checkMonthLateDays() {
+      const activePills = Array.from(document.querySelectorAll('#monthDayGrid .day-pill.active'));
+      const activeVals = activePills.map(p => p.dataset.val);
+      const hasLateDay = activeVals.includes('29号') || activeVals.includes('30号') || activeVals.includes('31号');
+      
+      monthEndStrategyRow.style.display = hasLateDay ? 'flex' : 'none';
+
+      if (hasLateDay) {
+        const drawerBody = document.querySelector('.drawer-body');
+        if (drawerBody) {
+          setTimeout(() => {
+            drawerBody.scrollTo({ top: drawerBody.scrollHeight, behavior: 'smooth' });
+          }, 60);
+        }
+      }
+    }
+
+    // 生成 1~31 号多选网格（初始全不选）
+    const monthDayGrid = document.getElementById('monthDayGrid');
+    for (let i = 1; i <= 31; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `day-pill`;
+      btn.dataset.val = `${i}号`;
+      btn.textContent = `${i}`;
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        checkMonthLateDays();
+        validateForm();
+      });
+      monthDayGrid.appendChild(btn);
+    }
+
+    // 绑定特定星期胶囊点击
+    document.querySelectorAll('#weekDayPills .pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        validateForm();
+      });
+    });
+
+    // 标题、描述与表单输入变化事件监听
+    if (formTitle) formTitle.addEventListener('input', validateForm);
+    if (formDesc) formDesc.addEventListener('input', validateForm);
+
+    document.getElementById('formTimeCycle').addEventListener('change', validateForm);
+    document.getElementById('formStartDateCycle').addEventListener('change', validateForm);
+    document.getElementById('formEndDateCycle').addEventListener('change', validateForm);
+    document.getElementById('formStartDateInterval').addEventListener('change', validateForm);
+    document.getElementById('formEndDateInterval').addEventListener('change', validateForm);
+    document.getElementById('intervalVal').addEventListener('input', validateForm);
+    document.getElementById('singleRunDate').addEventListener('change', validateForm);
+    document.getElementById('singleRunTime').addEventListener('change', validateForm);
+
+    // 长期有效切换绑定
+    if (formPermanentCycle) {
+      formPermanentCycle.addEventListener('change', (e) => {
+        datePickerRowCycle.style.display = e.target.checked ? 'none' : 'flex';
+        validateForm();
+      });
+    }
+
+    if (formPermanentInterval) {
+      formPermanentInterval.addEventListener('change', (e) => {
+        datePickerRowInterval.style.display = e.target.checked ? 'none' : 'flex';
+        validateForm();
+      });
+    }
+
+    // 重复周期下拉联动
+    if (formRepeatCycle) {
+      formRepeatCycle.addEventListener('change', (e) => {
+        const val = e.target.value;
+        weekDayRow.style.display = (val === '每周' || val === '每双周') ? 'flex' : 'none';
+        monthDayRow.style.display = (val === '每月') ? 'flex' : 'none';
+
+        if (val === '每月') {
+          checkMonthLateDays();
+          // 选择每月后，自动滚动到最低，以便完全展示选项
+          const drawerBody = document.querySelector('.drawer-body');
+          if (drawerBody) {
+            setTimeout(() => {
+              drawerBody.scrollTo({ top: drawerBody.scrollHeight, behavior: 'smooth' });
+            }, 60);
+          }
+        }
+
+        validateForm();
+      });
+    }
+
+    // ================= 渲染函数 =================
+    function renderUI() {
+      if (tasks.length > 0) {
+        emptyState.style.display = 'none';
+        tasksSection.style.display = 'flex';
+        if (headerActions) headerActions.style.display = 'flex';
+        renderTasks();
+      } else {
+        emptyState.style.display = 'flex';
+        tasksSection.style.display = 'none';
+        if (headerActions) headerActions.style.display = 'none';
+      }
+
+      if (tasks.length < 3 && recommendedTasks.length > 0) {
+        recommendedSection.style.display = 'flex';
+        renderRecommended();
+      } else {
+        recommendedSection.style.display = 'none';
+      }
+    }
+
+    // 渲染已添加的任务
+    function renderTasks() {
+      tasksContainer.innerHTML = '';
+      tasks.forEach((task, index) => {
+        const card = document.createElement('div');
+        card.className = `task-card ${task.paused ? 'paused' : ''}`;
+        
+        let statusTagHtml = `<span class="task-next-run">${task.nextRun}</span>`;
+        if (task.running) {
+          statusTagHtml = `<span class="status-tag-running"><span class="running-dot"></span>运行中</span>`;
+        } else if (task.paused) {
+          statusTagHtml = `<span class="status-tag-paused">已暂停</span>`;
+        }
+
+        card.innerHTML = `
+          <div class="task-info">
+            <div class="task-line1">
+              <span class="task-title">${escapeHtml(task.title)}</span>
+              ${statusTagHtml}
+            </div>
+            <div class="task-line2">
+              <svg width="14" height="14" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 44C35.0457 44 44 35.0457 44 24C44 12.9543 35.0457 4 24 4C12.9543 4 4 12.9543 4 24C4 35.0457 12.9543 44 24 44Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M24 12V24L32 28" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>${escapeHtml(task.scheduleText)}</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="icon-btn-more" ${task.running ? 'disabled title="任务运行中"' : ''} onclick="toggleDropdown(event, ${index})">
+              <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="24" r="4" fill="currentColor"/>
+                <circle cx="24" cy="24" r="4" fill="currentColor"/>
+                <circle cx="36" cy="24" r="4" fill="currentColor"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="dropdown-${index}">
+              <div class="dropdown-item" onclick="runTaskNow(${index}, event)">
+                <svg width="14" height="14" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 10L37 24L15 38V10Z" fill="currentColor"/></svg>
+                立即运行
+              </div>
+              <div class="dropdown-item" onclick="togglePauseTask(${index}, event)">
+                <svg width="14" height="14" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 12V36M32 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+                ${task.paused ? '恢复' : '暂停'}
+              </div>
+              <div class="dropdown-item danger" onclick="deleteTask(${index}, event)">
+                <svg width="14" height="14" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 10H39M20 20V34M28 20V34M12 10L14 40C14 41.1046 14.8954 42 16 42H32C33.1046 42 34 41.1046 34 40L36 10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+                删除
+              </div>
+            </div>
+          </div>
+        `;
+        tasksContainer.appendChild(card);
+      });
+    }
+
+    // 渲染推荐任务
+    function renderRecommended() {
+      recommendedContainer.innerHTML = '';
+      recommendedTasks.forEach((rec, idx) => {
+        const card = document.createElement('div');
+        card.className = 'recommended-card';
+        card.onclick = (e) => addRecommendedTask(idx, e);
+        card.innerHTML = `
+          <div class="rec-info">
+            <div class="rec-title">${escapeHtml(rec.title)}</div>
+            <div class="rec-desc">${escapeHtml(rec.desc)}</div>
+          </div>
+          <button class="btn-add-rec" title="一键添加">+</button>
+        `;
+        recommendedContainer.appendChild(card);
+      });
+    }
+
+    // ================= 交互动作 =================
+
+    function closeAllDropdowns() {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+
+    // 1. 添加推荐任务
+    function addRecommendedTask(idx, e) {
+      if (e) e.stopPropagation();
+      const item = recommendedTasks[idx];
+      tasks.push({
+        title: item.title,
+        desc: item.desc,
+        scheduleText: item.scheduleText,
+        nextRun: item.nextRun,
+        paused: false
+      });
+      recommendedTasks.splice(idx, 1);
+      showToast(`已成功添加定时任务：“${item.title}”`);
+      renderUI();
+    }
+
+    // 2. 下拉操作菜单切换
+    function toggleDropdown(e, index) {
+      if (e) e.stopPropagation();
+      if (tasks[index] && tasks[index].running) return;
+      const menu = document.getElementById(`dropdown-${index}`);
+      const isShow = menu ? menu.classList.contains('show') : false;
+      closeAllDropdowns();
+      if (menu && !isShow) {
+        menu.classList.add('show');
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.task-actions')) {
+        closeAllDropdowns();
+      }
+    });
+
+    // 3. 立即运行
+    function runTaskNow(index, e) {
+      if (e) e.stopPropagation();
+      closeAllDropdowns();
+      const task = tasks[index];
+      if (!task || task.running) return;
+
+      task.running = true;
+      showToast(`已触发立即运行：“${task.title}”`);
+      renderUI();
+
+      setTimeout(() => {
+        task.running = false;
+        showToast(`任务运行完成：“${task.title}”`);
+        renderUI();
+      }, 4000);
+    }
+
+    // 4. 暂停/恢复任务
+    function togglePauseTask(index, e) {
+      if (e) e.stopPropagation();
+      closeAllDropdowns();
+      tasks[index].paused = !tasks[index].paused;
+      showToast(tasks[index].paused ? '任务已暂停' : '任务已恢复');
+      renderUI();
+    }
+
+    // 5. 删除任务
+    function deleteTask(index, e) {
+      if (e) e.stopPropagation();
+      closeAllDropdowns();
+      const deleted = tasks.splice(index, 1);
+      showToast(`已删除任务：“${deleted[0].title}”`);
+      renderUI();
+    }
+
+    // 6. 切换视图：对话创建
+    function openChatView() {
+      tasksMainView.style.display = 'none';
+      chatMainView.style.display = 'flex';
+      navTasks.classList.remove('active');
+      
+      chatTextarea.value = "我们一起来设置一个已安排任务吧。首先，说明定时任务在SoulAgent中的工作方式。然后询问我需要安排什么，以及应该在什么时候运行。";
+      chatTextarea.focus();
+    }
+
+    function openTasksView() {
+      chatMainView.style.display = 'none';
+      tasksMainView.style.display = 'flex';
+      navTasks.classList.add('active');
+    }
+
+    // 重置抽屉表单
+    function resetTaskForm() {
+      const form = document.getElementById('taskForm');
+      if (form) form.reset();
+
+      // 重置 Tab 为 周期
+      currentTab = 'cycle';
+      document.querySelectorAll('#freqTabGroup .segmented-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === 'cycle');
+      });
+      document.getElementById('tabPanelCycle').style.display = 'block';
+      document.getElementById('tabPanelInterval').style.display = 'none';
+      document.getElementById('tabPanelSingle').style.display = 'none';
+
+      // 清除星期与日期胶囊选中态
+      document.querySelectorAll('#weekDayPills .pill-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('#monthDayGrid .day-pill').forEach(btn => btn.classList.remove('active'));
+
+      // 恢复默认选中的星期（周一、周五）
+      const defaultWeekPills = document.querySelectorAll('#weekDayPills .pill-btn[data-val="周一"], #weekDayPills .pill-btn[data-val="周五"]');
+      defaultWeekPills.forEach(btn => btn.classList.add('active'));
+
+      // 隐藏/重置条件联动区域
+      if (formPermanentCycle) formPermanentCycle.checked = true;
+      if (formPermanentInterval) formPermanentInterval.checked = true;
+      if (datePickerRowCycle) datePickerRowCycle.style.display = 'none';
+      if (datePickerRowInterval) datePickerRowInterval.style.display = 'none';
+
+      document.getElementById('intervalVal').value = '1';
+      document.getElementById('intervalUnit').value = '小时';
+
+      weekDayRow.style.display = 'none';
+      monthDayRow.style.display = 'none';
+      monthEndStrategyRow.style.display = 'none';
+
+      validateForm();
+    }
+
+    // 7. 右侧抽屉（手动设置）
+    function openDrawer() {
+      drawerOverlay.classList.add('active');
+      manualDrawer.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      validateForm();
+    }
+
+    function closeDrawer() {
+      drawerOverlay.classList.remove('active');
+      manualDrawer.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // 保存手动设置表单
+    function saveTaskForm() {
+      if (btnSubmitDrawer.disabled) return;
+
+      const title = formTitle.value.trim();
+      const desc = document.getElementById('formDesc').value.trim();
+
+      let scheduleText = '';
+      let nextRun = '';
+
+      if (currentTab === 'cycle') {
+        const isPermanent = formPermanentCycle.checked;
+        if (isPermanent) {
+          scheduleText = '长期有效 · ';
+        } else {
+          const start = document.getElementById('formStartDateCycle').value.replace(/-/g, '.');
+          const end = document.getElementById('formEndDateCycle').value.replace(/-/g, '.');
+          scheduleText = `${start} - ${end} · `;
+        }
+
+        const repeat = formRepeatCycle.value;
+        const time = document.getElementById('formTimeCycle').value;
+
+        if (repeat === '每周' || repeat === '每双周') {
+          const selectedDays = Array.from(document.querySelectorAll('#weekDayPills .pill-btn.active')).map(b => b.dataset.val);
+          const daysStr = selectedDays.length ? selectedDays.join('、') : '未指定星期';
+          scheduleText += `${repeat}（${daysStr}） · ${time}`;
+        } else if (repeat === '每月') {
+          const selectedMonthDays = Array.from(document.querySelectorAll('#monthDayGrid .day-pill.active')).map(b => b.dataset.val);
+          const monthDaysStr = selectedMonthDays.length ? selectedMonthDays.join('、') : '未指定日期';
+          
+          const hasLateDay = selectedMonthDays.includes('29号') || selectedMonthDays.includes('30号') || selectedMonthDays.includes('31号');
+          let strategyInfo = '';
+          if (hasLateDay) {
+            const strategy = document.getElementById('monthEndStrategy').value;
+            strategyInfo = ` · ${strategy}`;
+          }
+          
+          scheduleText += `每月（${monthDaysStr}${strategyInfo}） · ${time}`;
+        } else {
+          scheduleText += `${repeat} · ${time}`;
+        }
+        nextRun = '明天 08:00 运行';
+      } else if (currentTab === 'interval') {
+        const isPermanent = formPermanentInterval.checked;
+        if (isPermanent) {
+          scheduleText = '长期有效 · ';
+        } else {
+          const start = document.getElementById('formStartDateInterval').value.replace(/-/g, '.');
+          const end = document.getElementById('formEndDateInterval').value.replace(/-/g, '.');
+          scheduleText = `${start} - ${end} · `;
+        }
+
+        const num = document.getElementById('intervalVal').value || '1';
+        const unit = document.getElementById('intervalUnit').value;
+        scheduleText += `每 ${num} ${unit} 自动运行`;
+        nextRun = `每 ${num} ${unit} 运行`;
+      } else if (currentTab === 'single') {
+        const runDate = document.getElementById('singleRunDate').value.replace(/-/g, '.');
+        const runTime = document.getElementById('singleRunTime').value;
+        scheduleText = `单次运行 · ${runDate} ${runTime}`;
+        nextRun = `${runDate} ${runTime} 运行`;
+      }
+
+      tasks.push({
+        title: title,
+        desc: desc,
+        scheduleText: scheduleText,
+        nextRun: nextRun,
+        paused: false
+      });
+
+      closeDrawer();
+      showToast('定时任务创建成功！');
+      resetTaskForm();
+      renderUI();
+    }
+
+    btnSubmitDrawer.addEventListener('click', saveTaskForm);
+
+    // Toast 提示框显示
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+
+    // ================= 事件监听绑定 =================
+    document.getElementById('btnChatCreateTop').addEventListener('click', openChatView);
+    document.getElementById('btnChatCreateEmpty').addEventListener('click', openChatView);
+
+    document.getElementById('btnManualCreateTop').addEventListener('click', openDrawer);
+    document.getElementById('btnManualCreateEmpty').addEventListener('click', openDrawer);
+
+    document.getElementById('btnCloseDrawer').addEventListener('click', closeDrawer);
+    document.getElementById('btnCancelDrawer').addEventListener('click', closeDrawer);
+    drawerOverlay.addEventListener('click', closeDrawer);
+
+    navTasks.addEventListener('click', openTasksView);
+
+    // 置中输入框发送指令
+    if (document.getElementById('btnSendMessage')) {
+      document.getElementById('btnSendMessage').addEventListener('click', () => {
+        const val = chatTextarea.value.trim();
+        if (!val) return;
+        showToast('指令已发送给 SoulAgent');
+        openTasksView();
+      });
+    }
+
+    // 键盘 Esc 键快捷关闭抽屉和下拉菜单
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAllDropdowns();
+        if (manualDrawer.classList.contains('active')) {
+          closeDrawer();
+        }
+      }
+    });
+
+    // 初始化渲染
+    renderUI();
+  </script>
+</body>
+</html>
