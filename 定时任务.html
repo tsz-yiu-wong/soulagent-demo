@@ -1559,7 +1559,7 @@
         if (headerActions) headerActions.style.display = 'none';
       }
 
-      if (tasks.length < 3 && recommendedTasks.length > 0) {
+      if (recommendedTasks.length > 0) {
         recommendedSection.style.display = 'flex';
         renderRecommended();
       } else {
@@ -1652,6 +1652,7 @@
       if (e) e.stopPropagation();
       const item = recommendedTasks[idx];
       tasks.push({
+        recData: { ...item },
         title: item.title,
         desc: item.desc,
         scheduleText: item.scheduleText,
@@ -1712,8 +1713,16 @@
     function deleteTask(index, e) {
       if (e) e.stopPropagation();
       closeAllDropdowns();
-      const deleted = tasks.splice(index, 1);
-      showToast(`已删除任务：“${deleted[0].title}”`);
+      const deleted = tasks.splice(index, 1)[0];
+      if (deleted) {
+        if (deleted.recData) {
+          if (!recommendedTasks.some(r => r.id === deleted.recData.id)) {
+            recommendedTasks.push(deleted.recData);
+            recommendedTasks.sort((a, b) => a.id.localeCompare(b.id));
+          }
+        }
+        showToast(`已删除任务：“${deleted.title}”`);
+      }
       renderUI();
     }
 

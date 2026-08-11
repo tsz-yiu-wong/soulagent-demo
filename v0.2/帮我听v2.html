@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>帮我听 - SoulAgent</title>
+  <title>帮我听会 - SoulAgent</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -215,6 +215,107 @@
     }
     .bubble-count { font-size: 11.5px; padding: 1px 7px; border-radius: 10px; background: rgba(0, 0, 0, 0.06); color: inherit; }
 
+    /* 状态下拉框 样式 (Bubble Tags 前置 Trigger - 高区分度设计) */
+    .status-dropdown-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      padding-right: 12px;
+      margin-right: 4px;
+      border-right: 1px solid #e5e7eb;
+    }
+    .status-dropdown-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .status-dropdown-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+    .status-dropdown-btn.open, .status-dropdown-btn.has-value {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #bfdbfe;
+      font-weight: 600;
+      box-shadow: 0 2px 6px -1px rgba(37, 99, 235, 0.12);
+    }
+    .status-dropdown-btn.open:hover, .status-dropdown-btn.has-value:hover {
+      background: #e0f2fe;
+      border-color: #93c5fd;
+    }
+    .status-btn-icon {
+      color: #64748b;
+      transition: color 0.2s ease;
+    }
+    .status-dropdown-btn.open .status-btn-icon,
+    .status-dropdown-btn.has-value .status-btn-icon {
+      color: #2563eb;
+    }
+    .status-dropdown-chevron {
+      transition: transform 0.2s ease;
+      color: #64748b;
+    }
+    .status-dropdown-btn.open .status-dropdown-chevron,
+    .status-dropdown-btn.has-value .status-dropdown-chevron {
+      color: #2563eb;
+    }
+    .status-dropdown-btn.open .status-dropdown-chevron {
+      transform: rotate(180deg);
+    }
+    .status-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 120;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      min-width: 110px;
+      padding: 5px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .status-dropdown-menu.show {
+      display: flex !important;
+      animation: chipFadeIn 0.15s ease;
+    }
+    .status-dropdown-item {
+      padding: 7px 12px;
+      font-size: 13px;
+      color: #374151;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      white-space: nowrap;
+    }
+    .status-dropdown-item:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .status-dropdown-item.active {
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
     /* ==================== 活动卡片 样式 (修改1：全卡片遮罩 + 按钮居中，状态栏保持左上角) ==================== */
     .activity-card {
       background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px;
@@ -280,6 +381,193 @@
     .hover-listen-btn-center:hover {
       background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
       transform: scale(1.06);
+    }
+
+    /* 右上角 收藏 按钮样式 */
+    .hover-favorite-btn-topright {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 6;
+      user-select: none;
+    }
+    .hover-favorite-btn-topright:hover {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.6);
+      color: #fef08a;
+      transform: scale(1.04);
+    }
+    .hover-favorite-btn-topright.favorited {
+      background: rgba(245, 158, 11, 0.95);
+      color: #ffffff;
+      border-color: #f59e0b;
+    }
+    .hover-favorite-btn-topright.favorited svg {
+      fill: #ffffff;
+      stroke: #ffffff;
+    }
+
+    /* 左上角 删除 按钮样式 */
+    .hover-delete-btn-topleft {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 6;
+      user-select: none;
+    }
+    .hover-delete-btn-topleft:hover {
+      background: rgba(220, 38, 38, 0.88);
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* 删除二次确认 Modal 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: modalFadeIn 0.2s ease;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      width: 420px;
+      max-width: 90vw;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
+      border: 1px solid #e5e7eb;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalSlideUp {
+      from { transform: translateY(16px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .modal-danger-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #fee2e2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .modal-body {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal-btn-cancel {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #374151;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .modal-btn-cancel:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .modal-btn-delete {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      background: #dc2626;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+      transition: all 0.15s ease;
+    }
+    .modal-btn-delete:hover {
+      background: #b91c1c;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Toast 全局通知提示 */
+    .toast-notification {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(17, 24, 39, 0.92);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast-notification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* KV 背景样式 */
@@ -543,7 +831,7 @@
     
     /* 视频正位占位符 (小窗时显示) */
     .video-player-placeholder {
-      display: none; height: 220px; border-radius: 12px;
+      display: none; width: 100%; aspect-ratio: 16 / 9; max-height: 520px; border-radius: 12px;
       background: #f8fafc; border: 2px dashed #cbd5e1;
       align-items: center; justify-content: center;
       color: #64748b; font-size: 13px; font-weight: 500;
@@ -556,14 +844,14 @@
 
     .video-player-container {
       background: #0f172a; border-radius: 12px; overflow: hidden; position: relative;
-      height: 220px; display: flex; flex-direction: column; justify-content: space-between;
+      width: 100%; aspect-ratio: 16 / 9; max-height: 520px; display: flex; flex-direction: column; justify-content: space-between;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); border: 1px solid #1e293b;
       transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
 
     /* 视频小窗浮动样式 (Picture-in-Picture Mini Float) */
     .video-player-container.is-floating {
-      position: fixed; top: 80px; right: 28px; width: 340px; height: 210px;
+      position: fixed; top: 80px; right: 28px; width: 340px; height: 210px; aspect-ratio: auto; max-height: none;
       z-index: 1200; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.25);
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.1);
       animation: miniFloatIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -658,31 +946,89 @@
       50% { border-color: #f87171; }
     }
 
-    /* 横向章节 Track */
-    .horizontal-chapter-wrapper { margin-top: 12px; }
+    /* 章节时间轴 (Timeline Style) */
+    .horizontal-chapter-wrapper { margin-top: 16px; }
     .horizontal-chapter-header {
-      font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 12.5px; font-weight: 600; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
     }
-    .horizontal-chapter-track {
-      display: flex; align-items: center; gap: 10px; overflow-x: auto;
-      padding-bottom: 6px; scroll-behavior: smooth; scrollbar-width: thin;
+    .chapter-timeline-track {
+      position: relative; display: flex; align-items: flex-start; gap: 0;
+      overflow-x: auto; padding: 10px 4px 16px; scroll-behavior: smooth; scrollbar-width: thin;
     }
-    .horizontal-chapter-track::-webkit-scrollbar { height: 4px; }
-    .horizontal-chapter-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .chapter-timeline-track::-webkit-scrollbar { height: 4px; }
+    .chapter-timeline-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-    .chapter-chip {
-      flex: 0 0 calc(28% - 8px); min-width: 140px; padding: 8px 12px; border-radius: 10px;
-      background: #ffffff; border: 1px solid #e2e8f0; font-size: 12.5px; color: #475569;
-      cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; gap: 4px;
-      user-select: none;
+    .chapter-timeline-node {
+      position: relative; z-index: 2; flex: 0 0 165px; min-width: 165px;
+      display: flex; flex-direction: column; align-items: flex-start;
+      cursor: pointer; user-select: none; transition: all 0.2s ease;
+      padding-right: 14px;
     }
-    .chapter-chip:hover { border-color: #3b82f6; color: #1e293b; background: #eff6ff; }
-    .chapter-chip.active {
-      background: #eff6ff; border-color: #2563eb; color: #2563eb; font-weight: 600;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+
+    /* 节点间连线背景 (灰色) */
+    .chapter-timeline-node::before {
+      content: ''; position: absolute; top: 14px; left: 22px; width: 100%; height: 3px;
+      background: #e2e8f0; z-index: 1; pointer-events: none;
     }
-    .chapter-chip-time { font-family: monospace; font-size: 11px; opacity: 0.85; }
-    .chapter-chip-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chapter-timeline-node:last-child::before {
+      display: none;
+    }
+
+    /* 节点间进度连线 (蓝色) */
+    .chapter-timeline-node::after {
+      content: ''; position: absolute; top: 14px; left: 22px; width: 0%; height: 3px;
+      background: #2563eb; z-index: 1; pointer-events: none; transition: width 0.3s ease;
+    }
+    .chapter-timeline-node.completed::after {
+      width: 100%;
+    }
+    .chapter-timeline-node:last-child::after {
+      display: none;
+    }
+
+    .timeline-dot {
+      width: 16px; height: 16px; border-radius: 50%; background: #ffffff;
+      border: 3px solid #94a3b8; display: flex; align-items: center; justify-content: center;
+      margin-left: 14px; margin-bottom: 12px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 0 0 3px #f8fafc; flex-shrink: 0; position: relative; z-index: 2;
+    }
+    .timeline-dot .inner-dot {
+      width: 5px; height: 5px; border-radius: 50%; background: transparent; transition: background 0.2s ease;
+    }
+
+    .timeline-content {
+      display: flex; flex-direction: column; gap: 6px; padding-left: 2px; width: 100%;
+    }
+    .timeline-time {
+      font-family: monospace; font-size: 12px; font-weight: 600; color: #64748b;
+      letter-spacing: 0.02em; transition: color 0.2s ease;
+    }
+    .timeline-title {
+      font-size: 12.5px; font-weight: 500; color: #334155; line-height: 1.55;
+      white-space: normal; word-break: break-word; overflow: visible;
+      transition: color 0.2s ease;
+    }
+
+    /* Hover & Active & Completed States */
+    .chapter-timeline-node:hover .timeline-dot {
+      border-color: #3b82f6; transform: scale(1.15);
+    }
+    .chapter-timeline-node:hover .timeline-time { color: #2563eb; }
+    .chapter-timeline-node:hover .timeline-title { color: #0f172a; }
+
+    .chapter-timeline-node.active .timeline-dot {
+      border-color: #2563eb; background: #2563eb; transform: scale(1.25);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    }
+    .chapter-timeline-node.active .inner-dot { background: #ffffff; }
+    .chapter-timeline-node.active .timeline-time { color: #2563eb; font-weight: 700; }
+    .chapter-timeline-node.active .timeline-title { color: #2563eb; font-weight: 700; }
+
+    .chapter-timeline-node.completed .timeline-dot {
+      border-color: #2563eb; background: #2563eb; transform: scale(1.05);
+    }
+    .chapter-timeline-node.completed .inner-dot { background: #ffffff; }
+    .chapter-timeline-node.completed .timeline-time { color: #2563eb; }
 
     /* 抽屉正文 Tab (概览 | 总结 | 语音转写) */
     .drawer-content-area { padding: 20px 24px 60px; flex: 1; }
@@ -698,6 +1044,92 @@
 
     .drawer-tab-content { display: none; }
     .drawer-tab-content.active { display: block; }
+
+    /* 抽屉操作栏 (Toolbar below tabs) */
+    .drawer-action-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; padding: 4px 0; min-height: 36px;
+    }
+    .toolbar-left-group { display: flex; align-items: center; gap: 10px; }
+    .toolbar-right-group { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+    /* 风格下拉选择器 */
+    .style-dropdown-container { position: relative; display: inline-block; }
+    .style-dropdown-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+      border-radius: 8px; background: #ffffff; border: 1px solid #cbd5e1;
+      font-size: 13px; font-weight: 500; color: #1e293b; cursor: pointer;
+      transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .style-dropdown-btn:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    .style-dropdown-btn.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+
+    .style-dropdown-menu {
+      position: absolute; top: calc(100% + 6px); left: 0; z-index: 1000;
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15); min-width: 140px; padding: 4px;
+      display: none; flex-direction: column; gap: 2px;
+    }
+    .style-dropdown-menu.show { display: flex !important; animation: chipFadeIn 0.15s ease; }
+    .style-option-item {
+      padding: 7px 12px; border-radius: 6px; font-size: 13px; color: #334155;
+      cursor: pointer; transition: background 0.15s ease; display: flex; align-items: center; justify-content: space-between;
+    }
+    .style-option-item:hover { background: #f1f5f9; color: #0f172a; }
+    .style-option-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+
+    .toolbar-text-btn {
+      display: inline-flex; align-items: center; gap: 5px; background: #ffffff;
+      border: 1px solid #e2e8f0; font-size: 12.5px; font-weight: 500; color: #475569;
+      cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: all 0.15s ease;
+    }
+    .toolbar-text-btn:hover { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+
+    /* 多媒体素材 Card Grid (简洁大方) */
+    .media-card-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px; margin-top: 12px;
+    }
+    .media-asset-card {
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: all 0.2s ease; position: relative;
+    }
+    .media-asset-card:hover {
+      border-color: #3b82f6; transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
+    }
+    .media-asset-thumb {
+      height: 110px; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+      display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .media-asset-thumb-icon {
+      width: 44px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.95);
+      display: flex; align-items: center; justify-content: center; color: #2563eb;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); backdrop-filter: blur(4px); border: 1px solid #dbeafe;
+    }
+    .media-asset-body {
+      padding: 12px 14px; display: flex; flex-direction: column; justify-content: center;
+    }
+    .media-asset-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .media-asset-title {
+      font-size: 13.5px; font-weight: 600; color: #0f172a; line-height: 1.4;
+      flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .media-card-actions {
+      display: flex; align-items: center; gap: 2px; flex-shrink: 0;
+    }
+    .media-icon-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent;
+      background: transparent; color: #64748b; cursor: pointer; transition: all 0.15s ease;
+    }
+    .media-icon-btn:hover {
+      background: #eff6ff; color: #2563eb; border-color: #bfdbfe;
+    }
 
     /* 概览卡片 */
     .overview-card {
@@ -737,17 +1169,29 @@
     .transcript-speaker { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 13px; font-weight: 700; color: #111827; width: 140px; flex-shrink: 0; }
     .transcript-text { flex: 1; font-size: 14px; line-height: 1.7; color: #374151; }
 
-    /* 划词 Popover (统一为“引用”) */
+    /* 划词 Popover (白色背景 + 阴影 + 复制/引用按钮) */
     .text-selection-popover {
-      position: fixed; z-index: 2000; display: none; background: #1e293b; border-radius: 8px;
-      padding: 4px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25); animation: popIn 0.15s ease;
+      position: fixed; z-index: 2000; display: none; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 3px 4px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+      animation: popIn 0.15s ease; align-items: center; gap: 2px;
     }
     .popover-btn {
-      background: transparent; border: none; color: #ffffff; padding: 6px 14px; border-radius: 6px;
-      font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;
-      transition: background 0.15s ease;
+      background: transparent; border: none; color: #334155; padding: 5px 10px; border-radius: 6px;
+      font-size: 12.5px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+      transition: all 0.15s ease;
     }
-    .popover-btn:hover { background: #2563eb; }
+    .popover-btn:hover { background: #eff6ff; color: #2563eb; }
+    .popover-divider { width: 1px; height: 16px; background: #e2e8f0; margin: 0 1px; }
+
+    /* Toast Notification */
+    .toast-notification {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #0f172a; color: #ffffff; padding: 8px 18px; border-radius: 20px;
+      font-size: 13px; font-weight: 500; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex; align-items: center; gap: 8px; z-index: 9999; opacity: 0;
+      pointer-events: none; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast-notification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
@@ -771,15 +1215,11 @@
       </div>
       <div class="nav-item active" id="nav-btn-listener">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-        <span>帮我听</span>
+        <span>帮我听会</span>
       </div>
       <div class="nav-item">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         <span>知识库</span>
-      </div>
-      <div class="nav-item">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span>档案库</span>
       </div>
     </nav>
 
@@ -808,7 +1248,7 @@
     <!-- 视图 1：帮我听 广场列表页面 -->
     <main class="page-view" id="page-anything-listener">
       <div class="main-header">
-        <h1 class="main-title">帮我听</h1>
+        <h1 class="main-title">帮我听会</h1>
         <p class="main-subtitle">直播、视频，随时随地实时听记</p>
 
         <!-- 智能听记输入框卡片 -->
@@ -849,53 +1289,42 @@
         <!-- Tab 导航栏 -->
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="conference">
-            <span>活动广场</span>
-            <span class="tab-count">7</span>
-          </button>
-          <button class="tab-btn" data-tab="course">
-            <span>课程广场</span>
-            <span class="tab-count">2</span>
+            <span>官方会议</span>
+            <span class="tab-count">9</span>
           </button>
           <button class="tab-btn" data-tab="personal">
-            <span>个人添加</span>
-            <span class="tab-count" id="personal-tab-count">0</span>
+            <span>我的会议</span>
+            <span class="tab-count" id="personal-tab-count">6</span>
           </button>
         </div>
       </div>
 
-      <!-- Tab 内容 1：活动广场 -->
+      <!-- Tab 内容 1：官方会议 -->
       <div class="tab-content active" id="tab-conference">
         <div class="bubble-tags-wrapper">
-          <button type="button" class="bubble-tag active" data-filter="all"><span>全部</span><span class="bubble-count">7</span></button>
+          <div class="status-dropdown-container">
+            <button type="button" class="status-dropdown-btn" id="conf-status-dropdown-btn">
+              <svg class="status-btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              <span class="status-btn-text">状态</span>
+              <svg class="status-dropdown-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="status-dropdown-menu" id="conf-status-dropdown-menu">
+              <div class="status-dropdown-item active" data-status="all">全部</div>
+              <div class="status-dropdown-item" data-status="not-started">未开始</div>
+              <div class="status-dropdown-item" data-status="in-progress">进行中</div>
+              <div class="status-dropdown-item" data-status="ended">已结束</div>
+            </div>
+          </div>
+          <button type="button" class="bubble-tag active" data-filter="all"><span>全部</span><span class="bubble-count">9</span></button>
           <button type="button" class="bubble-tag" data-filter="summit"><span>行业峰会</span><span class="bubble-count">3</span></button>
+          <button type="button" class="bubble-tag" data-filter="course"><span>系列课程</span><span class="bubble-count">2</span></button>
           <button type="button" class="bubble-tag" data-filter="press"><span>发布会</span><span class="bubble-count">2</span></button>
           <button type="button" class="bubble-tag" data-filter="podcast"><span>播客</span><span class="bubble-count">2</span></button>
         </div>
 
         <div class="card-grid" id="conference-card-grid">
           
-          <!-- 卡片 1: 硬核AI (已结束, 播客) -->
-          <div class="activity-card" data-subtag="podcast" data-title="【硬核AI】从 Transformer 到 Agent 的进化之路" data-kv="kv-podcast2" data-status="ended" data-time="2026年07月28日 · 第45期" data-source="音频播客 · 小宇宙 / Apple Podcasts">
-            <div class="card-kv kv-podcast2">
-              <span class="status-badge ended">已结束</span>
-            </div>
-            <div class="card-body">
-              <div class="card-title">【硬核AI】从 Transformer 到 Agent 的进化之路</div>
-              <div class="card-info-list">
-                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年07月28日 · 第45期</span></div>
-                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg><span>音频播客 · 小宇宙 / Apple Podcasts</span></div>
-              </div>
-            </div>
-            <!-- 修改1：全卡片遮罩与按钮正居中 -->
-            <div class="card-full-hover-mask">
-              <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span>帮我听</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 卡片 2: 智源 FlagOpen 2.0 (进行中, 发布会) -->
+          <!-- 卡片 1: 智源 FlagOpen 2.0 (进行中, 发布会) -->
           <div class="activity-card" data-subtag="press" data-title="智源 FlagOpen 2.0 开源发布会" data-kv="kv-flagopen" data-status="in-progress" data-time="2026年08月07日 14:00 - 16:30" data-source="线上直播 · 智源人工智能研究院">
             <div class="card-kv kv-flagopen">
               <span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>
@@ -908,14 +1337,18 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
           </div>
 
-          <!-- 卡片 3: 硅谷101 (进行中, 播客) -->
+          <!-- 卡片 2: 硅谷101 (进行中, 播客) -->
           <div class="activity-card" data-subtag="podcast" data-title="【硅谷101】对话大模型具身智能新前沿" data-kv="kv-podcast1" data-status="in-progress" data-time="2026年08月07日 · 第128期" data-source="音频播客 · 小宇宙 / 喜马拉雅">
             <div class="card-kv kv-podcast1">
               <span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>
@@ -928,14 +1361,18 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
           </div>
 
-          <!-- 卡片 4: 2026 智源大会 (进行中, 行业峰会) -->
+          <!-- 卡片 3: 2026 智源大会 (进行中, 行业峰会) -->
           <div class="activity-card" data-subtag="summit" data-title="2026 智源大会" data-kv="kv-baai" data-status="in-progress" data-time="2026年08月07日 - 08月08日" data-source="北京 · 中关村国家自主创新示范区展示中心">
             <div class="card-kv kv-baai">
               <span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>
@@ -948,14 +1385,18 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
           </div>
 
-          <!-- 卡片 5: 2026 苹果秋季发布会 (未开始, 发布会) -->
+          <!-- 卡片 4: 2026 苹果秋季发布会 (未开始, 发布会) -->
           <div class="activity-card" data-subtag="press" data-title="2026 苹果秋季年度新品发布会" data-kv="kv-apple" data-status="not-started" data-time="2026年09月12日 01:00" data-source="线上直播 · 史蒂夫·乔布斯剧院">
             <div class="card-kv kv-apple">
               <span class="status-badge not-started">未开始</span>
@@ -968,8 +1409,36 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片 5: 硬核AI (已结束, 播客) -->
+          <div class="activity-card" data-subtag="podcast" data-title="【硬核AI】从 Transformer 到 Agent 的进化之路" data-kv="kv-podcast2" data-status="ended" data-time="2026年07月28日 · 第45期" data-source="音频播客 · 小宇宙 / Apple Podcasts">
+            <div class="card-kv kv-podcast2">
+              <span class="status-badge ended">已结束</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">【硬核AI】从 Transformer 到 Agent 的进化之路</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年07月28日 · 第45期</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg><span>音频播客 · 小宇宙 / Apple Podcasts</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
@@ -988,8 +1457,12 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
@@ -1008,20 +1481,19 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
           </div>
 
-        </div>
-      </div>
-
-      <!-- Tab 内容 2：课程广场 -->
-      <div class="tab-content" id="tab-course">
-        <div class="card-grid">
-          <div class="activity-card" data-title="FlagOS 系列课程" data-kv="kv-flagos" data-status="in-progress" data-time="2026年04月10日 - 08月30日" data-source="线上 · 智源社区 Hub 讲堂">
+          <!-- 卡片 8: FlagOS 系列课程 (进行中, 系列课程) -->
+          <div class="activity-card" data-subtag="course" data-title="FlagOS 系列课程" data-kv="kv-flagos" data-status="in-progress" data-time="2026年04月10日 - 08月30日" data-source="线上 · 智源社区 Hub 讲堂">
             <div class="card-kv kv-flagos">
               <span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>
             </div>
@@ -1033,14 +1505,19 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
           </div>
 
-          <div class="activity-card" data-title="北大黄铁军老师系列课程" data-kv="kv-pku" data-status="not-started" data-time="2026年09月01日 - 11月15日" data-source="北京大学 · 理论物理与类脑智能报告厅">
+          <!-- 卡片 9: 北大黄铁军老师系列课程 (未开始, 系列课程) -->
+          <div class="activity-card" data-subtag="course" data-title="北大黄铁军老师系列课程" data-kv="kv-pku" data-status="not-started" data-time="2026年09月01日 - 11月15日" data-source="北京大学 · 理论物理与类脑智能报告厅">
             <div class="card-kv kv-pku">
               <span class="status-badge not-started">未开始</span>
             </div>
@@ -1052,21 +1529,206 @@
               </div>
             </div>
             <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
               <div class="hover-listen-btn-center">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                 <span>帮我听</span>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      <!-- Tab 内容 3：个人添加 -->
+      <!-- Tab 内容 2：我的会议 -->
       <div class="tab-content" id="tab-personal">
-        <div class="empty-state">
-          <div class="empty-icon"><svg width="32" height="32" fill="none" stroke="#9ca3af" stroke-width="1.75" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div>
-          <div class="empty-title">暂无个人添加活动</div>
-          <div class="empty-desc">暂未添加个人活动听记</div>
+        <div class="bubble-tags-wrapper" id="my-meetings-bubble-tags">
+          <div class="status-dropdown-container">
+            <button type="button" class="status-dropdown-btn" id="my-status-dropdown-btn">
+              <svg class="status-btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              <span class="status-btn-text">状态</span>
+              <svg class="status-dropdown-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="status-dropdown-menu" id="my-status-dropdown-menu">
+              <div class="status-dropdown-item active" data-status="all">全部</div>
+              <div class="status-dropdown-item" data-status="not-started">未开始</div>
+              <div class="status-dropdown-item" data-status="in-progress">进行中</div>
+              <div class="status-dropdown-item" data-status="ended">已结束</div>
+            </div>
+          </div>
+          <button type="button" class="bubble-tag active" data-myfilter="all"><span>全部</span><span class="bubble-count" id="my-count-all">6</span></button>
+          <button type="button" class="bubble-tag" data-myfilter="favorite"><span>我的收藏</span><span class="bubble-count" id="my-count-favorite">2</span></button>
+          <button type="button" class="bubble-tag" data-myfilter="live"><span>直播网址</span><span class="bubble-count" id="my-count-live">1</span></button>
+          <button type="button" class="bubble-tag" data-myfilter="video"><span>视频链接</span><span class="bubble-count" id="my-count-video">1</span></button>
+          <button type="button" class="bubble-tag" data-myfilter="attachment"><span>音视频附件</span><span class="bubble-count" id="my-count-attachment">1</span></button>
+          <button type="button" class="bubble-tag" data-myfilter="other"><span>其他</span><span class="bubble-count" id="my-count-other">1</span></button>
+        </div>
+
+        <div class="card-grid" id="personal-card-grid">
+          
+          <!-- 卡片 1: 2026 智源大会 (官方收藏, 不可删除, 仅可取消收藏) -->
+          <div class="activity-card" data-is-official="true" data-mysubtag="favorite" data-title="2026 智源大会" data-kv="kv-baai" data-status="in-progress" data-time="2026年08月07日 - 08月08日" data-source="北京 · 中关村国家自主创新示范区展示中心">
+            <div class="card-kv kv-baai">
+              <span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">2026 智源大会</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年08月07日 - 08月08日</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>北京 · 中关村国家自主创新示范区展示中心</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright favorited" title="取消收藏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>已收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片 2: 硅谷101 (官方收藏, 不可删除, 仅可取消收藏) -->
+          <div class="activity-card" data-is-official="true" data-mysubtag="favorite" data-title="【硅谷101】对话大模型具身智能新前沿" data-kv="kv-podcast1" data-status="in-progress" data-time="2026年08月07日 · 第128期" data-source="音频播客 · 小宇宙 / 喜马拉雅">
+            <div class="card-kv kv-podcast1">
+              <span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">【硅谷101】对话大模型具身智能新前沿</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年08月07日 · 第128期</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg><span>音频播客 · 小宇宙 / 喜马拉雅</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-favorite-btn-topright favorited" title="取消收藏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>已收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片 3: OpenAI Spring Update (个人添加直播网址, 可删除, 可收藏) -->
+          <div class="activity-card" data-is-official="false" data-mysubtag="live" data-title="OpenAI Spring Update 2026 开发者大会" data-kv="kv-apple" data-status="ended" data-time="2026年08月05日 23:00" data-source="直播网址 · youtube.com/watch?v=live_stream">
+            <div class="card-kv kv-apple">
+              <span class="status-badge ended">已结束</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">OpenAI Spring Update 2026 开发者大会</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年08月05日 23:00</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;">直播网址 · youtube.com/watch?v=live_stream</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-delete-btn-topleft" title="删除此记录">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                <span>删除</span>
+              </button>
+              <button type="button" class="hover-favorite-btn-topright" title="收藏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片 4: Karpathy LLM.c (个人添加视频链接, 可删除, 可收藏) -->
+          <div class="activity-card" data-is-official="false" data-mysubtag="video" data-title="【B站】Karpathy 讲解 LLM.c 神经网络源码解析" data-kv="kv-flagopen" data-status="ended" data-time="2026年08月02日 19:30" data-source="视频链接 · bilibili.com/video/BV1xx411">
+            <div class="card-kv kv-flagopen">
+              <span class="status-badge ended">已结束</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">【B站】Karpathy 讲解 LLM.c 神经网络源码解析</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年08月02日 19:30</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;">视频链接 · bilibili.com/video/BV1xx411</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-delete-btn-topleft" title="删除此记录">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                <span>删除</span>
+              </button>
+              <button type="button" class="hover-favorite-btn-topright" title="收藏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片 5: 产品规划 (个人添加音视频附件, 可删除, 可收藏) -->
+          <div class="activity-card" data-is-official="false" data-mysubtag="attachment" data-title="2026Q3产品规划及AI智能体迭代讨论.mp3" data-kv="kv-personal" data-status="ended" data-time="2026年08月08日 10:30" data-source="本地音视频附件 (48.5 MB)">
+            <div class="card-kv kv-personal">
+              <span class="status-badge ended">已结束</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">2026Q3产品规划及AI智能体迭代讨论.mp3</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年08月08日 10:30</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;">本地音视频附件 (48.5 MB)</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-delete-btn-topleft" title="删除此记录">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                <span>删除</span>
+              </button>
+              <button type="button" class="hover-favorite-btn-topright" title="收藏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 卡片 6: 具身智能 (个人添加其他, 可删除, 可收藏) -->
+          <div class="activity-card" data-is-official="false" data-mysubtag="other" data-title="帮我总结具身智能大模型近期的技术突破与应用" data-kv="kv-baai" data-status="ended" data-time="2026年08月01日 16:20" data-source="用户自定义需求听记">
+            <div class="card-kv kv-baai">
+              <span class="status-badge ended">已结束</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">帮我总结具身智能大模型近期的技术突破与应用</div>
+              <div class="card-info-list">
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>2026年08月01日 16:20</span></div>
+                <div class="info-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;">用户自定义需求听记</span></div>
+              </div>
+            </div>
+            <div class="card-full-hover-mask">
+              <button type="button" class="hover-delete-btn-topleft" title="删除此记录">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                <span>删除</span>
+              </button>
+              <button type="button" class="hover-favorite-btn-topright" title="收藏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              </button>
+              <div class="hover-listen-btn-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                <span>帮我听</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </main>
@@ -1195,29 +1857,48 @@
 
               <div class="horizontal-chapter-wrapper" id="horizontal-chapter-wrapper">
                 <div class="horizontal-chapter-header">
-                  <span>章节速览</span>
+                  <span>章节时间轴</span>
                   <span>共 5 个章节</span>
                 </div>
-                <div class="horizontal-chapter-track" id="horizontal-chapter-track">
-                  <div class="chapter-chip active" data-time="00:00" data-chapter="01. Transformer 架构回顾">
-                    <span class="chapter-chip-time">00:00</span>
-                    <span class="chapter-chip-title">01. Transformer 机制</span>
+                <div class="chapter-timeline-track" id="horizontal-chapter-track">
+                  <div class="chapter-timeline-node active" data-time="00:00" data-chapter="01. Transformer 架构回顾">
+                    <div class="timeline-dot"><span class="inner-dot"></span></div>
+                    <div class="timeline-content">
+                      <span class="timeline-time">00:00</span>
+                      <span class="timeline-title">01. Transformer 架构回顾</span>
+                    </div>
                   </div>
-                  <div class="chapter-chip" data-time="05:20" data-chapter="02. 从 LLM 到 Agent 演进逻辑">
-                    <span class="chapter-chip-time">05:20</span>
-                    <span class="chapter-chip-title">02. 从 LLM 到 Agent 演进</span>
+
+                  <div class="chapter-timeline-node" data-time="05:20" data-chapter="02. 从 LLM 到 Agent 演进逻辑">
+                    <div class="timeline-dot"><span class="inner-dot"></span></div>
+                    <div class="timeline-content">
+                      <span class="timeline-time">05:20</span>
+                      <span class="timeline-title">02. 从 LLM 到 Agent 演进逻辑</span>
+                    </div>
                   </div>
-                  <div class="chapter-chip" data-time="12:45" data-chapter="03. Agent 四大核心组件拆解">
-                    <span class="chapter-chip-time">12:45</span>
-                    <span class="chapter-chip-title">03. Agent 四大核心组件</span>
+
+                  <div class="chapter-timeline-node" data-time="12:45" data-chapter="03. Agent 四大核心组件拆解">
+                    <div class="timeline-dot"><span class="inner-dot"></span></div>
+                    <div class="timeline-content">
+                      <span class="timeline-time">12:45</span>
+                      <span class="timeline-title">03. Agent 四大核心组件拆解</span>
+                    </div>
                   </div>
-                  <div class="chapter-chip" data-time="22:10" data-chapter="04. ReAct 范式与工具调用">
-                    <span class="chapter-chip-time">22:10</span>
-                    <span class="chapter-chip-title">04. ReAct 范式与工具调用</span>
+
+                  <div class="chapter-timeline-node" data-time="22:10" data-chapter="04. ReAct 范式与工具调用">
+                    <div class="timeline-dot"><span class="inner-dot"></span></div>
+                    <div class="timeline-content">
+                      <span class="timeline-time">22:10</span>
+                      <span class="timeline-title">04. ReAct 范式与工具调用</span>
+                    </div>
                   </div>
-                  <div class="chapter-chip" data-time="31:05" data-chapter="05. 多智能体协作 (Multi-Agent) 展望">
-                    <span class="chapter-chip-time">31:05</span>
-                    <span class="chapter-chip-title">05. Multi-Agent 协同</span>
+
+                  <div class="chapter-timeline-node" data-time="31:05" data-chapter="05. 多智能体协作 (Multi-Agent) 展望">
+                    <div class="timeline-dot"><span class="inner-dot"></span></div>
+                    <div class="timeline-content">
+                      <span class="timeline-time">31:05</span>
+                      <span class="timeline-title">05. 多智能体协作 (Multi-Agent) 展望</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1227,11 +1908,56 @@
               <div class="drawer-tab-nav">
                 <button type="button" class="drawer-tab-btn active" data-drawer-tab="overview">概览</button>
                 <button type="button" class="drawer-tab-btn" data-drawer-tab="summary">总结</button>
+                <button type="button" class="drawer-tab-btn" data-drawer-tab="media">多媒体素材</button>
                 <button type="button" class="drawer-tab-btn" data-drawer-tab="transcript">语音转写</button>
               </div>
 
               <!-- Tab 1: 概览 -->
               <div class="drawer-tab-content active" id="drawer-tab-overview">
+                <div class="drawer-action-toolbar">
+                  <div class="toolbar-left-group">
+                    <div class="style-dropdown-container">
+                      <button type="button" class="style-dropdown-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        <span class="current-style-label">风格：默认通用</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                      <div class="style-dropdown-menu">
+                        <div class="style-option-item active" data-style="默认通用">
+                          <span>默认通用</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="党政公文">
+                          <span>党政公文</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="科技前沿">
+                          <span>科技前沿</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="媒体新闻">
+                          <span>媒体新闻</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="自定义风格">
+                          <span>自定义风格</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="toolbar-right-group">
+                    <button type="button" class="toolbar-text-btn" id="btn-copy-overview">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span>复制全部</span>
+                    </button>
+                    <button type="button" class="toolbar-text-btn" id="btn-download-overview">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span>下载文档</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div class="overview-card" style="background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-color: #bfdbfe;">
                   <div class="overview-card-title" style="color: #1e40af;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -1279,6 +2005,50 @@
 
               <!-- Tab 2: 总结 -->
               <div class="drawer-tab-content" id="drawer-tab-summary">
+                <div class="drawer-action-toolbar">
+                  <div class="toolbar-left-group">
+                    <div class="style-dropdown-container">
+                      <button type="button" class="style-dropdown-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        <span class="current-style-label">风格：默认通用</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                      <div class="style-dropdown-menu">
+                        <div class="style-option-item active" data-style="默认通用">
+                          <span>默认通用</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="党政公文">
+                          <span>党政公文</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="科技前沿">
+                          <span>科技前沿</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="媒体新闻">
+                          <span>媒体新闻</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="自定义风格">
+                          <span>自定义风格</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="toolbar-right-group">
+                    <button type="button" class="toolbar-text-btn" id="btn-copy-summary">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span>复制全部</span>
+                    </button>
+                    <button type="button" class="toolbar-text-btn" id="btn-download-summary">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span>下载文档</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div class="summary-article-body">
                   <h3>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -1297,8 +2067,220 @@
                 </div>
               </div>
 
-              <!-- Tab 3: 语音转写 (多角色丰富模拟) -->
+              <!-- Tab 3: 多媒体素材 -->
+              <div class="drawer-tab-content" id="drawer-tab-media">
+                <div class="drawer-action-toolbar">
+                  <div class="toolbar-left-group">
+                    <div class="style-dropdown-container">
+                      <button type="button" class="style-dropdown-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        <span class="current-style-label">风格：默认通用</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                      <div class="style-dropdown-menu">
+                        <div class="style-option-item active" data-style="默认通用">
+                          <span>默认通用</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="党政公文">
+                          <span>党政公文</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="科技前沿">
+                          <span>科技前沿</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="媒体新闻">
+                          <span>媒体新闻</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="style-option-item" data-style="自定义风格">
+                          <span>自定义风格</span>
+                          <svg class="check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="toolbar-right-group">
+                    <button type="button" class="toolbar-text-btn" id="btn-copy-media">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span>复制全部</span>
+                    </button>
+                    <button type="button" class="toolbar-text-btn" id="btn-download-media">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span>下载全部</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="media-card-grid">
+                  <!-- 素材 1 -->
+                  <div class="media-asset-card">
+                    <div class="media-asset-thumb">
+                      <div class="media-asset-thumb-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    </div>
+                    <div class="media-asset-body">
+                      <div class="media-asset-header">
+                        <span class="media-asset-title">核心架构演进逻辑图</span>
+                        <div class="media-card-actions">
+                          <button type="button" class="media-icon-btn copy-media-card-btn" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn cite-media-card-btn" title="引用">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn download-media-card-btn" title="下载">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 素材 2 -->
+                  <div class="media-asset-card">
+                    <div class="media-asset-thumb">
+                      <div class="media-asset-thumb-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M2 3h20v14H2z"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+                      </div>
+                    </div>
+                    <div class="media-asset-body">
+                      <div class="media-asset-header">
+                        <span class="media-asset-title">Transformer 至 Agent 演讲幻灯片</span>
+                        <div class="media-card-actions">
+                          <button type="button" class="media-icon-btn copy-media-card-btn" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn cite-media-card-btn" title="引用">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn download-media-card-btn" title="下载">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 素材 3 -->
+                  <div class="media-asset-card">
+                    <div class="media-asset-thumb">
+                      <div class="media-asset-thumb-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                      </div>
+                    </div>
+                    <div class="media-asset-body">
+                      <div class="media-asset-header">
+                        <span class="media-asset-title">金句原声播客音频切片</span>
+                        <div class="media-card-actions">
+                          <button type="button" class="media-icon-btn copy-media-card-btn" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn cite-media-card-btn" title="引用">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn download-media-card-btn" title="下载">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 素材 4 -->
+                  <div class="media-asset-card">
+                    <div class="media-asset-thumb">
+                      <div class="media-asset-thumb-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                      </div>
+                    </div>
+                    <div class="media-asset-body">
+                      <div class="media-asset-header">
+                        <span class="media-asset-title">AI 智能体核心观点宣发海报</span>
+                        <div class="media-card-actions">
+                          <button type="button" class="media-icon-btn copy-media-card-btn" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn cite-media-card-btn" title="引用">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn download-media-card-btn" title="下载">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 素材 5 -->
+                  <div class="media-asset-card">
+                    <div class="media-asset-thumb">
+                      <div class="media-asset-thumb-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                      </div>
+                    </div>
+                    <div class="media-asset-body">
+                      <div class="media-asset-header">
+                        <span class="media-asset-title">全流程演进思维导图</span>
+                        <div class="media-card-actions">
+                          <button type="button" class="media-icon-btn copy-media-card-btn" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn cite-media-card-btn" title="引用">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn download-media-card-btn" title="下载">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 素材 6 -->
+                  <div class="media-asset-card">
+                    <div class="media-asset-thumb">
+                      <div class="media-asset-thumb-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="media-asset-body">
+                      <div class="media-asset-header">
+                        <span class="media-asset-title">FlagOpen 开源生态金句图卡</span>
+                        <div class="media-card-actions">
+                          <button type="button" class="media-icon-btn copy-media-card-btn" title="复制">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn cite-media-card-btn" title="引用">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                          <button type="button" class="media-icon-btn download-media-card-btn" title="下载">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab 4: 语音转写 (多角色丰富模拟) -->
               <div class="drawer-tab-content" id="drawer-tab-transcript">
+                <div class="drawer-action-toolbar">
+                  <div class="toolbar-left-group"></div>
+                  <div class="toolbar-right-group">
+                    <button type="button" class="toolbar-text-btn" id="btn-copy-transcript">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <span>复制全部</span>
+                    </button>
+                    <button type="button" class="toolbar-text-btn" id="btn-download-transcript">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <span>下载文档</span>
+                    </button>
+                  </div>
+                </div>
                 <div class="transcript-timeline">
                   <div class="transcript-row">
                     <div class="transcript-speaker">
@@ -1396,13 +2378,20 @@
 
   </div><!-- /main-wrapper -->
 
-  <!-- 划词选中 Popover (统一为“引用”) -->
+  <!-- 划词选中 Popover (白色背景 + 阴影 + 复制/引用按钮) -->
   <div id="text-selection-popover" class="text-selection-popover">
+    <button type="button" class="popover-btn" id="popover-copy-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span>复制</span>
+    </button>
+    <div class="popover-divider"></div>
     <button type="button" class="popover-btn" id="popover-cite-btn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span>引用</span>
     </button>
   </div>
+
+  <div id="toast-notification" class="toast-notification"></div>
 
 
 
@@ -1428,8 +2417,45 @@
       }
     }
 
-    if (navBtnNewChat) navBtnNewChat.addEventListener('click', () => switchView('chat'));
+    if (navBtnNewChat) {
+      navBtnNewChat.addEventListener('click', () => {
+        switchView('chat');
+        closePreviewDrawer();
+        const messagesContainer = document.getElementById('chat-messages-container');
+        if (messagesContainer) messagesContainer.innerHTML = '';
+        document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
+      });
+    }
     if (navBtnListener) navBtnListener.addEventListener('click', () => switchView('listener'));
+
+    // 在侧边栏历史对话中插入一条新对话，并绑定点击切换逻辑
+    function addHistoryConversation(title) {
+      const historyList = document.querySelector('.history-list');
+      if (!historyList) return;
+
+      const newItem = document.createElement('div');
+      newItem.className = 'history-item active';
+      newItem.textContent = title.startsWith('帮我听') ? title : `帮我听：${title}`;
+      
+      document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
+
+      newItem.addEventListener('click', () => {
+        document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
+        newItem.classList.add('active');
+        switchView('chat');
+      });
+
+      historyList.insertBefore(newItem, historyList.firstChild);
+    }
+
+    // 绑定初始历史对话点击事件
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        switchView('chat');
+      });
+    });
 
     // 广场列表 Tab 切换
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -1444,22 +2470,135 @@
       });
     });
 
-    // 气泡 Sub-tag 过滤
-    const bubbleTags = document.querySelectorAll('.bubble-tag');
-    const conferenceCards = document.querySelectorAll('#conference-card-grid .activity-card');
-    bubbleTags.forEach(tag => {
+    // 官方会议 气泡 Sub-tag & 状态 过滤
+    let confSubtagFilter = 'all';
+    let confStatusFilter = 'all';
+
+    function filterConfCards() {
+      const conferenceCards = document.querySelectorAll('#conference-card-grid .activity-card');
+      conferenceCards.forEach(card => {
+        const subtag = card.getAttribute('data-subtag');
+        const status = card.getAttribute('data-status');
+        const subtagMatch = (confSubtagFilter === 'all' || subtag === confSubtagFilter);
+        const statusMatch = (confStatusFilter === 'all' || status === confStatusFilter);
+        card.style.display = (subtagMatch && statusMatch) ? 'flex' : 'none';
+      });
+    }
+
+    const confBubbleTags = document.querySelectorAll('#tab-conference .bubble-tags-wrapper > .bubble-tag');
+    confBubbleTags.forEach(tag => {
       tag.addEventListener('click', () => {
-        const filter = tag.getAttribute('data-filter');
-        bubbleTags.forEach(t => t.classList.remove('active'));
+        confSubtagFilter = tag.getAttribute('data-filter') || 'all';
+        confBubbleTags.forEach(t => t.classList.remove('active'));
         tag.classList.add('active');
-        conferenceCards.forEach(card => {
-          const subtag = card.getAttribute('data-subtag');
-          card.style.display = (filter === 'all' || subtag === filter) ? 'flex' : 'none';
-        });
+        filterConfCards();
       });
     });
 
+    const confStatusBtn = document.getElementById('conf-status-dropdown-btn');
+    const confStatusMenu = document.getElementById('conf-status-dropdown-menu');
+    if (confStatusBtn && confStatusMenu) {
+      confStatusBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = confStatusMenu.classList.contains('show');
+        document.querySelectorAll('.status-dropdown-menu').forEach(m => m.classList.remove('show'));
+        document.querySelectorAll('.status-dropdown-btn').forEach(b => b.classList.remove('open'));
+        if (!isOpen) {
+          confStatusMenu.classList.add('show');
+          confStatusBtn.classList.add('open');
+        }
+      });
 
+      confStatusMenu.querySelectorAll('.status-dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = item.getAttribute('data-status');
+          const text = item.textContent.trim();
+          confStatusMenu.querySelectorAll('.status-dropdown-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          const textSpan = confStatusBtn.querySelector('.status-btn-text');
+          if (val === 'all') {
+            textSpan.textContent = '状态';
+            confStatusBtn.classList.remove('has-value');
+          } else {
+            textSpan.textContent = text;
+            confStatusBtn.classList.add('has-value');
+          }
+
+          confStatusMenu.classList.remove('show');
+          confStatusBtn.classList.remove('open');
+
+          confStatusFilter = val;
+          filterConfCards();
+        });
+      });
+    }
+
+    // 我的会议 气泡 Sub-tag & 状态 过滤
+    let mySubtagFilter = 'all';
+    let myStatusFilter = 'all';
+
+    function filterMyCards() {
+      const cards = document.querySelectorAll('#personal-card-grid .activity-card');
+      cards.forEach(card => {
+        const mysubtag = card.getAttribute('data-mysubtag') || 'other';
+        const status = card.getAttribute('data-status') || 'ended';
+        const subtagMatch = (mySubtagFilter === 'all' || mysubtag === mySubtagFilter);
+        const statusMatch = (myStatusFilter === 'all' || status === myStatusFilter);
+        card.style.display = (subtagMatch && statusMatch) ? 'flex' : 'none';
+      });
+    }
+
+    const myBubbleTags = document.querySelectorAll('#my-meetings-bubble-tags > .bubble-tag');
+    myBubbleTags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        mySubtagFilter = tag.getAttribute('data-myfilter') || 'all';
+        myBubbleTags.forEach(t => t.classList.remove('active'));
+        tag.classList.add('active');
+        filterMyCards();
+      });
+    });
+
+    const myStatusBtn = document.getElementById('my-status-dropdown-btn');
+    const myStatusMenu = document.getElementById('my-status-dropdown-menu');
+    if (myStatusBtn && myStatusMenu) {
+      myStatusBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = myStatusMenu.classList.contains('show');
+        document.querySelectorAll('.status-dropdown-menu').forEach(m => m.classList.remove('show'));
+        document.querySelectorAll('.status-dropdown-btn').forEach(b => b.classList.remove('open'));
+        if (!isOpen) {
+          myStatusMenu.classList.add('show');
+          myStatusBtn.classList.add('open');
+        }
+      });
+
+      myStatusMenu.querySelectorAll('.status-dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const val = item.getAttribute('data-status');
+          const text = item.textContent.trim();
+          myStatusMenu.querySelectorAll('.status-dropdown-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          const textSpan = myStatusBtn.querySelector('.status-btn-text');
+          if (val === 'all') {
+            textSpan.textContent = '状态';
+            myStatusBtn.classList.remove('has-value');
+          } else {
+            textSpan.textContent = text;
+            myStatusBtn.classList.add('has-value');
+          }
+
+          myStatusMenu.classList.remove('show');
+          myStatusBtn.classList.remove('open');
+
+          myStatusFilter = val;
+          filterMyCards();
+        });
+      });
+    }
 
     // 文件上传与音视频附件处理逻辑
     let attachedFile = null;
@@ -1505,10 +2644,214 @@
       return urlPattern.test(text);
     }
 
-    let personalCardsCount = 0;
+    let personalCardsCount = 6;
 
-    // 点击任何广场卡片 / 悬浮按钮：进入对话框并发送 User/Agent 消息
+    // Toast 提示框逻辑
+    let toastTimer = null;
+    function showToast(msg) {
+      let toast = document.getElementById('toast-notification');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        toast.className = 'toast-notification';
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>${msg}</span>`;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+    }
+
+    // 收藏 / 取消收藏 按钮点击逻辑
+    function handleFavoriteClick(favBtn) {
+      const card = favBtn.closest('.activity-card');
+      if (!card) return;
+
+      const title = card.getAttribute('data-title') || '会议听记';
+      const kvClass = card.getAttribute('data-kv') || 'kv-baai';
+      const status = card.getAttribute('data-status') || 'ended';
+      const time = card.getAttribute('data-time') || '2026年';
+      const source = card.getAttribute('data-source') || '线上直播';
+      const isInPersonalGrid = !!card.closest('#personal-card-grid');
+
+      if (favBtn.classList.contains('favorited')) {
+        // 取消收藏
+        favBtn.classList.remove('favorited');
+        favBtn.title = '收藏';
+        favBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>收藏</span>
+        `;
+
+        // 同步还原官方会议列表中对应卡片的收藏状态
+        const confCards = document.querySelectorAll('#conference-card-grid .activity-card');
+        confCards.forEach(cCard => {
+          if (cCard.getAttribute('data-title') === title) {
+            const btn = cCard.querySelector('.hover-favorite-btn-topright');
+            if (btn) {
+              btn.classList.remove('favorited');
+              btn.title = '收藏到我的会议';
+              btn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              `;
+            }
+          }
+        });
+
+        if (isInPersonalGrid && card.getAttribute('data-is-official') === 'true') {
+          // 官方收藏卡片从「我的会议」中移除
+          card.remove();
+          if (personalCardsCount > 0) personalCardsCount--;
+          const personalTabCount = document.getElementById('personal-tab-count');
+          if (personalTabCount) personalTabCount.textContent = personalCardsCount;
+
+          const countAll = document.getElementById('my-count-all');
+          if (countAll) countAll.textContent = personalCardsCount;
+        }
+
+        // 更新我的收藏分类计数
+        const subCountElem = document.getElementById('my-count-favorite');
+        if (subCountElem) {
+          const cur = parseInt(subCountElem.textContent || '0', 10);
+          if (cur > 0) subCountElem.textContent = cur - 1;
+        }
+
+        showToast(`已取消收藏《${title}》`);
+        return;
+      }
+
+      // 未收藏 -> 收藏
+      favBtn.classList.add('favorited');
+      favBtn.title = '取消收藏';
+      favBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>已收藏</span>
+      `;
+
+      if (!isInPersonalGrid) {
+        // 从「官方会议」收藏过来 -> 添加入「我的会议」
+        addCardToPersonalTab(title, kvClass, status, time, source, 'favorite', true);
+      } else {
+        // 在「我的会议」内部收藏本身已有卡片 -> 更新“我的收藏”计数
+        const subCountElem = document.getElementById('my-count-favorite');
+        if (subCountElem) {
+          const cur = parseInt(subCountElem.textContent || '0', 10);
+          subCountElem.textContent = cur + 1;
+        }
+      }
+
+      showToast(`已将《${title}》加入我的收藏`);
+    }
+
+    // 删除二次确认 Modal 逻辑
+    let cardToDelete = null;
+    const deleteModal = document.getElementById('delete-confirm-modal');
+    const modalDeleteDesc = document.getElementById('modal-delete-desc');
+    const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+    function openDeleteConfirmModal(card) {
+      cardToDelete = card;
+      const title = card.getAttribute('data-title') || '该会议听记';
+      if (modalDeleteDesc) {
+        modalDeleteDesc.innerHTML = `确定要从「我的会议」中删除<b>《${title}》</b>吗？删除后将无法恢复。`;
+      }
+      if (deleteModal) deleteModal.style.display = 'flex';
+    }
+
+    function closeDeleteConfirmModal() {
+      cardToDelete = null;
+      if (deleteModal) deleteModal.style.display = 'none';
+    }
+
+    if (cancelDeleteBtn) {
+      cancelDeleteBtn.addEventListener('click', closeDeleteConfirmModal);
+    }
+
+    if (deleteModal) {
+      deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) closeDeleteConfirmModal();
+      });
+    }
+
+    if (confirmDeleteBtn) {
+      confirmDeleteBtn.addEventListener('click', () => {
+        if (!cardToDelete) return;
+
+        const title = cardToDelete.getAttribute('data-title') || '会议听记';
+        const mysubtag = cardToDelete.getAttribute('data-mysubtag') || 'other';
+
+        // 1. 如果此卡片也是从「官方会议」收藏过来的，同步还原官方会议对应卡片的收藏按钮状态
+        const confCards = document.querySelectorAll('#conference-card-grid .activity-card');
+        confCards.forEach(cCard => {
+          if (cCard.getAttribute('data-title') === title) {
+            const favBtn = cCard.querySelector('.hover-favorite-btn-topright');
+            if (favBtn) {
+              favBtn.classList.remove('favorited');
+              favBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>收藏</span>
+              `;
+            }
+          }
+        });
+
+        // 2. 从 DOM 中移除该卡片
+        cardToDelete.remove();
+        cardToDelete = null;
+
+        // 3. 更新数量统计
+        if (personalCardsCount > 0) personalCardsCount--;
+        const personalTabCount = document.getElementById('personal-tab-count');
+        if (personalTabCount) personalTabCount.textContent = personalCardsCount;
+
+        const countAll = document.getElementById('my-count-all');
+        if (countAll) countAll.textContent = personalCardsCount;
+
+        const subCountElem = document.getElementById(`my-count-${mysubtag}`);
+        if (subCountElem) {
+          const cur = parseInt(subCountElem.textContent || '0', 10);
+          if (cur > 0) subCountElem.textContent = cur - 1;
+        }
+
+        // 4. 若已被清空，可显示 empty state
+        const grid = document.getElementById('personal-card-grid');
+        if (grid && grid.children.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1; padding: 40px 0;">
+              <div class="empty-icon"><svg width="32" height="32" fill="none" stroke="#9ca3af" stroke-width="1.75" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div>
+              <div class="empty-title">暂无相关会议记录</div>
+            </div>
+          `;
+        }
+
+        closeDeleteConfirmModal();
+        showToast(`已从「我的会议」中删除《${title}》`);
+      });
+    }
+
+    // 点击广场卡片 / 悬浮按钮 / 收藏按钮 / 删除按钮
     document.addEventListener('click', (e) => {
+      const delBtn = e.target.closest('.hover-delete-btn-topleft');
+      if (delBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const card = delBtn.closest('.activity-card');
+        if (card) openDeleteConfirmModal(card);
+        return;
+      }
+
+      const favBtn = e.target.closest('.hover-favorite-btn-topright');
+      if (favBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        handleFavoriteClick(favBtn);
+        return;
+      }
+
       const card = e.target.closest('.activity-card');
       if (card) {
         const title = card.getAttribute('data-title') || '活动听记';
@@ -1520,23 +2863,30 @@
       }
     });
 
-    // 触发听记对话工作流 (isPersonalAdd 表示是否同步写入「个人添加」广场)
-    function triggerListeningChatFlow(title, kvClass, status, time, source, isPersonalAdd = false) {
+    // 触发听记对话工作流 (isPersonalAdd 表示是否同步写入「我的会议」)
+    function triggerListeningChatFlow(title, kvClass, status, time, source, isPersonalAdd = false, mySubTag = 'favorite') {
       switchView('chat');
+      closePreviewDrawer();
 
       const messagesContainer = document.getElementById('chat-messages-container');
-      
+      if (messagesContainer) {
+        messagesContainer.innerHTML = ''; // 新建对话：清空上一会话内容
+      }
+
+      // 在侧边栏「历史对话」新增一个对话
+      addHistoryConversation(title);
+
       // 1. 插入 User Message: "帮我听 {活动名称/主题/URL}"
       const userMsgHtml = `
         <div class="chat-message-row user">
           <div class="chat-bubble">帮我听 ${title}</div>
         </div>
       `;
-      messagesContainer.insertAdjacentHTML('beforeend', userMsgHtml);
+      if (messagesContainer) messagesContainer.insertAdjacentHTML('beforeend', userMsgHtml);
 
-      // 若属于 URL/附件 听记，自动在「个人添加」选项卡中生成卡片
+      // 若属于 URL/附件 听记，自动在「我的会议」选项卡中生成卡片
       if (isPersonalAdd) {
-        addCardToPersonalTab(title, kvClass, status, time, source);
+        addCardToPersonalTab(title, kvClass, status, time, source, mySubTag);
       }
 
       // 插入 Typing 思考指示器 Agent 占位框
@@ -1562,7 +2912,7 @@
 
         let agentNoticeText = '正在为您读取并整理该活动的听记信息...';
         if (isPersonalAdd) {
-          agentNoticeText = '已成功提取音视频内容，并为您生成听记摘要！该记录已<b>同步加入「个人添加」广场</b>，您可以随时在广场的「个人添加」Tab中点击查看。以下是听记卡片：';
+          agentNoticeText = '已成功提取音视频内容，并为您生成听记摘要！该记录已<b>同步加入「我的会议」</b>，您可以随时在广场的「我的会议」Tab中点击查看。以下是听记卡片：';
         }
 
         const bubbleId = 'bubble-' + Date.now();
@@ -1599,7 +2949,7 @@
                 </div>
               </div>
               <div class="card-action-footer">
-                <span style="font-size: 12px; color: #64748b;">点击打开右侧文件预览</span>
+                <span style="font-size: 12px; color: #64748b;"> </span>
                 <div class="btn-view-detail">
                   <span>查看听记详情</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -1630,14 +2980,11 @@
       }, 1000);
     }
 
-    // 自动向「个人添加」广场 Tab 节点写入卡片
-    function addCardToPersonalTab(title, kvClass, status, time, source) {
+    // 自动向「我的会议」广场 Tab 节点写入卡片
+    function addCardToPersonalTab(title, kvClass, status, time, source, mySubTag = 'favorite') {
       const personalTabContent = document.getElementById('tab-personal');
       const personalTabCount = document.getElementById('personal-tab-count');
       if (!personalTabContent) return;
-
-      const emptyState = personalTabContent.querySelector('.empty-state');
-      if (emptyState) emptyState.style.display = 'none';
 
       let grid = document.getElementById('personal-card-grid');
       if (!grid) {
@@ -1654,8 +3001,19 @@
         statusBadgeHtml = `<span class="status-badge not-started">未开始</span>`;
       }
 
+      const isFav = (mySubTag === 'favorite');
+      const favBtnHtml = isFav ? `
+        <button type="button" class="hover-favorite-btn-topright favorited" title="已收藏">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>已收藏</span>
+        </button>` : `
+        <button type="button" class="hover-favorite-btn-topright" title="收藏到我的会议">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>收藏</span>
+        </button>`;
+
       const newCardHtml = `
-        <div class="activity-card" data-title="${title}" data-kv="${kvClass}" data-status="${status}" data-time="${time}" data-source="${source}">
+        <div class="activity-card" data-mysubtag="${mySubTag}" data-title="${title}" data-kv="${kvClass}" data-status="${status}" data-time="${time}" data-source="${source}">
           <div class="card-kv ${kvClass}">
             ${statusBadgeHtml}
           </div>
@@ -1667,8 +3025,9 @@
             </div>
           </div>
           <div class="card-full-hover-mask">
+            ${favBtnHtml}
             <div class="hover-listen-btn-center">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
               <span>帮我听</span>
             </div>
           </div>
@@ -1678,6 +3037,15 @@
       grid.insertAdjacentHTML('afterbegin', newCardHtml);
       personalCardsCount++;
       if (personalTabCount) personalTabCount.textContent = personalCardsCount;
+
+      const countAll = document.getElementById('my-count-all');
+      if (countAll) countAll.textContent = personalCardsCount;
+
+      const subCountElem = document.getElementById(`my-count-${mySubTag}`);
+      if (subCountElem) {
+        const cur = parseInt(subCountElem.textContent || '0', 10);
+        subCountElem.textContent = cur + 1;
+      }
     }
 
     // 智能听记输入框提交逻辑处理 (三种方式均跳转对话框)
@@ -1688,30 +3056,36 @@
         const now = new Date();
         const dateStr = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-        // 方式 1：上传音视频附件 (加至「个人添加」)
+        // 方式 1：上传音视频附件 (加至「我的会议」音视频附件)
         if (attachedFile) {
           const cardTitle = attachedFile.name.replace(/\.[^/.]+$/, "");
           const sourceInfo = `本地音视频文件 (${(attachedFile.size / (1024 * 1024)).toFixed(1)} MB)`;
-          triggerListeningChatFlow(cardTitle, 'kv-personal', 'ended', dateStr, sourceInfo, true);
+          triggerListeningChatFlow(cardTitle, 'kv-personal', 'ended', dateStr, sourceInfo, true, 'attachment');
           resetInputState();
           return;
         }
 
         if (!val) return;
 
-        // 方式 2：粘贴 URL / 直播网址 (加至「个人添加」)
+        // 方式 2：粘贴 URL / 直播网址 (加至「我的会议」直播网址/视频链接)
         if (containsUrl(val)) {
           let cardTitle = val.length > 25 ? val.substring(0, 25) + '...' : val;
-          if (val.includes('bilibili.com') || val.includes('b23.tv')) cardTitle = '哔哩哔哩视频听记';
-          else if (val.includes('live')) cardTitle = '网页直播听记';
+          let urlSubTag = 'video';
+          if (val.includes('bilibili.com') || val.includes('b23.tv')) {
+            cardTitle = '哔哩哔哩视频听记';
+            urlSubTag = 'video';
+          } else if (val.includes('live') || val.includes('zhibo') || val.includes('stream')) {
+            cardTitle = '网页直播听记';
+            urlSubTag = 'live';
+          }
 
-          triggerListeningChatFlow(cardTitle, 'kv-personal', 'in-progress', dateStr, val, true);
+          triggerListeningChatFlow(cardTitle, 'kv-personal', 'in-progress', dateStr, val, true, urlSubTag);
           resetInputState();
           return;
         }
 
-        // 方式 3：自然语言需求 (直接跳转对话)
-        triggerListeningChatFlow(val, 'kv-baai', 'in-progress', dateStr, '用户自定义听记', false);
+        // 方式 3：自然语言需求 (加至「我的会议」其他)
+        triggerListeningChatFlow(val, 'kv-baai', 'in-progress', dateStr, '用户自定义听记', true, 'other');
         resetInputState();
       });
     }
@@ -1773,18 +3147,29 @@
 
     // 监听 Drawer Body 滚动，实现滑出视口时视频自动小窗浮动
     if (drawerBody) {
+      let isTicking = false;
       drawerBody.addEventListener('scroll', () => {
-        if (!videoSection) return;
-        const rect = videoSection.getBoundingClientRect();
-        if (rect.bottom < 100) {
-          if (!isVideoFloating && !userClosedFloat) {
-            enableVideoFloat();
-          }
-        } else if (rect.top >= 0) {
-          userClosedFloat = false;
-          if (isVideoFloating) {
-            disableVideoFloat(false);
-          }
+        if (!isTicking) {
+          window.requestAnimationFrame(() => {
+            if (videoSection) {
+              const rect = videoSection.getBoundingClientRect();
+              if (rect.bottom < 100) {
+                if (!isVideoFloating && !userClosedFloat) {
+                  // 锁死高度，防止元素脱离文档流导致滚动条跳动进而引发死循环
+                  videoSection.style.minHeight = videoSection.getBoundingClientRect().height + 'px';
+                  enableVideoFloat();
+                }
+              } else if (rect.top >= 0) {
+                userClosedFloat = false;
+                if (isVideoFloating) {
+                  disableVideoFloat(false);
+                  videoSection.style.minHeight = '';
+                }
+              }
+            }
+            isTicking = false;
+          });
+          isTicking = true;
         }
       });
     }
@@ -1890,14 +3275,17 @@
     // 模版缓存 (缓存默认已结束状态的文本内容)
     let defaultOverviewHTML = '';
     let defaultSummaryHTML = '';
+    let defaultMediaHTML = '';
     let defaultTranscriptHTML = '';
 
     window.addEventListener('DOMContentLoaded', () => {
       const overviewEl = document.getElementById('drawer-tab-overview');
       const summaryEl = document.getElementById('drawer-tab-summary');
+      const mediaEl = document.getElementById('drawer-tab-media');
       const transcriptEl = document.getElementById('drawer-tab-transcript');
       if (overviewEl) defaultOverviewHTML = overviewEl.innerHTML;
       if (summaryEl) defaultSummaryHTML = summaryEl.innerHTML;
+      if (mediaEl) defaultMediaHTML = mediaEl.innerHTML;
       if (transcriptEl) defaultTranscriptHTML = transcriptEl.innerHTML;
     });
 
@@ -1917,12 +3305,18 @@
       currentPreviewStatus = status;
       const overviewEl = document.getElementById('drawer-tab-overview');
       const summaryEl = document.getElementById('drawer-tab-summary');
+      const mediaEl = document.getElementById('drawer-tab-media');
       const transcriptEl = document.getElementById('drawer-tab-transcript');
       const videoBadge = document.getElementById('video-chapter-badge');
       const videoLiveTag = document.getElementById('video-live-tag');
       const chapterWrapper = document.getElementById('horizontal-chapter-wrapper');
       const progressBarEl = document.getElementById('video-progress-bar-el');
       const timeDisplayEl = document.getElementById('video-time-display');
+
+      if (!defaultOverviewHTML && overviewEl) defaultOverviewHTML = overviewEl.innerHTML;
+      if (!defaultSummaryHTML && summaryEl) defaultSummaryHTML = summaryEl.innerHTML;
+      if (!defaultMediaHTML && mediaEl) defaultMediaHTML = mediaEl.innerHTML;
+      if (!defaultTranscriptHTML && transcriptEl) defaultTranscriptHTML = transcriptEl.innerHTML;
 
       if (status === 'in-progress') {
         if (videoBadge) videoBadge.style.display = 'none';
@@ -1943,8 +3337,15 @@
             <div class="empty-title" style="font-size: 15px; font-weight: 600; color: #374151; margin-top: 10px;">总结将在活动结束后生成</div>
           </div>
         `;
+        const inProgressMediaHtml = `
+          <div class="empty-state" style="padding: 60px 20px; background: #f8fafc; border-radius: 14px; border: 1px dashed #cbd5e1; margin-top: 10px;">
+            <div class="empty-icon"><svg width="36" height="36" fill="none" stroke="#9ca3af" stroke-width="1.75" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="empty-title" style="font-size: 15px; font-weight: 600; color: #374151; margin-top: 10px;">多媒体素材将在活动结束后生成</div>
+          </div>
+        `;
         if (overviewEl) overviewEl.innerHTML = inProgressOverviewHtml;
         if (summaryEl) summaryEl.innerHTML = inProgressSummaryHtml;
+        if (mediaEl) mediaEl.innerHTML = inProgressMediaHtml;
 
         if (transcriptEl && defaultTranscriptHTML) {
           transcriptEl.innerHTML = defaultTranscriptHTML;
@@ -1974,6 +3375,13 @@
           </div>
         `;
 
+        const notStartedMediaHtml = `
+          <div class="empty-state" style="padding: 60px 20px; background: #f8fafc; border-radius: 14px; border: 1px dashed #cbd5e1; margin-top: 10px;">
+            <div class="empty-icon"><svg width="36" height="36" fill="none" stroke="#9ca3af" stroke-width="1.75" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="empty-title" style="font-size: 15px; font-weight: 600; color: #374151; margin-top: 10px;">多媒体素材将在活动结束后生成</div>
+          </div>
+        `;
+
         const notStartedTranscriptHtml = `
           <div class="empty-state" style="padding: 60px 20px; background: #f8fafc; border-radius: 14px; border: 1px dashed #cbd5e1; margin-top: 10px;">
             <div class="empty-icon"><svg width="36" height="36" fill="none" stroke="#9ca3af" stroke-width="1.75" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
@@ -1983,9 +3391,10 @@
 
         if (overviewEl) overviewEl.innerHTML = notStartedOverviewHtml;
         if (summaryEl) summaryEl.innerHTML = notStartedSummaryHtml;
+        if (mediaEl) mediaEl.innerHTML = notStartedMediaHtml;
         if (transcriptEl) transcriptEl.innerHTML = notStartedTranscriptHtml;
 
-        // 未开始状态：三个都空，默认选中语音转写
+        // 未开始状态：四个都空，默认选中语音转写
         switchDrawerTab('transcript');
 
       } else {
@@ -2004,6 +3413,7 @@
 
         if (overviewEl && defaultOverviewHTML) overviewEl.innerHTML = defaultOverviewHTML;
         if (summaryEl && defaultSummaryHTML) summaryEl.innerHTML = defaultSummaryHTML;
+        if (mediaEl && defaultMediaHTML) mediaEl.innerHTML = defaultMediaHTML;
         if (transcriptEl && defaultTranscriptHTML) {
           transcriptEl.innerHTML = defaultTranscriptHTML;
         }
@@ -2050,41 +3460,83 @@
       });
     });
 
-    // 横向章节节点点击与视频跳转平滑居中
-    const chapterChips = document.querySelectorAll('.chapter-chip');
+    // 横向章节时间轴节点点击与视频跳转平滑居中
+    const chapterNodes = document.querySelectorAll('.chapter-timeline-node');
     const videoTimeDisplay = document.getElementById('video-time-display');
     const videoChapterBadge = document.getElementById('video-chapter-badge');
     const videoProgressFill = document.getElementById('video-progress-fill-el');
 
-    const chapterPercentMap = {
-      '00:00': { percent: '5%', name: '01. Transformer 机制' },
-      '05:20': { percent: '22%', name: '02. 从 LLM 到 Agent 演进' },
-      '12:45': { percent: '45%', name: '03. Agent 四大核心组件' },
-      '22:10': { percent: '68%', name: '04. ReAct 范式与工具调用' },
-      '31:05': { percent: '88%', name: '05. Multi-Agent 协同' }
-    };
+    const TOTAL_VIDEO_SECONDS = 42 * 60 + 18; // 2538 秒 (42:18)
 
-    function selectChapter(timeStr) {
-      const data = chapterPercentMap[timeStr] || { percent: '10%', name: '当前章节' };
-      if (videoTimeDisplay) videoTimeDisplay.textContent = `${timeStr} / 42:18`;
-      if (videoChapterBadge) videoChapterBadge.textContent = `当前章节：${data.name}`;
-      if (videoProgressFill) videoProgressFill.style.width = data.percent;
+    const chapterList = [
+      { timeStr: '00:00', seconds: 0, name: '01. Transformer 架构回顾' },
+      { timeStr: '05:20', seconds: 320, name: '02. 从 LLM 到 Agent 演进逻辑' },
+      { timeStr: '12:45', seconds: 765, name: '03. Agent 四大核心组件拆解' },
+      { timeStr: '22:10', seconds: 1330, name: '04. ReAct 范式与工具调用' },
+      { timeStr: '31:05', seconds: 1865, name: '05. 多智能体协作 (Multi-Agent) 展望' }
+    ];
 
-      chapterChips.forEach(chip => {
-        const t = chip.getAttribute('data-time');
-        if (t === timeStr) {
-          chip.classList.add('active');
-          // 横向平滑置中
-          chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        } else {
-          chip.classList.remove('active');
-        }
-      });
+    function timeStrToSeconds(str) {
+      if (!str) return 0;
+      const parts = str.split(':').map(Number);
+      if (parts.length === 2) return parts[0] * 60 + parts[1];
+      if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      return 0;
     }
 
-    chapterChips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        const time = chip.getAttribute('data-time');
+    function selectChapter(timeStr) {
+      const drawerBodyEl = document.getElementById('drawer-body');
+      const savedScrollTop = drawerBodyEl ? drawerBodyEl.scrollTop : 0;
+
+      const sec = timeStrToSeconds(timeStr);
+      const percentNum = Math.min(100, Math.max(0, (sec / TOTAL_VIDEO_SECONDS) * 100));
+      const percentStr = percentNum.toFixed(1) + '%';
+
+      // 自动计算当前时间锚点归属的章节索引
+      let activeIndex = 0;
+      for (let i = chapterList.length - 1; i >= 0; i--) {
+        if (sec >= chapterList[i].seconds) {
+          activeIndex = i;
+          break;
+        }
+      }
+      const matchedChapter = chapterList[activeIndex];
+
+      if (videoTimeDisplay) videoTimeDisplay.textContent = `${timeStr} / 42:18`;
+      if (videoChapterBadge) videoChapterBadge.textContent = `当前章节：${matchedChapter.name}`;
+      if (videoProgressFill) videoProgressFill.style.width = percentStr;
+
+      const track = document.getElementById('horizontal-chapter-track');
+
+      chapterNodes.forEach((node, idx) => {
+        node.classList.remove('active', 'completed');
+        if (idx < activeIndex) {
+          // 已越过的章节节点：填充蓝色进度连线与高亮蓝点
+          node.classList.add('completed');
+        } else if (idx === activeIndex) {
+          // 当前激活章节节点：高亮显示
+          node.classList.add('active');
+          if (track) {
+            const nodeLeft = node.offsetLeft;
+            const nodeWidth = node.offsetWidth;
+            const trackWidth = track.clientWidth;
+            track.scrollTo({
+              left: nodeLeft - (trackWidth / 2) + (nodeWidth / 2),
+              behavior: 'smooth'
+            });
+          }
+        }
+      });
+
+      // 确保绝对不触发外部 drawer-body 的垂直滚动跳顶
+      if (drawerBodyEl) {
+        drawerBodyEl.scrollTop = savedScrollTop;
+      }
+    }
+
+    chapterNodes.forEach(node => {
+      node.addEventListener('click', () => {
+        const time = node.getAttribute('data-time');
         selectChapter(time);
       });
     });
@@ -2115,9 +3567,21 @@
       }
     });
 
-    // ==================== 划词 Popover & 统一“引用”逻辑 ====================
+    // Toast 通知消息
+    function showToast(text) {
+      const toast = document.getElementById('toast-notification');
+      if (!toast) return;
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    // ==================== 划词 Popover & 统一“引用”/“复制”逻辑 ====================
     const popover = document.getElementById('text-selection-popover');
     const citeBtn = document.getElementById('popover-cite-btn');
+    const copyBtn = document.getElementById('popover-copy-btn');
     const refDocChipBar = document.getElementById('ref-doc-chip-bar');
     const refDocContentPreview = document.getElementById('ref-doc-content-preview');
     const refDocTagLabel = document.getElementById('ref-doc-tag-label');
@@ -2135,9 +3599,9 @@
         const rect = range.getBoundingClientRect();
         currentSelectedSnippet = text;
 
-        popover.style.display = 'block';
-        popover.style.top = `${rect.top - 42}px`;
-        popover.style.left = `${Math.max(10, rect.left + rect.width / 2 - 40)}px`;
+        popover.style.display = 'inline-flex';
+        popover.style.top = `${Math.max(10, rect.top - 42)}px`;
+        popover.style.left = `${Math.max(10, rect.left + rect.width / 2 - 60)}px`;
       } else {
         popover.style.display = 'none';
       }
@@ -2152,6 +3616,20 @@
     function getActiveDrawerTabName() {
       const activeBtn = document.querySelector('.drawer-tab-btn.active');
       return activeBtn ? activeBtn.textContent.trim() : '总结';
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        if (currentSelectedSnippet) {
+          navigator.clipboard.writeText(currentSelectedSnippet).then(() => {
+            showToast('已复制选中文字');
+          }).catch(() => {
+            showToast('复制失败，请重试');
+          });
+        }
+        popover.style.display = 'none';
+        window.getSelection().removeAllRanges();
+      });
     }
 
     if (citeBtn) {
@@ -2182,6 +3660,220 @@
         if (chatTextarea) chatTextarea.placeholder = '输入消息或关于听记的问题，输入 @ 选择专家...';
       });
     }
+
+    // ==================== 风格选择器逻辑 (支持多 Tab 委托) ====================
+    document.addEventListener('click', (e) => {
+      const styleBtn = e.target.closest('.style-dropdown-btn');
+      if (styleBtn) {
+        e.stopPropagation();
+        const container = styleBtn.closest('.style-dropdown-container');
+        const menu = container ? container.querySelector('.style-dropdown-menu') : null;
+        if (menu) {
+          const isOpen = menu.classList.contains('show');
+          document.querySelectorAll('.style-dropdown-menu').forEach(m => m.classList.remove('show'));
+          document.querySelectorAll('.style-dropdown-btn').forEach(b => b.classList.remove('active'));
+          if (!isOpen) {
+            menu.classList.add('show');
+            styleBtn.classList.add('active');
+          }
+        }
+        return;
+      }
+
+      const styleOpt = e.target.closest('.style-option-item');
+      if (styleOpt) {
+        e.stopPropagation();
+        const container = styleOpt.closest('.style-dropdown-container');
+        const menu = styleOpt.closest('.style-dropdown-menu');
+        const btn = container ? container.querySelector('.style-dropdown-btn') : null;
+        const label = container ? container.querySelector('.current-style-label') : null;
+
+        if (menu) {
+          menu.querySelectorAll('.style-option-item').forEach(o => {
+            o.classList.remove('active');
+            const check = o.querySelector('.check-icon');
+            if (check) check.style.display = 'none';
+          });
+          styleOpt.classList.add('active');
+          const check = styleOpt.querySelector('.check-icon');
+          if (check) check.style.display = 'block';
+
+          const styleName = styleOpt.getAttribute('data-style') || '默认通用';
+          if (label) label.textContent = `风格：${styleName}`;
+
+          menu.classList.remove('show');
+          if (btn) btn.classList.remove('active');
+          showToast(`已切换为【${styleName}】风格`);
+
+          if (styleName === '自定义风格') {
+            closePreviewDrawer();
+
+            const tabContent = styleOpt.closest('.drawer-tab-content');
+            let contentType = '概览';
+            let prevActivity = '《AI大模型落地实践研讨会》';
+            let prevStyleDesc = '【科技前沿风格：结构上包含核心摘要与金句高亮，语言简炼且突出技术演进】';
+
+            if (tabContent) {
+              const id = tabContent.id;
+              if (id === 'drawer-tab-summary') {
+                contentType = '总结';
+                prevActivity = '《大模型智能体架构深度解析》';
+                prevStyleDesc = '【专业研讨风格：按逻辑演进分章节拆解，提炼关键概念并附带精准时间戳】';
+              } else if (id === 'drawer-tab-media') {
+                contentType = '多媒体素材';
+                prevActivity = '《前沿AI技术发布会》';
+                prevStyleDesc = '【视觉导向风格：优先提取架构图与对比图表，配以简洁明确的图注与观点说明】';
+              }
+            }
+
+            const activityName = (typeof currentPreviewTitle !== 'undefined' && currentPreviewTitle)
+              ? currentPreviewTitle
+              : '35期 - 【硬核AI】从 Transformer 到 Agent 的进化之路';
+
+            const userMsgText = `帮我重新生成一个《${activityName}》的${contentType}，请询问我必要的风格信息与要求。`;
+            const containerMsg = document.getElementById('chat-messages-container');
+            if (containerMsg) {
+              const userHtml = `
+                <div class="chat-message-row user">
+                  <div class="chat-bubble">${userMsgText}</div>
+                </div>
+              `;
+              containerMsg.insertAdjacentHTML('beforeend', userHtml);
+              containerMsg.scrollTop = containerMsg.scrollHeight;
+
+              setTimeout(() => {
+                const agentHtml = `
+                  <div class="chat-message-row agent">
+                    <div class="chat-bubble">
+                      <div>收到！上次您在生成 ${prevActivity} 的${contentType}时，要求采用 ${prevStyleDesc}。</div>
+                      <div>请问本次为《${activityName}》生成${contentType}，是否继续按上次的要求来？还是有新的补充或细节调整？</div>
+                      <div>
+                        如需调整或补充新的风格要求，您可以从以下角度进行说明：<br>
+                        • <b>语气与基调</b>：如公文严谨风、科技硬核风、通俗科普风、高管汇报风等；<br>
+                        • <b>结构与格式</b>：如分点清单、逻辑三段式、金句高亮、精确时间戳定位等；<br>
+                        • <b>侧重视角</b>：如侧重技术架构细节、商业落地实践、行业趋势对比等。
+                      </div>
+                      <div>💡 <b>提示</b>：您也可以在下方输入框中<b>直接上传参考文件</b>（如贵司写作规范、历史优质报告模板等），我将自动按参考文件的风格为您重新生成！</div>
+                    </div>
+                  </div>
+                `;
+                containerMsg.insertAdjacentHTML('beforeend', agentHtml);
+                containerMsg.scrollTop = containerMsg.scrollHeight;
+              }, 600);
+            }
+          }
+        }
+        return;
+      }
+
+      // 点击外部关闭所有风格菜单及状态菜单
+      if (!e.target.closest('.style-dropdown-container')) {
+        document.querySelectorAll('.style-dropdown-menu').forEach(m => m.classList.remove('show'));
+        document.querySelectorAll('.style-dropdown-btn').forEach(b => b.classList.remove('active'));
+      }
+      if (!e.target.closest('.status-dropdown-container')) {
+        document.querySelectorAll('.status-dropdown-menu').forEach(m => m.classList.remove('show'));
+        document.querySelectorAll('.status-dropdown-btn').forEach(b => b.classList.remove('open'));
+      }
+    });
+
+    // ==================== 复制全部 / 下载文档 逻辑 ====================
+    function copyTabContentText(containerId, tabLabel) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const clone = container.cloneNode(true);
+      // 移除操作栏
+      const toolbar = clone.querySelector('.drawer-action-toolbar');
+      if (toolbar) toolbar.remove();
+
+      const text = clone.innerText.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`已复制【${tabLabel}】全部内容`);
+      }).catch(() => {
+        showToast('复制失败');
+      });
+    }
+
+    function downloadTabContentText(containerId, filename) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const clone = container.cloneNode(true);
+      const toolbar = clone.querySelector('.drawer-action-toolbar');
+      if (toolbar) toolbar.remove();
+
+      const text = clone.innerText.trim();
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`已开始下载 ${filename}.txt`);
+    }
+
+    // Toolbar 全部复制与下载及多媒体素材单个卡片操作 (全局事件委托)
+    document.addEventListener('click', (e) => {
+      const copyBtn = e.target.closest('#btn-copy-overview, #btn-copy-summary, #btn-copy-media, #btn-copy-transcript');
+      if (copyBtn) {
+        if (copyBtn.id === 'btn-copy-overview') copyTabContentText('drawer-tab-overview', '概览');
+        else if (copyBtn.id === 'btn-copy-summary') copyTabContentText('drawer-tab-summary', '总结');
+        else if (copyBtn.id === 'btn-copy-media') copyTabContentText('drawer-tab-media', '多媒体素材');
+        else if (copyBtn.id === 'btn-copy-transcript') copyTabContentText('drawer-tab-transcript', '语音转写');
+        return;
+      }
+
+      const downloadBtn = e.target.closest('#btn-download-overview, #btn-download-summary, #btn-download-media, #btn-download-transcript');
+      if (downloadBtn) {
+        if (downloadBtn.id === 'btn-download-overview') downloadTabContentText('drawer-tab-overview', '概览');
+        else if (downloadBtn.id === 'btn-download-summary') downloadTabContentText('drawer-tab-summary', '总结');
+        else if (downloadBtn.id === 'btn-download-media') downloadTabContentText('drawer-tab-media', '多媒体素材');
+        else if (downloadBtn.id === 'btn-download-transcript') downloadTabContentText('drawer-tab-transcript', '语音转写');
+        return;
+      }
+
+      const copyCardBtn = e.target.closest('.copy-media-card-btn');
+      if (copyCardBtn) {
+        e.stopPropagation();
+        const card = copyCardBtn.closest('.media-asset-card');
+        const title = card ? card.querySelector('.media-asset-title')?.textContent : '素材';
+        navigator.clipboard.writeText(title).then(() => {
+          showToast(`已复制【${title}】素材信息`);
+        });
+        return;
+      }
+
+      const citeCardBtn = e.target.closest('.cite-media-card-btn');
+      if (citeCardBtn) {
+        e.stopPropagation();
+        const card = citeCardBtn.closest('.media-asset-card');
+        const title = card ? card.querySelector('.media-asset-title')?.textContent : '素材';
+        toggleFullscreen(false);
+        if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
+          refDocContentPreview.textContent = `“${title}”`;
+          refDocTagLabel.textContent = '多媒体素材';
+          refDocChipBar.style.display = 'flex';
+        }
+        switchView('chat');
+        if (chatTextarea) {
+          chatTextarea.focus();
+          chatTextarea.placeholder = '针对引用的素材提问...';
+        }
+        showToast(`已引用【${title}】`);
+        return;
+      }
+
+      const downloadCardBtn = e.target.closest('.download-media-card-btn');
+      if (downloadCardBtn) {
+        e.stopPropagation();
+        const card = downloadCardBtn.closest('.media-asset-card');
+        const title = card ? card.querySelector('.media-asset-title')?.textContent : '素材';
+        showToast(`已开始下载【${title}】`);
+        return;
+      }
+    });
 
     // @ 专家 Mention
     const expertDropdown = document.getElementById('expert-mention-dropdown');
@@ -2305,5 +3997,24 @@
       });
     }
   </script>
+
+  <!-- 删除二次确认 Modal 弹窗 -->
+  <div id="delete-confirm-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-danger-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </div>
+        <div class="modal-title">确认删除会议听记</div>
+      </div>
+      <div class="modal-body" id="modal-delete-desc">
+        确定要从「我的会议」中删除该项记录吗？删除后将无法恢复。
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="modal-btn-cancel" id="cancel-delete-btn">取消</button>
+        <button type="button" class="modal-btn-delete" id="confirm-delete-btn">确认删除</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
