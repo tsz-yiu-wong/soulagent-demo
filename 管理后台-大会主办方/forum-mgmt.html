@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>论坛管理 - SoulAgent 后台管理</title>
+  <title>大会后台 - 直播论坛管理</title>
   <script src="sidebar.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -619,6 +619,11 @@
       color: #0f172a;
     }
 
+    .icon-action-btn-danger:hover {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+
     /* Modal 弹窗与 Form 布局规范 (对齐 event-mgmt, 垃圾桶在右上角, 彻底无关闭X) */
     .modal-backdrop {
       position: fixed;
@@ -1107,48 +1112,33 @@
 
     <header class="header">
       <div class="header-left">
-        <h1 class="header-title">论坛/直播管理</h1>
-        <p class="header-subtitle">管理活动内的论坛信息、直播配置、音视频流数据。</p>
+        <h1 class="header-title">直播论坛管理</h1>
+        <p class="header-subtitle">管理活动内的直播论坛信息、直播配置、音视频流数据。</p>
       </div>
 
-      <!-- Header 操作区域: 非空态下显示 AI 检索按钮组 + 新建论坛 -->
+      <!-- Header 操作区域: 非空态下显示 批量导入 按钮 + 新建直播论坛 -->
       <div style="display: flex; align-items: center; gap: 10px;">
         <div id="headerAiActionGroup" style="display: none; align-items: center; gap: 10px;">
-          <button class="btn-ai-outline" onclick="openUploadModal()">
+          <button class="btn-ai-outline" onclick="openBatchImportModal('doc')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
-            文档AI解析
-          </button>
-          <button class="btn-ai-outline" onclick="openWebsiteModalFromHeader()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-            官网AI检索
+            批量导入
           </button>
         </div>
-        <button class="btn-primary" id="createForumBtn" onclick="openForumEditModal(null, 'forum')">
+        <button class="btn-primary" id="createForumBtn" onclick="openForumEditModal(null)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          新建大会论坛
-        </button>
-        <button class="btn-primary" id="createLiveBtn" onclick="openForumEditModal(null, 'live')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          新建日常直播
+          新建直播论坛
         </button>
       </div>
     </header>
 
-    <!-- 主内容区域 (含 AI 智能解析窄栏 + 论坛列表/空态) -->
+    <!-- 主内容区域 (含 AI 智能解析窄栏 + 直播论坛列表/空态) -->
     <div class="main-body-section" id="mainBodySection">
       <!-- 空态时呈现的 AI 自动解析入口 (双大卡片 Banner) -->
       <div class="ai-parse-banner-large" id="aiParseBanner">
@@ -1163,7 +1153,7 @@
               </svg>
             </div>
             <div class="ai-card-text-large">
-              <div class="ai-card-title-large">官网AI检索</div>
+              <div class="ai-card-title-large">议程官网AI检索</div>
               <div class="ai-card-desc-large" id="websiteTextDesc">
                 <!-- JS 动态渲染：已绑定 vs 未绑定 -->
               </div>
@@ -1187,11 +1177,11 @@
               </svg>
             </div>
             <div class="ai-card-text-large">
-              <div class="ai-card-title-large">文档AI解析</div>
-              <div class="ai-card-desc-large">上传 Word / PDF / Excel 议程文档，AI智能识别并解析文档内的论坛及议题相关信息</div>
+              <div class="ai-card-title-large">议程文档AI解析</div>
+              <div class="ai-card-desc-large">上传 Word / PDF / Excel 议程文档，AI智能识别并解析文档内的直播论坛及议题相关信息</div>
             </div>
           </div>
-          <button class="btn-ai-outline" onclick="openUploadModal()">
+          <button class="btn-ai-outline" onclick="openBatchImportModal('doc')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
@@ -1202,7 +1192,7 @@
         </div>
       </div>
 
-      <!-- 论坛列表容器 / 精品空状态卡片 -->
+      <!-- 直播论坛列表容器 / 精品空状态卡片 -->
       <div id="forumContentArea">
         <!-- JS 动态渲染表格列表或空状态 -->
       </div>
@@ -1220,74 +1210,76 @@
     </div>
   </div>
 
-  <!-- Modal 1: 官网AI检索弹窗 -->
-  <div class="modal-backdrop" id="bindUrlModal">
-    <div class="modal-card" style="max-width: 480px;">
-      <div class="modal-header">
-        <div class="modal-title" id="bindUrlModalTitle">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-          </svg>
-          官网AI检索
-        </div>
-      </div>
-      <div class="modal-body">
-        <label class="form-label">议程网址 (URL)</label>
-        <input type="url" class="input-text" id="websiteUrlInput" placeholder="https://example.com/agenda" value="">
-      </div>
-      <div class="modal-footer">
-        <div class="modal-footer-right">
-          <button class="btn-secondary" onclick="closeModal('bindUrlModal')">取消</button>
-          <button class="btn-ai-sparkle" id="bindUrlSubmitBtn" onclick="confirmAndParse()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
-            </svg>
-            智能检索
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 2: 上传议程文档弹窗 -->
-  <div class="modal-backdrop" id="uploadDocModal">
+  <!-- Modal 1: 批量导入弹窗 (包含 文档 / 官网 切换 Tab) -->
+  <div class="modal-backdrop" id="batchImportModal">
     <div class="modal-card" style="max-width: 500px;">
       <div class="modal-header">
         <div class="modal-title">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
           </svg>
-          文档AI解析
+          批量导入
         </div>
+        <button type="button" class="modal-header-close" onclick="closeModal('batchImportModal')" title="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
+
       <div class="modal-body">
-        <div class="file-dropzone" id="agendaDropzone" onclick="document.getElementById('fileInput').click()">
-          <div class="file-dropzone-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-          </div>
-          <div class="file-dropzone-text">点击选择或将议程文件拖拽至此处</div>
-          <div style="font-size: 11.5px; color: #94a3b8; margin-top: 4px;">支持 .docx / .doc / .pdf / .xlsx / .xls，可多选</div>
-          <input type="file" id="fileInput" style="display: none;" accept=".docx,.doc,.pdf,.xlsx,.xls" multiple onchange="handleFileSelected(this)">
+        <!-- 顶部 Tab 切换标签 -->
+        <div class="form-tab-header" style="margin-bottom: 16px; width: 100%;">
+          <button type="button" class="form-tab-btn active" id="batchImportTabDocBtn" style="flex: 1; text-align: center; padding: 7px 16px; font-size: 13px;" onclick="switchBatchImportTab('doc')">议程文档AI解析</button>
+          <button type="button" class="form-tab-btn" id="batchImportTabWebsiteBtn" style="flex: 1; text-align: center; padding: 7px 16px; font-size: 13px;" onclick="switchBatchImportTab('website')">议程官网AI检索</button>
         </div>
-        <!-- 已保存 + 待上传文件列表 -->
-        <div id="agendaDocList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
+
+        <!-- 1. 议程文档AI解析 Tab 面板 -->
+        <div id="batchImportDocPanel">
+          <div class="file-dropzone" id="agendaDropzone" onclick="document.getElementById('fileInput').click()">
+            <div class="file-dropzone-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="file-dropzone-text">点击选择或将议程文件拖拽至此处</div>
+            <div style="font-size: 11.5px; color: #94a3b8; margin-top: 4px;">支持 .docx / .doc / .pdf / .xlsx / .xls，可多选</div>
+            <input type="file" id="fileInput" style="display: none;" accept=".docx,.doc,.pdf,.xlsx,.xls" multiple onchange="handleFileSelected(this)">
+          </div>
+          <!-- 已保存 + 待上传文件列表 -->
+          <div id="agendaDocList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- 2. 议程官网AI检索 Tab 面板 -->
+        <div id="batchImportWebsitePanel" style="display: none;">
+          <label class="form-label">议程网址 (URL)</label>
+          <input type="url" class="input-text" id="websiteUrlInput" placeholder="https://example.com/agenda" value="">
+          <div id="websiteUrlHint" style="font-size: 12px; color: #64748b; margin-top: 8px;"></div>
+        </div>
       </div>
+
       <div class="modal-footer">
-        <div style="font-size: 12px; color: #94a3b8;" id="agendaDocCount"></div>
+        <div id="batchImportDocFooterLeft" style="font-size: 12px; color: #94a3b8;">
+          <span id="agendaDocCount"></span>
+        </div>
         <div class="modal-footer-right">
-          <button class="btn-secondary" onclick="closeModal('uploadDocModal')">取消</button>
-          <button class="btn-ai-sparkle" onclick="confirmUploadAndParse()">
+          <button class="btn-secondary" onclick="closeModal('batchImportModal')">取消</button>
+          <button class="btn-ai-sparkle" id="batchImportDocSubmitBtn" onclick="confirmUploadAndParse()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
             </svg>
             智能解析
+          </button>
+          <button class="btn-ai-sparkle" id="batchImportWebsiteSubmitBtn" style="display: none;" onclick="confirmAndParse()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            </svg>
+            智能检索
           </button>
         </div>
       </div>
@@ -1309,7 +1301,7 @@
       </div>
       <div class="modal-body">
         <p style="font-size: 13.5px; color: #475569; line-height: 1.6;">
-          当前页面已包含论坛和议题数据。发起解析将重新生成<strong style="color: #dc2626;">并覆盖原有的所有论坛与议题信息</strong>，是否确定继续？
+          当前页面已包含直播论坛和议题数据。发起解析将重新生成<strong style="color: #dc2626;">并覆盖原有的所有直播论坛与议题信息</strong>，是否确定继续？
         </p>
       </div>
       <div class="modal-footer">
@@ -1334,7 +1326,7 @@
       </div>
       <h3 style="font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">未识别到有效信息</h3>
       <p style="font-size: 13.5px; color: #64748b; line-height: 1.6; margin-bottom: 22px;">
-        AI 未能识别出明确的论坛结构或议题安排，请检查官网地址或上传文件内容后重试。
+        AI 未能识别出明确的直播论坛结构或议题安排，请检查官网地址或上传文件内容后重试。
       </p>
       <div style="display: flex; justify-content: center; gap: 12px;">
         <button class="btn-secondary" style="padding: 8px 24px;" onclick="closeModal('parseFailedModal')">取消</button>
@@ -1343,7 +1335,7 @@
     </div>
   </div>
 
-  <!-- Modal 5: 删除论坛二次确认弹窗 (统一规范样式, 同 confirmOverwriteModal) -->
+  <!-- Modal 5: 删除直播论坛二次确认弹窗 (统一规范样式, 同 confirmOverwriteModal) -->
   <div class="modal-backdrop" id="deleteForumConfirmModal">
     <div class="modal-card" style="max-width: 420px;">
       <div class="modal-header">
@@ -1353,12 +1345,12 @@
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
-          确认删除该论坛？
+          确认删除该直播论坛？
         </div>
       </div>
       <div class="modal-body">
         <p style="font-size: 13.5px; color: #475569; line-height: 1.6;">
-          删除后，<strong style="color: #dc2626;">论坛内的所有议题、直播配置、速记稿等数据将全部一并删除</strong>，且操作不可撤销。是否确定继续？
+          删除后，<strong style="color: #dc2626;">直播论坛内的所有议题、直播配置、速记稿等数据将全部一并删除</strong>，且操作不可撤销。是否确定继续？
         </p>
       </div>
       <div class="modal-footer">
@@ -1370,7 +1362,7 @@
     </div>
   </div>
 
-  <!-- Modal 6: 新建/编辑论坛模态弹窗 -->
+  <!-- Modal 6: 新建/编辑直播论坛模态弹窗 -->
   <div class="modal-backdrop" id="forumEditModal">
     <div class="modal-card">
       <div class="modal-header">
@@ -1379,7 +1371,7 @@
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          编辑论坛
+          编辑直播论坛
         </div>
         <!-- 右上角关闭按钮 -->
         <button type="button" class="modal-header-close" onclick="closeModal('forumEditModal')" title="关闭">
@@ -1392,22 +1384,16 @@
 
       <div class="modal-body">
         <form id="forumForm">
-          <!-- 1. 论坛名/直播主题 -->
+          <!-- 1. 直播论坛名称 -->
           <div class="form-group">
-            <label class="form-label" id="formNameLabel">论坛名称 <span style="color: #ef4444;">*</span></label>
+            <label class="form-label" id="formNameLabel">直播论坛名称 <span style="color: #ef4444;">*</span></label>
             <input type="text" class="input-text" id="formForumName" placeholder="例如：开幕式及主论坛" required>
           </div>
 
-          <!-- 2. 场馆 (通用) -->
+          <!-- 2. 场馆 -->
           <div class="form-group">
             <label class="form-label">场馆</label>
             <input type="text" class="input-text" id="formForumVenue" placeholder="例如：中关村国际创新中心 畅春厅">
-          </div>
-
-          <!-- 3. 主持人/嘉宾 (仅日常直播) -->
-          <div class="form-group type-live-only" style="display: none;">
-            <label class="form-label">主持人/嘉宾</label>
-            <textarea class="textarea-text" id="formLiveGuests" placeholder="多位嘉宾支持通过换行或分号分隔，例如：&#10;主持人：智源研究院院长 王仲远&#10;嘉宾：智源研究院理事长 黄铁军" style="height: 90px; min-height: 80px; resize: vertical; font-family: inherit; font-size: 13px;"></textarea>
           </div>
 
           <!-- 4. 直播方式 (包含 4 个 Tab: 拉流模式, 推流模式, 网址模式, 视频回放) -->
@@ -1495,8 +1481,8 @@
             </div>
           </div>
 
-          <!-- 6. 速记稿上传及策略 (仅大会论坛) -->
-          <div class="form-group type-forum-only" style="margin-bottom: 0;">
+          <!-- 6. 速记稿上传及策略 -->
+          <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">速记稿</label>
             <div class="attachment-upload-box" style="margin-bottom: 10px;">
               <div class="attachment-trigger-btn" onclick="triggerShorthandInput()">
@@ -1526,18 +1512,7 @@
       </div>
 
       <div class="modal-footer">
-        <div class="modal-footer-left">
-          <!-- 左下角删除按钮 (编辑模式下显示) -->
-          <button type="button" class="icon-btn-danger" id="deleteForumBtn" style="display: none; width: auto; padding: 0 12px; gap: 6px;" onclick="confirmDeleteForum()" title="删除论坛">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-            删除论坛
-          </button>
-        </div>
+        <div class="modal-footer-left"></div>
         <div class="modal-footer-right">
           <button type="button" class="btn-secondary" onclick="closeModal('forumEditModal')">取消</button>
           <button type="button" class="btn-primary" onclick="saveForumData()">保存配置</button>
@@ -1710,6 +1685,7 @@
     let pendingExecutionFn = null;
     let editingForumId = null;
     let pendingAgendaFiles = []; // 弹窗内本次新选但未保存的文件
+    let currentBatchImportTab = 'doc';
 
     // 筛选与排序状态
     let venueFilter = 'all';
@@ -1753,6 +1729,65 @@
       });
     });
 
+    function fillDetectedAgendaUrl() {
+      const inputEl = document.getElementById('websiteUrlInput');
+      if (inputEl && agendaPageUrl) {
+        inputEl.value = agendaPageUrl;
+        showToast('已填入识别到的议程网址！');
+      }
+    }
+
+    // 批量导入弹窗逻辑
+    function openBatchImportModal(tab = 'doc') {
+      currentBatchImportTab = tab;
+      switchBatchImportTab(tab);
+
+      // 初始化文档列表
+      pendingAgendaFiles = [];
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
+      renderUploadedDocList();
+      setupDropzone();
+
+      // 初始化官网网址
+      const inputEl = document.getElementById('websiteUrlInput');
+      if (inputEl) inputEl.value = agendaPageUrl || '';
+      
+      const hintEl = document.getElementById('websiteUrlHint');
+      if (hintEl) {
+        if (agendaPageUrl && agendaPageUrl.trim() !== '') {
+          hintEl.innerHTML = `已识别到议程网址：<a href="${agendaPageUrl}" target="_blank" style="color:#2563eb;">${agendaPageUrl}</a><button type="button" onclick="fillDetectedAgendaUrl()" style="margin-left: 8px; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">一键填入</button>`;
+        } else {
+          hintEl.textContent = '输入议程网址，AI智能检索并解析其中的直播论坛及议题相关信息';
+        }
+      }
+
+      openModal('batchImportModal');
+    }
+
+    function switchBatchImportTab(tab) {
+      currentBatchImportTab = tab;
+      const isDoc = (tab === 'doc');
+
+      const docBtn = document.getElementById('batchImportTabDocBtn');
+      const websiteBtn = document.getElementById('batchImportTabWebsiteBtn');
+      if (docBtn) docBtn.classList.toggle('active', isDoc);
+      if (websiteBtn) websiteBtn.classList.toggle('active', !isDoc);
+
+      const docPanel = document.getElementById('batchImportDocPanel');
+      const websitePanel = document.getElementById('batchImportWebsitePanel');
+      if (docPanel) docPanel.style.display = isDoc ? 'block' : 'none';
+      if (websitePanel) websitePanel.style.display = isDoc ? 'none' : 'block';
+
+      const docFooterLeft = document.getElementById('batchImportDocFooterLeft');
+      const docSubmitBtn = document.getElementById('batchImportDocSubmitBtn');
+      const websiteSubmitBtn = document.getElementById('batchImportWebsiteSubmitBtn');
+
+      if (docFooterLeft) docFooterLeft.style.display = isDoc ? 'block' : 'none';
+      if (docSubmitBtn) docSubmitBtn.style.display = isDoc ? 'inline-flex' : 'none';
+      if (websiteSubmitBtn) websiteSubmitBtn.style.display = isDoc ? 'none' : 'inline-flex';
+    }
+
     // 渲染官网检索卡片状态与排位顺序
     function renderWebsiteCard() {
       const descEl = document.getElementById('websiteTextDesc');
@@ -1766,7 +1801,7 @@
 
         descEl.innerHTML = `已识别到议程网址：<a href="${agendaPageUrl}" target="_blank">${agendaPageUrl}</a>`;
         actionEl.innerHTML = `
-          <button class="btn-ai-sparkle" onclick="startOfficialWebsiteParsing()">
+          <button class="btn-ai-sparkle" onclick="openBatchImportModal('website')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
             </svg>
@@ -1777,9 +1812,9 @@
         if (documentCard) documentCard.style.order = '1';
         if (websiteCard) websiteCard.style.order = '2';
 
-        descEl.textContent = '输入议程网址，AI智能检索并解析其中的论坛及议题相关信息';
+        descEl.textContent = '输入议程网址，AI智能检索并解析其中的直播论坛及议题相关信息';
         actionEl.innerHTML = `
-          <button class="btn-ai-outline" onclick="openWebsiteModalFromHeader()">
+          <button class="btn-ai-outline" onclick="openBatchImportModal('website')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -1791,7 +1826,7 @@
       }
     }
 
-    // 核心渲染：论坛列表表格与 AI Banner / Header 按钮联动
+    // 核心渲染：直播论坛列表表格与 AI Banner / Header 按钮联动
     function renderForumList() {
       const container = document.getElementById('forumContentArea');
       const bannerEl = document.getElementById('aiParseBanner');
@@ -1827,8 +1862,8 @@
                 <polyline points="2 12 12 17 22 12"></polyline>
               </svg>
             </div>
-            <div class="empty-state-title">暂无论坛数据</div>
-            <div class="empty-state-desc">当前活动下尚未配置任何论坛信息</div>
+            <div class="empty-state-title">暂无直播论坛数据</div>
+            <div class="empty-state-desc">当前活动下尚未配置任何直播论坛信息</div>
           </div>
         `;
         return;
@@ -1845,7 +1880,7 @@
             <thead>
               <tr>
                 <th class="th-sortable" onclick="handleSort('name')">
-                  论坛名称
+                  直播论坛名称
                   <span class="sort-icon ${sortState.field === 'name' ? 'active' : ''}">
                     ${sortState.field === 'name' ? (sortState.order === 'asc' ? '▲' : '▼') : '⇅'}
                   </span>
@@ -1873,7 +1908,7 @@
                   </span>
                 </th>
 
-                <th>直播方式</th>
+                <th>直播状态</th>
                 <th>视频回放</th>
                 <th>速记稿</th>
                 <th>操作</th>
@@ -1927,10 +1962,18 @@
             </td>
             <td>
               <div class="action-cell">
-                <button class="icon-action-btn" title="编辑论坛" onclick="event.stopPropagation(); openForumEditModal('${forum.id}')">
+                <button class="icon-action-btn" title="编辑直播论坛" onclick="event.stopPropagation(); openForumEditModal('${forum.id}')">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button class="icon-action-btn icon-action-btn-danger" title="删除直播论坛" onclick="event.stopPropagation(); confirmDeleteForum(event, '${forum.id}')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
                   </svg>
                 </button>
                 <button class="icon-action-btn" title="进入议题与日程编排" onclick="event.stopPropagation(); goToAgenda('${currentEventId}', '${forum.id}')">
@@ -2002,31 +2045,7 @@
       renderForumList();
     }
 
-    let currentFormType = 'forum';
-
-    // 切换论坛/直播类型视图匹配
-    function switchForumType(type) {
-      currentFormType = type;
-      const nameLabel = document.getElementById('formNameLabel');
-      const nameInput = document.getElementById('formForumName');
-
-      document.querySelectorAll('.type-forum-only').forEach(el => {
-        el.style.display = type === 'forum' ? 'block' : 'none';
-      });
-      document.querySelectorAll('.type-live-only').forEach(el => {
-        el.style.display = type === 'live' ? 'block' : 'none';
-      });
-
-      if (type === 'live') {
-        if (nameLabel) nameLabel.innerHTML = '直播主题 <span style="color: #ef4444;">*</span>';
-        if (nameInput) nameInput.placeholder = '例如：大模型前沿技术分享';
-      } else {
-        if (nameLabel) nameLabel.innerHTML = '论坛名称 <span style="color: #ef4444;">*</span>';
-        if (nameInput) nameInput.placeholder = '例如：开幕式及主论坛';
-      }
-    }
-
-    // 官网 Modal 唤起（统一标题为"官网AI检索"，若已有识别到的议程网址则预填入输入框）
+    // 官网 Modal 唤起（统一标题为"议程官网AI检索"，若已有识别到的议程网址则预填入输入框）
     function openWebsiteModalFromHeader() {
       const titleEl = document.getElementById('bindUrlModalTitle');
       const inputEl = document.getElementById('websiteUrlInput');
@@ -2038,7 +2057,7 @@
             <line x1="2" y1="12" x2="22" y2="12"></line>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
           </svg>
-          官网AI检索
+          议程官网AI检索
         `;
       }
       // AI识别到议程网址时自动预填，用户也可手动修改
@@ -2047,32 +2066,26 @@
       openModal('bindUrlModal');
     }
 
-    // 新建 / 编辑论坛 Modal 弹窗逻辑
-    function openForumEditModal(forumId = null, initialType = 'forum') {
+    // 新建 / 编辑直播论坛 Modal 弹窗逻辑
+    function openForumEditModal(forumId = null) {
       editingForumId = forumId;
       const modalTitle = document.getElementById('forumEditModalTitle');
-      const deleteBtn = document.getElementById('deleteForumBtn');
 
       if (forumId) {
-        deleteBtn.style.display = 'inline-flex';
         const list = MOCK_FORUMS_DB[currentEventId] || [];
         const forum = list.find(f => f.id === forumId);
         if (!forum) return;
-
-        const forumType = forum.type || 'forum';
-        switchForumType(forumType);
 
         modalTitle.innerHTML = `
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          ${forumType === 'live' ? '编辑日常直播' : '编辑大会论坛'}
+          编辑直播论坛
         `;
 
         document.getElementById('formForumName').value = forum.name || '';
         document.getElementById('formForumVenue').value = forum.venue || '';
-        document.getElementById('formLiveGuests').value = forum.guestsText || '';
 
         const liveMode = forum.liveStream ? forum.liveStream.mode || 'pull' : 'pull';
         switchLiveTab(liveMode);
@@ -2121,19 +2134,15 @@
         if (radio) radio.checked = true;
 
       } else {
-        deleteBtn.style.display = 'none';
-        const forumType = initialType || 'forum';
-        switchForumType(forumType);
         modalTitle.innerHTML = `
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          ${forumType === 'live' ? '新建日常直播' : '新建大会论坛'}
+          新建直播论坛
         `;
 
         document.getElementById('formForumName').value = '';
-        document.getElementById('formForumVenue').value = forumType === 'live' ? '线上直播' : '';
-        document.getElementById('formLiveGuests').value = '';
+        document.getElementById('formForumVenue').value = '';
         
         switchLiveTab('pull');
         document.getElementById('formLivePushUrl').value = '';
@@ -2191,8 +2200,12 @@
       }
     }
 
-    // 删除论坛唤起二次确认弹窗
-    function confirmDeleteForum() {
+    // 删除直播论坛唤起二次确认弹窗
+    function confirmDeleteForum(e, forumId) {
+      if (e && e.stopPropagation) e.stopPropagation();
+      if (forumId) {
+        editingForumId = forumId;
+      }
       if (!editingForumId) return;
       openModal('deleteForumConfirmModal');
     }
@@ -2208,14 +2221,14 @@
       closeModal('deleteForumConfirmModal');
       closeModal('forumEditModal');
       renderForumList();
-      showToast('论坛/直播已成功删除');
+      showToast('直播论坛已成功删除');
     }
 
-    // 保存论坛表单数据
+    // 保存直播论坛表单数据
     function saveForumData() {
       const name = document.getElementById('formForumName').value.trim();
       if (!name) {
-        alert(currentFormType === 'live' ? '请输入直播主题' : '请输入论坛名称');
+        alert('请输入直播论坛名称');
         return;
       }
 
@@ -2304,7 +2317,7 @@
 
       closeModal('forumEditModal');
       renderForumList();
-      showToast(editingForumId ? (currentFormType === 'live' ? '直播配置已成功更新' : '论坛配置已成功更新') : (currentFormType === 'live' ? '日常直播创建成功！' : '分论坛创建成功！'));
+      showToast(editingForumId ? '配置已成功更新' : '直播论坛创建成功！');
     }
 
     function switchLiveTab(mode) {
@@ -2420,11 +2433,7 @@
     }
 
     function openUploadModal() {
-      pendingAgendaFiles = [];
-      document.getElementById('fileInput').value = '';
-      renderUploadedDocList();
-      setupDropzone();
-      openModal('uploadDocModal');
+      openBatchImportModal('doc');
     }
 
     function setupDropzone() {
@@ -2549,7 +2558,7 @@
 
     function startOfficialWebsiteParsing() {
       attemptParsing(() => {
-        executeAgentParsingProcess('官网AI检索');
+        executeAgentParsingProcess('议程官网AI检索');
       });
     }
 
@@ -2561,10 +2570,10 @@
       }
       agendaPageUrl = url.trim(); // 记录本次输入的议程网址，用于卡片预填
       renderWebsiteCard();
-      closeModal('bindUrlModal');
+      closeModal('batchImportModal');
 
       attemptParsing(() => {
-        executeAgentParsingProcess('官网AI检索');
+        executeAgentParsingProcess('议程官网AI检索');
       });
     }
 
@@ -2584,7 +2593,7 @@
       });
       pendingAgendaFiles = [];
 
-      closeModal('uploadDocModal');
+      closeModal('batchImportModal');
 
       attemptParsing(() => {
         executeAgentParsingProcess('文档智能解析', true);
@@ -2600,16 +2609,10 @@
       if (mainSection) mainSection.classList.add('section-disabled');
 
       const createBtn = document.getElementById('createForumBtn');
-      const createLiveBtn = document.getElementById('createLiveBtn');
       if (createBtn) {
         createBtn.disabled = true;
         createBtn.style.opacity = '0.5';
         createBtn.style.pointerEvents = 'none';
-      }
-      if (createLiveBtn) {
-        createLiveBtn.disabled = true;
-        createLiveBtn.style.opacity = '0.5';
-        createLiveBtn.style.pointerEvents = 'none';
       }
 
       const progressBar = document.getElementById('aiProgressBar');
@@ -2641,16 +2644,11 @@
             createBtn.style.opacity = '1';
             createBtn.style.pointerEvents = 'auto';
           }
-          if (createLiveBtn) {
-            createLiveBtn.disabled = false;
-            createLiveBtn.style.opacity = '1';
-            createLiveBtn.style.pointerEvents = 'auto';
-          }
 
           if (isFailure) {
             openModal('parseFailedModal');
           } else {
-            showToast(`[${typeLabel}] 完成，已自动填充论坛与议题！`);
+            showToast(`[${typeLabel}] 完成，已自动填充直播论坛与议题！`);
           }
         }
       }, intervalMs);

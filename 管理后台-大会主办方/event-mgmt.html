@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活动管理 - SoulAgent 后台管理</title>
+    <title>大会后台 - 活动管理</title>
     <!-- Cropper.js 样式组件 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <!-- 通用侧边栏组件 -->
@@ -244,6 +244,11 @@
         .icon-btn:hover {
             background: #f3f4f6;
             color: #2563eb;
+        }
+
+        .icon-btn.icon-btn-danger:hover {
+            background: #fef2f2;
+            color: #ef4444;
         }
 
         .arrow-icon {
@@ -817,20 +822,7 @@
 
             <!-- 冻结固定吸底操作区 -->
             <div class="modal-footer">
-                <div class="modal-footer-left">
-                    <!-- 左下角删除按钮 (编辑模式下显示) -->
-                    <button class="icon-btn-danger" id="deleteEventBtn" style="display:none; gap: 6px; width: auto; padding: 0 12px;"
-                        onclick="openDeleteConfirmModal()" title="删除活动">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                        删除活动
-                    </button>
-                </div>
+                <div class="modal-footer-left"></div>
                 <div class="modal-footer-right">
                     <button class="btn-secondary" onclick="closeModal()">取消</button>
                     <button class="btn-primary" id="saveBtn" disabled onclick="saveEvent()">确定保存</button>
@@ -902,7 +894,6 @@
                 icon: '',
                 color: 'linear-gradient(135deg, #6366f1, #4f46e5)',
                 dateText: '2026.08.18 - 2026.08.20',
-                locationText: '国家会议中心等5地',
                 forumCountText: '12个论坛'
             },
             {
@@ -915,7 +906,6 @@
                 icon: '',
                 color: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                 dateText: '2026.07.01 - 2026.08.31',
-                locationText: '北京大学',
                 forumCountText: '6个论坛'
             }
         ];
@@ -967,7 +957,6 @@
 
                 const bgStyle = evt.icon ? '' : `style="background: ${evt.color || 'linear-gradient(135deg, #3b82f6, #1d4ed8)'};"`;
                 const dateStr = evt.dateText || (evt.desc ? evt.desc.split('·')[0].trim() : '时间待排定');
-                const locationStr = evt.locationText || '国家会议中心';
                 const forumStr = evt.forumCountText || (evt.desc && evt.desc.includes('·') ? evt.desc.split('·')[1].trim() : '0 个论坛');
 
                 return `
@@ -991,14 +980,6 @@
                   <span class="desc-divider">·</span>
                   <span class="desc-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    ${escapeHtml(locationStr)}
-                  </span>
-                  <span class="desc-divider">·</span>
-                  <span class="desc-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
                       <polyline points="2 17 12 22 22 17"></polyline>
                       <polyline points="2 12 12 17 22 12"></polyline>
@@ -1013,6 +994,14 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 2 2h14a2 2 0 0 2 2h-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </div>
+              <div class="icon-btn icon-btn-danger" onclick="openDeleteConfirmModal(event, '${evt.id}')" title="删除活动">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
                 </svg>
               </div>
               <svg class="arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1099,7 +1088,6 @@
             currentBase64Icon = '';
             currentAttachments = [];
             document.getElementById('modalTitle').innerText = '新建活动';
-            document.getElementById('deleteEventBtn').style.display = 'none';
             document.getElementById('eventNameInput').value = '';
             document.getElementById('eventShortNameInput').value = '';
             document.getElementById('eventWebsiteInput').value = '';
@@ -1123,7 +1111,6 @@
             currentAttachments = evt.attachments ? JSON.parse(JSON.stringify(evt.attachments)) : [];
 
             document.getElementById('modalTitle').innerText = '编辑活动';
-            document.getElementById('deleteEventBtn').style.display = 'flex';
             document.getElementById('eventNameInput').value = evt.name || '';
             document.getElementById('eventShortNameInput').value = evt.shortName || '';
             document.getElementById('eventWebsiteInput').value = evt.website || '';
@@ -1187,7 +1174,6 @@
                     icon: currentBase64Icon,
                     color: getRandomGradient(),
                     dateText: '2026.09.10 - 2026.09.12',
-                    locationText: '国家会议中心',
                     forumCountText: '0 个论坛'
                 };
                 events.unshift(newEvt);
@@ -1198,7 +1184,9 @@
         }
 
         // 删除逻辑
-        function openDeleteConfirmModal() {
+        function openDeleteConfirmModal(e, id) {
+            if (e && e.stopPropagation) e.stopPropagation();
+            if (id) editingEventId = id;
             document.getElementById('deleteConfirmModal').classList.add('active');
         }
 

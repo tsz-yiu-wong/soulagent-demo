@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SoulAgent - 定时任务</title>
+  <title>定时任务</title>
   <style>
     * {
       box-sizing: border-box;
@@ -1335,6 +1335,13 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    if (window.location.hash === '#embed' || window.self !== window.top) {
+      document.addEventListener('DOMContentLoaded', () => {
+        const sb = document.querySelector('.sidebar');
+        if (sb) sb.style.display = 'none';
+      });
+    }
+
     // ================= 状态数据 =================
     let tasks = []; // 已添加的任务列表
 
