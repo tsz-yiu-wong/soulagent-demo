@@ -4,12 +4,16 @@
  */
 
 // 全局响应式状态
+// 全局响应式状态
 const state = {
   currentAgent: "MyAgent",       // 当前选中的智能体
   currentView: "new-chat",       // 当前视图: 'new-chat' | 'expert-chat-new' | 'dialog' | 'plaza'
   activeChatTitle: null,          // 当前激活的历史对话标题
   activeExpert: null,             // 当前选择的专家对象 (用于专家新对话视图)
-  isDropdownOpen: false,          // 下拉菜单显隐
+  expertSelectMode: null,         // 专家选择来源: 'direct' (广场卡片进)
+  chatInputDraft: "",             // 新建对话输入框文本草稿
+  isDropdownOpen: false,          // 智能体下拉菜单显隐
+  isExpertDropdownOpen: false,    // 专家AI分身下拉菜单显隐
   plazaSearchKeyword: ""         // 广场搜索关键字
 };
 
@@ -39,15 +43,24 @@ function renderApp() {
     const msgContainer = document.getElementById('dialog-messages');
     if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
   } else {
-    // new-chat (普通智能体或智能体下拉选择的专家分身)
-    const isExpert = isExpertAgent(state.currentAgent);
-    if (isExpert) {
-      const expertMatch = expertList.find(exp => exp.agentName === state.currentAgent || state.currentAgent.includes(exp.name));
-      mainEl.innerHTML = renderExpertNewView(expertMatch);
-    } else {
-      mainEl.innerHTML = renderAgentNewView();
-    }
+    // new-chat
+    mainEl.innerHTML = renderAgentNewView();
   }
+}
+
+// Helper: build expert reply header HTML (used by mock messages with mentioned expert)
+function _buildExpertHeaderHtml(exp) {
+  return `
+    <div class="expert-reply-header">
+      <div class="expert-reply-avatar-mini" style="background: ${exp.gradient};">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
+      <div class="expert-reply-meta">
+        <div class="expert-reply-name">${escapeHtml(exp.name)} 的 AI 分身</div>
+        <div class="expert-reply-role">${escapeHtml(exp.role)}</div>
+      </div>
+    </div>
+  `;
 }
 
 // 帮助函数
@@ -77,6 +90,71 @@ function escapeJsString(str) {
 }
 
 // -------------------------------------------------------------
+// 专家 AI 分身 选择器组件及交互处理
+// -------------------------------------------------------------
+
+function renderExpertSelectorHtml() {
+  const dropdownItemsHtml = expertList.map(exp => `
+    <div class="expert-dropdown-item" onclick="selectExpertFromDropdown('${exp.id}', event)">
+      <div class="expert-item-avatar" style="background: ${exp.gradient};">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
+      <div class="expert-item-info">
+        <div class="expert-item-name">${escapeHtml(exp.name)}</div>
+        <div class="expert-item-role">${escapeHtml(exp.role)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="expert-select-wrapper" id="expert-select-wrapper">
+      <button class="expert-select-btn ${state.isExpertDropdownOpen ? 'open' : ''}" onclick="toggleExpertSelectDropdown(event)" title="选择专家AI分身">
+        <svg class="icon" viewBox="0 0 24 24" style="width: 14px; height: 14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>专家AI分身</span>
+        <svg class="icon chevron-icon" viewBox="0 0 24 24" style="width: 12px; height: 12px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+
+      <div class="expert-select-dropdown ${state.isExpertDropdownOpen ? 'show' : ''}">
+        <div class="expert-dropdown-header">选择专家 AI 分身</div>
+        <div class="expert-dropdown-list">
+          ${dropdownItemsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleExpertSelectDropdown(e) {
+  if (e) e.stopPropagation();
+  state.isExpertDropdownOpen = !state.isExpertDropdownOpen;
+  state.isDropdownOpen = false;
+  renderApp();
+}
+
+function selectExpertFromDropdown(expertId, e) {
+  if (e) e.stopPropagation();
+  const exp = expertList.find(item => item.id === expertId);
+  if (!exp) return;
+
+  const input = document.getElementById('chat-input');
+  let currentVal = input ? input.value : (state.chatInputDraft || '');
+  expertList.forEach(item => {
+    currentVal = currentVal.replace(new RegExp(`@${item.name}\\s*`, 'g'), '');
+  });
+  state.chatInputDraft = `@${exp.name} ` + currentVal.trimStart();
+  state.isExpertDropdownOpen = false;
+  renderApp();
+
+  setTimeout(() => {
+    const newInput = document.getElementById('chat-input');
+    if (newInput) {
+      newInput.focus();
+      newInput.setSelectionRange(newInput.value.length, newInput.value.length);
+    }
+  }, 0);
+}
+
+// -------------------------------------------------------------
 // 交互事件处理函数
 // -------------------------------------------------------------
 
@@ -85,8 +163,11 @@ function startNewChat(e) {
   if (e) e.stopPropagation();
   state.activeChatTitle = null;
   state.activeExpert = null;
+  state.expertSelectMode = null;
+  state.chatInputDraft = '';
   state.currentView = 'new-chat';
   state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
   renderApp();
 }
 
@@ -94,23 +175,21 @@ function startNewChat(e) {
 function openDialogChat(chatTitle) {
   state.activeChatTitle = chatTitle;
 
-  // 检查是否是与专家的对话（格式：与XX对话）
-  if (chatTitle.startsWith('与') && chatTitle.endsWith('对话')) {
+  // 检查是否是与专家的对话（格式：与XX对话 或 包含关联专家）
+  const conv = mockConversations[chatTitle];
+  if (conv && conv.expertId) {
+    state.activeExpert = expertList.find(e => e.id === conv.expertId) || null;
+  } else if (chatTitle.startsWith('与') && chatTitle.endsWith('对话')) {
     const expName = chatTitle.substring(1, chatTitle.length - 2);
     const exp = expertList.find(e => e.name === expName);
-    if (exp) {
-      // 专家对话：跳转至只有专家介绍无历史聊天的新对话界面
-      state.activeExpert = exp;
-      state.currentView = 'expert-chat-new';
-      state.isDropdownOpen = false;
-      renderApp();
-      return;
-    }
+    state.activeExpert = exp || null;
+  } else {
+    state.activeExpert = null;
   }
 
-  state.activeExpert = null;
   state.currentView = 'dialog';
   state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
   renderApp();
 }
 
@@ -121,13 +200,7 @@ function selectAgent(agentName) {
   state.activeExpert = null;
   state.currentView = 'new-chat';
   state.isDropdownOpen = false;
-
-  // 清除选中智能体的未读蓝点标记
-  const item = agentMenuItems.find(i => i.name === agentName);
-  if (item) {
-    item.unread = false;
-  }
-
+  state.isExpertDropdownOpen = false;
   renderApp();
 }
 
@@ -135,6 +208,7 @@ function selectAgent(agentName) {
 function toggleAgentMenu(e) {
   if (e) e.stopPropagation();
   state.isDropdownOpen = !state.isDropdownOpen;
+  state.isExpertDropdownOpen = false;
   renderSidebar();
 }
 
@@ -152,6 +226,7 @@ function openPlazaView(e) {
   state.activeExpert = null;
   state.currentView = 'plaza';
   state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
   renderApp();
 }
 
@@ -162,6 +237,7 @@ function openListenView(e) {
   state.activeExpert = null;
   state.currentView = 'listen';
   state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
   renderApp();
 }
 
@@ -172,15 +248,20 @@ function openScheduleView(e) {
   state.activeExpert = null;
   state.currentView = 'schedule';
   state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
   renderApp();
 }
 
 // 推荐提问芯片点击
 function usePrompt(promptText) {
-  const input = document.getElementById('chat-input');
+  const input = document.getElementById('dialog-chat-input') || document.getElementById('chat-input');
   if (input) {
     input.value = promptText;
-    handleSendNewChat();
+    if (state.currentView === 'dialog') {
+      handleSendDialogChat();
+    } else {
+      handleSendNewChat();
+    }
   }
 }
 
@@ -194,15 +275,47 @@ window.addHistoryChatFromIframe = function(title) {
   }
 };
 
-// 发送新对话
+// 发送新对话（来自专家新建页或普通新建页）
 function handleSendNewChat() {
   const input = document.getElementById('chat-input');
-  const val = input ? input.value.trim() : '';
+  const val = input ? input.value.trim() : (state.chatInputDraft || '').trim();
   if (!val) return;
 
+  state.chatInputDraft = '';
+  let currentExp = state.activeExpert;
+  if (!currentExp && val.includes('@')) {
+    currentExp = expertList.find(e => val.includes(`@${e.name}`));
+  }
+
+  // 1. 如果当前处于专家新建对话视图，为该首条消息初始化专家对话 mock 数据
+  if (currentExp) {
+    mockConversations[val] = {
+      type: "twin",
+      expertId: currentExp.id,
+      messages: [
+        {
+          role: "user",
+          content: val
+        },
+        {
+          role: "assistant",
+          htmlContent: `
+            <p>你好！收到你的问题：<strong>"${escapeHtml(val)}"</strong>。</p>
+            <p>作为<strong>${escapeHtml(currentExp.name)}的AI分身</strong>，在<strong>${escapeHtml(currentExp.tag || '前沿技术')}</strong>方向上，我的核心建议是聚焦场景价值与关键路径设计，分阶段推动技术突破与工程落地。</p>
+            <p>后续我们可以针对具体细节做进一步深入探讨！</p>
+          `
+        }
+      ]
+    };
+  }
+
+  // 2. 将用户发送的消息作为新会话标题加入历史记录
   const chats = getAgentChats(state.currentAgent);
-  chats.unshift(val);
+  if (!chats.includes(val)) {
+    chats.unshift(val);
+  }
   
+  // 3. 打开该对话
   openDialogChat(val);
 }
 
@@ -222,23 +335,46 @@ function handleSendDialogChat() {
   userRow.innerHTML = `<div class="msg-bubble-user">${escapeHtml(val)}</div>`;
   msgContainer.appendChild(userRow);
 
-  const isTwin = state.currentAgent.includes('分身') || (state.activeChatTitle && (state.activeChatTitle.includes('具身') || state.activeChatTitle.includes('VLA')));
+  const selectedExp = state.activeExpert;
+  const chatTitle = state.activeChatTitle;
+  const conv = mockConversations[chatTitle];
+  let dialogExp = null;
+  if (conv && conv.expertId) {
+    dialogExp = expertList.find(e => e.id === conv.expertId) || null;
+  } else if (chatTitle && chatTitle.startsWith('与') && chatTitle.endsWith('对话')) {
+    const expName = chatTitle.substring(1, chatTitle.length - 2);
+    dialogExp = expertList.find(e => e.name === expName) || null;
+  }
+
+  const isTwin = dialogExp || (conv && conv.type === 'twin') || state.currentAgent.includes('分身') || (chatTitle && (chatTitle.includes('具身') || chatTitle.includes('VLA')));
 
   // 2. 模拟 AI 回复
   setTimeout(() => {
     const botRow = document.createElement('div');
     if (isTwin) {
+      const exp = dialogExp || selectedExp;
+      const avatarGradient = exp ? exp.gradient : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+      const expName = exp ? exp.name : 'AI分身';
       botRow.className = 'msg-row assistant twin-assistant';
       botRow.innerHTML = `
-        <div class="twin-avatar-box" title="AI分身">
+        <div class="twin-avatar-box" style="background: ${avatarGradient};" title="${escapeHtml(expName)}的AI分身">
           <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ffffff;fill:none;">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </div>
         <div class="msg-content-twin msg-text">
-          <p>收到你的想法：<strong>“${escapeHtml(val)}”</strong>。</p>
-          <p>从分身视角来看，这方向非常值得持续深挖。后续我们可以配合团队进一步做策略验证。</p>
+          <p>收到你的想法：<strong>"${escapeHtml(val)}"</strong>。</p>
+          <p>从<strong>${escapeHtml(expName)}</strong>分身视角来看，这方向非常值得持续深挖。后续我们可以配合团队进一步做策略验证。</p>
+        </div>
+      `;
+    } else if (selectedExp) {
+      botRow.className = 'msg-row assistant with-expert-header';
+      botRow.innerHTML = `
+        ${_buildExpertHeaderHtml(selectedExp)}
+        <div class="msg-content-agent msg-text">
+          <p>你好！我是<strong>${escapeHtml(selectedExp.name)}的AI分身</strong>。</p>
+          <p>针对你在 Agent 对话中提出的：<strong>“${escapeHtml(val)}”</strong>，我的建议是关注关键路径与场景落地。</p>
         </div>
       `;
     } else {
@@ -269,9 +405,9 @@ function handlePlazaSearch(val) {
   }
 }
 
-// 点击专家卡片 -> 立即对话（关键点：保持当前智能体，加到历史对话顶部，历史对话展示人名标签，右侧展现只有专家介绍的新对话视图）
+// 点击专家卡片 -> 进入专家新建对话页（发送首条消息后再生成历史记录）
 function onExpertCardClick(expertId, event) {
-  if (!event.target.closest('.expert-card-hover-action') && !event.target.closest('.btn-add-agent')) {
+  if (!event.target.closest('.expert-card-hover-action')) {
     startChatWithExpertById(expertId);
   }
 }
@@ -285,124 +421,15 @@ function startChatWithExpertById(expertId) {
   const exp = expertList.find(item => item.id === expertId);
   if (!exp) return;
 
-  const chatTitle = `与${exp.name}对话`;
-  
-  // 1. 保持在当前智能体（如 MyAgent）的历史对话中追加
-  const chats = getAgentChats(state.currentAgent);
-  if (!chats.includes(chatTitle)) {
-    chats.unshift(chatTitle);
-  }
-
-  // 2. 状态更新：激活当前对话项并进入专家新对话视图（无历史聊天记录，只有专家介绍）
-  state.activeChatTitle = chatTitle;
+  // 状态更新：从专家广场进入该专家的新建对话视图
+  state.activeChatTitle = null;
   state.activeExpert = exp;
+  state.expertSelectMode = 'direct';
   state.currentView = 'expert-chat-new';
   state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
 
   renderApp();
-}
-
-// 飞向召唤智能体按钮的抛物线动画 (类似购物车飞入效果)
-function flyToSummonButton(startX, startY, exp, onComplete) {
-  const targetEl = document.getElementById('agent-summon-wrapper') || document.querySelector('.agent-summon-bar');
-  let targetX = 140;
-  let targetY = 65;
-  if (targetEl) {
-    const rect = targetEl.getBoundingClientRect();
-    targetX = rect.right - 24;
-    targetY = rect.top + rect.height / 2;
-  }
-
-  const firstChar = exp.name ? exp.name.charAt(0) : 'A';
-  const flyingDot = document.createElement('div');
-  flyingDot.className = 'flying-agent-dot';
-  flyingDot.style.background = exp.gradient || 'linear-gradient(135deg, #4f46e5, #7c3aed)';
-  flyingDot.innerText = firstChar;
-
-  flyingDot.style.left = `${startX - 16}px`;
-  flyingDot.style.top = `${startY - 16}px`;
-  document.body.appendChild(flyingDot);
-
-  const startTime = performance.now();
-  const duration = 650;
-
-  function step(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    const easeProgress = progress < 0.5
-      ? 2 * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-    const currentX = startX + (targetX - startX) * easeProgress;
-    const arc = -90 * Math.sin(progress * Math.PI);
-    const currentY = startY + (targetY - startY) * easeProgress + arc;
-
-    const scale = 1 + 0.3 * Math.sin(progress * Math.PI) - 0.45 * progress;
-    const opacity = progress > 0.88 ? (1 - progress) / 0.12 : 1;
-
-    flyingDot.style.transform = `translate3d(${currentX - startX}px, ${currentY - startY}px, 0) scale(${Math.max(scale, 0.35)})`;
-    flyingDot.style.opacity = opacity;
-
-    if (progress < 1) {
-      requestAnimationFrame(step);
-    } else {
-      flyingDot.remove();
-      if (targetEl) {
-        targetEl.classList.remove('pulse-bounce');
-        void targetEl.offsetWidth;
-        targetEl.classList.add('pulse-bounce');
-      }
-      if (onComplete) onComplete();
-    }
-  }
-
-  requestAnimationFrame(step);
-}
-
-// 添加专家到我的智能体（添加到智能体下拉菜单中，标注 unread 未读蓝点，触发抛物线飞入动画）
-function toggleAddAgent(expertId, event) {
-  let startX = null, startY = null;
-  if (event) {
-    event.stopPropagation();
-    if (event.currentTarget) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      startX = rect.left + rect.width / 2;
-      startY = rect.top + rect.height / 2;
-    }
-  }
-
-  const exp = expertList.find(item => item.id === expertId);
-  if (!exp) return;
-
-  exp.added = true;
-
-  if (!agentData[exp.agentName]) {
-    agentData[exp.agentName] = [];
-  }
-
-  // 查找是否已存在于下拉菜单中，若不存在则添加并带 unread: true 标记
-  let existingItem = agentMenuItems.find(item => item.name === exp.agentName);
-  if (!existingItem) {
-    const firstChar = exp.name.charAt(0);
-    existingItem = {
-      name: exp.agentName,
-      avatar: firstChar,
-      gradient: exp.gradient,
-      unread: true
-    };
-    agentMenuItems.push(existingItem);
-  } else {
-    existingItem.unread = true;
-  }
-
-  showToast(`已添加“${exp.name}”到我的智能体`);
-  renderApp();
-
-  // 触发抛物线飞入视觉动效
-  if (startX !== null && startY !== null) {
-    flyToSummonButton(startX, startY, exp);
-  }
 }
 
 // Modal 弹窗
@@ -466,4 +493,8 @@ function showToast(msg) {
 // 点击空白关闭下拉
 window.addEventListener('click', () => {
   closeAgentMenu();
+  if (state.isExpertDropdownOpen) {
+    state.isExpertDropdownOpen = false;
+    renderApp();
+  }
 });

@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大会后台 - AI速记管理</title>
+  <script src="sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #1f2937; background: #f8fafc; }
+    
+    .container { width: 100%; max-width: 1040px; margin: 0 auto; position: relative; padding-bottom: 40px; }
+
+    /* 顶部返回导航与当前论坛路径胶囊 */
+    .back-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #4b5563;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      color: #2563eb;
+      border-color: #bfdbfe;
+      background: #eff6ff;
+      transform: translateX(-2px);
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 16px;
+      background: #e5e7eb;
+    }
+
+    .event-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .event-tag .tag-name {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* 主区域：无卡片包装的纯净分栏布局 */
+    .transcript-split-container {
+      display: flex;
+      background: #ffffff;
+      border: 1px solid #eaecf0;
+      border-radius: 14px;
+      min-height: calc(100vh - 140px);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    /* 左侧目录区域 */
+    .left-pane {
+      width: 350px;
+      min-width: 350px;
+      border-right: 1px solid #eaecf0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+    }
+
+    /* 顶部 Tab 切换（文字+下划线） */
+    .catalog-tabs {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      height: 44px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 18px;
+    }
+
+    .catalog-tab-item {
+      font-size: 15px;
+      font-weight: 500;
+      color: #64748b;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .catalog-tab-item:hover {
+      color: #1e293b;
+    }
+
+    .catalog-tab-item.active {
+      color: #2563eb;
+      font-weight: 600;
+      border-bottom-color: #2563eb;
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* 章节 Tab - 视频占位窗口 */
+    .video-window-box {
+      width: 100%;
+      height: 180px;
+      background: #0f172a;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+      color: #ffffff;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+      margin-bottom: 18px;
+    }
+
+    .video-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -60%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.75);
+      pointer-events: none;
+    }
+
+    .video-play-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      pointer-events: auto;
+    }
+
+    .video-play-btn:hover {
+      transform: scale(1.08);
+      background: #2563eb;
+    }
+
+    .video-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .video-live-tag {
+      background: rgba(239, 68, 68, 0.9);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .video-controls {
+      z-index: 2;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      padding: 8px 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .video-progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .video-progress-fill {
+      height: 100%;
+      width: 32%;
+      background: #3b82f6;
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .video-progress-handle {
+      position: absolute;
+      right: -5px;
+      top: -3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+
+    .video-time-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #cbd5e1;
+      font-family: monospace;
+    }
+
+    /* 章节列表 */
+    .chapter-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chapter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: calc(100vh - 430px);
+      padding-right: 2px;
+    }
+
+    .chapter-item {
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chapter-item:hover {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+    }
+
+    .chapter-item.active {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .chapter-item-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+
+    .chapter-item.active .chapter-item-title {
+      color: #1d4ed8;
+    }
+
+    .chapter-item-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* 参会人 Tab */
+    .participant-top-btn-wrapper {
+      margin-bottom: 14px;
+    }
+
+    .btn-global-hotwords {
+      width: 100%;
+      height: 38px;
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-global-hotwords:hover {
+      background: #dcfce7;
+      border-color: #86efac;
+      transform: translateY(-1px);
+    }
+
+    .participant-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: calc(100vh - 280px);
+      padding-right: 2px;
+    }
+
+    .participant-card {
+      height: 54px;
+      min-height: 54px;
+      padding: 0 12px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .participant-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .participant-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .participant-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+
+    .participant-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .btn-view-hotwords {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-view-hotwords:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    /* 添加参会人虚拟框按钮 (与正常卡片同高) */
+    .participant-card-add {
+      height: 54px;
+      min-height: 54px;
+      border: 1.5px dashed #cbd5e1;
+      background: #f8fafc;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #64748b;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .participant-card-add:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #2563eb;
+    }
+
+    /* 右侧速记主区域 */
+    .right-pane {
+      flex: 1;
+      padding: 20px 30px;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      position: relative;
+    }
+
+    .right-pane-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 44px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .right-pane-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 100%;
+    }
+
+    .right-pane-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .right-pane-count {
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .search-filter-input {
+      width: 220px;
+      padding: 6px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-filter-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* 说话速记内容列表 - 倒序序流 */
+    .transcript-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      overflow-y: auto;
+      max-height: calc(100vh - 230px);
+      padding-right: 8px;
+    }
+
+    .transcript-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* 头像 说话人 时间 所在行 */
+    .speaker-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .speaker-avatar-img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    /* 说话人名字包装框：支持 Hover 半透明遮罩覆盖 */
+    .speaker-name-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .speaker-name-wrapper:hover {
+      background: #f1f5f9;
+    }
+
+    .speaker-name-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    /* Hover 状态下的带透明度遮罩与编辑 Icon (覆盖在说话人之上) */
+    .speaker-hover-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(37, 99, 235, 0.88);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      backdrop-filter: blur(1px);
+      box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+    }
+
+    .speaker-name-wrapper:hover .speaker-hover-mask {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .speaker-time-stamp {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    /* 文本内容平铺展示 (无卡片，与头像左对齐，无缩进) */
+    .transcript-text-content {
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: #334155;
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      user-select: text;
+    }
+
+    .transcript-text-content:hover {
+      background: #f8fafc;
+    }
+
+    /* 双击编辑文本的多行输入框样式 */
+    .transcript-edit-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .transcript-textarea {
+      width: 100%;
+      padding: 4px 6px;
+      border: 1.5px solid #3b82f6;
+      border-radius: 6px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: #1e293b;
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      overflow: hidden;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: #ffffff;
+      box-sizing: border-box;
+    }
+
+    .edit-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-edit-cancel {
+      padding: 5px 12px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-edit-cancel:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .btn-edit-save {
+      padding: 5px 14px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-edit-save:hover {
+      background: #1d4ed8;
+    }
+
+    /* 说话人下拉选项框 Popover */
+    .speaker-dropdown-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 6px;
+      width: 240px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      z-index: 50;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dropdown-input-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dropdown-speaker-input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12.5px;
+      outline: none;
+    }
+
+    .dropdown-speaker-input:focus {
+      border-color: #2563eb;
+    }
+
+    .btn-save-new-speaker {
+      padding: 6px 10px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-save-new-speaker:hover {
+      background: #1d4ed8;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: #f1f5f9;
+      border: none;
+      margin: 2px 0;
+    }
+
+    .dropdown-options-list {
+      max-height: 160px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .dropdown-option-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .dropdown-option-item:hover {
+      background: #f1f5f9;
+    }
+
+    .dropdown-option-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .dropdown-option-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    /* 热词通用 Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(3px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      width: 480px;
+      max-width: 90vw;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: translateY(10px);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-backdrop.show .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close-btn:hover {
+      color: #334155;
+      background: #f1f5f9;
+    }
+
+    .hotwords-textarea {
+      width: 100%;
+      height: 110px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: #1e293b;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .hotwords-textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .hotwords-tags-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .hotword-tag-pill {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #dbeafe;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .btn-crawl-hotwords {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .btn-crawl-hotwords:hover {
+      background: #dcfce7;
+      border-color: #86efac;
+    }
+
+    .modal-right-btns {
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 1. 顶部返回导航与路径胶囊 (不含页面标题) -->
+  <div class="back-nav">
+    <a href="forum-mgmt.html" id="backLink" class="back-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      返回论坛列表
+    </a>
+    <div class="nav-divider"></div>
+    <span class="event-tag">
+      当前论坛: <strong class="tag-name" id="pathForumTag">2026全球数字经济大会 - 具身智能与大模型前沿论坛</strong>
+    </span>
+  </div>
+
+  <!-- 2. 主区域：左右分栏容器 -->
+  <div class="transcript-split-container">
+    
+    <!-- 2.1 左侧目录区域 -->
+    <div class="left-pane">
+      <!-- 顶部 Tab 切换（文字+下划线） -->
+      <div class="catalog-tabs">
+        <div class="catalog-tab-item active" onclick="switchCatalogTab('chapter')">章节</div>
+        <div class="catalog-tab-item" onclick="switchCatalogTab('participant')">参会人</div>
+      </div>
+
+      <!-- Tab 1: 章节内容 -->
+      <div id="tabChapter" class="tab-content active">
+        <!-- 视频窗口 (占位 + 进度条) -->
+        <div class="video-window-box">
+          <div class="video-top-bar">
+            <span class="video-live-tag">
+              <span style="width: 5px; height: 5px; border-radius: 50%; background: #ffffff;"></span>
+              LIVE RECORD
+            </span>
+            <span style="font-size: 11px; opacity: 0.8;">1080P HD</span>
+          </div>
+
+          <div class="video-watermark">
+            <div class="video-play-btn" onclick="togglePlayVideo()">
+              <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            <span style="font-size: 12px; margin-top: 4px; font-weight: 500;">论坛现场实时音轨录制</span>
+          </div>
+
+          <div class="video-controls">
+            <div class="video-progress-bar" onclick="seekVideo(event)">
+              <div class="video-progress-fill" id="videoProgressFill">
+                <div class="video-progress-handle"></div>
+              </div>
+            </div>
+            <div class="video-time-row">
+              <span id="videoCurrentTime">00:18:24</span>
+              <span>01:45:00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 章节列表 -->
+        <div class="chapter-section-title">
+          <span>论坛议题章节</span>
+          <span style="font-weight: 400; font-size: 12px; color: #94a3b8;">共 5 个章节</span>
+        </div>
+        <div class="chapter-list" id="chapterList">
+          <!-- 动态渲染章节数据 -->
+        </div>
+      </div>
+
+      <!-- Tab 2: 参会人内容 -->
+      <div id="tabParticipant" class="tab-content">
+        <!-- 置顶扁扁的“查看全局热词”按钮 -->
+        <div class="participant-top-btn-wrapper">
+          <button class="btn-global-hotwords" onclick="openHotwordsModal('global')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            查看全局热词
+          </button>
+        </div>
+
+        <!-- 参会人列表 (含同高虚拟框“添加参会人”按钮) -->
+        <div class="participant-list" id="participantList">
+          <!-- 动态渲染参会人 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.2 右侧速记主区域 -->
+    <div class="right-pane">
+      <div class="right-pane-header">
+        <div class="right-pane-title-group">
+          <span class="right-pane-title">转写文本</span>
+        </div>
+        <input type="text" class="search-filter-input" placeholder="搜索说话人或文本..." oninput="handleSearchTranscript(this.value)">
+      </div>
+
+      <!-- 一句一句往下，时间倒序 (最新在前) -->
+      <div class="transcript-stream" id="transcriptStream">
+        <!-- 动态渲染速记条目 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 查看热词 Modal (全局 / 参会人) -->
+<div class="modal-backdrop" id="hotwordsModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title" id="hotwordsModalTitle">查看热词</h3>
+      <button class="modal-close-btn" onclick="closeHotwordsModal()">✕</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label style="font-size: 13px; font-weight: 500; color: #475569;">热词列表 (专有名词/人名/地名等)：</label>
+      <textarea class="hotwords-textarea" id="hotwordsInput" placeholder="请输入热词，多个热词用逗号或分号分隔..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-crawl-hotwords" onclick="handleCrawlHotwords()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path>
+        </svg>
+        爬取热词
+      </button>
+      <div class="modal-right-btns">
+        <button class="btn-edit-cancel" onclick="closeHotwordsModal()">取消</button>
+        <button class="btn-edit-save" onclick="saveHotwords()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 模拟活动与论坛映射
+  const EVENT_MAP = {
+    'evt_101': {
+      name: '2026全球数字经济大会',
+      forums: {
+        'forum_1': '具身智能与大模型前沿论坛',
+        'forum_2': 'AI大模型安全与治理论坛',
+        'forum_3': '自动驾驶与智能网联论坛'
+      }
+    },
+    'evt_102': {
+      name: '北京大学2026学术论坛',
+      forums: {
+        'forum_101': '人工智能前沿计算研讨会'
+      }
+    }
+  };
+
+  // 全局热词与参会人模拟数据
+  let globalHotwords = "具身智能, 大语言模型, 智源研究院, 张宏江, Transformer, 强化学习, VLA模型, 北京大学";
+
+  let participants = [
+    { id: 'p1', name: '张宏江', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zhang', hotwords: '智源研究院, 具身智能, 大模型, 开源生态, AI基础设施' },
+    { id: 'p2', name: '黄铁军', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Huang', hotwords: '脉冲神经网络, 智源大模型, 具身多模态, 机器视觉' },
+    { id: 'p3', name: '林达华', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lin', hotwords: '书生大模型, 自动驾驶, 跨模态生成, 视觉感知' },
+    { id: 'p4', name: '王小川', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wang', hotwords: '百川智能, 医疗大模型, 长文本推理, 智商测评' },
+    { id: 'p5', name: '李笛', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Li', hotwords: '小冰框架, 情感计算, AI Being, 社交Agent' }
+  ];
+
+  // 章节模拟数据
+  let chapters = [
+    { id: 'c1', title: '开幕致辞 & 领导致辞', speaker: '张宏江', time: '09:00:00', duration: '20 min', active: true },
+    { id: 'c2', title: '智源人工智能前沿进展报告', speaker: '黄铁军', time: '09:20:00', duration: '45 min', active: false },
+    { id: 'c3', title: '具身智能具身大模型理论与实践', speaker: '林达华', time: '10:05:00', duration: '45 min', active: false },
+    { id: 'c4', title: '圆桌讨论：具身智能的未来十年', speaker: '嘉宾圆桌', time: '10:50:00', duration: '40 min', active: false },
+    { id: 'c5', title: '闭幕总结与成果发布', speaker: '组委会代表', time: '11:30:00', duration: '15 min', active: false }
+  ];
+
+  // 速记发言流模拟数据 (倒序：时间最新在前)
+  let transcriptItems = [
+    {
+      id: 't6',
+      speakerId: 'p1',
+      speakerName: '张宏江',
+      time: '11:35:10',
+      text: '感谢各位嘉宾的精彩发言与深刻见解！总结而言，具身智能与大模型软硬件的深度融合是走向 AGI 的关键一步。智源研究院将继续坚定推动开源与算法创新，与全球学术界和产业界共建开放包容的 AI 生态。今天的大会直播论坛到此结束，谢谢大家！'
+    },
+    {
+      id: 't5',
+      speakerId: 'p4',
+      speakerName: '王小川',
+      time: '11:15:42',
+      text: '关于大模型长文本推理与实际业务场景落地，我认为不仅要在算法架构上进行微调，更要关注推理成本与响应时延的平衡。在医疗和法律等专业领域，结合知识图谱的高精度 Agent 方案正在展现出显著优势。'
+    },
+    {
+      id: 't4',
+      speakerId: 'p3',
+      speakerName: '林达华',
+      time: '10:45:00',
+      text: '我们在具身多模态感知与控制的最新研究中发现，将视觉-语言-动作 (VLA) 模型与端到端强化学习结合，能极大提升机械臂在复杂不确定环境下的自适应抓取成功率。未来的泛化能力将是跨场景部署的核心。'
+    },
+    {
+      id: 't3',
+      speakerId: 'p5',
+      speakerName: '李笛',
+      time: '10:20:15',
+      text: '多模态交互不仅是语音和视觉的简单叠加，更是情感计算与上下文长期记忆的自然融合。AI Being 正在从单向助手演化为具备共情能力的协同伙伴，这为未来的智慧家庭和养老服务打开了全新的空间。'
+    },
+    {
+      id: 't2',
+      speakerId: 'p2',
+      speakerName: '黄铁军',
+      time: '09:35:50',
+      text: '大家早上好！今天非常高兴代表智源报告我们在前沿大模型与具身视觉芯片上的最新突破。过去一年里，智源团队实现了超大规模脉冲神经网络与多模态大模型的融合架构，大幅降低了推理能耗。'
+    },
+    {
+      id: 't1',
+      speakerId: 'p1',
+      speakerName: '张宏江',
+      time: '09:05:00',
+      text: '尊敬的各位领导、专家和现场及在线的嘉宾们，欢迎大家参加 2026 全球数字经济大会具身智能与大模型前沿论坛！人工智能正在经历从数字空间走向物理世界的深刻变革。'
+    }
+  ];
+
+  // 页面状态
+  let currentEventId = 'evt_101';
+  let currentForumId = 'forum_1';
+  let activeHotwordsTarget = 'global'; // 'global' 或 participant.id
+  let editingTranscriptId = null;
+  let activeSpeakerPopoverId = null;
+  let isPlayingVideo = false;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. 解析 URL 参数
+    const params = new URLSearchParams(window.location.search);
+    currentEventId = params.get('eventId') || 'evt_101';
+    currentForumId = params.get('forumId') || 'forum_1';
+
+    // 2. 更新顶部路径
+    const eventInfo = EVENT_MAP[currentEventId] || { name: '2026全球数字经济大会', forums: { 'forum_1': '具身智能与大模型前沿论坛' } };
+    const forumName = (eventInfo.forums && eventInfo.forums[currentForumId]) || '具身智能与大模型前沿论坛';
+    document.getElementById('pathForumTag').textContent = `${eventInfo.name} - ${forumName}`;
+    document.getElementById('backLink').href = `forum-mgmt.html?eventId=${currentEventId}`;
+
+    // 3. 初始渲染
+    renderChapters();
+    renderParticipants();
+    renderTranscripts();
+
+    // 4. 点击全局空白处关闭 Popover
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.speaker-name-wrapper') && !e.target.closest('.speaker-dropdown-popover')) {
+        closeSpeakerPopover();
+      }
+    });
+  });
+
+  // Tab 切换逻辑
+  function switchCatalogTab(tabName) {
+    const tabs = document.querySelectorAll('.catalog-tab-item');
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+    if (tabName === 'chapter') {
+      tabs[0].classList.add('active');
+      document.getElementById('tabChapter').classList.add('active');
+    } else {
+      tabs[1].classList.add('active');
+      document.getElementById('tabParticipant').classList.add('active');
+    }
+  }
+
+  // 视频播放模拟
+  function togglePlayVideo() {
+    isPlayingVideo = !isPlayingVideo;
+    const playIcon = document.getElementById('playIcon');
+    if (isPlayingVideo) {
+      playIcon.innerHTML = `<rect x="5" y="4" width="4" height="16"></rect><rect x="15" y="4" width="4" height="16"></rect>`;
+    } else {
+      playIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
+    }
+  }
+
+  function seekVideo(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+    document.getElementById('videoProgressFill').style.width = percent + '%';
+    
+    const totalSec = 105 * 60; // 1h45m
+    const currSec = Math.floor((percent / 100) * totalSec);
+    const m = Math.floor(currSec / 60);
+    const s = currSec % 60;
+    document.getElementById('videoCurrentTime').textContent = `00:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+  }
+
+  // 渲染章节
+  function renderChapters() {
+    const listEl = document.getElementById('chapterList');
+    listEl.innerHTML = chapters.map(c => `
+      <div class="chapter-item ${c.active ? 'active' : ''}" onclick="selectChapter('${c.id}')">
+        <div class="chapter-item-title">${escapeHtml(c.title)}</div>
+        <div class="chapter-item-meta">
+          <span>${escapeHtml(c.speaker)}</span>
+          <span style="font-family: monospace;">${c.time} (${c.duration})</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function selectChapter(id) {
+    chapters.forEach(c => c.active = (c.id === id));
+    renderChapters();
+  }
+
+  // 渲染参会人列表 (含同高度虚线框添加按钮)
+  function renderParticipants() {
+    const listEl = document.getElementById('participantList');
+    let html = participants.map(p => `
+      <div class="participant-card">
+        <div class="participant-info">
+          <img class="participant-avatar" src="${p.avatar}" alt="${p.name}">
+          <span class="participant-name">${escapeHtml(p.name)}</span>
+        </div>
+        <button class="btn-view-hotwords" onclick="openHotwordsModal('${p.id}')">查看热词</button>
+      </div>
+    `).join('');
+
+    // 置底渲染同等高度的虚拟框“添加参会人”按钮
+    html += `
+      <div class="participant-card-add" onclick="handleAddParticipantPrompt()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        添加参会人
+      </div>
+    `;
+
+    listEl.innerHTML = html;
+  }
+
+  // 添加参会人弹窗逻辑
+  function handleAddParticipantPrompt() {
+    const name = prompt('请输入新参会人的姓名：');
+    if (name && name.trim()) {
+      addNewParticipant(name.trim());
+    }
+  }
+
+  function addNewParticipant(name) {
+    const newId = 'p_' + Date.now();
+    const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
+    const newP = { id: newId, name: name, avatar: avatar, hotwords: `${name}, 具身智能, 大模型` };
+    participants.push(newP);
+    renderParticipants();
+    return newP;
+  }
+
+  // 渲染右侧速记流 (倒序展示)
+  function renderTranscripts(filterVal = '') {
+    const streamEl = document.getElementById('transcriptStream');
+    let items = transcriptItems;
+
+    if (filterVal && filterVal.trim()) {
+      const q = filterVal.trim().toLowerCase();
+      items = items.filter(t => t.speakerName.toLowerCase().includes(q) || t.text.toLowerCase().includes(q));
+    }
+
+    if (items.length === 0) {
+      streamEl.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 40px 0; font-size: 14px;">无匹配发言内容</div>`;
+      return;
+    }
+
+    streamEl.innerHTML = items.map(item => {
+      // 查找参会人头像
+      const pObj = participants.find(p => p.name === item.speakerName) || { avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.speakerName)}` };
+      
+      const isEditingText = (editingTranscriptId === item.id);
+      const isPopoverOpen = (activeSpeakerPopoverId === item.id);
+
+      return `
+        <div class="transcript-item" id="item_${item.id}">
+          <!-- 头像 说话人 时间 所在行 -->
+          <div class="speaker-meta-row">
+            <img class="speaker-avatar-img" src="${pObj.avatar}" alt="${item.speakerName}">
+            
+            <div class="speaker-name-wrapper" onclick="toggleSpeakerPopover(event, '${item.id}')">
+              <span class="speaker-name-text">${escapeHtml(item.speakerName)}</span>
+              <!-- Hover 状态下的带透明度遮罩与编辑 Icon -->
+              <div class="speaker-hover-mask">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                修改
+              </div>
+            </div>
+
+            <span class="speaker-time-stamp">${item.time}</span>
+
+            <!-- 下方弹出说话人选项框 Popover -->
+            ${isPopoverOpen ? renderSpeakerPopoverHtml(item.id) : ''}
+          </div>
+
+          <!-- 文本内容 (平铺，与头像左对齐，无缩进) -->
+          ${isEditingText ? `
+            <div class="transcript-edit-box">
+              <textarea class="transcript-textarea" id="textarea_${item.id}" oninput="autoResizeTextarea(this)">${escapeHtml(item.text)}</textarea>
+              <div class="edit-actions-row">
+                <button class="btn-edit-cancel" onclick="cancelEditText()">取消</button>
+                <button class="btn-edit-save" onclick="saveEditText('${item.id}')">保存</button>
+              </div>
+            </div>
+          ` : `
+            <div class="transcript-text-content" ondblclick="enableEditText('${item.id}')" title="双击可直接修改内容">
+              ${escapeHtml(item.text)}
+            </div>
+          `}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 动态计算并适配 Textarea 高度
+  function autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  // 搜索速记
+  function handleSearchTranscript(val) {
+    renderTranscripts(val);
+  }
+
+  // 双击编辑文本
+  function enableEditText(id) {
+    editingTranscriptId = id;
+    renderTranscripts();
+    setTimeout(() => {
+      const ta = document.getElementById(`textarea_${id}`);
+      if (ta) {
+        autoResizeTextarea(ta);
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+      }
+    }, 50);
+  }
+
+  function cancelEditText() {
+    editingTranscriptId = null;
+    renderTranscripts();
+  }
+
+  function saveEditText(id) {
+    const ta = document.getElementById(`textarea_${id}`);
+    if (ta) {
+      const item = transcriptItems.find(t => t.id === id);
+      if (item) {
+        item.text = ta.value.trim();
+      }
+    }
+    editingTranscriptId = null;
+    renderTranscripts();
+  }
+
+  // 说话人切换与新增 Popover
+  function toggleSpeakerPopover(e, id) {
+    e.stopPropagation();
+    if (activeSpeakerPopoverId === id) {
+      activeSpeakerPopoverId = null;
+    } else {
+      activeSpeakerPopoverId = id;
+    }
+    renderTranscripts();
+  }
+
+  function closeSpeakerPopover() {
+    if (activeSpeakerPopoverId !== null) {
+      activeSpeakerPopoverId = null;
+      renderTranscripts();
+    }
+  }
+
+  function renderSpeakerPopoverHtml(itemId) {
+    return `
+      <div class="speaker-dropdown-popover" onclick="event.stopPropagation()">
+        <div class="dropdown-input-row">
+          <input type="text" class="dropdown-speaker-input" id="newSpeakerInput_${itemId}" placeholder="输入新说话人姓名..." onkeydown="if(event.key==='Enter') saveNewSpeakerForLine('${itemId}')">
+          <button class="btn-save-new-speaker" onclick="saveNewSpeakerForLine('${itemId}')">保存</button>
+        </div>
+        <hr class="dropdown-divider">
+        <div class="dropdown-options-list">
+          ${participants.map(p => `
+            <div class="dropdown-option-item" onclick="selectSpeakerForLine('${itemId}', '${p.name}')">
+              <img class="dropdown-option-avatar" src="${p.avatar}" alt="${p.name}">
+              <span class="dropdown-option-name">${escapeHtml(p.name)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 输入框新增说话人，并应用到当前条目与参会人列表
+  function saveNewSpeakerForLine(itemId) {
+    const input = document.getElementById(`newSpeakerInput_${itemId}`);
+    if (!input || !input.value.trim()) return;
+
+    const name = input.value.trim();
+    // 检查参会人列表中是否存在
+    let p = participants.find(item => item.name === name);
+    if (!p) {
+      p = addNewParticipant(name);
+    }
+
+    const tItem = transcriptItems.find(t => t.id === itemId);
+    if (tItem) {
+      tItem.speakerId = p.id;
+      tItem.speakerName = p.name;
+    }
+
+    activeSpeakerPopoverId = null;
+    renderTranscripts();
+  }
+
+  // 选择已有的说话人
+  function selectSpeakerForLine(itemId, speakerName) {
+    const tItem = transcriptItems.find(t => t.id === itemId);
+    if (tItem) {
+      tItem.speakerName = speakerName;
+    }
+    activeSpeakerPopoverId = null;
+    renderTranscripts();
+  }
+
+  // 热词 Modal 逻辑
+  function openHotwordsModal(target) {
+    activeHotwordsTarget = target;
+    const modal = document.getElementById('hotwordsModal');
+    const titleEl = document.getElementById('hotwordsModalTitle');
+    const inputEl = document.getElementById('hotwordsInput');
+
+    if (target === 'global') {
+      titleEl.textContent = '论坛全局热词';
+      inputEl.value = globalHotwords;
+    } else {
+      const p = participants.find(item => item.id === target);
+      titleEl.textContent = `参会人热词 - ${p ? p.name : ''}`;
+      inputEl.value = p ? p.hotwords : '';
+    }
+
+    modal.classList.add('show');
+  }
+
+  function closeHotwordsModal() {
+    document.getElementById('hotwordsModal').classList.remove('show');
+  }
+
+  function saveHotwords() {
+    const val = document.getElementById('hotwordsInput').value.trim();
+    if (activeHotwordsTarget === 'global') {
+      globalHotwords = val;
+    } else {
+      const p = participants.find(item => item.id === activeHotwordsTarget);
+      if (p) p.hotwords = val;
+    }
+    closeHotwordsModal();
+  }
+
+  // 模拟爬取热词
+  function handleCrawlHotwords() {
+    const btn = event.currentTarget;
+    const origText = btn.innerHTML;
+    btn.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+        <line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line>
+        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+      </svg>
+      正在爬取音轨与文本...
+    `;
+    btn.style.pointerEvents = 'none';
+
+    setTimeout(() => {
+      const crawlCandidates = [
+        '具身大模型', '端到端控制', '强化学习', 'VLA模型', '开源生态', '机器视觉', '自适应抓取', '智源AI前沿'
+      ];
+      const inputEl = document.getElementById('hotwordsInput');
+      let currentVal = inputEl.value.trim();
+
+      const newWords = crawlCandidates.filter(w => !currentVal.includes(w)).slice(0, 4);
+      if (newWords.length > 0) {
+        if (currentVal.length > 0 && !currentVal.endsWith(',') && !currentVal.endsWith('，')) {
+          currentVal += ', ';
+        }
+        currentVal += newWords.join(', ');
+      }
+      inputEl.value = currentVal;
+
+      btn.innerHTML = origText;
+      btn.style.pointerEvents = 'auto';
+    }, 800);
+  }
+
+  // 转义工具
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+</script>
+
+</body>
+</html>

@@ -18,19 +18,8 @@ function renderPlazaView() {
     `;
   } else {
     cardsHtml = filtered.map(exp => {
-      const addBtnClass = exp.added ? 'btn-add-agent added' : 'btn-add-agent';
-      const addBtnIcon = exp.added ?
-        `<svg class="icon" style="width:12px;height:12px;stroke:currentColor;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` :
-        '';
-      const addBtnText = exp.added ? '已添加' : '+添加';
-
       return `
         <div class="expert-card" onclick="onExpertCardClick('${exp.id}', event)">
-          <button class="${addBtnClass}" onclick="toggleAddAgent('${exp.id}', event)">
-            ${addBtnIcon}
-            <span>${addBtnText}</span>
-          </button>
-
           <div class="expert-avatar-container">
             <div class="expert-avatar-box" style="background: ${exp.gradient};">
               <svg class="expert-person-svg" viewBox="0 0 24 24">
@@ -53,7 +42,7 @@ function renderPlazaView() {
           <div class="expert-card-hover-action">
             <button class="btn-chat-now" onclick="startChatWithExpertBtn('${exp.id}', event)">
               <svg class="icon" style="width:14px;height:14px;stroke:currentColor;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              <span>立即对话</span>
+              <span>新建对话</span>
             </button>
           </div>
         </div>

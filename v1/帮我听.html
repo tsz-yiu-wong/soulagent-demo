@@ -6261,6 +6261,25 @@
 
           <!-- 右侧抽屉底部固定问答输入框区域 -->
           <div class="preview-drawer-input-area" id="preview-drawer-input-area">
+            <!-- 抽屉底部 引用 Tag Bar -->
+            <div id="preview-ref-doc-chip-bar" class="ref-doc-chip-bar" style="display: none; margin-bottom: 8px;">
+              <div class="ref-doc-chip">
+                <span class="ref-doc-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                </span>
+                <span class="ref-doc-content-preview" id="preview-ref-doc-content-preview">“引用的正文文本...”</span>
+                <span class="ref-doc-tag-label" id="preview-ref-doc-tag-label">总结</span>
+                <button type="button" class="ref-doc-close-btn" id="preview-ref-doc-close-btn" title="移除引用">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
             <div class="preview-input-box-wrapper">
               <input type="text" id="preview-drawer-input" class="preview-drawer-input" placeholder="针对本场内容问问Agent" autocomplete="off">
               <button type="button" class="preview-drawer-send-btn" id="preview-drawer-send-btn" title="发送消息">
@@ -6300,13 +6319,6 @@
 
   <!-- JavaScript 简洁模块化逻辑 -->
   <script>
-    if (window.location.hash === '#embed' || window.self !== window.top) {
-      document.addEventListener('DOMContentLoaded', () => {
-        const sb = document.querySelector('.sidebar');
-        if (sb) sb.style.display = 'none';
-      });
-    }
-
     // 页面视图与侧边栏导航切换
     const navBtnNewChat = document.getElementById('nav-btn-new-chat');
     const navBtnListener = document.getElementById('nav-btn-listener');
@@ -6345,12 +6357,6 @@
 
     // 在侧边栏历史对话中插入一条新对话，并绑定点击切换逻辑
     function addHistoryConversation(title) {
-      const chatTitle = title.startsWith('帮我听') ? title : `帮我听：${title}`;
-      
-      if (window.parent && window.parent.addHistoryChatFromIframe) {
-        window.parent.addHistoryChatFromIframe(chatTitle);
-      }
-
       const historyList = document.querySelector('.history-list');
       if (!historyList) return;
 
@@ -7456,6 +7462,9 @@
         }
       }
 
+      if (previewRefDocChipBar) previewRefDocChipBar.style.display = 'none';
+      if (previewInput) previewInput.placeholder = '针对本场内容问问Agent';
+
       updateDrawerHeaderDropdown(title);
       renderDrawerStatusContent(status);
     }
@@ -7468,6 +7477,8 @@
       if (chatSplitContainer) chatSplitContainer.classList.remove('has-preview');
       const previewDrawer = document.getElementById('preview-drawer');
       if (previewDrawer) previewDrawer.classList.remove('show-bottom-input');
+      if (previewRefDocChipBar) previewRefDocChipBar.style.display = 'none';
+      if (previewInput) previewInput.placeholder = '针对本场内容问问Agent';
     }
 
     function sendFromPreviewDrawer() {
@@ -7478,6 +7489,14 @@
 
       const context = currentPreviewCardContext || { title: '活动听记', status: 'ended', kvClass: 'kv-baai', time: '2026年', source: '线上会议' };
       const { title, status, kvClass, time, source } = context;
+
+      // 检查是否有引用内容
+      let quoteHtml = '';
+      if (previewRefDocChipBar && previewRefDocChipBar.style.display !== 'none') {
+        quoteHtml = `<div style="font-size: 12.5px; background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px; margin-bottom: 4px; border-left: 2px solid #ffffff;">📌 ${previewRefDocContentPreview.textContent}</div>`;
+        previewRefDocChipBar.style.display = 'none';
+        inputEl.placeholder = '针对本场内容问问Agent';
+      }
 
       // 1. 切换左半屏为对话页面
       switchView('chat', true);
@@ -7528,7 +7547,7 @@
 
       const textMsgHtml = `
         <div class="chat-message-row user">
-          <div class="chat-bubble">${text}</div>
+          <div class="chat-bubble">${quoteHtml}${text}</div>
         </div>
       `;
 
@@ -7812,20 +7831,7 @@
           const text = clone.innerText.trim();
 
           if (text) {
-            toggleFullscreen(false);
-
-            if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
-              refDocContentPreview.textContent = `“${text}”`;
-              refDocTagLabel.textContent = getActiveDrawerTabName();
-              refDocChipBar.style.display = 'flex';
-            }
-
-            switchView('chat');
-            if (chatTextarea) {
-              chatTextarea.focus();
-              chatTextarea.placeholder = '针对引用的内容提问...';
-            }
-            showToast('已放入对话引用');
+            applyCitation(text, getActiveDrawerTabName());
           }
         }
         return;
@@ -7840,6 +7846,10 @@
     const refDocContentPreview = document.getElementById('ref-doc-content-preview');
     const refDocTagLabel = document.getElementById('ref-doc-tag-label');
     const refDocCloseBtn = document.getElementById('ref-doc-close-btn');
+    const previewRefDocChipBar = document.getElementById('preview-ref-doc-chip-bar');
+    const previewRefDocContentPreview = document.getElementById('preview-ref-doc-content-preview');
+    const previewRefDocTagLabel = document.getElementById('preview-ref-doc-tag-label');
+    const previewRefDocCloseBtn = document.getElementById('preview-ref-doc-close-btn');
     const chatTextarea = document.getElementById('chat-textarea');
 
     let currentSelectedSnippet = '';
@@ -7872,6 +7882,39 @@
       return activeBtn ? activeBtn.textContent.trim() : '总结';
     }
 
+    function applyCitation(text, tagLabel = '总结') {
+      const previewDrawer = document.getElementById('preview-drawer');
+      const hasDrawerBottomInput = previewDrawer && previewDrawer.classList.contains('show-bottom-input');
+
+      if (hasDrawerBottomInput) {
+        // 详情页底部有输入框时：在详情页底部的聊天框上方出引用，左侧保持列表页不切换
+        if (previewRefDocChipBar && previewRefDocContentPreview && previewRefDocTagLabel) {
+          previewRefDocContentPreview.textContent = `“${text}”`;
+          previewRefDocTagLabel.textContent = tagLabel;
+          previewRefDocChipBar.style.display = 'flex';
+        }
+        if (previewInput) {
+          previewInput.focus();
+          previewInput.placeholder = '针对引用的内容问问Agent...';
+        }
+        showToast('已放入底部提问引用');
+      } else {
+        // 只有左边是对话框时：强制切回半屏，展现左侧对话与输入框，在左边输入框上方出引用
+        toggleFullscreen(false);
+        if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
+          refDocContentPreview.textContent = `“${text}”`;
+          refDocTagLabel.textContent = tagLabel;
+          refDocChipBar.style.display = 'flex';
+        }
+        switchView('chat');
+        if (chatTextarea) {
+          chatTextarea.focus();
+          chatTextarea.placeholder = '针对引用的内容提问...';
+        }
+        showToast('已放入对话引用');
+      }
+    }
+
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
         if (currentSelectedSnippet) {
@@ -7889,20 +7932,8 @@
     if (citeBtn) {
       citeBtn.addEventListener('click', () => {
         popover.style.display = 'none';
-
-        // 点引用强制切回半屏，展现左侧对话与输入框
-        toggleFullscreen(false);
-
-        if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
-          refDocContentPreview.textContent = `“${currentSelectedSnippet}”`;
-          refDocTagLabel.textContent = getActiveDrawerTabName();
-          refDocChipBar.style.display = 'flex';
-        }
-
-        switchView('chat');
-        if (chatTextarea) {
-          chatTextarea.focus();
-          chatTextarea.placeholder = '针对引用的内容提问...';
+        if (currentSelectedSnippet) {
+          applyCitation(currentSelectedSnippet, getActiveDrawerTabName());
         }
         window.getSelection().removeAllRanges();
       });
@@ -7912,6 +7943,13 @@
       refDocCloseBtn.addEventListener('click', () => {
         refDocChipBar.style.display = 'none';
         if (chatTextarea) chatTextarea.placeholder = '输入消息或关于听记的问题，输入 @ 选择专家...';
+      });
+    }
+
+    if (previewRefDocCloseBtn && previewRefDocChipBar) {
+      previewRefDocCloseBtn.addEventListener('click', () => {
+        previewRefDocChipBar.style.display = 'none';
+        if (previewInput) previewInput.placeholder = '针对本场内容问问Agent';
       });
     }
 

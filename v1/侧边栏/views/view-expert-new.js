@@ -42,7 +42,7 @@ function renderExpertNewView(expertObj) {
       </div>
 
       <div class="input-card">
-        <textarea class="chat-textarea" id="chat-input" placeholder="给智能体发送消息..."></textarea>
+        <textarea class="chat-textarea" id="chat-input" placeholder="给${escapeHtml(exp.name)}的AI分身发送消息..."></textarea>
         
         <div class="input-card-bottom">
           <button class="action-btn" title="上传附件">
