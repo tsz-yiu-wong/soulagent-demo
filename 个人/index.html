@@ -1,0 +1,2540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>餐饮门店品类四宫格分析看板 (浅色版)</title>
+  <!-- ECharts 本地/CDN 库 -->
+  <script src="./echarts.min.js"></script>
+  <!-- 数据源 -->
+  <script src="./dashboard_data.js"></script>
+  <style>
+    /* CSS RESET & LIGHT MODE DESIGN TOKENS */
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-blue: #0284c7;
+      --accent-green: #16a34a;
+      --accent-yellow: #d97706;
+      --accent-red: #dc2626;
+      
+      --star-color: #16a34a;
+      --potential-color: #d97706;
+      --traffic-color: #2563eb;
+      --dog-color: #dc2626;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", STHeiti, "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      background-color: #e2e8f0;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: hidden;
+      padding-bottom: 30px;
+    }
+
+    /* Mobile Container Wrapper */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background-color: var(--bg-main);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    }
+
+    /* Header Bar */
+    .app-header {
+      padding: 16px 16px 12px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-title-group h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .app-title-group .subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .reset-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      color: var(--accent-blue);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .reset-btn:active {
+      transform: scale(0.95);
+      background: #e2e8f0;
+    }
+
+    /* Content Layout */
+    .content-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Filter Card */
+    .filter-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      width: 58px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding-bottom: 2px;
+      flex: 1;
+    }
+
+    .filter-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 5px 11px;
+      border-radius: 16px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pill-btn.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      font-weight: 700;
+      border-color: var(--accent-blue);
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    }
+
+    /* 统一集成式日期选择器组件 */
+    .unified-date-picker {
+      position: relative;
+      display: inline-block;
+    }
+
+    .date-picker-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-main);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .date-picker-trigger:hover,
+    .date-picker-trigger.open {
+      border-color: var(--accent-blue);
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+      background: #f8fafc;
+    }
+
+    .date-picker-trigger .picker-icon {
+      font-size: 13px;
+    }
+
+    .date-picker-trigger .date-text {
+      color: #1e293b;
+      font-weight: 600;
+    }
+
+    .date-picker-trigger .preset-badge {
+      background: #e0f2fe;
+      color: #0284c7;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .date-picker-trigger .dropdown-arrow {
+      color: var(--text-muted);
+      font-size: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .date-picker-trigger.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    /* 下拉面板 Popover */
+    .date-picker-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 100;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+      width: 300px;
+      overflow: hidden;
+      animation: fadeInDown 0.15s ease-out;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .popover-body {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 8px;
+    }
+
+    .preset-menu {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 4px;
+    }
+
+    .preset-option {
+      flex: 1;
+      background: #f1f5f9;
+      border: 1px solid transparent;
+      color: var(--text-main);
+      padding: 4px 0;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .preset-option:hover {
+      background: #e2e8f0;
+      color: var(--accent-blue);
+    }
+
+    .preset-option.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+    }
+
+    .custom-range-section {
+      border-top: 1px dashed var(--border-color);
+      padding-top: 8px;
+    }
+
+    .range-input-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .popover-date-input {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 3px 5px;
+      font-size: 10px;
+      color: var(--text-main);
+      outline: none;
+      width: 105px;
+    }
+
+    .popover-date-input:focus {
+      border-color: var(--accent-blue);
+      background: #ffffff;
+    }
+
+    .range-arrow {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .apply-btn {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .apply-btn:hover {
+      background: #0369a1;
+    }
+
+    /* KPI Summary Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px 6px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .kpi-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .kpi-card.highlight .kpi-value {
+      color: var(--accent-green);
+    }
+
+    /* Chart Card */
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chart-controls-left {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .metric-toggle-group {
+      display: flex;
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2px;
+    }
+
+    .toggle-option {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 16px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .toggle-option.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .split-line-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .split-input-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .split-input-item span {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .split-input {
+      width: 44px;
+      padding: 2px 4px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      text-align: center;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .split-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .view-large-btn {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+      transition: all 0.2s;
+    }
+
+    .view-large-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Chart View Area */
+    .chart-container-wrapper {
+      position: relative;
+      width: 100%;
+      height: 330px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: #fafafa;
+      border: 1px solid #f1f5f9;
+    }
+
+    #quadrantChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Product List Ranking */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .table-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sort-select {
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .search-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      outline: none;
+      width: 100px;
+    }
+
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .product-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .product-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .product-item {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .product-item:active {
+      background: #e0f2fe;
+      border-color: var(--accent-blue);
+    }
+
+    .product-main-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .product-growth-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1px solid #f1f5f9;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: #64748b;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+    }
+
+    .growth-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+
+    .growth-item span {
+      color: #94a3b8;
+    }
+
+    .trend-up {
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    .trend-down {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+    .trend-none {
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .rank-up {
+      color: #16a34a;
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .rank-down {
+      color: #dc2626;
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .rank-flat {
+      color: #94a3b8;
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    .product-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rank-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rank-badge.top1 { background: #f59e0b; color: #ffffff; }
+    .rank-badge.top2 { background: #94a3b8; color: #ffffff; }
+    .rank-badge.top3 { background: #d97706; color: #ffffff; }
+
+    .product-info .name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .product-info .sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .product-right {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .quadrant-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .quadrant-tag.star { background: #dcfce7; color: #15803d; }
+    .quadrant-tag.potential { background: #fef3c7; color: #b45309; }
+    .quadrant-tag.traffic { background: #dbeafe; color: #1d4ed8; }
+    .quadrant-tag.dog { background: #fee2e2; color: #b91c1c; }
+
+    .metrics-text {
+      font-size: 11px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* FULLSCREEN LANDSCAPE MODAL (查看大图) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #ffffff;
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      padding: 12px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-title-group h2 {
+      font-size: 15px;
+      color: var(--text-main);
+    }
+    .modal-title-group p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .close-modal-btn {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-body {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      margin-top: 8px;
+    }
+
+    #modalChart {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Landscape Hint Overlay */
+    .landscape-hint {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #fef3c7;
+      border: 1px solid #fde047;
+      color: #b45309;
+      font-size: 10px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Ultra-Premium Glassmorphism Modal Styles */
+    #customComboModal {
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .custom-combo-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 450px;
+      padding: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 85vh;
+      overflow: hidden;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .custom-combo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .custom-combo-header h3 {
+      font-size: 16px;
+      color: var(--text-main);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .custom-combo-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .combo-input {
+      padding: 9px 12px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.2s;
+      background: #ffffff;
+    }
+
+    .combo-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+
+    .combo-sku-container {
+      max-height: 240px;
+      overflow-y: auto;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .combo-sku-container::-webkit-scrollbar {
+      width: 4px;
+    }
+    .combo-sku-container::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    .combo-sku-category-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .combo-sku-category-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-blue);
+      background: #e0f2fe;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .combo-sku-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      padding: 2px;
+    }
+
+    .checkbox-label {
+      font-size: 11px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 8px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .checkbox-label:hover {
+      border-color: #93c5fd;
+      background: #f0f9ff;
+    }
+
+    .checkbox-label.checked {
+      background: #e0f2fe;
+      border-color: var(--accent-blue);
+      color: #0284c7;
+      font-weight: 700;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      accent-color: var(--accent-blue);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .custom-combo-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .modal-secondary-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-secondary-btn:active {
+      transform: scale(0.96);
+    }
+
+    .modal-primary-btn {
+      background: var(--accent-blue);
+      border: none;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+      transition: all 0.2s;
+    }
+
+    .modal-primary-btn:active {
+      transform: scale(0.96);
+    }
+
+    .pill-btn.custom-trigger {
+      background: #e0f2fe;
+      color: var(--accent-blue);
+      border-color: #7dd3fc;
+      font-weight: 600;
+    }
+
+    .pill-btn.custom-combo-pill {
+      border-style: dashed;
+    }
+
+    .existing-combos-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .existing-combo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 11px;
+    }
+
+    .delete-combo-btn {
+      color: var(--accent-red);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-title-group">
+        <h1>📊 门店四宫格分析看板</h1>
+        <div class="subtitle">销量-毛利/毛利率矩阵 (移动端 Demo)</div>
+      </div>
+      <button class="reset-btn" id="resetFiltersBtn">↺ 重置筛选</button>
+    </header>
+
+    <div class="content-body">
+      <!-- Multi-Dimension Filters -->
+      <section class="filter-card">
+        <!-- 门店筛选 -->
+        <div class="filter-row">
+          <span class="filter-label">🏬 门店:</span>
+          <div class="filter-pills" id="storePills">
+            <button class="pill-btn active" data-value="ALL">全部</button>
+            <button class="pill-btn" data-value="旗舰店">旗舰店</button>
+            <button class="pill-btn" data-value="商业街店">商业街店</button>
+            <button class="pill-btn" data-value="社区店">社区店</button>
+          </div>
+        </div>
+
+        <!-- 时间范围选择 -->
+        <div class="filter-row">
+          <span class="filter-label">📅 时间:</span>
+          
+          <div class="unified-date-picker" id="unifiedDatePicker">
+            <div class="date-picker-trigger" id="datePickerTrigger">
+              <span class="picker-icon">📅</span>
+              <span class="date-text" id="dateRangeText">2026-08-01 至 2026-08-15</span>
+              <span class="preset-badge" id="datePresetBadge">本月</span>
+              <span class="dropdown-arrow">▾</span>
+            </div>
+
+            <!-- 下拉组件面板 -->
+            <div class="date-picker-popover" id="datePickerPopover" style="display: none;">
+              <div class="popover-body">
+                <!-- 快捷选项 (单行横向排布) -->
+                <div class="preset-menu" id="datePresetPills">
+                  <button class="preset-option active" data-preset="THIS_MONTH">本月</button>
+                  <button class="preset-option" data-preset="THIS_WEEK">本周</button>
+                  <button class="preset-option" data-preset="LAST_WEEK">上周</button>
+                  <button class="preset-option" data-preset="YESTERDAY">昨日</button>
+                  <button class="preset-option" data-preset="TODAY">今日</button>
+                </div>
+
+                <!-- 自定义起止日期组 -->
+                <div class="custom-range-section">
+                  <div class="range-input-group">
+                    <input type="date" id="startDateInput" value="2026-08-01" min="2026-08-01" max="2026-08-31" class="popover-date-input">
+                    <span class="range-arrow">至</span>
+                    <input type="date" id="endDateInput" value="2026-08-15" min="2026-08-01" max="2026-08-31" class="popover-date-input">
+                    <button class="apply-btn" id="applyCustomDateBtn">确认</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 品类筛选 -->
+        <div class="filter-row">
+          <span class="filter-label">🍲 品类:</span>
+          <div class="filter-pills" id="categoryPills">
+            <button class="pill-btn active" data-value="ALL">全部</button>
+            <button class="pill-btn" data-value="招牌菜">招牌菜</button>
+            <button class="pill-btn" data-value="热菜">热菜</button>
+            <button class="pill-btn" data-value="主食小吃">主食小吃</button>
+            <!-- 动态生成的自定义组合按钮插在前面 -->
+            <button class="pill-btn custom-trigger" id="customCategoryBtn">⚙️ 自定义</button>
+          </div>
+        </div>
+
+        <!-- 渠道筛选 -->
+        <div class="filter-row">
+          <span class="filter-label">🛵 渠道:</span>
+          <div class="filter-pills" id="channelPills">
+            <button class="pill-btn active" data-value="ALL">全部</button>
+            <button class="pill-btn" data-value="堂食">堂食</button>
+            <button class="pill-btn" data-value="美团外卖">美团外卖</button>
+            <button class="pill-btn" data-value="饿了么外卖">饿了么外卖</button>
+            <button class="pill-btn" data-value="自提/团购">自提/团购</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI Summary Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">总销量</div>
+          <div class="kpi-value" id="kpiSales">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">总销售额</div>
+          <div class="kpi-value" id="kpiRevenue">¥0</div>
+        </div>
+        <div class="kpi-card highlight">
+          <div class="kpi-title">总毛利</div>
+          <div class="kpi-value" id="kpiProfit">¥0</div>
+        </div>
+        <div class="kpi-card highlight">
+          <div class="kpi-title">综合毛利率</div>
+          <div class="kpi-value" id="kpiMargin">0%</div>
+        </div>
+      </section>
+
+      <!-- Chart Section -->
+      <section class="chart-card">
+        <div class="chart-header">
+          <div class="chart-controls-left">
+            <!-- 毛利 / 毛利率 切换开关 -->
+            <div class="metric-toggle-group" id="metricToggle">
+              <div class="toggle-option active" data-metric="profit">毛利排名</div>
+              <div class="toggle-option" data-metric="margin">毛利率排名</div>
+            </div>
+
+            <!-- 分割线数值控制 -->
+            <div class="split-line-group">
+              <span class="split-label">分割线:</span>
+              <div class="split-input-item">
+                <span>销量排名</span>
+                <input type="number" id="splitXInput" class="split-input" value="50" min="1" title="横轴销量排名分割线">
+              </div>
+              <div class="split-input-item">
+                <span id="splitYTag">毛利排名</span>
+                <input type="number" id="splitYInput" class="split-input" value="50" min="0" step="any" title="竖轴毛利排名/实际毛利率分割线">
+              </div>
+            </div>
+          </div>
+
+          <!-- 查看大图按钮 -->
+          <button class="view-large-btn" id="openModalBtn">
+            🔍 查看大图 / 横屏看
+          </button>
+        </div>
+
+        <!-- 散点图绘制区 -->
+        <div class="chart-container-wrapper">
+          <div id="quadrantChart"></div>
+        </div>
+      </section>
+
+      <!-- Product List Ranking -->
+      <section class="table-card">
+        <div class="table-header">
+          <div class="table-title-group">
+            <div class="table-title">🏆 菜品排行榜 (<span id="totalProductsCount">0</span>)</div>
+            <select class="sort-select" id="sortSelect">
+              <option value="SALES">按销量排名</option>
+              <option value="PROFIT">按毛利排名</option>
+              <option value="MARGIN">按毛利率排名</option>
+            </select>
+          </div>
+          <input type="text" class="search-box" id="productSearch" placeholder="搜索菜品...">
+        </div>
+        <div class="product-list" id="productList">
+          <!-- Dynamic JS Injection -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Fullscreen Landscape Modal (查看大图) -->
+  <div class="modal-overlay" id="chartModal">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <h2>📈 菜品四宫格分析图 (放大横屏模式)</h2>
+        <p id="modalSubTitle">右上角为销量第1与毛利(率)第1 | X轴:销量排名 Y轴:毛利(率)排名</p>
+      </div>
+      <button class="close-modal-btn" id="closeModalBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="landscape-hint">📱 建议旋转手机横屏查看全貌</div>
+      <div id="modalChart"></div>
+    </div>
+  </div>
+
+  <!-- Custom Category Combination Modal (自定义品类组合弹窗 - 改为菜品组合) -->
+  <div class="modal-overlay" id="customComboModal">
+    <div class="custom-combo-card">
+      <div class="custom-combo-header">
+        <h3>⚙️ 自定义菜品组合</h3>
+        <button class="close-modal-btn" id="closeComboModalBtn">✕</button>
+      </div>
+      <div class="custom-combo-body">
+        <div class="input-group">
+          <label for="comboNameInput">组合名称</label>
+          <input type="text" id="comboNameInput" placeholder="例如：核心招牌套餐组合" class="combo-input">
+        </div>
+        <div class="input-group">
+          <label>选择包含菜品 (支持跨品类多选)</label>
+          <input type="text" id="comboSkuSearchInput" placeholder="🔍 快速搜索菜品..." class="combo-input" style="font-size: 11px; padding: 6px 10px; margin-bottom: 4px;">
+          <div class="combo-sku-container" id="comboSkuContainer">
+            <!-- Dynamic grouped checkboxes -->
+          </div>
+        </div>
+        <div class="input-group" id="existingCombosGroup" style="display:none;">
+          <label>已有自定义组合</label>
+          <div class="existing-combos-list" id="existingCombosList">
+            <!-- Dynamic existing combos -->
+          </div>
+        </div>
+      </div>
+      <div class="custom-combo-footer">
+        <button class="modal-secondary-btn" id="cancelComboBtn">取消</button>
+        <button class="modal-primary-btn" id="saveComboBtn">保存组合并使用</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DASHBOARD APPLICATION STATE & LOGIC
+    (function () {
+      const BASE_CATEGORIES = ['招牌菜', '热菜', '主食小吃'];
+
+      // Helper: Map preset key to date range ({start, end})
+      // Baseline Today is 2026-08-15 (Saturday)
+      function getPresetDateRange(preset) {
+        switch (preset) {
+          case 'TODAY':
+            return { start: '2026-08-15', end: '2026-08-15' };
+          case 'YESTERDAY':
+            return { start: '2026-08-14', end: '2026-08-14' };
+          case 'THIS_WEEK':
+            // Mon 2026-08-10 to Today (Sat 2026-08-15)
+            return { start: '2026-08-10', end: '2026-08-15' };
+          case 'LAST_WEEK':
+            // Mon 2026-08-03 to Sun 2026-08-09
+            return { start: '2026-08-03', end: '2026-08-09' };
+          case 'THIS_MONTH':
+          default:
+            return { start: '2026-08-01', end: '2026-08-15' };
+        }
+      }
+
+      // Current Filter State (Stores, Channels, Categories support Multi-select Arrays)
+      const state = {
+        stores: ['ALL'],
+        channels: ['ALL'],
+        categories: ['ALL'],
+        customCombos: [], // [{ id: 'combo_1', name: '组合名', skus: ['金牌酸菜鱼（中份）', '叫花鸡'] }]
+        startDate: '2026-08-01',
+        endDate: '2026-08-15',
+        metric: 'profit', // 'profit' or 'margin'
+        sortMode: 'SALES', // 'SALES', 'PROFIT', 'MARGIN'
+        searchQuery: '',
+        splitX: 50,
+        splitY_profit: 50,
+        splitY_margin: 50
+      };
+
+      // Raw dataset reference
+      const rawData = window.RAW_DATA || [];
+
+      // ECharts instances
+      let mainChart = null;
+      let modalChart = null;
+
+      // Dom Elements
+      const kpiSalesEl = document.getElementById('kpiSales');
+      const kpiRevenueEl = document.getElementById('kpiRevenue');
+      const kpiProfitEl = document.getElementById('kpiProfit');
+      const kpiMarginEl = document.getElementById('kpiMargin');
+
+      const totalProductsCountEl = document.getElementById('totalProductsCount');
+      const productListEl = document.getElementById('productList');
+      const productSearchEl = document.getElementById('productSearch');
+      const sortSelectEl = document.getElementById('sortSelect');
+
+      // Initialize
+      function init() {
+        initECharts();
+        bindEvents();
+        updateDashboard();
+      }
+
+      function initECharts() {
+        mainChart = echarts.init(document.getElementById('quadrantChart'));
+        modalChart = echarts.init(document.getElementById('modalChart'));
+        
+        window.addEventListener('resize', () => {
+          mainChart && mainChart.resize();
+          modalChart && modalChart.resize();
+        });
+      }
+
+      // Filter Data & Aggregate by SKU (产品名称)
+      function processFilteredData() {
+        const { stores, channels, categories, customCombos, startDate, endDate, metric } = state;
+
+        // Date Helpers for Growth Calculations
+      function parseYMD(str) {
+        if (!str) return new Date();
+        const parts = str.split('-').map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+
+      function formatYMD(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function getPeriodMetricMap(startStr, endStr) {
+        if (!startStr || !endStr || startStr > endStr) return null;
+        const { stores, channels, categories, customCombos } = state;
+        const skuMap = new Map();
+
+        for (let i = 0; i < rawData.length; i++) {
+          const d = rawData[i];
+          const date = d[0];
+          if (date < startStr || date > endStr) continue;
+
+          if (!stores.includes('ALL') && !stores.includes(d[1])) continue;
+          if (!channels.includes('ALL') && !channels.includes(d[2])) continue;
+
+          if (!categories.includes('ALL')) {
+            const matchCat = categories.includes(d[3]);
+            let matchCombo = false;
+            if (customCombos && customCombos.length > 0) {
+              for (let c of customCombos) {
+                if (categories.includes(c.id) && c.skus.includes(d[4])) {
+                  matchCombo = true;
+                  break;
+                }
+              }
+            }
+            if (!matchCat && !matchCombo) continue;
+          }
+
+          const name = d[4];
+          const sales = d[5] || 0;
+          const profit = d[6] || 0;
+          const revenue = d[7] || 0;
+
+          if (!skuMap.has(name)) {
+            skuMap.set(name, { name, sales: 0, profit: 0, revenue: 0 });
+          }
+          const item = skuMap.get(name);
+          item.sales += sales;
+          item.profit += profit;
+          item.revenue += revenue;
+        }
+
+        const items = Array.from(skuMap.values()).map(item => {
+          item.unitProfit = item.sales > 0 ? item.profit / item.sales : 0;
+          item.marginRate = item.revenue > 0 ? (item.profit / item.revenue) * 100 : 0;
+          return item;
+        });
+
+        // 1. Sales Ranks
+        items.sort((a, b) => b.sales - a.sales);
+        const salesRankMap = new Map();
+        items.forEach((item, idx) => salesRankMap.set(item.name, idx + 1));
+
+        // 2. Profit Ranks
+        items.sort((a, b) => b.unitProfit - a.unitProfit);
+        const profitRankMap = new Map();
+        items.forEach((item, idx) => profitRankMap.set(item.name, idx + 1));
+
+        // 3. Margin Ranks
+        items.sort((a, b) => b.marginRate - a.marginRate);
+        const marginRankMap = new Map();
+        items.forEach((item, idx) => marginRankMap.set(item.name, idx + 1));
+
+        const salesVal = new Map();
+        const profitVal = new Map();
+        const marginVal = new Map();
+        items.forEach(item => {
+          salesVal.set(item.name, item.sales);
+          profitVal.set(item.name, item.unitProfit);
+          marginVal.set(item.name, item.marginRate);
+        });
+
+        return {
+          salesVal,
+          profitVal,
+          marginVal,
+          salesRankMap,
+          profitRankMap,
+          marginRankMap
+        };
+      }
+
+      function calcComparisonMaps() {
+        const dStart = parseYMD(state.startDate);
+        const dEnd = parseYMD(state.endDate);
+        const durationMs = dEnd.getTime() - dStart.getTime();
+        const durationDays = Math.round(durationMs / (24 * 3600 * 1000)) + 1;
+
+        // 1. MoM (环比): Previous L days
+        const momEnd = new Date(dStart.getTime() - 24 * 3600 * 1000);
+        const momStart = new Date(momEnd.getTime() - (durationDays - 1) * 24 * 3600 * 1000);
+
+        // 2. WoW (同比周): Same period 7 days ago (ONLY when durationDays === 1, i.e. single day selection)
+        let wowMap = null;
+        if (durationDays === 1) {
+          const wowStart = new Date(dStart.getTime() - 7 * 24 * 3600 * 1000);
+          const wowEnd = new Date(dEnd.getTime() - 7 * 24 * 3600 * 1000);
+          wowMap = getPeriodMetricMap(formatYMD(wowStart), formatYMD(wowEnd));
+        }
+
+        // 3. MoY (同比月): Same period 1 month ago
+        const moyStart = new Date(dStart.getFullYear(), dStart.getMonth() - 1, dStart.getDate());
+        const moyEnd = new Date(dEnd.getFullYear(), dEnd.getMonth() - 1, dEnd.getDate());
+
+        // 4. YoY (同比年): Same period 1 year ago
+        const yoyStart = new Date(dStart.getFullYear() - 1, dStart.getMonth(), dStart.getDate());
+        const yoyEnd = new Date(dEnd.getFullYear() - 1, dEnd.getMonth(), dEnd.getDate());
+
+        return {
+          momMap: getPeriodMetricMap(formatYMD(momStart), formatYMD(momEnd)),
+          wowMap,
+          moyMap: getPeriodMetricMap(formatYMD(moyStart), formatYMD(moyEnd)),
+          yoyMap: getPeriodMetricMap(formatYMD(yoyStart), formatYMD(yoyEnd))
+        };
+      }
+
+      function getGrowthAndRankInfo(currItem, prevMap) {
+        if (!prevMap) return { text: '-', cls: 'trend-none' };
+
+        let currVal, currRank, prevVal, prevRank;
+        if (state.sortMode === 'PROFIT') {
+          currVal = currItem.unitProfit;
+          currRank = currItem.profitRank;
+          prevVal = prevMap.profitVal.get(currItem.name);
+          prevRank = prevMap.profitRankMap.get(currItem.name);
+        } else if (state.sortMode === 'MARGIN') {
+          currVal = currItem.marginRate;
+          currRank = currItem.marginRank;
+          prevVal = prevMap.marginVal.get(currItem.name);
+          prevRank = prevMap.marginRankMap.get(currItem.name);
+        } else {
+          // Default: SALES
+          currVal = currItem.sales;
+          currRank = currItem.salesRank;
+          prevVal = prevMap.salesVal.get(currItem.name);
+          prevRank = prevMap.salesRankMap.get(currItem.name);
+        }
+
+        if (prevVal === undefined || prevVal === null || prevVal === 0) {
+          return { text: '-', cls: 'trend-none' };
+        }
+
+        const diffVal = currVal - prevVal;
+        const rate = (diffVal / prevVal) * 100;
+        let valText = '';
+        let cls = 'trend-none';
+
+        if (rate > 0) {
+          valText = `+${rate.toFixed(1)}%`;
+          cls = 'trend-up';
+        } else if (rate < 0) {
+          valText = `${rate.toFixed(1)}%`;
+          cls = 'trend-down';
+        } else {
+          valText = '0.0%';
+          cls = 'trend-none';
+        }
+
+        let rankText = '';
+        if (prevRank !== undefined && prevRank !== null) {
+          const rankDiff = prevRank - currRank;
+          if (rankDiff > 0) {
+            rankText = `<i class="rank-up">↑${rankDiff}</i>`;
+          } else if (rankDiff < 0) {
+            rankText = `<i class="rank-down">↓${Math.abs(rankDiff)}</i>`;
+          } else {
+            rankText = `<i class="rank-flat">-</i>`;
+          }
+        }
+
+        const fullText = rankText ? `${valText} (${rankText})` : valText;
+        return { text: fullText, cls };
+      }
+
+        // Single Source of Truth Date Filtering
+        let actualStart = startDate;
+        let actualEnd = endDate;
+
+        // Build target category Union Set & target SKU Set (Deduplicated Aggregation Logic)
+        let targetCategorySet = null;
+        let targetSkuSet = null;
+
+        if (!categories.includes('ALL')) {
+          targetCategorySet = new Set();
+          targetSkuSet = new Set();
+
+          categories.forEach(catKey => {
+            const combo = customCombos.find(c => c.id === catKey);
+            if (combo) {
+              combo.skus.forEach(s => targetSkuSet.add(s));
+            } else {
+              targetCategorySet.add(catKey);
+            }
+          });
+        }
+
+        // SKU Map for aggregation
+        const skuMap = new Map();
+        let totalSales = 0;
+        let totalRevenue = 0;
+        let totalProfit = 0;
+
+        for (let i = 0; i < rawData.length; i++) {
+          const row = rawData[i];
+          // row format: [date, store, channel, category, name, sales, profit, revenue, cost]
+          const dDate = row[0];
+          const dStore = row[1];
+          const dChannel = row[2];
+          const dCategory = row[3];
+          const dName = row[4];
+          const dSales = row[5];
+          const dProfit = row[6];
+          const dRevenue = row[7];
+          const dCost = row[8];
+
+          // Exclude deleted categories
+          if (!BASE_CATEGORIES.includes(dCategory)) continue;
+
+          // Multi-select Check for Store, Channel & Category/Custom SKU Combo
+          if (!stores.includes('ALL') && !stores.includes(dStore)) continue;
+          if (!channels.includes('ALL') && !channels.includes(dChannel)) continue;
+          
+          if (targetCategorySet !== null) {
+            const matchCategory = targetCategorySet.has(dCategory);
+            const matchSku = targetSkuSet.has(dName);
+            if (!matchCategory && !matchSku) continue;
+          }
+
+          if (dDate < actualStart || dDate > actualEnd) continue;
+
+          totalSales += dSales;
+          totalRevenue += dRevenue;
+          totalProfit += dProfit;
+
+          if (!skuMap.has(dName)) {
+            skuMap.set(dName, {
+              name: dName,
+              category: dCategory,
+              sales: 0,
+              revenue: 0,
+              profit: 0,
+              cost: 0
+            });
+          }
+
+          const item = skuMap.get(dName);
+          item.sales += dSales;
+          item.revenue += dRevenue;
+          item.profit += dProfit;
+          item.cost += dCost;
+        }
+
+        // Convert map to array and compute gross margin % & unit profit (单菜毛利)
+        const items = Array.from(skuMap.values()).map(item => {
+          item.marginRate = item.revenue > 0 ? (item.profit / item.revenue) * 100 : 0;
+          item.unitProfit = item.sales > 0 ? (item.profit / item.sales) : 0;
+          return item;
+        });
+
+        const n = items.length;
+        if (n === 0) {
+          return {
+            items: [],
+            totalSales,
+            totalRevenue,
+            totalProfit,
+            overallMargin: 0,
+            n: 0
+          };
+        }
+
+        // 1. Calculate Sales Rank (销量排名: 1 ~ N)
+        items.sort((a, b) => {
+          if (b.sales !== a.sales) return b.sales - a.sales;
+          const metricA = metric === 'profit' ? a.unitProfit : a.marginRate;
+          const metricB = metric === 'profit' ? b.unitProfit : b.marginRate;
+          return metricB - metricA;
+        });
+
+        items.forEach((item, idx) => {
+          item.salesRank = idx + 1;
+        });
+
+        // 2a. Calculate Profit Rank (单菜毛利排名: 1 ~ N)
+        items.sort((a, b) => {
+          if (b.unitProfit !== a.unitProfit) return b.unitProfit - a.unitProfit;
+          return b.sales - a.sales;
+        });
+        items.forEach((item, idx) => {
+          item.profitRank = idx + 1;
+        });
+
+        // 2b. Calculate Margin Rate Rank (毛利率排名: 1 ~ N)
+        items.sort((a, b) => {
+          if (b.marginRate !== a.marginRate) return b.marginRate - a.marginRate;
+          return b.sales - a.sales;
+        });
+        items.forEach((item, idx) => {
+          item.marginRank = idx + 1;
+        });
+
+        // Metric rank for quadrant chart
+        items.forEach(item => {
+          item.metricRank = metric === 'profit' ? item.profitRank : item.marginRank;
+        });
+
+        // 3. Quadrant Assignment based on Split Lines
+        const splitX = (state.splitX !== undefined && state.splitX !== null && state.splitX > 0) ? state.splitX : 50;
+        let isHighMetricFn;
+        let splitYCoord = 50;
+        let splitYDisplayLabel = '';
+
+        if (metric === 'profit') {
+          const targetRank = (state.splitY_profit !== undefined && state.splitY_profit > 0) ? state.splitY_profit : 50;
+          isHighMetricFn = (item) => item.profitRank <= targetRank;
+          splitYCoord = targetRank;
+          splitYDisplayLabel = `Y:${targetRank}名`;
+        } else {
+          const targetMargin = (state.splitY_margin !== undefined && state.splitY_margin !== null) ? state.splitY_margin : 50;
+          isHighMetricFn = (item) => item.marginRate >= targetMargin;
+          const passCount = items.filter(item => item.marginRate >= targetMargin).length;
+          splitYCoord = passCount + 0.5;
+          splitYDisplayLabel = `Y:${targetMargin}%`;
+        }
+
+        items.forEach(item => {
+          const isHighSales = item.salesRank <= splitX;
+          const isHighMetric = isHighMetricFn(item);
+
+          if (isHighSales && isHighMetric) {
+            item.quadrant = 'STAR';
+            item.quadrantName = '明星区';
+            item.quadrantOrder = 1;
+          } else if (!isHighSales && isHighMetric) {
+            item.quadrant = 'POTENTIAL';
+            item.quadrantName = '高潜区';
+            item.quadrantOrder = 2;
+          } else if (isHighSales && !isHighMetric) {
+            item.quadrant = 'TRAFFIC';
+            item.quadrantName = '引流区';
+            item.quadrantOrder = 3;
+          } else {
+            item.quadrant = 'DOG';
+            item.quadrantName = '瘦狗区';
+            item.quadrantOrder = 4;
+          }
+
+          item.compositeRankScore = item.salesRank + item.metricRank;
+        });
+
+        // Calculate Growth Rates (MoM, WoW, MoY, YoY) based on active sortMode
+        const compMaps = calcComparisonMaps();
+
+        items.forEach(item => {
+          item.momInfo = getGrowthAndRankInfo(item, compMaps.momMap);
+          item.wowInfo = getGrowthAndRankInfo(item, compMaps.wowMap);
+          item.moyInfo = getGrowthAndRankInfo(item, compMaps.moyMap);
+          item.yoyInfo = getGrowthAndRankInfo(item, compMaps.yoyMap);
+        });
+
+        const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+        return {
+          items,
+          totalSales,
+          totalRevenue,
+          totalProfit,
+          overallMargin,
+          n,
+          splitX,
+          splitYCoord,
+          splitYDisplayLabel
+        };
+      }
+
+      // Update Dashboard View
+      function updateDashboard() {
+        const data = processFilteredData();
+
+        // Update KPIs
+        kpiSalesEl.innerText = data.totalSales.toLocaleString();
+        kpiRevenueEl.innerText = '¥' + Math.round(data.totalRevenue).toLocaleString();
+        kpiProfitEl.innerText = '¥' + Math.round(data.totalProfit).toLocaleString();
+        kpiMarginEl.innerText = data.overallMargin.toFixed(1) + '%';
+        totalProductsCountEl.innerText = data.n;
+
+        // Sort option is now explicitly separated into PROFIT and MARGIN
+
+        // Render Charts
+        renderEChart(mainChart, data, false);
+        if (modalChart) {
+          renderEChart(modalChart, data, true);
+        }
+
+        // Render Product List
+        renderProductList(data.items);
+      }
+
+      // Render ECharts Option
+      function renderEChart(chartInstance, data, isModal) {
+        if (!chartInstance) return;
+
+        const { items, n, splitX, splitYCoord, splitYDisplayLabel } = data;
+        const sX = splitX !== undefined ? splitX : 50;
+        const sY = splitYCoord !== undefined ? splitYCoord : 50;
+        const displayYLabel = splitYDisplayLabel || `Y:${sY}`;
+        const isProfit = state.metric === 'profit';
+        const metricTitle = isProfit ? '单菜毛利排名' : '毛利率排名';
+
+        if (n === 0) {
+          chartInstance.setOption({
+            title: { text: '暂无符合条件的菜品数据', left: 'center', top: 'center', textStyle: { color: '#94a3b8', fontSize: 13 } }
+          }, true);
+          return;
+        }
+
+        const quadrantColors = {
+          STAR: '#16a34a',
+          POTENTIAL: '#d97706',
+          TRAFFIC: '#2563eb',
+          DOG: '#dc2626'
+        };
+
+        const scatterData = items.map(item => {
+          const metricValStr = isProfit ? `¥${item.unitProfit.toFixed(1)}` : `${item.marginRate.toFixed(1)}%`;
+          return {
+            name: item.name,
+            value: [item.salesRank, item.metricRank],
+            itemStyle: {
+              color: quadrantColors[item.quadrant],
+              borderColor: '#ffffff',
+              borderWidth: 1.5,
+              shadowBlur: 4,
+              shadowColor: 'rgba(0,0,0,0.15)'
+            },
+            rawItem: item,
+            metricValStr
+          };
+        });
+
+        const option = {
+          animationDuration: 400,
+          grid: {
+            top: isModal ? 45 : 30,
+            bottom: isModal ? 45 : 40,
+            left: isModal ? 55 : 48,
+            right: isModal ? 30 : 20
+          },
+          tooltip: {
+            trigger: 'item',
+            backgroundColor: '#ffffff',
+            borderColor: '#e2e8f0',
+            borderWidth: 1,
+            textStyle: { color: '#0f172a', fontSize: 12 },
+            padding: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.1)',
+            shadowBlur: 10,
+            formatter: function (params) {
+              const d = params.data.rawItem;
+              const qTag = params.data.rawItem.quadrantName;
+              const metricLabel = isProfit ? '单菜毛利' : '毛利率';
+              const metricVal = isProfit ? `¥${d.unitProfit.toFixed(1)}/份` : `${d.marginRate.toFixed(1)}%`;
+
+              return `
+                <div style="font-weight: bold; font-size: 13px; margin-bottom: 4px; color: #0f172a;">${d.name} (${qTag})</div>
+                <div style="font-size: 11px; color: #64748b;">品类: ${d.category}</div>
+                <div style="font-size: 11px; color: #16a34a; margin-top: 4px;">
+                  📦 销量: <b>${d.sales.toLocaleString()} 份</b> (第 <b>${d.salesRank}</b> 名)
+                </div>
+                <div style="font-size: 11px; color: #0284c7;">
+                  💰 ${metricLabel}: <b>${metricVal}</b> (第 <b>${d.metricRank}</b> 名)
+                </div>
+              `;
+            }
+          },
+          xAxis: {
+            type: 'value',
+            name: '销量排名',
+            nameLocation: 'middle',
+            nameGap: isModal ? 26 : 22,
+            nameTextStyle: { color: '#475569', fontSize: isModal ? 12 : 11, fontWeight: 'bold' },
+            min: 1,
+            max: n,
+            inverse: true,
+            axisLine: { lineStyle: { color: '#cbd5e1' } },
+            splitLine: { show: false },
+            axisLabel: {
+              color: '#64748b',
+              fontSize: 10,
+              formatter: function (val) {
+                return Number.isInteger(val) ? val : '';
+              }
+            }
+          },
+          yAxis: {
+            type: 'value',
+            name: metricTitle,
+            nameLocation: 'middle',
+            nameGap: isModal ? 38 : 34,
+            nameRotate: 90,
+            nameTextStyle: { color: '#475569', fontSize: isModal ? 12 : 11, fontWeight: 'bold' },
+            min: 1,
+            max: n,
+            inverse: true,
+            axisLine: { lineStyle: { color: '#cbd5e1' } },
+            splitLine: { show: false },
+            axisLabel: {
+              color: '#64748b',
+              fontSize: 10,
+              formatter: function (val) {
+                return Number.isInteger(val) ? val : '';
+              }
+            }
+          },
+          series: [
+            {
+              type: 'scatter',
+              symbolSize: isModal ? 15 : 12,
+              data: scatterData,
+              label: {
+                show: isModal,
+                position: 'top',
+                formatter: function (params) {
+                  return params.data.name;
+                },
+                fontSize: 10,
+                color: '#0f172a',
+                textBorderColor: '#ffffff',
+                textBorderWidth: 2
+              },
+              markLine: {
+                silent: true,
+                symbol: 'none',
+                label: {
+                  show: true,
+                  fontSize: 10,
+                  color: '#dc2626'
+                },
+                lineStyle: {
+                  color: '#dc2626',
+                  type: 'dashed',
+                  width: 1.5
+                },
+                data: [
+                  { xAxis: sX, label: { formatter: `X:${sX}` } },
+                  { yAxis: sY, label: { formatter: displayYLabel } }
+                ]
+              },
+              markArea: {
+                silent: true,
+                data: [
+                  [
+                    { name: '明星区', coord: [1, 1], itemStyle: { color: 'rgba(22, 163, 74, 0.08)' }, label: { show: true, position: 'inside', color: 'rgba(22, 163, 74, 0.35)', fontSize: isModal ? 32 : 22, fontWeight: 'bold' } },
+                    { coord: [sX, sY] }
+                  ],
+                  [
+                    { name: '高潜区', coord: [sX, 1], itemStyle: { color: 'rgba(217, 119, 6, 0.08)' }, label: { show: true, position: 'inside', color: 'rgba(217, 119, 6, 0.35)', fontSize: isModal ? 32 : 22, fontWeight: 'bold' } },
+                    { coord: [n, sY] }
+                  ],
+                  [
+                    { name: '引流区', coord: [1, sY], itemStyle: { color: 'rgba(37, 99, 235, 0.08)' }, label: { show: true, position: 'inside', color: 'rgba(37, 99, 235, 0.35)', fontSize: isModal ? 32 : 22, fontWeight: 'bold' } },
+                    { coord: [sX, n] }
+                  ],
+                  [
+                    { name: '瘦狗区', coord: [sX, sY], itemStyle: { color: 'rgba(220, 38, 38, 0.08)' }, label: { show: true, position: 'inside', color: 'rgba(220, 38, 38, 0.35)', fontSize: isModal ? 32 : 22, fontWeight: 'bold' } },
+                    { coord: [n, n] }
+                  ]
+                ]
+              }
+            }
+          ]
+        };
+
+        chartInstance.setOption(option, true);
+      }
+
+      // Render Product Ranking Table List
+      function renderProductList(items) {
+        const query = state.searchQuery.trim().toLowerCase();
+        let filteredItems = items.filter(item => item.name.toLowerCase().includes(query) || item.category.includes(query));
+
+        if (filteredItems.length === 0) {
+          productListEl.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px;">未找到匹配菜品</div>';
+          return;
+        }
+
+        filteredItems = [...filteredItems];
+        if (state.sortMode === 'SALES') {
+          filteredItems.sort((a, b) => a.salesRank - b.salesRank);
+        } else if (state.sortMode === 'PROFIT') {
+          filteredItems.sort((a, b) => a.profitRank - b.profitRank);
+        } else if (state.sortMode === 'MARGIN') {
+          filteredItems.sort((a, b) => a.marginRank - b.marginRank);
+        } else {
+          filteredItems.sort((a, b) => a.salesRank - b.salesRank);
+        }
+
+        let html = '';
+        filteredItems.forEach((item, idx) => {
+          const rankClass = idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : '';
+          const qClass = item.quadrant.toLowerCase();
+          const isMarginSort = state.sortMode === 'MARGIN';
+
+          const primaryMetricHtml = isMarginSort
+            ? `毛利率: ${item.marginRate.toFixed(1)}% (第${item.marginRank}名)`
+            : `单菜毛利: ¥${item.unitProfit.toFixed(1)}/份 (第${item.profitRank}名)`;
+
+          const secondaryMetricHtml = isMarginSort
+            ? `单菜毛利: ¥${item.unitProfit.toFixed(1)}/份 (第${item.profitRank}名)`
+            : `毛利率: ${item.marginRate.toFixed(1)}% (第${item.marginRank}名)`;
+
+          html += `
+            <div class="product-item" data-name="${item.name}">
+              <div class="product-main-row">
+                <div class="product-left">
+                  <div class="rank-badge ${rankClass}">${idx + 1}</div>
+                  <div class="product-info">
+                    <div class="name">${item.name}</div>
+                    <div class="sub">${item.category} | 销量: ${item.sales.toLocaleString()} (第${item.salesRank}名)</div>
+                  </div>
+                </div>
+                <div class="product-right">
+                  <span class="quadrant-tag ${qClass}">${item.quadrantName}</span>
+                  <div class="metrics-text" style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                    <span>${primaryMetricHtml}</span>
+                    <span style="font-size: 10px; color: #64748b; font-weight: 400;">${secondaryMetricHtml}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="product-growth-row">
+                <div class="growth-item"><span>环比:</span> <b class="${item.momInfo.cls}">${item.momInfo.text}</b></div>
+                <div class="growth-item"><span>同比(周):</span> <b class="${item.wowInfo.cls}">${item.wowInfo.text}</b></div>
+                <div class="growth-item"><span>同比(月):</span> <b class="${item.moyInfo.cls}">${item.moyInfo.text}</b></div>
+                <div class="growth-item"><span>同比(年):</span> <b class="${item.yoyInfo.cls}">${item.yoyInfo.text}</b></div>
+              </div>
+            </div>
+          `;
+        });
+
+        productListEl.innerHTML = html;
+
+        const rows = productListEl.querySelectorAll('.product-item');
+        rows.forEach(row => {
+          row.addEventListener('click', () => {
+            const pName = row.getAttribute('data-name');
+            highlightProduct(pName);
+          });
+        });
+      }
+
+      // Highlight Product on Chart
+      function highlightProduct(name) {
+        if (!mainChart) return;
+        mainChart.dispatchAction({
+          type: 'highlight',
+          seriesIndex: 0,
+          name: name
+        });
+        mainChart.dispatchAction({
+          type: 'showTip',
+          seriesIndex: 0,
+          name: name
+        });
+      }
+
+      // Event Listeners & Multi-select Pill Logic
+      function bindEvents() {
+        // Multi-select Store Pills
+        bindMultiPillGroup('storePills', 'stores', () => updateDashboard());
+
+        // Multi-select Channel Pills
+        bindMultiPillGroup('channelPills', 'channels', () => updateDashboard());
+
+        // Multi-select Category Pills
+        bindMultiPillGroup('categoryPills', 'categories', () => updateDashboard());
+
+        // Integrated Unified Date Picker Logic
+        const unifiedPicker = document.getElementById('unifiedDatePicker');
+        const datePickerTrigger = document.getElementById('datePickerTrigger');
+        const datePickerPopover = document.getElementById('datePickerPopover');
+        const presetContainer = document.getElementById('datePresetPills');
+        const startInputEl = document.getElementById('startDateInput');
+        const endInputEl = document.getElementById('endDateInput');
+        const applyCustomBtn = document.getElementById('applyCustomDateBtn');
+
+        const PRESET_NAMES = {
+          'THIS_MONTH': '本月',
+          'THIS_WEEK': '本周',
+          'LAST_WEEK': '上周',
+          'YESTERDAY': '昨日',
+          'TODAY': '今日'
+        };
+
+        function updateTriggerUI(matchedPreset) {
+          const textEl = document.getElementById('dateRangeText');
+          const badgeEl = document.getElementById('datePresetBadge');
+          if (textEl) textEl.textContent = `${state.startDate} 至 ${state.endDate}`;
+          if (badgeEl) {
+            if (matchedPreset && PRESET_NAMES[matchedPreset]) {
+              badgeEl.textContent = PRESET_NAMES[matchedPreset];
+            } else {
+              badgeEl.textContent = '自定义';
+            }
+          }
+        }
+
+        function checkMatchingPreset() {
+          const s = state.startDate;
+          const e = state.endDate;
+          let matchedPreset = null;
+
+          presetContainer.querySelectorAll('.preset-option').forEach(btn => {
+            const p = btn.getAttribute('data-preset');
+            const range = getPresetDateRange(p);
+            if (range.start === s && range.end === e) {
+              matchedPreset = p;
+            }
+          });
+
+          presetContainer.querySelectorAll('.preset-option').forEach(btn => {
+            if (btn.getAttribute('data-preset') === matchedPreset) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+
+          updateTriggerUI(matchedPreset);
+        }
+
+        // Toggle Popover Display
+        datePickerTrigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = datePickerPopover.style.display !== 'none';
+          datePickerPopover.style.display = isOpen ? 'none' : 'block';
+          datePickerTrigger.classList.toggle('open', !isOpen);
+        });
+
+        // Close Popover on Outside Click
+        document.addEventListener('click', (e) => {
+          if (unifiedPicker && !unifiedPicker.contains(e.target)) {
+            datePickerPopover.style.display = 'none';
+            datePickerTrigger.classList.remove('open');
+          }
+        });
+
+        // Preset Options Click Handler
+        presetContainer.querySelectorAll('.preset-option').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const preset = btn.getAttribute('data-preset');
+            const range = getPresetDateRange(preset);
+            state.startDate = range.start;
+            state.endDate = range.end;
+            startInputEl.value = range.start;
+            endInputEl.value = range.end;
+
+            presetContainer.querySelectorAll('.preset-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            updateTriggerUI(preset);
+            updateDashboard();
+            
+            // Close Popover
+            datePickerPopover.style.display = 'none';
+            datePickerTrigger.classList.remove('open');
+          });
+        });
+
+        // Date Inputs & Custom Apply Button Handler
+        startInputEl.addEventListener('change', () => {
+          if (startInputEl.value > endInputEl.value) {
+            endInputEl.value = startInputEl.value;
+          }
+        });
+
+        endInputEl.addEventListener('change', () => {
+          if (endInputEl.value < startInputEl.value) {
+            startInputEl.value = endInputEl.value;
+          }
+        });
+
+        applyCustomBtn.addEventListener('click', () => {
+          state.startDate = startInputEl.value;
+          state.endDate = endInputEl.value;
+          checkMatchingPreset();
+          updateDashboard();
+
+          datePickerPopover.style.display = 'none';
+          datePickerTrigger.classList.remove('open');
+        });
+
+        // Reset Button
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+          state.stores = ['ALL'];
+          state.channels = ['ALL'];
+          state.categories = ['ALL'];
+          state.startDate = '2026-08-01';
+          state.endDate = '2026-08-15';
+          state.searchQuery = '';
+          state.sortMode = 'SALES';
+
+          productSearchEl.value = '';
+          sortSelectEl.value = 'SALES';
+          startInputEl.value = '2026-08-01';
+          endInputEl.value = '2026-08-15';
+
+          resetPillsGroup('storePills');
+          resetPillsGroup('channelPills');
+          resetPillsGroup('categoryPills');
+          
+          presetContainer.querySelectorAll('.preset-option').forEach(b => {
+            if (b.getAttribute('data-preset') === 'THIS_MONTH') b.classList.add('active');
+            else b.classList.remove('active');
+          });
+
+          updateTriggerUI('THIS_MONTH');
+          updateDashboard();
+        });
+
+        // Metric Toggle (毛利 vs 毛利率)
+        const metricToggleGroup = document.getElementById('metricToggle');
+        const splitYTagEl = document.getElementById('splitYTag');
+        const splitYInputEl = document.getElementById('splitYInput');
+        const splitXInputEl = document.getElementById('splitXInput');
+
+        metricToggleGroup.querySelectorAll('.toggle-option').forEach(opt => {
+          opt.addEventListener('click', () => {
+            metricToggleGroup.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            state.metric = opt.getAttribute('data-metric');
+
+            // Switch Y tag & input value according to selected metric
+            if (state.metric === 'profit') {
+              if (splitYTagEl) splitYTagEl.textContent = '毛利排名';
+              if (splitYInputEl) {
+                splitYInputEl.value = state.splitY_profit;
+                splitYInputEl.title = '竖轴单菜毛利排名分割线(如第50名)';
+              }
+            } else {
+              if (splitYTagEl) splitYTagEl.textContent = '实际毛利率%';
+              if (splitYInputEl) {
+                splitYInputEl.value = state.splitY_margin;
+                splitYInputEl.title = '竖轴实际毛利率绝对值分割线(如50%)';
+              }
+            }
+
+            updateDashboard();
+          });
+        });
+
+        // Split Line Inputs (X轴与Y轴分割线)
+        function handleSplitInputChange() {
+          const valX = parseInt(splitXInputEl.value, 10);
+          const valY = parseFloat(splitYInputEl.value);
+          state.splitX = isNaN(valX) || valX <= 0 ? 50 : valX;
+
+          if (state.metric === 'profit') {
+            state.splitY_profit = isNaN(valY) || valY <= 0 ? 50 : valY;
+          } else {
+            state.splitY_margin = isNaN(valY) ? 50 : valY;
+          }
+
+          updateDashboard();
+        }
+
+        if (splitXInputEl) {
+          splitXInputEl.addEventListener('input', handleSplitInputChange);
+        }
+        if (splitYInputEl) {
+          splitYInputEl.addEventListener('input', handleSplitInputChange);
+        }
+
+        // Sort Selector
+        sortSelectEl.addEventListener('change', e => {
+          state.sortMode = e.target.value;
+          const data = processFilteredData();
+          renderProductList(data.items);
+        });
+
+        // Product Search
+        productSearchEl.addEventListener('input', e => {
+          state.searchQuery = e.target.value;
+          const data = processFilteredData();
+          renderProductList(data.items);
+        });
+
+        // Fullscreen Landscape Modal (查看大图)
+        const modal = document.getElementById('chartModal');
+        const openBtn = document.getElementById('openModalBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+
+        openBtn.addEventListener('click', () => {
+          modal.classList.add('active');
+          setTimeout(() => {
+            if (modalChart) {
+              modalChart.resize();
+              const data = processFilteredData();
+              renderEChart(modalChart, data, true);
+            }
+          }, 100);
+        });
+
+        closeBtn.addEventListener('click', () => {
+          modal.classList.remove('active');
+        });
+
+        // Custom Category Combination Modal Handlers (Dish / SKU based)
+        initCustomComboModal();
+      }
+
+      // Multi-select Pill Group Binder
+      function bindMultiPillGroup(groupId, stateKey, onChange) {
+        const container = document.getElementById(groupId);
+        if (!container) return;
+
+        container.addEventListener('click', e => {
+          const btn = e.target.closest('.pill-btn');
+          if (!btn || btn.classList.contains('custom-trigger')) return;
+
+          const val = btn.getAttribute('data-value');
+          const allBtn = container.querySelector('[data-value="ALL"]');
+
+          if (val === 'ALL') {
+            container.querySelectorAll('.pill-btn').forEach(b => {
+              if (b !== allBtn && !b.classList.contains('custom-trigger')) b.classList.remove('active');
+            });
+            allBtn.classList.add('active');
+            state[stateKey] = ['ALL'];
+          } else {
+            allBtn.classList.remove('active');
+            btn.classList.toggle('active');
+
+            const activeBtns = Array.from(container.querySelectorAll('.pill-btn.active')).filter(b => b !== allBtn && !b.classList.contains('custom-trigger'));
+            
+            if (activeBtns.length === 0) {
+              allBtn.classList.add('active');
+              state[stateKey] = ['ALL'];
+            } else {
+              state[stateKey] = activeBtns.map(b => b.getAttribute('data-value'));
+            }
+          }
+
+          onChange();
+        });
+      }
+
+      // Single-select Pill Group Binder (for date presets)
+      function bindSinglePillGroup(groupId, onChange) {
+        const container = document.getElementById(groupId);
+        if (!container) return;
+        container.querySelectorAll('.pill-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            container.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            onChange(btn.getAttribute('data-value'));
+          });
+        });
+      }
+
+      function resetPillsGroup(groupId) {
+        const container = document.getElementById(groupId);
+        if (!container) return;
+        container.querySelectorAll('.pill-btn').forEach((b, idx) => {
+          if (b.classList.contains('custom-trigger')) return;
+          if (b.getAttribute('data-value') === 'ALL') b.classList.add('active');
+          else b.classList.remove('active');
+        });
+      }
+
+      // Custom Category Combo Modal Setup (Dish / SKU Selection)
+      function initCustomComboModal() {
+        const modal = document.getElementById('customComboModal');
+        const openBtn = document.getElementById('customCategoryBtn');
+        const closeBtn = document.getElementById('closeComboModalBtn');
+        const cancelBtn = document.getElementById('cancelComboBtn');
+        const saveBtn = document.getElementById('saveComboBtn');
+        const nameInput = document.getElementById('comboNameInput');
+        const skuSearchInput = document.getElementById('comboSkuSearchInput');
+        const skuContainer = document.getElementById('comboSkuContainer');
+        const existingGroup = document.getElementById('existingCombosGroup');
+        const existingList = document.getElementById('existingCombosList');
+
+        let isUserTypedName = false;
+
+        nameInput.addEventListener('input', () => {
+          isUserTypedName = nameInput.value.trim().length > 0;
+        });
+
+        openBtn.addEventListener('click', () => {
+          modal.classList.add('active');
+          renderModalSkus();
+          renderExistingCombos();
+          isUserTypedName = false;
+          nameInput.value = '';
+          skuSearchInput.value = '';
+        });
+
+        function closeModal() {
+          modal.classList.remove('active');
+        }
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Search dish filtering inside modal
+        skuSearchInput.addEventListener('input', e => {
+          const query = e.target.value.trim().toLowerCase();
+          skuContainer.querySelectorAll('.sku-checkbox-item').forEach(item => {
+            const name = item.getAttribute('data-name');
+            if (!query || name.includes(query)) {
+              item.style.display = 'flex';
+            } else {
+              item.style.display = 'none';
+            }
+          });
+        });
+
+        function renderModalSkus() {
+          const groupMap = new Map();
+          BASE_CATEGORIES.forEach(c => groupMap.set(c, new Set()));
+
+          for (let i = 0; i < rawData.length; i++) {
+            const cat = rawData[i][3];
+            const name = rawData[i][4];
+            if (BASE_CATEGORIES.includes(cat)) {
+              groupMap.get(cat).add(name);
+            }
+          }
+
+          let html = '';
+          BASE_CATEGORIES.forEach(cat => {
+            const skuList = Array.from(groupMap.get(cat)).sort();
+            if (skuList.length === 0) return;
+
+            html += `
+              <div class="combo-sku-category-block" data-category="${cat}">
+                <div class="combo-sku-category-title">
+                  <span>${cat}</span>
+                  <span style="font-size:10px; font-weight:normal; opacity:0.85;">${skuList.length}个菜品</span>
+                </div>
+                <div class="combo-sku-grid">
+            `;
+
+            skuList.forEach(sku => {
+              html += `
+                <label class="checkbox-label sku-checkbox-item" data-name="${sku.toLowerCase()}">
+                  <input type="checkbox" value="${sku}" class="combo-cb">
+                  <span>${sku}</span>
+                </label>
+              `;
+            });
+
+            html += `
+                </div>
+              </div>
+            `;
+          });
+
+          skuContainer.innerHTML = html;
+
+          // Auto-generate name when checkboxes change & toggle .checked class for card highlight
+          skuContainer.querySelectorAll('.combo-cb').forEach(cb => {
+            cb.addEventListener('change', () => {
+              const parentLabel = cb.closest('.checkbox-label');
+              if (cb.checked) {
+                parentLabel.classList.add('checked');
+              } else {
+                parentLabel.classList.remove('checked');
+              }
+
+              if (!isUserTypedName) {
+                const selected = Array.from(skuContainer.querySelectorAll('.combo-cb:checked')).map(c => c.value);
+                if (selected.length > 0) {
+                  nameInput.value = selected.slice(0, 2).join('+') + (selected.length > 2 ? `等${selected.length}项` : '组合');
+                } else {
+                  nameInput.value = '';
+                }
+              }
+            });
+          });
+        }
+
+        function renderExistingCombos() {
+          if (state.customCombos.length === 0) {
+            existingGroup.style.display = 'none';
+            return;
+          }
+
+          existingGroup.style.display = 'flex';
+          let html = '';
+          state.customCombos.forEach(combo => {
+            html += `
+              <div class="existing-combo-item">
+                <span><b>${combo.name}</b> (${combo.skus.length}个菜品: ${combo.skus.slice(0, 2).join(', ')}${combo.skus.length > 2 ? '...' : ''})</span>
+                <button class="delete-combo-btn" data-id="${combo.id}">🗑️</button>
+              </div>
+            `;
+          });
+          existingList.innerHTML = html;
+
+          existingList.querySelectorAll('.delete-combo-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const comboId = btn.getAttribute('data-id');
+              deleteCustomCombo(comboId);
+            });
+          });
+        }
+
+        function deleteCustomCombo(comboId) {
+          state.customCombos = state.customCombos.filter(c => c.id !== comboId);
+          state.categories = state.categories.filter(c => c !== comboId);
+
+          // Remove Pill DOM
+          const pill = document.querySelector(`.pill-btn[data-value="${comboId}"]`);
+          if (pill) pill.remove();
+
+          if (state.categories.length === 0) {
+            state.categories = ['ALL'];
+            const allBtn = document.querySelector('#categoryPills [data-value="ALL"]');
+            if (allBtn) allBtn.classList.add('active');
+          }
+
+          renderExistingCombos();
+          updateDashboard();
+        }
+
+        saveBtn.addEventListener('click', () => {
+          const selectedSkus = Array.from(skuContainer.querySelectorAll('.combo-cb:checked')).map(c => c.value);
+          if (selectedSkus.length === 0) {
+            alert('请至少勾选一个菜品！');
+            return;
+          }
+
+          let comboName = nameInput.value.trim();
+          if (!comboName) {
+            comboName = selectedSkus.slice(0, 2).join('+') + '组合';
+          }
+
+          const comboId = 'combo_' + Date.now();
+          const newCombo = {
+            id: comboId,
+            name: comboName,
+            skus: selectedSkus
+          };
+
+          state.customCombos.push(newCombo);
+
+          // Add Custom Pill to DOM
+          const customBtn = document.getElementById('customCategoryBtn');
+          const newPill = document.createElement('button');
+          newPill.className = 'pill-btn custom-combo-pill active';
+          newPill.setAttribute('data-value', comboId);
+          newPill.innerText = `✨ ${comboName}`;
+
+          // Insert before "⚙️ 自定义" button
+          customBtn.parentNode.insertBefore(newPill, customBtn);
+
+          // Deactivate "ALL" button
+          const allBtn = document.querySelector('#categoryPills [data-value="ALL"]');
+          if (allBtn) allBtn.classList.remove('active');
+
+          // Update state.categories
+          if (state.categories.includes('ALL')) {
+            state.categories = [comboId];
+          } else {
+            if (!state.categories.includes(comboId)) {
+              state.categories.push(comboId);
+            }
+          }
+
+          closeModal();
+          updateDashboard();
+        });
+      }
+
+      // Initialize Application
+      window.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+</html>
