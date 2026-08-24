@@ -7,29 +7,23 @@
 // 1. 智能体下拉菜单定义
 // =============================================
 const agentMenuItems = [
-  { name: "MyAgent", avatar: "M", gradient: "linear-gradient(135deg, #4f46e5, #6366f1)" },
-  { name: "写诗智能体", avatar: "写", gradient: "linear-gradient(135deg, #059669, #10b981)" }
+  { name: "AI助手", avatar: "A", gradient: "linear-gradient(135deg, #4f46e5, #6366f1)" }
 ];
 
 // =============================================
 // 2. 智能体与历史对话映射数据
 // =============================================
 const agentData = {
-  "MyAgent": [
+  "AI助手": [
     "世界模型与物理仿真探讨",
     "与王仲远对话",
     "与林咏文对话",
     "与屈鑫对话",
-    "欢迎使用 SoulAgent MyAgent",
-    "探索智能体多样化功能",
+    "欢迎使用 SoulAgent",
+    "探索AI分身多样化功能",
     "快速开始提示指南"
   ],
-  "写诗智能体": [
-    "七言律诗·咏秋月",
-    "现代抒情诗创作提纲",
-    "宋词意境美化"
-  ],
-  "写诗 智能体": [
+  "我的写诗分身": [
     "七言律诗·咏秋月",
     "现代抒情诗创作提纲",
     "宋词意境美化"
@@ -39,7 +33,7 @@ const agentData = {
     "VLA模型端到端控制与仿真",
     "人形机器人实机部署与泛化"
   ],
-  "具身智能体": [
+  "具身AI分身": [
     "具身感知与语义地图构建",
     "机器人机械臂轨迹规划",
     "Sim-to-Real 虚拟迁移算法"
@@ -86,7 +80,7 @@ const mockConversations = {
   // Agent 智能体对话（ChatGPT 风格，无头像）
   "七言律诗·咏秋月": {
     type: "agent",
-    agentBadgeText: "写诗智能体",
+    agentBadgeText: "我的写诗分身",
     messages: [
       {
         role: "user",
@@ -153,7 +147,7 @@ const mockConversations = {
       },
       {
         role: "user",
-        content: "明白了！那从 SoulAgent 的技术规划来看，我们是如何把这种具身智能架构落地到智能体工作流中的？"
+        content: "明白了！那从 SoulAgent 的技术规划来看，我们是如何把这种具身智能架构落地到AI分身工作流中的？"
       },
       {
         role: "assistant",
@@ -196,12 +190,12 @@ const mockConversations = {
     messages: [
       {
         role: "user",
-        content: "屈鑫老师，Multi-Agent 多智能体生态要实现规模化协作，最核心的设计原则是什么？"
+        content: "屈鑫老师，Multi-Agent 多AI分身生态要实现规模化协作，最核心的设计原则是什么？"
       },
       {
         role: "assistant",
         htmlContent: `
-          <p>很高兴探讨 Multi-Agent 的生态设计！构建一个高可用、可扩展的智能体协作网络，核心在于三点：</p>
+          <p>很高兴探讨 Multi-Agent 的生态设计！构建一个高可用、可扩展的AI分身协作网络，核心在于三点：</p>
           <ul>
             <li><strong>清晰的角色拓扑与职责解耦</strong>：每个 Agent 专注于垂直领域的输入输出，避免单体 Agent 过于臃肿。</li>
             <li><strong>统一的通信标准与协议路由</strong>：建立标准化的消息格式、上下文传递机制与心跳熔断策略。</li>
@@ -235,7 +229,7 @@ const mockConversations = {
       },
       {
         role: "user",
-        content: "明白了！那从 SoulAgent 的技术规划来看，我们是如何把这种具身智能架构落地到智能体工作流中的？"
+        content: "明白了！那从 SoulAgent 的技术规划来看，我们是如何把这种具身智能架构落地到AI分身工作流中的？"
       },
       {
         role: "assistant",
@@ -300,8 +294,8 @@ const expertList = [
     id: "quxin",
     name: "屈鑫",
     agentName: "屈鑫的AI分身",
-    role: "生态负责人 · 智能体专家",
-    tag: "智能体",
+    role: "生态负责人 · AI分身专家",
+    tag: "AI分身",
     gradient: "linear-gradient(135deg, #ec4899, #f43f5e)",
     desc: "负责 Multi-Agent 协作框架设计、开发者生态与应用场景建设。",
     stat: "860 次对话"

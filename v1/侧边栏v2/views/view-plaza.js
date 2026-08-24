@@ -55,7 +55,7 @@ function renderPlazaView() {
       <div class="plaza-header">
         <div class="plaza-title-row">
           <div>
-            <h2 class="plaza-title">分身广场</h2>
+            <h2 class="plaza-title">AI分身广场</h2>
           </div>
           <div class="plaza-search-box">
             <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text-muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

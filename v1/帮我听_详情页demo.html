@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听会 - 详情页 Demo · SoulAgent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; height: 100vh; background: #fff; color: #111827; overflow: hidden; }
+
+    /* 侧边栏 */
+    .sidebar { width: 220px; background: #f9fafb; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 16px 12px; flex-shrink: 0; }
+    .sidebar-title { font-size: 17px; font-weight: 700; padding: 4px 12px 14px; letter-spacing: -0.02em; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-size: 14px; color: #374151; border-radius: 8px; cursor: default; }
+    .nav-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+    .divider { height: 1px; background: #e5e7eb; margin: 12px 0; }
+    .history-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .history-label { font-size: 12px; color: #9ca3af; padding: 0 12px 6px; font-weight: 500; }
+    .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+    .history-item { padding: 8px 12px; font-size: 13px; color: #4b5563; border-radius: 6px; cursor: default; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+    .user-area { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .username { font-size: 14px; font-weight: 500; }
+
+    /* 主区域 */
+    .main-wrapper { flex: 1; display: flex; overflow: hidden; }
+
+    /* 左侧对话(静态) */
+    .chat-left { width: 50%; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid #e5e7eb; padding: 20px 20px 0; position: relative; }
+    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 130px; }
+    .msg-row { display: flex; width: 100%; }
+    .msg-row.user { justify-content: flex-end; }
+    .bubble { max-width: 85%; padding: 13px 18px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
+    .msg-row.user .bubble { background: #2563eb; color: #fff; border-bottom-right-radius: 4px; box-shadow: 0 4px 12px rgba(37,99,235,.2); }
+    .msg-row.agent .bubble { background: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; box-shadow: 0 4px 14px rgba(0,0,0,.03); display: flex; flex-direction: column; gap: 12px; }
+
+    /* Agent 内嵌卡片 */
+    .agent-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.06); }
+    .card-kv-bar { height: 80px; padding: 12px 16px; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #4f46e5 100%); }
+    .card-kv-bar .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(15,23,42,.55); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.2); }
+    .card-body-area { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+    .card-body-title { font-size: 15px; font-weight: 700; color: #111827; }
+    .card-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
+    .card-footer { padding: 10px 16px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+    .btn-view-detail { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; background: #eff6ff; color: #2563eb; font-size: 13px; font-weight: 600; border: 1px solid #bfdbfe; cursor: default; }
+
+    /* 底部输入框 */
+    .chat-input-area { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 40%); padding: 16px 20px 20px; }
+    .chat-input-box { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 13px 16px 10px; box-shadow: 0 8px 30px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 10px; }
+    .chat-input-text { font-size: 14px; color: #9ca3af; line-height: 1.5; min-height: 44px; }
+    .chat-input-footer { display: flex; justify-content: flex-end; }
+    .send-btn { width: 34px; height: 34px; border-radius: 10px; background: #e5e7eb; color: #9ca3af; display: flex; align-items: center; justify-content: center; }
+
+    /* 右侧详情页 */
+    .detail-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+    .detail-header { padding: 14px 24px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .detail-header-pos { position: relative; flex: 1; min-width: 0; }
+    .detail-title-btn { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; margin-left: -6px; border-radius: 8px; background: transparent; border: none; cursor: pointer; transition: background .15s; }
+    .detail-title-btn:hover { background: #f3f4f6; }
+    .detail-title-text { font-size: 15px; font-weight: 700; color: #111827; }
+    .chevron { color: #6b7280; transition: transform .2s; flex-shrink: 0; }
+    .detail-title-btn.open .chevron { transform: rotate(180deg); color: #2563eb; }
+    .episode-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,.15); min-width: 300px; padding: 6px; display: none; flex-direction: column; gap: 2px; }
+    .episode-menu.show { display: flex !important; }
+    .episode-item { padding: 8px 12px; border-radius: 8px; font-size: 13px; color: #374151; cursor: pointer; transition: background .15s; }
+    .episode-item:hover { background: #f3f4f6; }
+    .episode-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .icon-btn { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; border: none; color: #6b7280; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
+    .icon-btn:hover { background: #eff6ff; color: #2563eb; }
+    .icon-btn.close:hover { background: #fee2e2; color: #dc2626; }
+    .detail-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* 视频 */
+    .video-section { padding: 16px 24px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    .video-player { background: #0f172a; border-radius: 12px; overflow: hidden; width: 100%; aspect-ratio: 16/9; max-height: 240px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 8px 24px rgba(0,0,0,.15); border: 1px solid #1e293b; }
+    .video-screen { flex: 1; position: relative; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); display: flex; align-items: center; justify-content: center; }
+    .play-btn-center { width: 44px; height: 44px; border-radius: 50%; background: rgba(37,99,235,.9); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 16px rgba(37,99,235,.5); transition: transform .2s; }
+    .play-btn-center:hover { transform: scale(1.08); }
+    .live-badge { position: absolute; top: 10px; left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(220,38,38,.9); color: #fff; box-shadow: 0 2px 8px rgba(220,38,38,.4); }
+    .pulse-red { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulseRed 1.5s infinite; }
+    @keyframes pulseRed { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,.7); } 50% { box-shadow: 0 0 0 5px rgba(255,255,255,0); } }
+    .video-controls { height: 40px; background: rgba(15,23,42,.95); display: flex; align-items: center; gap: 12px; padding: 0 14px; color: #fff; font-size: 12px; border-top: 1px solid rgba(255,255,255,.1); }
+    .ctrl-btn { background: none; border: none; color: #fff; cursor: pointer; display: flex; align-items: center; }
+    .progress-track { flex: 1; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; cursor: pointer; position: relative; }
+    .progress-fill { height: 100%; border-radius: 2px; background: #3b82f6; position: relative; transition: width .1s linear; }
+    .progress-fill::after { content: ''; position: absolute; right: -4px; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(59,130,246,.8); }
+    .time-label { font-size: 11px; color: rgba(255,255,255,.7); white-space: nowrap; }
+
+    /* 章节卡片列表 */
+    .chapter-section { padding: 14px 24px 4px; }
+    .chapter-cards-track { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 10px; scroll-behavior: smooth; }
+    .chapter-cards-track::-webkit-scrollbar { height: 4px; }
+    .chapter-cards-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .chapter-card { flex: 0 0 220px; min-width: 220px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .2s ease; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.03); user-select: none; }
+    .chapter-card:hover { border-color: #93c5fd; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.08); }
+    .chapter-card.active { border-color: #2563eb; background: #eff6ff; box-shadow: 0 4px 12px rgba(37,99,235,.15); }
+
+    .card-top-row { display: flex; align-items: center; justify-content: space-between; }
+    .card-ts-anchor { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11.5px; font-weight: 600; border: 1px solid #cbd5e1; transition: all .15s; cursor: pointer; }
+    .card-ts-anchor:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .chapter-card.active .card-ts-anchor { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .chapter-card.active .card-ts-anchor:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+    .card-title-name { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .chapter-card.active .card-title-name { color: #1d4ed8; font-weight: 700; }
+
+    /* 内容区 */
+    .detail-content { padding: 8px 24px 24px; }
+
+    /* Tabs */
+    .drawer-tab-nav { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px; }
+    .dtab { padding: 10px 16px; font-size: 13.5px; font-weight: 500; color: #6b7280; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all .15s; margin-bottom: -1px; }
+    .dtab:hover { color: #111827; }
+    .dtab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+    .style-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: #fff; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 500; color: #1e293b; cursor: pointer; transition: all .15s; }
+    .style-btn:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    .toolbar-btn { display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #e2e8f0; font-size: 12px; font-weight: 500; color: #475569; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: all .15s; }
+    .toolbar-btn:hover { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+
+    /* Style dropdown */
+    .style-drop-wrap { position: relative; display: inline-block; }
+    .style-drop-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 500; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,.15); min-width: 130px; padding: 4px; display: none; flex-direction: column; gap: 2px; }
+    .style-drop-menu.open { display: flex !important; }
+    .style-opt { padding: 7px 12px; border-radius: 6px; font-size: 13px; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .15s; }
+    .style-opt:hover { background: #f1f5f9; }
+    .style-opt.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+
+    /* Overview cards */
+    .overview-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.03); position: relative; }
+    .overview-card:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .oc-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .oc-desc { font-size: 13.5px; color: #334155; line-height: 1.7; }
+    .quote-grid { display: flex; flex-direction: column; gap: 10px; }
+    .quote-card { background: #fff; border: 1px solid #fef3c7; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .quote-text { font-size: 13.5px; line-height: 1.6; color: #1f2937; font-weight: 500; }
+    .quote-footer { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: #d97706; }
+    .ts-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; background: #eff6ff; color: #2563eb; font-family: monospace; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #bfdbfe; transition: all .15s; }
+    .ts-tag:hover { background: #2563eb; color: #fff; }
+    .insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .insight-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+    .insight-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+    .insight-desc { font-size: 12.5px; color: #475569; line-height: 1.5; }
+
+    /* Summary */
+    .summary-body { font-size: 14px; line-height: 1.8; color: #374151; }
+    .sum-block { position: relative; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+    .sum-block:hover { background: #f8fafc; border-color: #e2e8f0; }
+    .sum-block:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .sum-h { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+    .sum-h:hover { color: #2563eb; }
+    .sum-chevron { transition: transform 0.2s; color: #94a3b8; margin-left: auto; display: inline-flex; align-items: center; }
+    .sum-block.collapsed .sum-chevron { transform: rotate(-90deg); }
+    .sum-block.collapsed p, .sum-block.collapsed ul { display: none; }
+    .sum-block.collapsed { margin-bottom: 4px; padding-bottom: 8px; }
+
+    /* Media */
+    .media-section { margin-bottom: 14px; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff; }
+    .media-section-header { padding: 10px 16px; font-weight: 600; font-size: 13.5px; color: #1f2937; background: #f9fafb; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e5e7eb; cursor: pointer; user-select: none; transition: background .15s; }
+    .media-section-header:hover { background: #f1f5f9; }
+    .media-chevron { transition: transform 0.2s; color: #64748b; margin-left: 4px; display: inline-flex; align-items: center; }
+    .media-section.collapsed .media-chevron { transform: rotate(-90deg); }
+    .media-section.collapsed .media-section-header { border-bottom: none; }
+    .media-section.collapsed .media-grid { display: none; }
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; padding: 14px; }
+    .media-card { position: relative; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; transition: all .2s; }
+    .media-card:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,.08); }
+    .media-card:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .media-thumb { height: 80px; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f1f5f9; }
+    .mock-doc { width: 36px; height: 46px; background: #fff; border-radius: 3px; box-shadow: 0 2px 6px rgba(0,0,0,.08); padding: 5px; display: flex; flex-direction: column; gap: 4px; border: 1px solid #f1f5f9; }
+    .mock-line { height: 3px; background: #e2e8f0; border-radius: 2px; }
+    .mock-line.title { height: 4px; width: 70%; background: #94a3b8; margin-bottom: 2px; }
+    .mock-line.short { width: 55%; }
+    .mock-quote-thumb { width: 50px; height: 36px; background: linear-gradient(135deg, #fbcfe8, #f472b6); border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+    .mock-quote-thumb-line { width: 80%; height: 3px; background: rgba(255,255,255,.9); border-radius: 2px; }
+    .mock-video { width: 56px; height: 38px; background: #1e293b; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,.15); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .mock-video-play { width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid rgba(255,255,255,.9); margin-left: 3px; }
+    .mock-video-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: #ef4444; width: 45%; }
+    .mock-mindmap { width: 52px; height: 38px; position: relative; }
+    .mock-mindmap-node { position: absolute; background: #3b82f6; border-radius: 2px; height: 7px; }
+    .mock-mindmap-node.center { width: 14px; top: 15px; left: 4px; background: #2563eb; }
+    .mock-mindmap-node.branch1 { width: 10px; top: 7px; right: 6px; }
+    .mock-mindmap-node.branch2 { width: 10px; top: 24px; right: 6px; }
+    .mock-mindmap-line { position: absolute; width: 10px; height: 18px; top: 10px; left: 20px; border: 1.5px solid #93c5fd; border-right: none; border-radius: 3px 0 0 3px; }
+    .mock-poster { width: 34px; height: 46px; background: #fff; border-radius: 3px; box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #f1f5f9; }
+    .mock-poster-img { height: 26px; background: linear-gradient(135deg, #34d399, #059669); width: 100%; }
+    .mock-poster-text { padding: 3px; display: flex; flex-direction: column; gap: 2px; }
+    .mock-poster-line { height: 2px; background: #e2e8f0; border-radius: 1px; }
+    .mock-poster-line.title { width: 80%; background: #94a3b8; }
+    .media-card-body { padding: 10px 12px; }
+    .media-card-title { font-size: 12.5px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-download-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; font-size: 12px; font-weight: 500; color: #475569; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; margin-left: auto; }
+    .media-download-btn:hover { color: #2563eb; border-color: #93c5fd; background: #eff6ff; }
+
+    /* AI速记 */
+    .transcript-list { display: flex; flex-direction: column; gap: 4px; }
+    .tr-row { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 14px; border-radius: 12px; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+    .tr-row:hover { background: #f8fafc; border-color: #e2e8f0; }
+    .tr-row:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .tr-speaker { display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; }
+    .tr-speaker span:first-child { font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.4; }
+    .tr-text { font-size: 14px; line-height: 1.7; color: #374151; text-align: left; width: 100%; }
+
+    /* Block hover actions */
+    .block-hover-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px; background: rgba(255,255,255,.95); backdrop-filter: blur(8px); border: 1px solid #cbd5e1; border-radius: 7px; box-shadow: 0 4px 14px rgba(0,0,0,.08); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; transform: translateY(-4px); }
+    .bha-btn { background: none; border: none; width: 26px; height: 26px; border-radius: 5px; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+    .bha-btn:hover { background: #eff6ff; color: #2563eb; }
+    .bha-divider { width: 1px; height: 12px; background: #cbd5e1; margin: 0 1px; }
+
+    /* Footer */
+    .ai-footer { margin-top: 16px; padding: 10px 0; border-top: 1px solid #f1f5f9; font-size: 12px; color: #9ca3af; display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; flex-wrap: nowrap; }
+    .fb-link { color: #9ca3af; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-weight: 600; transition: color .15s; }
+    .fb-link:hover { color: #4b5563; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(17,24,39,.92); color: #fff; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500; box-shadow: 0 10px 25px rgba(0,0,0,.2); z-index: 9999; opacity: 0; pointer-events: none; transition: all .25s cubic-bezier(.16,1,.3,1); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- 侧边栏(静态) -->
+<aside class="sidebar">
+  <div class="sidebar-title">SoulAgent</div>
+  <nav style="display:flex;flex-direction:column;gap:2px;">
+    <div class="nav-item">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      新建对话
+    </div>
+    <div class="nav-item">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      专家分身
+    </div>
+    <div class="nav-item active">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+      帮我听会
+    </div>
+    <div class="nav-item">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      知识库
+    </div>
+  </nav>
+  <div class="divider"></div>
+  <div class="history-section">
+    <div class="history-label">历史对话</div>
+    <div class="history-list">
+      <div class="history-item active">2026 智源大会开幕式听记</div>
+      <div class="history-item">Agent 架构讨论会议</div>
+      <div class="history-item">产品需求规划会议记录</div>
+      <div class="history-item">团队周报与进展汇报</div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="user-area">
+    <div class="avatar">U</div>
+    <span class="username">用户名</span>
+  </div>
+</aside>
+
+<!-- 主区域 -->
+<div class="main-wrapper">
+
+  <!-- 左侧对话(静态) -->
+  <div class="chat-left">
+    <div class="chat-messages">
+      <div class="msg-row user">
+        <div class="bubble">帮我听一下今天的 2026 智源大会开幕式，整理一下核心内容</div>
+      </div>
+      <div class="msg-row agent">
+        <div class="bubble">
+          <div>好的！已为你接入 2026 智源大会开幕式直播，正在实时听记中。以下是本次会议的听记卡片，点击可查看详细内容 👇</div>
+          <div class="agent-card">
+            <div class="card-kv-bar">
+              <span class="badge">已结束</span>
+            </div>
+            <div class="card-body-area">
+              <div class="card-body-title">2026 智源大会 — 开幕式与主论坛</div>
+              <div class="card-meta">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>2026年08月07日</span>
+                <span>·</span>
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <span>共 4 小时</span>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span style="font-size:12px;color:#6b7280;">6 章节 · AI 摘要、总结、转写</span>
+              <span class="btn-view-detail">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                查看详情
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <div class="chat-input-box">
+        <div class="chat-input-text">输入消息或关于听记的问题，输入 @ 选择专家...</div>
+        <div class="chat-input-footer">
+          <div class="send-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧详情页 -->
+  <div class="detail-panel">
+    <div class="detail-header">
+      <div class="detail-header-pos">
+        <button class="detail-title-btn" id="episodeBtn">
+          <span class="detail-title-text" id="episodeTitle">2026 智源大会 — 开幕式与主论坛</span>
+          <svg class="chevron" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="episode-menu" id="episodeMenu">
+          <div class="episode-item active" data-title="2026 智源大会 — 开幕式与主论坛">2026 智源大会 — 开幕式与主论坛</div>
+          <div class="episode-item" data-title="2026 智源大会 — 具身智能论坛">2026 智源大会 — 具身智能论坛</div>
+          <div class="episode-item" data-title="2026 智源大会 — 大模型论坛">2026 智源大会 — 大模型论坛</div>
+          <div class="episode-item" data-title="2026 智源大会 — AI Agent 论坛">2026 智源大会 — AI Agent 论坛</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" title="全屏">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </button>
+        <button class="icon-btn close" title="关闭">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <!-- 视频播放器 -->
+      <div class="video-section">
+        <div class="video-player">
+          <div class="video-screen">
+            <div class="live-badge"><span class="pulse-red"></span>已结束</div>
+            <div class="play-btn-center" id="playBtn">
+              <svg width="20" height="20" fill="#fff" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </div>
+          </div>
+          <div class="video-controls">
+            <button class="ctrl-btn" id="ctrlPlay">
+              <svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <div class="time-label" id="timeLabel">00:00:00 / 04:00:00</div>
+            <div class="progress-track" id="progressTrack">
+              <div class="progress-fill" id="progressFill" style="width:0%"></div>
+            </div>
+            <button class="ctrl-btn">
+              <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 章节卡片列表 -->
+      <div class="chapter-section">
+        <div class="chapter-cards-track" id="chapterCardsTrack">
+          <div class="chapter-card active" data-chapter="0">
+            <div class="card-top-row">
+              <span class="card-ts-anchor" data-secs="0">
+                <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                00:00:00
+              </span>
+            </div>
+            <div class="card-title-name">01. 智源大会开幕式与致辞</div>
+          </div>
+          <div class="chapter-card" data-chapter="1">
+            <div class="card-top-row">
+              <span class="card-ts-anchor" data-secs="2400">
+                <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                00:40:00
+              </span>
+            </div>
+            <div class="card-title-name">02. AGI与具身智能前沿趋势</div>
+          </div>
+          <div class="chapter-card" data-chapter="2">
+            <div class="card-top-row">
+              <span class="card-ts-anchor" data-secs="4800">
+                <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                01:20:00
+              </span>
+            </div>
+            <div class="card-title-name">03. 大模型范式与架构创新</div>
+          </div>
+          <div class="chapter-card" data-chapter="3">
+            <div class="card-top-row">
+              <span class="card-ts-anchor" data-secs="7200">
+                <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                02:00:00
+              </span>
+            </div>
+            <div class="card-title-name">04. 开源生态与 FlagOpen 2.0 重磅发布</div>
+          </div>
+          <div class="chapter-card" data-chapter="4">
+            <div class="card-top-row">
+              <span class="card-ts-anchor" data-secs="9600">
+                <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                02:40:00
+              </span>
+            </div>
+            <div class="card-title-name">05. 专家圆桌：AI 原生应用与具身智能</div>
+          </div>
+          <div class="chapter-card" data-chapter="5">
+            <div class="card-top-row">
+              <span class="card-ts-anchor" data-secs="12000">
+                <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                03:20:00
+              </span>
+            </div>
+            <div class="card-title-name">06. 闭幕致辞与人工智能愿景展望</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="detail-content">
+
+        <div class="drawer-tab-nav">
+          <button class="dtab active" data-tab="overview">AI摘要</button>
+          <button class="dtab" data-tab="summary">AI总结</button>
+          <button class="dtab" data-tab="media">AI素材包</button>
+          <button class="dtab" data-tab="transcript">AI速记</button>
+        </div>
+
+        <!-- AI摘要 -->
+        <div class="tab-pane active" id="pane-overview">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div class="style-drop-wrap">
+                <button class="style-btn" id="styleBtn1">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span id="styleLbl1">风格：默认通用</span>
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="style-drop-menu" id="styleDrop1">
+                  <div class="style-opt active" data-style="默认通用">默认通用 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <div class="style-opt" data-style="党政公文">党政公文</div>
+                  <div class="style-opt" data-style="科技前沿">科技前沿</div>
+                  <div class="style-opt" data-style="媒体新闻">媒体新闻</div>
+                </div>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button class="toolbar-btn" onclick="showToast('已复制全部内容')">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制全部
+              </button>
+              <button class="toolbar-btn" onclick="showToast('文档已下载')">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                下载文档
+              </button>
+            </div>
+          </div>
+
+          <div class="overview-card" style="background:linear-gradient(135deg,#eff6ff,#f0f9ff);border-color:#bfdbfe;">
+            <div class="block-hover-actions">
+              <button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <div class="bha-divider"></div>
+              <button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            </div>
+            <div class="oc-title" style="color:#1e40af;">
+              <svg width="16" height="16" fill="none" stroke="#1e40af" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              核心摘要 (Executive Summary)
+            </div>
+            <div class="oc-desc">2026 智源大会在北京隆重举办，全面聚焦 AGI 前沿探索、大模型范式演进与具身智能突破。智源研究院联合全球顶级学者与产业领袖呈现开幕致辞、前沿主旨演讲、AGI 领袖圆桌、FlagOpen 2.0 开源发布及 AI 原生应用研讨，全面引领大模型技术发展。</div>
+          </div>
+
+          <div class="overview-card" style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border-color:#fde68a;">
+            <div class="block-hover-actions">
+              <button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <div class="bha-divider"></div>
+              <button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            </div>
+            <div class="oc-title" style="color:#854d0e;">
+              <svg width="16" height="16" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              金句高亮 (Golden Quotes)
+            </div>
+            <div class="quote-grid">
+              <div class="quote-card">
+                <div class="quote-text">"Agent 不是替代人类的终点，而是人机协同、延伸人类智力边际的倍增器。"</div>
+                <div class="quote-footer"><span>核心观点 · 人机协同</span><span class="ts-tag" data-secs="2400">00:40:00</span></div>
+              </div>
+              <div class="quote-card">
+                <div class="quote-text">"从 Transformer 到自主 Agent，核心转变是从'语言概率预测'跨越到'环境感知与自主决策'。"</div>
+                <div class="quote-footer"><span>范式演进 · 核心定义</span><span class="ts-tag" data-secs="4800">01:20:00</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="overview-card">
+            <div class="block-hover-actions">
+              <button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <div class="bha-divider"></div>
+              <button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            </div>
+            <div class="oc-title">
+              <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 12h10M7 17h6"/></svg>
+              核心要点速览
+            </div>
+            <div class="insights-grid">
+              <div class="insight-card"><div class="insight-head"><span>🚀</span><span>范式本质跨越</span></div><div class="insight-desc">从无状态语言预测器跨越至具备环境感知与工具执行能力的自主主体。</div></div>
+              <div class="insight-card"><div class="insight-head"><span>🧩</span><span>四大核心架构</span></div><div class="insight-desc">LLM Brain 配合 Planning 规划、Memory 记忆、Tools 工具与 Action 执行。</div></div>
+              <div class="insight-card"><div class="insight-head"><span>🤖</span><span>具身智能突破</span></div><div class="insight-desc">VLA 模型与机械臂伺服结合，实现毫秒级物理世界响应，泛化能力显著提升。</div></div>
+              <div class="insight-card"><div class="insight-head"><span>🔓</span><span>FlagOpen 2.0</span></div><div class="insight-desc">重磅发布全栈开源体系，涵盖分布式训练、推理加速与多智能体协作框架。</div></div>
+            </div>
+          </div>
+
+          <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link">错误反馈</span></div>
+        </div>
+
+        <!-- AI总结 -->
+        <div class="tab-pane" id="pane-summary">
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <div class="style-drop-wrap">
+                <button class="style-btn" id="styleBtn2">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span id="styleLbl2">风格：默认通用</span>
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button class="toolbar-btn" onclick="showToast('已复制全部内容')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制全部</button>
+              <button class="toolbar-btn" onclick="showToast('文档已下载')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载文档</button>
+            </div>
+          </div>
+          <div class="summary-body">
+            <div class="sum-block">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="sum-h"><svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>一、核心概要</div>
+              <p>本期全面聚焦<strong>大模型向自主智能体演进的范式转移</strong>，以及<strong>具身智能与开源算力生态</strong>的深度融合。AI 正从静态语言预测模型，跨越至具备"感知-规划-行动-记忆"闭环能力的智能实体阶段。未来 3-5 年，具身智能与多模态 Agent 将重塑人机交互及产业自动化格局。</p>
+            </div>
+            <div class="sum-block">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="sum-h"><svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>二、Transformer 到 Agent 的本质跨越</div>
+              <p>Transformer 奠定了现代 LLM 基石，但传统模型本质是无状态文本概率预测器。当接入环境感知、长短期记忆与外部工具池时，模型完成了向自主 Agent 的进化。点击跳转：<span class="ts-tag" data-secs="0">00:00:00</span> 了解 Transformer 原理，<span class="ts-tag" data-secs="320">05:20</span> 聆听演进逻辑。</p>
+              <ul>
+                <li><strong>记忆系统</strong>：上下文工作记忆、短期推理暂存区（Scratchpad）以及向量数据库长期记忆（RAG）。</li>
+                <li><strong>规划与推理</strong>：思维链 CoT、ReAct 框架、思维树 ToT，实现多步骤任务自我分解与纠错。</li>
+              </ul>
+            </div>
+            <div class="sum-block">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="sum-h"><svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>三、具身智能的传感器闭环</div>
+              <p>VLA 模型与机械臂伺服控制结合，智能体能对三维空间物理属性做出毫秒级响应。点击跳转：<span class="ts-tag" data-secs="1115">18:35</span></p>
+              <ul>
+                <li><strong>空间感知与力反馈</strong>：整合深度相机、触觉传感器与点云数据，实现毫米级精密抓取。</li>
+                <li><strong>小样本微调</strong>：利用仿真环境合成数据，大幅缩短物理世界调优周期。</li>
+              </ul>
+            </div>
+            <div class="sum-block">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="sum-h"><svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>四、FlagOpen 2.0 开源生态</div>
+              <p>攻克异构算力集群训练并行度、KV Cache 动态内存压缩及低比特量化剪枝，显著降低智能体大规模部署推理成本。点击跳转：<span class="ts-tag" data-secs="2050">34:10</span></p>
+            </div>
+          </div>
+          <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link">错误反馈</span></div>
+        </div>
+
+        <!-- AI素材包 -->
+        <div class="tab-pane" id="pane-media">
+          <div class="media-section">
+            <div class="media-section-header">
+              <span>📄 新闻稿</span>
+              <button class="media-download-btn" onclick="event.stopPropagation(); showToast('全部新闻稿已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载全部</button>
+              <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+            <div class="media-grid">
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">AGI时代大模型范式转移新闻稿</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">FlagOpen 2.0 发布新闻稿</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">具身智能技术突破报道</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">智能体 Agent 架构解析新闻稿</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">多模态感知与决策高峰论坛报道</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">智源开源生态 2.0 新闻稿</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">LLM 推理加速与算力优化报道</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">AI 学术前沿与产业应用研讨新闻稿</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">具身机器人毫米级控制突破报道</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div><div class="media-card-body"><div class="media-card-title">2026智源大会闭幕成果总结新闻稿</div></div></div>
+            </div>
+          </div>
+          <div class="media-section">
+            <div class="media-section-header">
+              <span>✨ 金句图卡</span>
+              <button class="media-download-btn" onclick="event.stopPropagation(); showToast('全部图卡已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载全部</button>
+              <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+            <div class="media-grid">
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"Agent 是延伸智力边际的倍增器"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"从语言预测到环境感知与决策"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"通往 AGI 的物理世界关键桥梁"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"跨越传统无状态语言生成器"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"模型必须具备自我反思与矫正能力"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"异构算力集群训练与 KV Cache 动态压缩"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"空间感知与毫米级力反馈精密抓取"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"小样本微调缩短物理世界调优周期"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"全栈开源生态面向全球开发者开放"</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div><div class="media-card-body"><div class="media-card-title">"大模型范式转移与自主智能体演进"</div></div></div>
+            </div>
+          </div>
+          <div class="media-section">
+            <div class="media-section-header">
+              <span>🎬 视频切片</span>
+              <button class="media-download-btn" onclick="event.stopPropagation(); showToast('全部视频切片已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载全部</button>
+              <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+            <div class="media-grid">
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">01. 智源大会开幕致辞精华</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">02. AGI 前沿趋势与范式转移</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">03. 大模型智能体架构深度解析</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">04. 具身智能与多模态技术突破</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">05. 空间感知与毫米级力反馈</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">06. 领袖圆桌：环境感知与自主决策</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">07. FlagOpen 2.0 全栈开源发布</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">08. 异构算力与推理成本优化</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">09. 全球学者学术前沿碰撞</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div><div class="media-card-body"><div class="media-card-title">10. 大会闭幕与未来展望</div></div></div>
+            </div>
+          </div>
+          <div class="media-section">
+            <div class="media-section-header">
+              <span>🧠 思维导图</span>
+              <button class="media-download-btn" onclick="event.stopPropagation(); showToast('全部思维导图已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载全部</button>
+              <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+            <div class="media-grid">
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-mindmap"><div class="mock-mindmap-line"></div><div class="mock-mindmap-node center"></div><div class="mock-mindmap-node branch1"></div><div class="mock-mindmap-node branch2"></div></div></div><div class="media-card-body"><div class="media-card-title">智源大会 AGI 与智能体技术全景图</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-mindmap"><div class="mock-mindmap-line"></div><div class="mock-mindmap-node center"></div><div class="mock-mindmap-node branch1"></div><div class="mock-mindmap-node branch2"></div></div></div><div class="media-card-body"><div class="media-card-title">FlagOpen 2.0 开源生态架构图</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-mindmap"><div class="mock-mindmap-line"></div><div class="mock-mindmap-node center"></div><div class="mock-mindmap-node branch1"></div><div class="mock-mindmap-node branch2"></div></div></div><div class="media-card-body"><div class="media-card-title">具身智能与物理世界感知演进路径</div></div></div>
+            </div>
+          </div>
+          <div class="media-section">
+            <div class="media-section-header">
+              <span>🖼️ 宣发海报</span>
+              <button class="media-download-btn" onclick="event.stopPropagation(); showToast('全部宣发海报已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载全部</button>
+              <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+            <div class="media-grid">
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-poster"><div class="mock-poster-img"></div><div class="mock-poster-text"><div class="mock-poster-line title"></div><div class="mock-poster-line"></div></div></div></div><div class="media-card-body"><div class="media-card-title">2026智源大会重磅开幕主视觉海报</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-poster"><div class="mock-poster-img"></div><div class="mock-poster-text"><div class="mock-poster-line title"></div><div class="mock-poster-line"></div></div></div></div><div class="media-card-body"><div class="media-card-title">AGI前沿趋势与范式转移主题海报</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-poster"><div class="mock-poster-img"></div><div class="mock-poster-text"><div class="mock-poster-line title"></div><div class="mock-poster-line"></div></div></div></div><div class="media-card-body"><div class="media-card-title">具身智能技术突破精选海报</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-poster"><div class="mock-poster-img"></div><div class="mock-poster-text"><div class="mock-poster-line title"></div><div class="mock-poster-line"></div></div></div></div><div class="media-card-body"><div class="media-card-title">FlagOpen 2.0 开源生态发布海报</div></div></div>
+              <div class="media-card"><div class="block-hover-actions"><button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button><div class="bha-divider"></div><button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div><div class="media-thumb"><div class="mock-poster"><div class="mock-poster-img"></div><div class="mock-poster-text"><div class="mock-poster-line title"></div><div class="mock-poster-line"></div></div></div></div><div class="media-card-body"><div class="media-card-title">领袖圆桌专家金句精选海报</div></div></div>
+            </div>
+          </div>
+          <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link">错误反馈</span></div>
+        </div>
+
+        <!-- AI速记 -->
+        <div class="tab-pane" id="pane-transcript">
+          <div class="toolbar">
+            <div class="toolbar-left"></div>
+            <div class="toolbar-right">
+              <button class="toolbar-btn" onclick="showToast('已复制全部内容')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制全部</button>
+              <button class="toolbar-btn" onclick="showToast('文档已下载')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载文档</button>
+            </div>
+          </div>
+          <div class="transcript-list">
+            <div class="tr-row">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="tr-speaker"><span>王仲远（院长）</span><span class="ts-tag" data-secs="0">00:00:00</span></div>
+              <div class="tr-text">欢迎各位嘉宾与全球学者收看【2026 智源大会】！今天我们将共同探讨 AGI 前沿趋势、具身智能技术突破，并重磅发布 FlagOpen 2.0 开源生态...</div>
+            </div>
+            <div class="tr-row">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="tr-speaker"><span>黄铁军（理事长）</span><span class="ts-tag" data-secs="900">00:15:00</span></div>
+              <div class="tr-text">从底层代码与神经工程原理来看，大模型正在跨越传统无状态语言生成器，向具备感知、记忆、决策与工具执行能力的自主智能体全面演进...</div>
+            </div>
+            <div class="tr-row">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="tr-speaker"><span>张亚勤（特邀嘉宾）</span><span class="ts-tag" data-secs="2400">00:40:00</span></div>
+              <div class="tr-text">具身智能与多模态大模型的深度结合，将是通往 AGI 的物理世界关键桥梁。Agent 不是替代人类的终点，而是延伸智力边际的倍增器...</div>
+            </div>
+            <div class="tr-row">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="tr-speaker"><span>领袖圆桌嘉宾</span><span class="ts-tag" data-secs="4800">01:20:00</span></div>
+              <div class="tr-text">从 Transformer 范式到 Agent 范式，核心转变在于"环境感知"与"自主决策"。模型必须具备自我反思与矫正能力，才能处理复杂工程长链条...</div>
+            </div>
+            <div class="tr-row">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="tr-speaker"><span>智源开源团队</span><span class="ts-tag" data-secs="7200">02:00:00</span></div>
+              <div class="tr-text">重磅发布智源 FlagOpen 2.0 全栈开源体系！涵盖高性能分布式训练、推理加速与多智能体协作框架，面向全球开发者完全开放...</div>
+            </div>
+            <div class="tr-row">
+              <div class="block-hover-actions"><button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><div class="bha-divider"></div><button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button></div>
+              <div class="tr-speaker"><span>大会闭幕组</span><span class="ts-tag" data-secs="12000">03:20:00</span></div>
+              <div class="tr-text">感谢各位专家学者与线上线下听众的参与，2026 智源大会到此圆满闭幕！</div>
+            </div>
+          </div>
+          <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link">错误反馈</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== 章节数据集 =====
+  const CHAPTER_DATA = [
+    {
+      title: "01. 智源大会开幕式与致辞",
+      time: "00:00:00",
+      secs: 0,
+      overview: {
+        execSummary: "2026 智源大会在北京隆重举办，全面聚焦 AGI 前沿探索、大模型范式演进与具身智能突破。智源研究院联合全球顶级学者与产业领袖呈现开幕致辞、前沿主旨演讲、AGI 领袖圆桌、FlagOpen 2.0 开源发布及 AI 原生应用研讨，全面引领大模型技术发展。",
+        quotes: [
+          { text: "“AI 开源生态是推动全球通用人工智能创新与普惠的最强引擎。”", tag: "开幕致辞 · 生态建设", secs: 120, time: "00:02:00" },
+          { text: "“面对 AGI 浪潮，我们需要构建更加开放、包容且具建设性的国际学术交流机制。”", tag: "致辞要点 · 国际合作", secs: 600, time: "00:10:00" }
+        ],
+        insights: [
+          { icon: "🌐", title: "开源创新生态", desc: "深化全球开源协同，打造开放共享的大模型基础设施。" },
+          { icon: "🤝", title: "国际学术交流", desc: "汇聚顶尖AI科学家，共同应对通用人工智能安全与发展挑战。" },
+          { icon: "⚡", title: "产业赋能跃迁", desc: "推动大模型技术在医疗、制造、教育等实体经济领域的落地。" },
+          { icon: "🎯", title: "五年愿景展望", desc: "明确通用人工智能基础设施与开源评测体系的技术路线图。" }
+        ]
+      },
+      summary: [
+        { h: "一、开幕致辞核心要点", p: "智源研究院理事长代表主办方发表开幕致辞，强调了<strong>开源开放与学术交流</strong>在 AGI 时代的关键作用。过去一年，大模型研发已全面从单一模态向原生多模态与多智能体协同演进。", tags: [{secs: 180, label: "00:03:00"}] },
+        { h: "二、通用人工智能基础设施展望", p: "大会指出，未来算力与评测基础设施将是 AGI 发展的两大支柱。智源将持续迭代开源评测标准，打造业界公认的算法与模型能力度量衡。", tags: [{secs: 480, label: "00:08:00"}] }
+      ],
+      media: {
+        news: ["2026智源大会北京盛大开幕新闻稿", "开源生态与 AGI 发展愿景通稿"],
+        quotes: ["“开源生态是推动 AGI 普惠的最强引擎”", "“构建开放包容的国际 AI 交流机制”"],
+        videos: ["01. 智源大会开幕致辞精华", "02. 主办方致辞与开源愿景"],
+        transcripts: [
+          { time: "00:01:15", name: "大会主持人", text: "尊敬的各位来宾、线上所有的开发者朋友们，大家上午好！欢迎来到 2026 智源大会开幕式现场。" },
+          { time: "00:05:30", name: "智源研究院代表", text: "过去一年，通用人工智能的发展速度超乎想象。开源生态不仅加速了技术的普及，更为全球科研人员提供了平等的创新舞台。" }
+        ]
+      }
+    },
+    {
+      title: "02. AGI与具身智能前沿趋势",
+      time: "00:40:00",
+      secs: 2400,
+      overview: {
+        execSummary: "本章节重点探讨大模型向具身智能演进的范式转移。重点分析了三维空间物理感知、视觉-语言-动作 (VLA) 统一模型架构，以及毫米级力反馈伺服控制在实体机器人中的最新技术突破。",
+        quotes: [
+          { text: "“Agent 不是替代人类的终点，而是人机协同、延伸人类智力边际的倍增器。”", tag: "核心观点 · 人机协同", secs: 2400, time: "00:40:00" },
+          { text: "“具身智能的突破点在于将多模态语义理解直接转化为物理世界的精确控制。”", tag: "技术突破 · VLA模型", secs: 3000, time: "00:50:00" }
+        ],
+        insights: [
+          { icon: "🤖", title: "具身智能突破", desc: "VLA 模型与机械臂伺服结合，实现毫秒级物理世界响应。" },
+          { icon: "👁️", title: "多模态空间感知", desc: "整合深度相机、触觉传感器与点云数据，实现毫米级精密抓取。" },
+          { icon: "⚙️", title: "仿真微调加速", desc: "利用仿真环境合成数据，大幅缩短物理世界机器人调优周期。" },
+          { icon: "🧠", title: "感知决策闭环", desc: "从离线文本预测跨越至实时环境交互与自我纠错决策。" }
+        ]
+      },
+      summary: [
+        { h: "一、具身智能范式转移", p: "大模型正在从单纯的文本与图像理解，迈向能够理解物理规律、在三维空间中执行复杂任务的<strong>具身实体 (Embodied AI)</strong>。关键在于视觉-语言-动作 (VLA) 模型的高效融合。", tags: [{secs: 2520, label: "00:42:00"}] },
+        { h: "二、物理世界感知与决策闭环", p: "传感器力反馈与高频运动控制需要毫秒级响应。通过端到端的具身神经网络，机器人能够自主完成复杂装配与生活服务任务。", tags: [{secs: 3120, label: "00:52:00"}] }
+      ],
+      media: {
+        news: ["具身智能前沿趋势技术白皮书", "VLA 模型物理控制突破报道"],
+        quotes: ["“Agent 是延伸智力边际的倍增器”", "“将多模态语义直接转化为物理控制”"],
+        videos: ["03. 具身智能前沿演讲", "04. VLA 模型与机械臂演示"],
+        transcripts: [
+          { time: "00:40:15", name: "演讲嘉宾", text: "大家关心的具身智能，核心瓶颈在于如何让大模型拥有对物理规律的深度理解与毫米级的控制精度。" },
+          { time: "00:48:20", name: "特邀学者", text: "我们的实验表明，通过在合成仿真环境中进行强化学习，机器人在真实场景中的泛化提升了 400%。" }
+        ]
+      }
+    },
+    {
+      title: "03. 大模型范式与架构创新",
+      time: "01:20:00",
+      secs: 4800,
+      overview: {
+        execSummary: "顶级 AI 学者与架构师深入剖析了 Transformer 瓶颈、长上下文注意力计算优化、State Space Models (SSM) 新范式，以及基于思维链 (CoT) 与思维树 (ToT) 的 Agent 规划机制。",
+        quotes: [
+          { text: "“从 Transformer 到自主 Agent，核心转变是从'语言概率预测'跨越到'环境感知与自主决策'。”", tag: "范式演进 · 核心定义", secs: 4800, time: "01:20:00" },
+          { text: "“长上下文不仅是 Token 数量的增加，更是对知识关联与时序推理深度的考验。”", tag: "架构创新 · 上下文", secs: 5400, time: "01:30:00" }
+        ],
+        insights: [
+          { icon: "🚀", title: "范式本质跨越", desc: "从无状态语言预测器跨越至具备环境感知与工具执行能力的自主主体。" },
+          { icon: "🧩", title: "四大核心架构", desc: "LLM Brain 配合 Planning 规划、Memory 记忆、Tools 工具与 Action 执行。" },
+          { icon: "⚡", title: "KV Cache 压缩", desc: "稀疏注意力与动态剪枝大幅降低长文本推理内存开销。" },
+          { icon: "🌳", title: "思维树规划", desc: "多分支反思与搜索策略，显著提升复杂数学与逻辑推理正确率。" }
+        ]
+      },
+      summary: [
+        { h: "一、Transformer 到 Agent 的本质跨越", p: "传统模型本质是无状态文本概率预测器。当接入环境感知、长短期记忆与外部工具池时，模型完成了向自主 Agent 的进化。", tags: [{secs: 4860, label: "01:21:00"}] },
+        { h: "二、记忆与规划机制深度解析", p: "介绍了上下文工作记忆、暂存区 (Scratchpad) 以及向量数据库 RAG 长期记忆在多步骤复杂工作流中的调度策略。", tags: [{secs: 5580, label: "01:33:00"}] }
+      ],
+      media: {
+        news: ["AGI 时代大模型范式转移新闻稿", "智能体 Agent 架构解析研讨"],
+        quotes: ["“从语言预测到环境感知与决策”", "“长上下文是对推理能力的深层考验”"],
+        videos: ["05. 大模型范式演进演讲", "06. 领袖圆桌：架构创新讨论"],
+        transcripts: [
+          { time: "01:20:45", name: "圆桌主持人", text: "欢迎进入领袖圆桌环节。请问在座各位，Transformer 架构是否能直接带我们走向 AGI？" },
+          { time: "01:29:10", name: "架构专家", text: "我们需要在注意力机制之外寻找更有弹性的状态表达方式，Memory 和 System 2 慢思考机制至关重要。" }
+        ]
+      }
+    },
+    {
+      title: "04. 开源生态与 FlagOpen 2.0 发布",
+      time: "02:00:00",
+      secs: 7200,
+      overview: {
+        execSummary: "智源重磅发布 FlagOpen 2.0 全栈开源体系。涵盖千卡异构分布式训练框架 FlagScale、推理加速引擎 FlagInference，以及多智能体协同评测基准 FlagEval Agent。",
+        quotes: [
+          { text: "“FlagOpen 2.0 的使命是打破软硬件壁垒，让每一位开发者都能低门槛构建顶级 Agent。”", tag: "开源发布 · 核心宗旨", secs: 7200, time: "02:00:00" },
+          { text: "“异构算力兼容性是国产 AI 芯片繁荣发展的前提。”", tag: "系统架构 · 算力生态", secs: 7800, time: "02:10:00" }
+        ],
+        insights: [
+          { icon: "🔓", title: "FlagOpen 2.0", desc: "重磅发布全栈开源体系，涵盖分布式训练、推理加速与多智能体框架。" },
+          { icon: "💻", title: "异构芯片适配", desc: "无缝兼容主流 GPU 与国产 AI 算力芯片，实现高效并行调度。" },
+          { icon: "📊", title: "FlagEval 基准", desc: "全新 Agent 评测标准，从工具调用、逻辑推理及安全防御维度进行全面评估。" },
+          { icon: "🚀", title: "推理成本降80%", desc: "结合低比特量化与算子融合，显著提升大模型并发吞吐率。" }
+        ]
+      },
+      summary: [
+        { h: "一、FlagOpen 2.0 全栈开源矩阵", p: "FlagOpen 2.0 全面升级，包含数据处理、预训练、微调、推理加速及 Agent 评测的全链路开源工具，助力全球开发者。", tags: [{secs: 7320, label: "02:02:00"}] },
+        { h: "二、异构集群调度与推理优化", p: "攻克了异构算力集群训练并行度与 KV Cache 动态内存压缩，大幅降低企业级智能体部署运营成本。", tags: [{secs: 7920, label: "02:12:00"}] }
+      ],
+      media: {
+        news: ["FlagOpen 2.0 重磅发布官方新闻稿", "智源开源生态技术路线白皮书"],
+        quotes: ["“打破软硬件壁垒，降低 Agent 门槛”", "“异构算力兼容是芯片繁荣的前提”"],
+        videos: ["07. FlagOpen 2.0 发布会全程", "08. 开源基准 FlagEval 演示"],
+        transcripts: [
+          { time: "02:00:30", name: "开源项目负责人", text: "各位开发者，今天我们非常自豪地把 FlagOpen 2.0 完整呈现给大家！" },
+          { time: "02:11:00", name: "资深工程师", text: "在千卡混合算力测试中，FlagScale 实现了 85% 以上的超线性加速比。" }
+        ]
+      }
+    },
+    {
+      title: "05. 专家圆桌：AI 原生应用与具身智能",
+      time: "02:40:00",
+      secs: 9600,
+      overview: {
+        execSummary: "来自科技巨头与前沿初创企业的创始人围绕 AI 原生应用 (AI-Native Apps) 的商业化落地展开讨论。涵盖代码生成、智能助理、工业自动化与机器人终端的应用前景。",
+        quotes: [
+          { text: "“AI 原生应用绝不是给旧软件穿上 AI 套件，而是围绕 Agent 自主决策重构整个交互流程。”", tag: "产品思考 · 原生应用", secs: 9600, time: "02:40:00" },
+          { text: "“未来的应用入口不再是按钮与菜单，而是智能体的对话与自主协作。”", tag: "交互革新 · 未来UI", secs: 10200, time: "02:50:00" }
+        ],
+        insights: [
+          { icon: "💡", title: "重构交互范式", desc: "从手动点击菜单转向自然语言驱动的自主工作流。" },
+          { icon: "🏭", title: "工业与医疗落地", desc: "Agent 嵌入复杂业务系统，实现故障诊断与手术辅助。" },
+          { icon: "💼", title: "商业化路径探讨", desc: "按 Agent 解决实际问题的结果与价值付费，取代传统 SaaS 订阅。" },
+          { icon: "🔒", title: "安全与隐私保护", desc: "企业级 Agent 部署中的权限管控与数据沙箱隔离技术。" }
+        ]
+      },
+      summary: [
+        { h: "一、AI 原生应用落地方向", p: "专家一致认为，代码生成、文档总结与自动化客服是目前落地速度最快的三大场景。但在高价值业务链条中，仍需提高 Agent 的可解释性与确定性。", tags: [{secs: 9720, label: "02:42:00"}] },
+        { h: "二、商业模式与用户体验革新", p: "探讨了从传统 SaaS (软件即服务) 向 Service-as-a-Software (服务即软件) 的升级转型。", tags: [{secs: 10320, label: "02:52:00"}] }
+      ],
+      media: {
+        news: ["AI 原生应用产业落地案例集", "专家圆桌：Agent 商业化未来报道"],
+        quotes: ["“围绕 Agent 自主决策重构交互流程”", "“未来的入口是智能体对话与协作”"],
+        videos: ["09. AI 原生应用圆桌论坛", "10. 产业落地创新案例分享"],
+        transcripts: [
+          { time: "02:40:50", name: "圆桌嘉宾 A", text: "在我们的实际客户现场，部署 AI Agent 后，工作流处理效率提升了 5 倍以上。" },
+          { time: "02:54:15", name: "圆桌嘉宾 B", text: "难点在于如何让 Agent 在遇到确定性极高的业务规则时，不产生幻觉并严格遵守 SOP。" }
+        ]
+      }
+    },
+    {
+      title: "06. 闭幕致辞与人工智能愿景展望",
+      time: "03:20:00",
+      secs: 12000,
+      overview: {
+        execSummary: "2026 智源大会圆满闭幕。大会总结了通用人工智能领域的技术共识，并向全球学术与产业界共同发起《AI 安全、开放与可持续发展倡议书》，共同迎向通用人工智能新时代。",
+        quotes: [
+          { text: "“科技的终极意义在于增进人类福祉。在追求 AGI 速度的同时，安全与伦理不可或缺。”", tag: "闭幕致辞 · 科技向善", secs: 12000, time: "03:20:00" },
+          { text: "“感谢全球学者的倾情贡献，期待明年智源大会我们再次见证 AI 的奇迹爆发！”", tag: "总结展望 · 大会闭幕", secs: 12600, time: "03:30:00" }
+        ],
+        insights: [
+          { icon: "🏆", title: "大会成果汇总", desc: "发布 6 大重磅技术成果，吸引全球超百万开发者线上同步关注。" },
+          { icon: "📜", title: "安全发展倡议", desc: "联合发布全球 AI 治理准则，建立可追溯、可控制的 AI 框架。" },
+          { icon: "🌍", title: "全球协同网络", desc: "成立智源全球青年科学家创新基金，扶持顶尖 AGI 青年人才。" },
+          { icon: "🔮", title: "未来三年预测", desc: "预计 2028 年前实现复杂多模态物理世界通用自主 Agent。" }
+        ]
+      },
+      summary: [
+        { h: "一、大会成果全面复盘", p: "本届智源大会在 AGI 前沿、具身智能、开源矩阵 FlagOpen 2.0 及 AI 原生应用等四大主线取得了丰硕学术成果。", tags: [{secs: 12120, label: "03:22:00"}] },
+        { h: "二、安全与可持续发展倡议", p: "大会闭幕式上公布了安全伦理规范，强调全行业应携手应对数据安全、算法偏见与对齐挑战。", tags: [{secs: 12720, label: "03:32:00"}] }
+      ],
+      media: {
+        news: ["2026智源大会闭幕成果全景报道", "全球 AI 安全与发展倡议书通稿"],
+        quotes: ["“科技的终极意义在于增进人类福祉”", "“期待明年再次见证 AGI 爆发”"],
+        videos: ["11. 智源大会闭幕致辞", "12. 大会精彩集锦与未来展望"],
+        transcripts: [
+          { time: "03:20:20", name: "闭幕式主持人", text: "经过两天充实而热烈的讨论，2026 智源大会即将落下帷幕。" },
+          { time: "03:31:00", name: "大会主席", text: "感谢每一位远道而来的专家与线上朋友！让我们共同携手，开创通用人工智能的美好未来！" }
+        ]
+      }
+    }
+  ];
+
+  // ===== 播放器 =====
+  const TOTAL = 14400; // 4h
+  let cur = 0, playing = false, timer = null;
+
+  function hms(s) {
+    const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60);
+    return [h,m,ss].map(n=>String(n).padStart(2,'0')).join(':');
+  }
+
+  function updateUI() {
+    const pct = cur/TOTAL*100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('timeLabel').textContent = hms(cur) + ' / ' + hms(TOTAL);
+  }
+
+  function seekTo(s) { cur = Math.min(Math.max(s,0), TOTAL); updateUI(); }
+
+  const pauseIcon = '<svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  const playIcon = '<svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  const playIconLg = '<svg width="20" height="20" fill="#fff" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  const pauseIconLg = '<svg width="18" height="18" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+
+  function togglePlay() {
+    playing = !playing;
+    document.getElementById('ctrlPlay').innerHTML = playing ? pauseIcon : playIcon;
+    document.getElementById('playBtn').innerHTML = playing ? pauseIconLg : playIconLg;
+    if(playing) {
+      timer = setInterval(() => { if(cur>=TOTAL){playing=false;clearInterval(timer);return;} cur+=8; updateUI(); }, 400);
+    } else { clearInterval(timer); }
+  }
+
+  document.getElementById('playBtn').addEventListener('click', togglePlay);
+  document.getElementById('ctrlPlay').addEventListener('click', togglePlay);
+  document.getElementById('progressTrack').addEventListener('click', function(e) {
+    const r = this.getBoundingClientRect();
+    seekTo(Math.round((e.clientX-r.left)/r.width * TOTAL));
+  });
+
+  // ===== 渲染章节底部内容 =====
+  function renderChapterContent(idx) {
+    const data = CHAPTER_DATA[idx];
+    if(!data) return;
+
+    // 1. AI 摘要
+    const execDesc = document.querySelector('#pane-overview .oc-desc');
+    if(execDesc) execDesc.innerHTML = data.overview.execSummary;
+
+    const quoteGrid = document.querySelector('#pane-overview .quote-grid');
+    if(quoteGrid) {
+      quoteGrid.innerHTML = data.overview.quotes.map(q => `
+        <div class="quote-card">
+          <div class="quote-text">${q.text}</div>
+          <div class="quote-footer"><span>${q.tag}</span><span class="ts-tag" data-secs="${q.secs}">${q.time}</span></div>
+        </div>
+      `).join('');
+    }
+
+    const insightsGrid = document.querySelector('#pane-overview .insights-grid');
+    if(insightsGrid) {
+      insightsGrid.innerHTML = data.overview.insights.map(i => `
+        <div class="insight-card"><div class="insight-head"><span>${i.icon}</span><span>${i.title}</span></div><div class="insight-desc">${i.desc}</div></div>
+      `).join('');
+    }
+
+    // 2. AI 总结
+    const summaryBody = document.querySelector('#pane-summary .summary-body');
+    if(summaryBody) {
+      summaryBody.innerHTML = data.summary.map(s => `
+        <div class="sum-block">
+          <div class="block-hover-actions">
+            <button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+          </div>
+          <div class="sum-h">
+            <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            ${s.h}
+          </div>
+          <p>${s.p} ${s.tags ? s.tags.map(t=>`<span class="ts-tag" data-secs="${t.secs}">${t.label}</span>`).join(' ') : ''}</p>
+        </div>
+      `).join('') + `<div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link">错误反馈</span></div>`;
+
+      summaryBody.querySelectorAll('.sum-h').forEach(h => {
+        h.addEventListener('click', () => {
+          const block = h.closest('.sum-block');
+          if (block) block.classList.toggle('collapsed');
+        });
+      });
+      summaryBody.querySelectorAll('.fb-link').forEach(link => {
+        link.addEventListener('click', () => showToast('已收到您的错误反馈，感谢！'));
+      });
+    }
+
+    // 3. AI 素材包
+    const mediaNewsGrid = document.querySelectorAll('#pane-media .media-grid')[0];
+    if(mediaNewsGrid && data.media.news) {
+      mediaNewsGrid.innerHTML = data.media.news.map(title => `
+        <div class="media-card">
+          <div class="block-hover-actions">
+            <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+          </div>
+          <div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div>
+          <div class="media-card-body"><div class="media-card-title">${title}</div></div>
+        </div>
+      `).join('');
+    }
+
+    const mediaQuoteGrid = document.querySelectorAll('#pane-media .media-grid')[1];
+    if(mediaQuoteGrid && data.media.quotes) {
+      mediaQuoteGrid.innerHTML = data.media.quotes.map(title => `
+        <div class="media-card">
+          <div class="block-hover-actions">
+            <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+          </div>
+          <div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div>
+          <div class="media-card-body"><div class="media-card-title">${title}</div></div>
+        </div>
+      `).join('');
+    }
+
+    const mediaVideoGrid = document.querySelectorAll('#pane-media .media-grid')[2];
+    if(mediaVideoGrid && data.media.videos) {
+      mediaVideoGrid.innerHTML = data.media.videos.map(title => `
+        <div class="media-card">
+          <div class="block-hover-actions">
+            <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" title="下载" onclick="showToast('素材已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+          </div>
+          <div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div>
+          <div class="media-card-body"><div class="media-card-title">${title}</div></div>
+        </div>
+      `).join('');
+    }
+
+    // 4. AI 速记
+    const transcriptList = document.querySelector('#pane-transcript .transcript-list');
+    if(transcriptList && data.media.transcripts) {
+      transcriptList.innerHTML = data.media.transcripts.map(tr => `
+        <div class="tr-row">
+          <div class="block-hover-actions">
+            <button class="bha-btn" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+            <div class="bha-divider"></div>
+            <button class="bha-btn" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+          </div>
+          <div class="tr-speaker">
+            <span class="ts-tag" data-secs="${data.secs}">${tr.time}</span>
+            <span>${tr.name}</span>
+          </div>
+          <div class="tr-text">${tr.text}</div>
+        </div>
+      `).join('');
+    }
+
+    // 重新绑定页面中所有时间戳点击事件
+    document.querySelectorAll('.ts-tag').forEach(tag => {
+      tag.onclick = (e) => {
+        e.stopPropagation();
+        seekTo(+tag.dataset.secs);
+        showToast('视频已跳转至 ' + hms(+tag.dataset.secs));
+      };
+    });
+  }
+
+  // ===== 章节卡片事件绑定 =====
+  document.querySelectorAll('.chapter-card').forEach((card, idx) => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.chapter-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      renderChapterContent(idx);
+      showToast('已切换章节：' + CHAPTER_DATA[idx].title);
+    });
+  });
+
+  document.querySelectorAll('.card-ts-anchor').forEach(anchor => {
+    anchor.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const secs = +anchor.dataset.secs;
+      seekTo(secs);
+      showToast('视频已跳转至 ' + hms(secs));
+    });
+  });
+
+  // ===== Tabs =====
+  document.querySelectorAll('.dtab').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.dtab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-'+btn.dataset.tab).classList.add('active');
+  }));
+
+  // ===== 论坛下拉 =====
+  const episodeBtn = document.getElementById('episodeBtn');
+  const episodeMenu = document.getElementById('episodeMenu');
+  if(episodeBtn && episodeMenu) {
+    episodeBtn.addEventListener('click', () => {
+      episodeBtn.classList.toggle('open');
+      episodeMenu.classList.toggle('show');
+    });
+    document.querySelectorAll('.episode-item').forEach(item => item.addEventListener('click', () => {
+      document.querySelectorAll('.episode-item').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('episodeTitle').textContent = item.dataset.title;
+      episodeBtn.classList.remove('open'); episodeMenu.classList.remove('show');
+      showToast('已切换至：' + item.dataset.title);
+    }));
+    document.addEventListener('click', e => {
+      if(!episodeBtn.contains(e.target) && !episodeMenu.contains(e.target)) {
+        episodeBtn.classList.remove('open'); episodeMenu.classList.remove('show');
+      }
+    });
+  }
+
+  // ===== 风格下拉 =====
+  function initDrop(btnId, dropId, lblId) {
+    const btn = document.getElementById(btnId), drop = document.getElementById(dropId);
+    if(!btn||!drop) return;
+    btn.addEventListener('click', e => { e.stopPropagation(); drop.classList.toggle('open'); });
+    drop.querySelectorAll('.style-opt').forEach(opt => opt.addEventListener('click', e => {
+      e.stopPropagation();
+      drop.querySelectorAll('.style-opt').forEach(o => { o.classList.remove('active'); const sv=o.querySelector('svg'); if(sv) sv.remove(); });
+      opt.classList.add('active');
+      if(lblId) document.getElementById(lblId).textContent = '风格：' + opt.dataset.style;
+      drop.classList.remove('open');
+      showToast('风格已切换为：' + opt.dataset.style);
+    }));
+  }
+  initDrop('styleBtn1','styleDrop1','styleLbl1');
+  initDrop('styleBtn2',null,null);
+  document.addEventListener('click', () => document.querySelectorAll('.style-drop-menu').forEach(d=>d.classList.remove('open')));
+
+  // ===== Toast =====
+  let toastT;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    if(!t) return;
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  // ===== 收起/展开 =====
+  document.querySelectorAll('.media-section-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      if (e.target.closest('.media-download-btn')) return;
+      const sec = header.closest('.media-section');
+      if (sec) sec.classList.toggle('collapsed');
+    });
+  });
+
+  document.querySelectorAll('.sum-h').forEach(h => {
+    h.addEventListener('click', () => {
+      const block = h.closest('.sum-block');
+      if (block) block.classList.toggle('collapsed');
+    });
+  });
+
+  // ===== 错误反馈 =====
+  document.querySelectorAll('.fb-link').forEach(link => {
+    link.addEventListener('click', () => showToast('已收到您的错误反馈，感谢！'));
+  });
+
+  updateUI();
+  renderChapterContent(0);
+</script>
+</body>
+</html>

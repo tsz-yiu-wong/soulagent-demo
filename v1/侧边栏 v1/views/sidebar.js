@@ -91,7 +91,7 @@ function renderSidebar() {
               <div class="agent-avatar-badge create-badge">
                 <svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </div>
-              <span>新建智能体</span>
+              <span>新建AI分身</span>
             </div>
           </div>
         </div>
@@ -99,9 +99,9 @@ function renderSidebar() {
 
       <!-- 智能体二级菜单 -->
       <div class="agent-sub-nav">
-        <div class="sub-nav-item" style="display: ${profileDisplay};">
+        <div class="sub-nav-item ${state.currentView === 'profile' ? 'active' : ''}" style="display: ${profileDisplay};" onclick="openProfileView(event)">
           <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>智能体档案</span>
+          <span>档案中心</span>
         </div>
         <div class="sub-nav-item ${state.currentView === 'schedule' ? 'active' : ''}" onclick="openScheduleView(event)">
           <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -112,13 +112,13 @@ function renderSidebar() {
       <div class="divider"></div>
 
       <div class="nav-group">
-        <div class="nav-item-static ${isPlazaActive ? 'active' : ''}" onclick="openPlazaView(event)">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>专家AI分身</span>
-        </div>
         <div class="nav-item-static ${state.currentView === 'listen' ? 'active' : ''}" onclick="openListenView(event)">
           <svg class="icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2H3z"/></svg>
           <span>帮我听会</span>
+        </div>
+        <div class="nav-item-static ${isPlazaActive ? 'active' : ''}" onclick="openPlazaView(event)">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>AI分身广场</span>
         </div>
       </div>
 

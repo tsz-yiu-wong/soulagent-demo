@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>帮我听会</title>
+  <title>帮我听会 - SoulAgent</title>
   <style>
     * {
       box-sizing: border-box;
@@ -157,13 +157,6 @@
       display: flex;
       position: relative;
       overflow: hidden;
-    }
-
-    .main-wrapper.has-preview .page-view {
-      flex: 0 0 50%;
-      width: 50%;
-      max-width: 50%;
-      border-right: 1px solid #e5e7eb;
     }
 
     .page-view {
@@ -1011,6 +1004,217 @@
       transform: translateY(-1px);
     }
 
+    /* 论坛选择 Modal 弹窗 样式 */
+    .forum-select-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px 28px;
+      width: 620px;
+      max-width: 92vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.25);
+      border: 1px solid #e5e7eb;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .forum-modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .forum-modal-header-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .forum-modal-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .forum-modal-conf-tag {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .forum-modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.01em;
+    }
+
+    .forum-modal-subtitle {
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .forum-modal-close-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      border: none;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .forum-modal-close-btn:hover {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .forum-list-container {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 4px;
+      max-height: 54vh;
+    }
+
+    .forum-item-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .forum-item-card:hover {
+      background: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .forum-item-main {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .forum-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .forum-tag-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .forum-tag-pill.main-forum {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .forum-item-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+
+    .forum-item-details {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 12.5px;
+      color: #64748b;
+    }
+
+    .forum-detail-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .forum-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-select-forum {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    }
+
+    .forum-item-card:hover .btn-select-forum {
+      background: #1d4ed8;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-back-to-forum-list {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      margin-right: 8px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .btn-back-to-forum-list:hover {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #bfdbfe;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.1);
+    }
+
     /* Toast 全局通知提示 */
     .toast-notification {
       position: fixed;
@@ -1171,11 +1375,12 @@
       width: 100%;
     }
 
-    .chat-split-container.has-preview .chat-left-column,
-    .main-wrapper.has-preview .chat-left-column {
+    .chat-split-container.has-preview .chat-left-column {
       max-width: 100%;
       margin: 0;
-      width: 100%;
+      width: 50%;
+      flex: 0 0 50%;
+      border-right: 1px solid #e5e7eb;
       padding-right: 20px;
       padding-left: 20px;
     }
@@ -1298,7 +1503,6 @@
       z-index: 10;
     }
 
-    .main-wrapper.has-preview .chat-input-sticky-area,
     .chat-split-container.has-preview .chat-input-sticky-area {
       left: 20px;
       right: 20px;
@@ -1506,76 +1710,10 @@
       flex-direction: column;
       border-left: 1px solid #e5e7eb;
       animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
     }
 
-    .main-wrapper.has-preview .chat-right-preview-column,
     .chat-split-container.has-preview .chat-right-preview-column {
       display: flex;
-    }
-
-    /* 右侧抽屉底部固定问答输入框区域 */
-    .preview-drawer-input-area {
-      display: none;
-      padding: 12px 20px 16px;
-      background: #ffffff;
-      border-top: 1px solid #e5e7eb;
-      flex-shrink: 0;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .chat-right-preview-column.show-bottom-input .preview-drawer-input-area {
-      display: block;
-    }
-
-    .preview-input-box-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 7px 7px 7px 14px;
-      transition: all 0.2s ease;
-    }
-
-    .preview-input-box-wrapper:focus-within {
-      border-color: #2563eb;
-      background: #ffffff;
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
-    }
-
-    .preview-drawer-input {
-      flex: 1;
-      border: none;
-      outline: none;
-      background: transparent;
-      font-size: 13.5px;
-      color: #111827;
-    }
-
-    .preview-drawer-input::placeholder {
-      color: #9ca3af;
-    }
-
-    .preview-drawer-send-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      flex-shrink: 0;
-    }
-
-    .preview-drawer-send-btn:hover {
-      background: #1d4ed8;
-      transform: scale(1.05);
     }
 
     @keyframes slideInRight {
@@ -1642,6 +1780,14 @@
 
     .episode-dropdown-btn.active {
       background: #eff6ff;
+    }
+
+    .episode-dropdown-btn.disabled-dropdown {
+      cursor: default !important;
+      background: transparent !important;
+      border-color: transparent !important;
+      pointer-events: none !important;
+      padding-left: 0;
     }
 
     .drawer-title {
@@ -4117,17 +4263,15 @@
           </div>
 
         </div><!-- /chat-left-column -->
-      </div><!-- /chat-split-container -->
-    </main><!-- /page-new-chat -->
 
-    <!-- 右栏：修改2：50% 文件预览栏 (与左侧对话及广场列表平级，直属于 main-wrapper) -->
-    <aside class="chat-right-preview-column" id="preview-drawer">
+        <!-- 右栏：修改2：50% 文件预览栏 (与左侧对话及输入框平级) -->
+        <aside class="chat-right-preview-column" id="preview-drawer">
 
           <div class="drawer-header">
             <div class="drawer-header-left">
               <div class="episode-dropdown-container">
                 <button type="button" class="episode-dropdown-btn" id="episode-dropdown-btn" title="切换论坛">
-                  <h2 class="drawer-title" id="drawer-main-title">2026 智源大会开幕式</h2>
+                  <h2 class="drawer-title" id="drawer-main-title">2026 智源大会 - 开幕式与主论坛</h2>
                   <svg class="drawer-title-chevron" id="drawer-title-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.5">
                     <polyline points="6 9 12 15 18 9" />
@@ -6258,40 +6402,10 @@
 
             </div>
           </div>
-
-          <!-- 右侧抽屉底部固定问答输入框区域 -->
-          <div class="preview-drawer-input-area" id="preview-drawer-input-area">
-            <!-- 抽屉底部 引用 Tag Bar -->
-            <div id="preview-ref-doc-chip-bar" class="ref-doc-chip-bar" style="display: none; margin-bottom: 8px;">
-              <div class="ref-doc-chip">
-                <span class="ref-doc-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                </span>
-                <span class="ref-doc-content-preview" id="preview-ref-doc-content-preview">“引用的正文文本...”</span>
-                <span class="ref-doc-tag-label" id="preview-ref-doc-tag-label">总结</span>
-                <button type="button" class="ref-doc-close-btn" id="preview-ref-doc-close-btn" title="移除引用">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="preview-input-box-wrapper">
-              <input type="text" id="preview-drawer-input" class="preview-drawer-input" placeholder="针对本场内容问问Agent" autocomplete="off">
-              <button type="button" class="preview-drawer-send-btn" id="preview-drawer-send-btn" title="发送消息">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
         </aside><!-- /chat-right-preview-column -->
+
+      </div><!-- /chat-split-container -->
+    </main>
 
   </div><!-- /main-wrapper -->
 
@@ -6825,6 +6939,316 @@
       });
     }
 
+    // 行业峰会及多论坛数据配置
+    const CONFERENCE_FORUMS = {
+      '2026 智源大会': {
+        title: '2026 智源大会',
+        kv: 'kv-baai',
+        status: 'ended',
+        time: '2026年08月07日 - 08月08日',
+        source: '北京 · 中关村国家自主创新示范区展示中心',
+        forums: [
+          {
+            title: '2026 智源大会 - 开幕式与主论坛',
+            status: 'ended',
+            time: '2026年08月07日 09:00 - 12:00',
+            source: '主会场 · 大宴会厅',
+            tag: '主论坛',
+            speakers: '黄铁军、张宏江、Sam Altman、Yann LeCun 等'
+          },
+          {
+            title: '2026 智源大会 - 具身智能与机器人论坛',
+            status: 'ended',
+            time: '2026年08月07日 14:00 - 17:30',
+            source: '分会场 A · 中关村厅',
+            tag: '分论坛',
+            speakers: '王鹤、卢策吾、宋赵飞 等'
+          },
+          {
+            title: '2026 智源大会 - 大模型范式与架构创新论坛',
+            status: 'ended',
+            time: '2026年08月08日 09:00 - 12:00',
+            source: '分会场 B · 海淀厅',
+            tag: '分论坛',
+            speakers: '刘知远、孙茂松、林宙辰 等'
+          },
+          {
+            title: '2026 智源大会 - AI Agent 智能体前沿论坛',
+            status: 'ended',
+            time: '2026年08月08日 14:00 - 17:30',
+            source: '分会场 C · 创新厅',
+            tag: '分论坛',
+            speakers: '杨植麟、朱军、周明 等'
+          }
+        ]
+      },
+      '2026 WAIC': {
+        title: '2026 WAIC 全球人工智能大会',
+        kv: 'kv-waic',
+        status: 'ended',
+        time: '2026年07月04日 - 07月06日',
+        source: '上海 · 世博中心 / 世博展览馆',
+        forums: [
+          {
+            title: '2026 WAIC - 开幕式暨产业发展主论坛',
+            status: 'ended',
+            time: '2026年07月04日 09:00 - 12:00',
+            source: '世博中心红厅',
+            tag: '主论坛',
+            speakers: '全球科技领袖与院士专家'
+          },
+          {
+            title: '2026 WAIC - 科学智能 AI for Science 论坛',
+            status: 'ended',
+            time: '2026年07月05日 09:00 - 12:00',
+            source: '世博展览馆 1号会议室',
+            tag: '分论坛',
+            speakers: '诺奖得主与顶尖科学家'
+          },
+          {
+            title: '2026 WAIC - 自动驾驶与智能出行论坛',
+            status: 'ended',
+            time: '2026年07月05日 14:00 - 17:30',
+            source: '世博中心蓝厅',
+            tag: '分论坛',
+            speakers: '自动驾驶领军企业代表'
+          }
+        ]
+      },
+      '2026 GDEC': {
+        title: '2026 GDEC 全球数字经济大会',
+        kv: 'kv-gdec',
+        status: 'ended',
+        time: '2026年07月02日 - 07月05日',
+        source: '北京 · 国家会议中心',
+        forums: [
+          {
+            title: '2026 GDEC - 全球数字经济主论坛',
+            status: 'ended',
+            time: '2026年07月02日 09:30 - 12:00',
+            source: '国家会议中心大会堂',
+            tag: '主论坛',
+            speakers: '数字经济专家与政府领导'
+          },
+          {
+            title: '2026 GDEC - 人工智能创新应用论坛',
+            status: 'ended',
+            time: '2026年07月03日 14:00 - 17:00',
+            source: '301会议室',
+            tag: '分论坛',
+            speakers: 'AI企业CEO与技术负责人'
+          }
+        ]
+      }
+    };
+
+    function getConferenceByTitle(title) {
+      if (!title) return null;
+      for (let key in CONFERENCE_FORUMS) {
+        if (title.includes(key) || key.includes(title)) {
+          return CONFERENCE_FORUMS[key];
+        }
+      }
+      return null;
+    }
+
+    function getParentConfName(title) {
+      if (!title) return null;
+      for (let key in CONFERENCE_FORUMS) {
+        if (title.includes(key) || key.includes(title)) {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    let currentModalConference = null;
+
+    function openForumSelectModal(confData) {
+      currentModalConference = confData;
+      const modal = document.getElementById('forum-select-modal');
+      const confTime = document.getElementById('forum-modal-conf-time');
+      const confTitle = document.getElementById('forum-modal-title');
+      const confSubtitle = document.getElementById('forum-modal-subtitle');
+      const container = document.getElementById('forum-list-container');
+
+      if (!modal || !container) return;
+
+      if (confTitle) confTitle.textContent = confData.title;
+      if (confTime) confTime.textContent = confData.time;
+      if (confSubtitle) confSubtitle.textContent = `该峰会共有 ${confData.forums.length} 个论坛，请选择您具体想听的论坛：`;
+
+      container.innerHTML = '';
+
+      confData.forums.forEach((forum, index) => {
+        let badgeHtml = forum.status === 'in-progress'
+          ? `<span class="status-badge in-progress" style="font-size:11px;padding:2px 8px;position:relative;top:auto;left:auto;"><span class="pulse-dot"></span>进行中</span>`
+          : (forum.status === 'not-started'
+              ? `<span class="status-badge not-started" style="font-size:11px;padding:2px 8px;position:relative;top:auto;left:auto;">未开始</span>`
+              : `<span class="status-badge ended" style="font-size:11px;padding:2px 8px;position:relative;top:auto;left:auto;">已结束</span>`);
+
+        const isMain = forum.tag === '主论坛';
+        const tagPill = `<span class="forum-tag-pill ${isMain ? 'main-forum' : ''}">${forum.tag || '论坛'}</span>`;
+
+        const itemHtml = `
+          <div class="forum-item-card" data-forum-index="${index}">
+            <div class="forum-item-main">
+              <div class="forum-item-meta">
+                ${tagPill}
+                ${badgeHtml}
+              </div>
+              <div class="forum-item-title">${forum.title}</div>
+              <div class="forum-item-details">
+                <div class="forum-detail-row">
+                  <div class="forum-detail-item"><span>📅 ${forum.time}</span></div>
+                  <div class="forum-detail-item"><span>📍 ${forum.source}</span></div>
+                </div>
+                ${forum.speakers ? `<div class="forum-detail-item" style="color:#475569;margin-top:2px;"><span>👤 ${forum.speakers}</span></div>` : ''}
+              </div>
+            </div>
+            <button type="button" class="btn-select-forum">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+              <span>帮我听</span>
+            </button>
+          </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', itemHtml);
+      });
+
+      container.querySelectorAll('.forum-item-card').forEach(item => {
+        item.addEventListener('click', (e) => {
+          const idx = parseInt(item.getAttribute('data-forum-index'), 10);
+          const forum = confData.forums[idx];
+          if (!forum) return;
+
+          closeForumSelectModal();
+
+          triggerListeningChatFlow(
+            forum.title,
+            confData.kv,
+            forum.status,
+            forum.time,
+            `${forum.source}`,
+            false,
+            'favorite',
+            confData.title
+          );
+        });
+      });
+
+      modal.style.display = 'flex';
+    }
+
+    function getConferenceForums(card) {
+      if (!card) return null;
+      const title = card.getAttribute('data-title') || '';
+      const subtag = card.getAttribute('data-subtag') || '';
+
+      // 仅对行业峰会下的三大峰会（智源大会、WAIC、GDEC）触发论坛选择弹窗
+      if (subtag === 'summit' || title.includes('智源大会') || title.includes('WAIC') || title.includes('GDEC')) {
+        return getConferenceByTitle(title);
+      }
+
+      return null;
+    }
+
+    function openForumSelectModal(confData) {
+      currentModalConference = confData;
+      const modal = document.getElementById('forum-select-modal');
+      const headerInfo = document.getElementById('forum-modal-header-info');
+      const container = document.getElementById('forum-list-container');
+
+      if (!modal || !container) return;
+
+      if (headerInfo) {
+        headerInfo.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="forum-modal-title" style="font-size: 20px; font-weight: 700; color: #111827;">${confData.title}</div>
+          </div>
+          <div style="font-size: 13px; color: #64748b; margin-top: 6px; display: flex; flex-direction: column; gap: 3px;">
+            <div><span>${confData.time}</span></div>
+            <div><span>${confData.source}</span></div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = '';
+
+      confData.forums.forEach((forum, index) => {
+        let badgeHtml = forum.status === 'in-progress'
+          ? `<span class="status-badge in-progress" style="font-size:11px;padding:2px 7px;position:relative;top:auto;left:auto;"><span class="pulse-dot"></span>进行中</span>`
+          : (forum.status === 'not-started'
+              ? `<span class="status-badge not-started" style="font-size:11px;padding:2px 7px;position:relative;top:auto;left:auto;">未开始</span>`
+              : `<span class="status-badge ended" style="font-size:11px;padding:2px 7px;position:relative;top:auto;left:auto;">已结束</span>`);
+
+        const itemHtml = `
+          <div class="forum-item-card" data-forum-index="${index}">
+            <div class="forum-item-main">
+              <div class="forum-item-title-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="forum-item-title" style="font-size: 15px; font-weight: 600; color: #1e293b;">${forum.title}</span>
+                ${badgeHtml}
+              </div>
+              <div class="forum-item-details" style="margin-top: 5px;">
+                <div class="forum-detail-row">
+                  <div class="forum-detail-item"><span>📅 ${forum.time}</span></div>
+                  <div class="forum-detail-item"><span>📍 ${forum.source}</span></div>
+                </div>
+                ${forum.speakers ? `<div class="forum-detail-item" style="color:#475569;margin-top:2px;"><span>👤 ${forum.speakers}</span></div>` : ''}
+              </div>
+            </div>
+            <button type="button" class="btn-select-forum">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+              <span>帮我听</span>
+            </button>
+          </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', itemHtml);
+      });
+
+      container.querySelectorAll('.forum-item-card').forEach(item => {
+        item.addEventListener('click', (e) => {
+          const idx = parseInt(item.getAttribute('data-forum-index'), 10);
+          const forum = confData.forums[idx];
+          if (!forum) return;
+
+          closeForumSelectModal();
+
+          triggerListeningChatFlow(
+            forum.title,
+            confData.kv,
+            forum.status,
+            forum.time,
+            `${forum.source}`,
+            false,
+            'favorite',
+            confData.title
+          );
+        });
+      });
+
+      modal.style.display = 'flex';
+    }
+
+    function closeForumSelectModal() {
+      const modal = document.getElementById('forum-select-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    // 绑定论坛 Modal 关闭按钮与点击遮罩逻辑
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#close-forum-modal-btn')) {
+        closeForumSelectModal();
+        return;
+      }
+      const forumModal = document.getElementById('forum-select-modal');
+      if (forumModal && e.target === forumModal) {
+        closeForumSelectModal();
+        return;
+      }
+    });
+
     // 点击广场卡片 / 悬浮按钮 / 收藏按钮 / 删除按钮
     document.addEventListener('click', (e) => {
       const delBtn = e.target.closest('.hover-delete-btn-topleft');
@@ -6851,12 +7275,21 @@
         const status = card.getAttribute('data-status') || 'ended';
         const time = card.getAttribute('data-time') || '2026年';
         const source = card.getAttribute('data-source') || '线上直播';
-        openPreviewDrawer(title, status, true, kvClass, time, source);
+
+        const confData = getConferenceForums(card);
+        if (confData && confData.forums && confData.forums.length > 0) {
+          openForumSelectModal(confData);
+        } else {
+          triggerListeningChatFlow(title, kvClass, status, time, source, false);
+        }
       }
     });
 
+    let currentParentConference = null;
+
     // 触发听记对话工作流 (isPersonalAdd 表示是否同步写入「我的会议」)
-    function triggerListeningChatFlow(title, kvClass, status, time, source, isPersonalAdd = false, mySubTag = 'favorite') {
+    function triggerListeningChatFlow(title, kvClass, status, time, source, isPersonalAdd = false, mySubTag = 'favorite', parentConference = null) {
+      currentParentConference = parentConference || getParentConfName(title);
       switchView('chat', true);
       closePreviewDrawer();
 
@@ -6902,7 +7335,7 @@
         const typingElem = document.getElementById(typingId);
         if (typingElem) typingElem.remove();
 
-        let agentNoticeText = '正在为您读取并整理该活动的听记信息...';
+        let agentNoticeText = `正在为您读取并整理【${title}】的听记信息...`;
         if (isPersonalAdd) {
           agentNoticeText = '已成功提取音视频内容，并为您生成听记摘要！该记录已<b>同步加入「我的会议」</b>，您可以随时在广场的「我的会议」Tab中点击查看。以下是听记卡片：';
         }
@@ -6928,20 +7361,23 @@
           }
 
           const agentMsgId = 'agent-card-' + Date.now();
+          const cardMainTitle = parentConference || title;
+          const isSubForum = parentConference && (title !== parentConference);
+
           const cardHtml = `
             <div class="agent-summary-card" id="${agentMsgId}" style="animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
               <div class="card-header-bar ${kvClass}">
                 ${statusBadgeHtml}
               </div>
               <div class="card-body" style="padding: 14px 16px 10px;">
-                <div class="card-title" style="font-size: 15px;">${title}</div>
-                <div class="card-info-list" style="font-size: 12.5px;">
+                <div class="card-title" style="font-size: 15.5px; font-weight: 700;">${cardMainTitle}</div>
+                <div class="card-info-list" style="font-size: 12.5px; margin-top: 4px;">
                   <div class="info-item"><span>📅 ${time}</span></div>
                   <div class="info-item"><span>📍 ${source}</span></div>
                 </div>
               </div>
               <div class="card-action-footer">
-                <span style="font-size: 12px; color: #64748b;"> </span>
+                <span style="font-size: 12px; color: #64748b;">${isSubForum ? '已选论坛听记' : '会议听记卡片'}</span>
                 <div class="btn-view-detail">
                   <span>查看听记详情</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -6956,7 +7392,7 @@
             const cardElem = document.getElementById(agentMsgId);
             if (cardElem) {
               cardElem.addEventListener('click', () => {
-                openPreviewDrawer(title, status);
+                openPreviewDrawer(title, status, currentParentConference);
               });
             }
           }
@@ -6964,7 +7400,7 @@
 
           // 【阶段 3】：然后再过 0.5 秒 (500ms)，弹出右边半窗
           setTimeout(() => {
-            openPreviewDrawer(title, status);
+            openPreviewDrawer(title, status, currentParentConference);
           }, 500);
 
         }, 500);
@@ -7429,17 +7865,12 @@
       }
     }
 
-    let currentPreviewCardContext = null;
-
-    function openPreviewDrawer(title, status = 'ended', fromList = false, kvClass = 'kv-baai', time = '', source = '') {
+    function openPreviewDrawer(title, status = 'ended', parentConf = null) {
       userClosedFloat = false;
       disableVideoFloat(false);
-
-      currentPreviewCardContext = { title, status, kvClass, time, source };
-
       let displayTitle = title;
       if (title === '2026 智源大会') {
-        displayTitle = '2026 智源大会开幕式';
+        displayTitle = '2026 智源大会 - 开幕式与主论坛';
       }
       if (!/^\d+期|第\d+期/.test(displayTitle) && title.includes('【硬核AI】')) {
         displayTitle = `35期 - ${title}`;
@@ -7448,173 +7879,17 @@
       if (drawerTitle) drawerTitle.textContent = displayTitle;
       const floatHeaderTitle = document.getElementById('float-header-title');
       if (floatHeaderTitle) floatHeaderTitle.textContent = displayTitle;
-
-      const mainWrapper = document.querySelector('.main-wrapper');
-      if (mainWrapper) mainWrapper.classList.add('has-preview');
       if (chatSplitContainer) chatSplitContainer.classList.add('has-preview');
 
-      const previewDrawer = document.getElementById('preview-drawer');
-      if (previewDrawer) {
-        if (fromList) {
-          previewDrawer.classList.add('show-bottom-input');
-        } else {
-          previewDrawer.classList.remove('show-bottom-input');
-        }
-      }
+      updateDrawerHeaderDropdown(displayTitle, parentConf);
 
-      if (previewRefDocChipBar) previewRefDocChipBar.style.display = 'none';
-      if (previewInput) previewInput.placeholder = '针对本场内容问问Agent';
-
-      updateDrawerHeaderDropdown(title);
       renderDrawerStatusContent(status);
     }
 
     function closePreviewDrawer() {
       disableVideoFloat(false);
       toggleFullscreen(false);
-      const mainWrapper = document.querySelector('.main-wrapper');
-      if (mainWrapper) mainWrapper.classList.remove('has-preview');
       if (chatSplitContainer) chatSplitContainer.classList.remove('has-preview');
-      const previewDrawer = document.getElementById('preview-drawer');
-      if (previewDrawer) previewDrawer.classList.remove('show-bottom-input');
-      if (previewRefDocChipBar) previewRefDocChipBar.style.display = 'none';
-      if (previewInput) previewInput.placeholder = '针对本场内容问问Agent';
-    }
-
-    function sendFromPreviewDrawer() {
-      const inputEl = document.getElementById('preview-drawer-input');
-      if (!inputEl) return;
-      const text = inputEl.value.trim();
-      if (!text) return;
-
-      const context = currentPreviewCardContext || { title: '活动听记', status: 'ended', kvClass: 'kv-baai', time: '2026年', source: '线上会议' };
-      const { title, status, kvClass, time, source } = context;
-
-      // 检查是否有引用内容
-      let quoteHtml = '';
-      if (previewRefDocChipBar && previewRefDocChipBar.style.display !== 'none') {
-        quoteHtml = `<div style="font-size: 12.5px; background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px; margin-bottom: 4px; border-left: 2px solid #ffffff;">📌 ${previewRefDocContentPreview.textContent}</div>`;
-        previewRefDocChipBar.style.display = 'none';
-        inputEl.placeholder = '针对本场内容问问Agent';
-      }
-
-      // 1. 切换左半屏为对话页面
-      switchView('chat', true);
-
-      // 2. 右侧抽屉保持显示，但隐藏底部输入框
-      const previewDrawer = document.getElementById('preview-drawer');
-      if (previewDrawer) previewDrawer.classList.remove('show-bottom-input');
-
-      const messagesContainer = document.getElementById('chat-messages-container');
-      if (messagesContainer) {
-        messagesContainer.innerHTML = ''; // 清空新建对话
-      }
-
-      // 新增侧边栏历史对话
-      addHistoryConversation(title);
-
-      // 3. 插入两条 User Message (复用原有的 agent-summary-card 卡片结构)
-      let statusBadgeHtml = `<span class="status-badge ended">已结束</span>`;
-      if (status === 'in-progress') {
-        statusBadgeHtml = `<span class="status-badge in-progress"><span class="pulse-dot"></span>进行中</span>`;
-      } else if (status === 'not-started') {
-        statusBadgeHtml = `<span class="status-badge not-started">未开始</span>`;
-      }
-
-      const cardMsgHtml = `
-        <div class="chat-message-row user">
-          <div class="agent-summary-card" onclick="openPreviewDrawer('${title}', '${status}', false, '${kvClass}', '${time}', '${source}')" style="max-width: 380px; width: 100%;">
-            <div class="card-header-bar ${kvClass}">
-              ${statusBadgeHtml}
-            </div>
-            <div class="card-body" style="padding: 14px 16px 10px; text-align: left;">
-              <div class="card-title" style="font-size: 15px;">${title}</div>
-              <div class="card-info-list" style="font-size: 12.5px;">
-                <div class="info-item"><span>📅 ${time || '2026年'}</span></div>
-                <div class="info-item"><span>📍 ${source || '线上直播'}</span></div>
-              </div>
-            </div>
-            <div class="card-action-footer">
-              <span style="font-size: 12px; color: #64748b;"> </span>
-              <div class="btn-view-detail">
-                <span>查看听记详情</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      const textMsgHtml = `
-        <div class="chat-message-row user">
-          <div class="chat-bubble">${quoteHtml}${text}</div>
-        </div>
-      `;
-
-      if (messagesContainer) {
-        messagesContainer.insertAdjacentHTML('beforeend', cardMsgHtml);
-        messagesContainer.insertAdjacentHTML('beforeend', textMsgHtml);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-
-      inputEl.value = '';
-
-      // 4. 触发 Agent 思考与解答
-      const typingId = 'typing-msg-' + Date.now();
-      const typingHtml = `
-        <div class="chat-message-row agent" id="${typingId}">
-          <div class="chat-bubble" style="display: flex; align-items: center; gap: 8px; color: #6b7280; font-size: 13.5px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" style="animation: spin 1s linear infinite;">
-              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-              <path d="M12 2 a 10 10 0 0 1 10 10" stroke-linecap="round"></path>
-            </svg>
-            <span>Agent 正在针对《${title}》分析并思考您的提问...</span>
-          </div>
-        </div>
-      `;
-      if (messagesContainer) {
-        messagesContainer.insertAdjacentHTML('beforeend', typingHtml);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-
-      setTimeout(() => {
-        const typingElem = document.getElementById(typingId);
-        if (typingElem) typingElem.remove();
-
-        const agentAnswerHtml = `
-          <div class="chat-message-row agent">
-            <div class="chat-bubble" style="animation: fadeIn 0.3s ease;">
-              <p style="margin-bottom: 8px; font-weight: 600; color: #1e293b;">关于《${title}》的提问解答：</p>
-              <p style="color: #334155; line-height: 1.6;">针对您提出的“<b>${text}</b>”，结合本场精彩听记与整理总结：</p>
-              <ul style="margin: 8px 0 8px 18px; color: #475569; display: flex; flex-direction: column; gap: 6px;">
-                <li><b>核心突破：</b> 本次发布/会议重点展示了在大模型与具身智能架构上的最新研发成果，性能大幅提升。</li>
-                <li><b>关键亮点：</b> 团队打通了端到端推理闭环，并在多个实际场景中实现了工业级落地与开源生态构建。</li>
-                <li><b>专家观点：</b> 嘉宾强调了数据质量与算法协同的重要性，预示着下一代 AI 基础设施的新趋势。</li>
-              </ul>
-              <p style="color: #64748b; font-size: 13px; margin-top: 6px;">您可以继续在左下方输入框询问更多关于本场听记的细节或生成定制报告。</p>
-            </div>
-          </div>
-        `;
-        if (messagesContainer) {
-          messagesContainer.insertAdjacentHTML('beforeend', agentAnswerHtml);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }, 1000);
-    }
-
-    const previewSendBtn = document.getElementById('preview-drawer-send-btn');
-    if (previewSendBtn) {
-      previewSendBtn.addEventListener('click', sendFromPreviewDrawer);
-    }
-
-    const previewInput = document.getElementById('preview-drawer-input');
-    if (previewInput) {
-      previewInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendFromPreviewDrawer();
-        }
-      });
     }
 
     if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closePreviewDrawer);
@@ -7831,7 +8106,20 @@
           const text = clone.innerText.trim();
 
           if (text) {
-            applyCitation(text, getActiveDrawerTabName());
+            toggleFullscreen(false);
+
+            if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
+              refDocContentPreview.textContent = `“${text}”`;
+              refDocTagLabel.textContent = getActiveDrawerTabName();
+              refDocChipBar.style.display = 'flex';
+            }
+
+            switchView('chat');
+            if (chatTextarea) {
+              chatTextarea.focus();
+              chatTextarea.placeholder = '针对引用的内容提问...';
+            }
+            showToast('已放入对话引用');
           }
         }
         return;
@@ -7846,10 +8134,6 @@
     const refDocContentPreview = document.getElementById('ref-doc-content-preview');
     const refDocTagLabel = document.getElementById('ref-doc-tag-label');
     const refDocCloseBtn = document.getElementById('ref-doc-close-btn');
-    const previewRefDocChipBar = document.getElementById('preview-ref-doc-chip-bar');
-    const previewRefDocContentPreview = document.getElementById('preview-ref-doc-content-preview');
-    const previewRefDocTagLabel = document.getElementById('preview-ref-doc-tag-label');
-    const previewRefDocCloseBtn = document.getElementById('preview-ref-doc-close-btn');
     const chatTextarea = document.getElementById('chat-textarea');
 
     let currentSelectedSnippet = '';
@@ -7882,39 +8166,6 @@
       return activeBtn ? activeBtn.textContent.trim() : '总结';
     }
 
-    function applyCitation(text, tagLabel = '总结') {
-      const previewDrawer = document.getElementById('preview-drawer');
-      const hasDrawerBottomInput = previewDrawer && previewDrawer.classList.contains('show-bottom-input');
-
-      if (hasDrawerBottomInput) {
-        // 详情页底部有输入框时：在详情页底部的聊天框上方出引用，左侧保持列表页不切换
-        if (previewRefDocChipBar && previewRefDocContentPreview && previewRefDocTagLabel) {
-          previewRefDocContentPreview.textContent = `“${text}”`;
-          previewRefDocTagLabel.textContent = tagLabel;
-          previewRefDocChipBar.style.display = 'flex';
-        }
-        if (previewInput) {
-          previewInput.focus();
-          previewInput.placeholder = '针对引用的内容问问Agent...';
-        }
-        showToast('已放入底部提问引用');
-      } else {
-        // 只有左边是对话框时：强制切回半屏，展现左侧对话与输入框，在左边输入框上方出引用
-        toggleFullscreen(false);
-        if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
-          refDocContentPreview.textContent = `“${text}”`;
-          refDocTagLabel.textContent = tagLabel;
-          refDocChipBar.style.display = 'flex';
-        }
-        switchView('chat');
-        if (chatTextarea) {
-          chatTextarea.focus();
-          chatTextarea.placeholder = '针对引用的内容提问...';
-        }
-        showToast('已放入对话引用');
-      }
-    }
-
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
         if (currentSelectedSnippet) {
@@ -7932,8 +8183,20 @@
     if (citeBtn) {
       citeBtn.addEventListener('click', () => {
         popover.style.display = 'none';
-        if (currentSelectedSnippet) {
-          applyCitation(currentSelectedSnippet, getActiveDrawerTabName());
+
+        // 点引用强制切回半屏，展现左侧对话与输入框
+        toggleFullscreen(false);
+
+        if (refDocChipBar && refDocContentPreview && refDocTagLabel) {
+          refDocContentPreview.textContent = `“${currentSelectedSnippet}”`;
+          refDocTagLabel.textContent = getActiveDrawerTabName();
+          refDocChipBar.style.display = 'flex';
+        }
+
+        switchView('chat');
+        if (chatTextarea) {
+          chatTextarea.focus();
+          chatTextarea.placeholder = '针对引用的内容提问...';
         }
         window.getSelection().removeAllRanges();
       });
@@ -7943,13 +8206,6 @@
       refDocCloseBtn.addEventListener('click', () => {
         refDocChipBar.style.display = 'none';
         if (chatTextarea) chatTextarea.placeholder = '输入消息或关于听记的问题，输入 @ 选择专家...';
-      });
-    }
-
-    if (previewRefDocCloseBtn && previewRefDocChipBar) {
-      previewRefDocCloseBtn.addEventListener('click', () => {
-        previewRefDocChipBar.style.display = 'none';
-        if (previewInput) previewInput.placeholder = '针对本场内容问问Agent';
       });
     }
 
@@ -8222,6 +8478,10 @@
     if (epDropdownBtn && epDropdownMenu) {
       epDropdownBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (epDropdownBtn.classList.contains('disabled-dropdown')) return;
+        const epItems = epDropdownMenu.querySelectorAll('.episode-item');
+        if (epItems.length <= 1) return;
+
         const isOpen = epDropdownMenu.classList.contains('show');
         if (isOpen) {
           epDropdownMenu.classList.remove('show');
@@ -8240,23 +8500,28 @@
       });
     }
 
-    function updateDrawerHeaderDropdown(title) {
+    function updateDrawerHeaderDropdown(title, parentConf = null) {
       const epBtn = document.getElementById('episode-dropdown-btn');
       const epMenu = document.getElementById('episode-dropdown-menu');
       const chevron = document.getElementById('drawer-title-chevron');
       if (!epBtn || !epMenu) return;
 
-      if (title.includes('智源大会')) {
+      const confKey = parentConf || getParentConfName(title);
+      if (confKey && CONFERENCE_FORUMS[confKey] && CONFERENCE_FORUMS[confKey].forums.length > 1) {
+        const confData = CONFERENCE_FORUMS[confKey];
         epBtn.setAttribute('title', '切换论坛');
-        epMenu.innerHTML = `
-          <div class="episode-item active" data-title="2026 智源大会开幕式">2026 智源大会开幕式</div>
-          <div class="episode-item" data-title="2026 智源大会具身智能论坛">2026 智源大会具身智能论坛</div>
-          <div class="episode-item" data-title="2026 智源大会大模型论坛">2026 智源大会大模型论坛</div>
-          <div class="episode-item" data-title="2026 智源大会 AI Agent 论坛">2026 智源大会 AI Agent 论坛</div>
-        `;
+        epBtn.classList.remove('disabled-dropdown');
+
+        let menuHtml = '';
+        confData.forums.forEach(forum => {
+          const isActive = (forum.title === title) ? 'active' : '';
+          menuHtml += `<div class="episode-item ${isActive}" data-title="${forum.title}">${forum.title}</div>`;
+        });
+        epMenu.innerHTML = menuHtml;
         if (chevron) chevron.style.display = 'inline-block';
       } else if (title.includes('硅谷101')) {
         epBtn.setAttribute('title', '切换期数');
+        epBtn.classList.remove('disabled-dropdown');
         epMenu.innerHTML = `
           <div class="episode-item active" data-title="【硅谷101】对话大模型具身智能新前沿">第128期 - 对话大模型具身智能新前沿</div>
           <div class="episode-item" data-title="【硅谷101】AI Hardware 硬件革命">第127期 - AI Hardware 硬件革命</div>
@@ -8265,6 +8530,7 @@
         if (chevron) chevron.style.display = 'inline-block';
       } else if (title.includes('硬核AI')) {
         epBtn.setAttribute('title', '切换期数');
+        epBtn.classList.remove('disabled-dropdown');
         epMenu.innerHTML = `
           <div class="episode-item active" data-title="35期 - 【硬核AI】从 Transformer 到 Agent 的进化之路">35期 - 从 Transformer 到 Agent</div>
           <div class="episode-item" data-title="34期 - 【硬核AI】LLM 训练与推理优化">34期 - LLM 训练与推理优化</div>
@@ -8272,6 +8538,7 @@
         if (chevron) chevron.style.display = 'inline-block';
       } else {
         epBtn.setAttribute('title', title);
+        epBtn.classList.add('disabled-dropdown');
         epMenu.innerHTML = `<div class="episode-item active" data-title="${title}">${title}</div>`;
         if (chevron) chevron.style.display = 'none';
       }
@@ -8346,6 +8613,29 @@
     }
   </script>
 
+  <!-- 论坛选择 Modal 弹窗 -->
+  <div id="forum-select-modal" class="modal-overlay" style="display: none;">
+    <div class="forum-select-card">
+      <div class="forum-modal-header">
+        <div class="forum-modal-header-info" id="forum-modal-header-info">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="forum-modal-title" style="font-size: 20px; font-weight: 700; color: #111827;">2026 智源大会</div>
+          </div>
+          <div style="font-size: 13px; color: #64748b; margin-top: 6px; display: flex; flex-direction: column; gap: 3px;">
+            <div>2026年08月07日 - 08月08日</div>
+            <div>北京 · 中关村国家自主创新示范区展示中心</div>
+          </div>
+        </div>
+        <button type="button" class="forum-modal-close-btn" id="close-forum-modal-btn" title="关闭">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="forum-list-container" id="forum-list-container">
+        <!-- JS 动态渲染论坛列表 -->
+      </div>
+    </div>
+  </div>
+
   <!-- 删除二次确认 Modal 弹窗 -->
   <div id="delete-confirm-modal" class="modal-overlay" style="display: none;">
     <div class="modal-card">
@@ -8371,34 +8661,4 @@
   </div>
 </body>
 
-</html
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          
-
-          >
+</html>

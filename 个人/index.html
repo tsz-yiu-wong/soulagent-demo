@@ -306,44 +306,116 @@
       padding-top: 8px;
     }
 
-    .range-input-group {
+    /* Calendar Grid */
+    .calendar-container {
       display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 4px;
-    }
-
-    .popover-date-input {
-      background: #f8fafc;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 3px 5px;
-      font-size: 10px;
+      font-size: 12px;
+      font-weight: 700;
       color: var(--text-main);
-      outline: none;
-      width: 105px;
+      padding: 0 4px;
     }
-
-    .popover-date-input:focus {
-      border-color: var(--accent-blue);
-      background: #ffffff;
+    
+    .calendar-header button {
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: all 0.2s;
     }
-
-    .range-arrow {
+    
+    .calendar-header button:active {
+      background: #e2e8f0;
+      transform: scale(0.95);
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      text-align: center;
+    }
+    
+    .cal-day-header {
       font-size: 10px;
       color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    
+    .cal-date {
+      font-size: 11px;
+      padding: 6px 0;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      color: var(--text-main);
+    }
+    
+    .cal-date:hover:not(.disabled) {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    
+    .cal-date.selected {
+      background: var(--accent-blue);
+      color: #ffffff;
+      font-weight: 700;
+      border-color: var(--accent-blue);
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+    }
+    
+    .cal-date.disabled {
+      color: #cbd5e1;
+      pointer-events: none;
+    }
+    
+    .calendar-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+    
+    .clear-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .clear-btn:hover {
+      background: #f1f5f9;
     }
 
     .apply-btn {
       background: var(--accent-blue);
       color: #ffffff;
       border: none;
-      padding: 4px 10px;
+      padding: 4px 14px;
       border-radius: var(--radius-sm);
       font-size: 10px;
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
       transition: background 0.15s;
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
     }
 
     .apply-btn:hover {
@@ -1100,13 +1172,28 @@
                   <button class="preset-option" data-preset="TODAY">今日</button>
                 </div>
 
-                <!-- 自定义起止日期组 -->
+                <!-- 自定义日期选择日历 -->
                 <div class="custom-range-section">
-                  <div class="range-input-group">
-                    <input type="date" id="startDateInput" value="2026-08-01" min="2026-08-01" max="2026-08-31" class="popover-date-input">
-                    <span class="range-arrow">至</span>
-                    <input type="date" id="endDateInput" value="2026-08-15" min="2026-08-01" max="2026-08-31" class="popover-date-input">
-                    <button class="apply-btn" id="applyCustomDateBtn">确认</button>
+                  <div class="calendar-container">
+                    <div class="calendar-header">
+                      <button id="prevMonthBtn">&lt;</button>
+                      <span id="calendarMonthText">2026年8月</span>
+                      <button id="nextMonthBtn">&gt;</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                      <div class="cal-day-header">日</div>
+                      <div class="cal-day-header">一</div>
+                      <div class="cal-day-header">二</div>
+                      <div class="cal-day-header">三</div>
+                      <div class="cal-day-header">四</div>
+                      <div class="cal-day-header">五</div>
+                      <div class="cal-day-header">六</div>
+                      <!-- JS dynamically injects cal-date items here -->
+                    </div>
+                    <div class="calendar-footer">
+                      <button class="clear-btn" id="clearDatesBtn">清空选择</button>
+                      <button class="apply-btn" id="applyCustomDateBtn">确认</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1145,18 +1232,22 @@
         <div class="kpi-card">
           <div class="kpi-title">总销量</div>
           <div class="kpi-value" id="kpiSales">0</div>
+          <div class="kpi-mom" id="kpiSalesMom" style="font-size:10px; margin-top:2px;"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-title">总销售额</div>
           <div class="kpi-value" id="kpiRevenue">¥0</div>
+          <div class="kpi-mom" id="kpiRevenueMom" style="font-size:10px; margin-top:2px;"></div>
         </div>
         <div class="kpi-card highlight">
           <div class="kpi-title">总毛利</div>
           <div class="kpi-value" id="kpiProfit">¥0</div>
+          <div class="kpi-mom" id="kpiProfitMom" style="font-size:10px; margin-top:2px;"></div>
         </div>
         <div class="kpi-card highlight">
           <div class="kpi-title">综合毛利率</div>
           <div class="kpi-value" id="kpiMargin">0%</div>
+          <div class="kpi-mom" id="kpiMarginMom" style="font-size:10px; margin-top:2px;"></div>
         </div>
       </section>
 
@@ -1269,23 +1360,49 @@
     (function () {
       const BASE_CATEGORIES = ['招牌菜', '热菜', '主食小吃'];
 
-      // Helper: Map preset key to date range ({start, end})
+      // Date Helpers
+      function parseYMD(str) {
+        if (!str) return new Date();
+        const parts = str.split('-').map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+
+      function formatYMD(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      // Helper: Generate date array between two dates
+      function generateDateArray(start, end) {
+        let d = parseYMD(start);
+        let e = parseYMD(end);
+        let arr = [];
+        while(d <= e) {
+          arr.push(formatYMD(d));
+          d.setDate(d.getDate() + 1);
+        }
+        return arr;
+      }
+
+      // Helper: Map preset key to date array
       // Baseline Today is 2026-08-15 (Saturday)
-      function getPresetDateRange(preset) {
+      function getPresetDates(preset) {
         switch (preset) {
           case 'TODAY':
-            return { start: '2026-08-15', end: '2026-08-15' };
+            return ['2026-08-15'];
           case 'YESTERDAY':
-            return { start: '2026-08-14', end: '2026-08-14' };
+            return ['2026-08-14'];
           case 'THIS_WEEK':
             // Mon 2026-08-10 to Today (Sat 2026-08-15)
-            return { start: '2026-08-10', end: '2026-08-15' };
+            return generateDateArray('2026-08-10', '2026-08-15');
           case 'LAST_WEEK':
             // Mon 2026-08-03 to Sun 2026-08-09
-            return { start: '2026-08-03', end: '2026-08-09' };
+            return generateDateArray('2026-08-03', '2026-08-09');
           case 'THIS_MONTH':
           default:
-            return { start: '2026-08-01', end: '2026-08-15' };
+            return generateDateArray('2026-08-01', '2026-08-15');
         }
       }
 
@@ -1295,8 +1412,7 @@
         channels: ['ALL'],
         categories: ['ALL'],
         customCombos: [], // [{ id: 'combo_1', name: '组合名', skus: ['金牌酸菜鱼（中份）', '叫花鸡'] }]
-        startDate: '2026-08-01',
-        endDate: '2026-08-15',
+        selectedDates: generateDateArray('2026-08-01', '2026-08-15'), // default to this month
         metric: 'profit', // 'profit' or 'margin'
         sortMode: 'SALES', // 'SALES', 'PROFIT', 'MARGIN'
         searchQuery: '',
@@ -1317,6 +1433,11 @@
       const kpiRevenueEl = document.getElementById('kpiRevenue');
       const kpiProfitEl = document.getElementById('kpiProfit');
       const kpiMarginEl = document.getElementById('kpiMargin');
+
+      const kpiSalesMomEl = document.getElementById('kpiSalesMom');
+      const kpiRevenueMomEl = document.getElementById('kpiRevenueMom');
+      const kpiProfitMomEl = document.getElementById('kpiProfitMom');
+      const kpiMarginMomEl = document.getElementById('kpiMarginMom');
 
       const totalProductsCountEl = document.getElementById('totalProductsCount');
       const productListEl = document.getElementById('productList');
@@ -1344,29 +1465,20 @@
       function processFilteredData() {
         const { stores, channels, categories, customCombos, startDate, endDate, metric } = state;
 
-        // Date Helpers for Growth Calculations
-      function parseYMD(str) {
-        if (!str) return new Date();
-        const parts = str.split('-').map(Number);
-        return new Date(parts[0], parts[1] - 1, parts[2]);
-      }
-
-      function formatYMD(d) {
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      }
-
-      function getPeriodMetricMap(startStr, endStr) {
-        if (!startStr || !endStr || startStr > endStr) return null;
+      function getPeriodMetricMap(dateArray) {
+        if (!dateArray || dateArray.length === 0) return null;
         const { stores, channels, categories, customCombos } = state;
         const skuMap = new Map();
+        const dateSet = new Set(dateArray);
+
+        let tSales = 0;
+        let tProfit = 0;
+        let tRevenue = 0;
 
         for (let i = 0; i < rawData.length; i++) {
           const d = rawData[i];
           const date = d[0];
-          if (date < startStr || date > endStr) continue;
+          if (!dateSet.has(date)) continue;
 
           if (!stores.includes('ALL') && !stores.includes(d[1])) continue;
           if (!channels.includes('ALL') && !channels.includes(d[2])) continue;
@@ -1389,6 +1501,10 @@
           const sales = d[5] || 0;
           const profit = d[6] || 0;
           const revenue = d[7] || 0;
+
+          tSales += sales;
+          tProfit += profit;
+          tRevenue += revenue;
 
           if (!skuMap.has(name)) {
             skuMap.set(name, { name, sales: 0, profit: 0, revenue: 0 });
@@ -1435,41 +1551,111 @@
           marginVal,
           salesRankMap,
           profitRankMap,
-          marginRankMap
+          marginRankMap,
+          tSales,
+          tProfit,
+          tRevenue,
+          tMargin: tRevenue > 0 ? (tProfit / tRevenue) * 100 : 0
         };
       }
 
+      // 寻找指定日期的上个月同样顺位的星期几
+      // 例如：本月第一个星期六 -> 上个月第一个星期六
+      function getSameWeekdayLastMonth(dateStr) {
+        const d = parseYMD(dateStr);
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const date = d.getDate();
+        const dow = d.getDay();
+        
+        // 第几个该星期几 (N-th occurrence)
+        const n = Math.ceil(date / 7);
+        
+        // 上个月
+        let targetYear = year;
+        let targetMonth = month - 1;
+        if (targetMonth < 0) {
+          targetMonth = 11;
+          targetYear--;
+        }
+        
+        // 上个月1号是星期几
+        const firstDayOfTargetMonth = new Date(targetYear, targetMonth, 1);
+        const firstDow = firstDayOfTargetMonth.getDay();
+        
+        // 上个月的第1个该星期几是几号
+        let offset = dow - firstDow;
+        if (offset < 0) offset += 7;
+        const firstOccurrence = 1 + offset;
+        
+        // 上个月的第N个该星期几
+        let targetDate = firstOccurrence + (n - 1) * 7;
+        
+        // 如果超出了上个月的天数，则回退到最后一个该星期几
+        const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+        if (targetDate > daysInTargetMonth) {
+          targetDate -= 7;
+        }
+        
+        return formatYMD(new Date(targetYear, targetMonth, targetDate));
+      }
+
       function calcComparisonMaps() {
-        const dStart = parseYMD(state.startDate);
-        const dEnd = parseYMD(state.endDate);
-        const durationMs = dEnd.getTime() - dStart.getTime();
-        const durationDays = Math.round(durationMs / (24 * 3600 * 1000)) + 1;
-
-        // 1. MoM (环比): Previous L days
-        const momEnd = new Date(dStart.getTime() - 24 * 3600 * 1000);
-        const momStart = new Date(momEnd.getTime() - (durationDays - 1) * 24 * 3600 * 1000);
-
-        // 2. WoW (同比周): Same period 7 days ago (ONLY when durationDays === 1, i.e. single day selection)
-        let wowMap = null;
-        if (durationDays === 1) {
-          const wowStart = new Date(dStart.getTime() - 7 * 24 * 3600 * 1000);
-          const wowEnd = new Date(dEnd.getTime() - 7 * 24 * 3600 * 1000);
-          wowMap = getPeriodMetricMap(formatYMD(wowStart), formatYMD(wowEnd));
+        const selectedDates = state.selectedDates.slice().sort();
+        if (selectedDates.length === 0) {
+          return { momMap: null, wowMap: null, moyMap: null, yoyMap: null };
         }
 
-        // 3. MoY (同比月): Same period 1 month ago
-        const moyStart = new Date(dStart.getFullYear(), dStart.getMonth() - 1, dStart.getDate());
-        const moyEnd = new Date(dEnd.getFullYear(), dEnd.getMonth() - 1, dEnd.getDate());
+        // Get max and min dates to check for cross-week
+        const minDate = parseYMD(selectedDates[0]);
+        const maxDate = parseYMD(selectedDates[selectedDates.length - 1]);
+        
+        // Definition of "cross week": 
+        // If maxDate - minDate >= 7 days, or if they fall in different ISO weeks.
+        // We'll use a simple but robust check: if duration >= 7 days or (maxDate's day of week < minDate's day of week, adjusting Sunday to 7)
+        const diffDays = Math.round((maxDate - minDate) / (24 * 3600 * 1000));
+        let isCrossWeek = diffDays >= 7;
+        if (!isCrossWeek && diffDays > 0) {
+          const minDow = minDate.getDay() === 0 ? 7 : minDate.getDay();
+          const maxDow = maxDate.getDay() === 0 ? 7 : maxDate.getDay();
+          if (maxDow < minDow) {
+            isCrossWeek = true;
+          }
+        }
 
-        // 4. YoY (同比年): Same period 1 year ago
-        const yoyStart = new Date(dStart.getFullYear() - 1, dStart.getMonth(), dStart.getDate());
-        const yoyEnd = new Date(dEnd.getFullYear() - 1, dEnd.getMonth(), dEnd.getDate());
+        let wowDates = null;
+        if (!isCrossWeek) {
+          // WoW: shift each date by 7 days backwards
+          wowDates = selectedDates.map(ds => {
+            const d = parseYMD(ds);
+            d.setDate(d.getDate() - 7);
+            return formatYMD(d);
+          });
+        }
+
+        // 环比 (Period-over-Period): shift exactly by the duration of the selected dates
+        const durationDays = diffDays + 1;
+        const momDates = selectedDates.map(ds => {
+          const d = parseYMD(ds);
+          d.setDate(d.getDate() - durationDays);
+          return formatYMD(d);
+        });
+
+        // 月同比 (MoY): match exact N-th weekday in previous month
+        const moyDates = selectedDates.map(ds => getSameWeekdayLastMonth(ds));
+
+        // YoY (同比年): exactly 1 year ago
+        const yoyDates = selectedDates.map(ds => {
+          const d = parseYMD(ds);
+          d.setFullYear(d.getFullYear() - 1);
+          return formatYMD(d);
+        });
 
         return {
-          momMap: getPeriodMetricMap(formatYMD(momStart), formatYMD(momEnd)),
-          wowMap,
-          moyMap: getPeriodMetricMap(formatYMD(moyStart), formatYMD(moyEnd)),
-          yoyMap: getPeriodMetricMap(formatYMD(yoyStart), formatYMD(yoyEnd))
+          momMap: getPeriodMetricMap(momDates),
+          wowMap: wowDates ? getPeriodMetricMap(wowDates) : null,
+          moyMap: getPeriodMetricMap(moyDates),
+          yoyMap: getPeriodMetricMap(yoyDates)
         };
       }
 
@@ -1532,8 +1718,7 @@
       }
 
         // Single Source of Truth Date Filtering
-        let actualStart = startDate;
-        let actualEnd = endDate;
+        const selectedDatesSet = new Set(state.selectedDates);
 
         // Build target category Union Set & target SKU Set (Deduplicated Aggregation Logic)
         let targetCategorySet = null;
@@ -1585,7 +1770,7 @@
             if (!matchCategory && !matchSku) continue;
           }
 
-          if (dDate < actualStart || dDate > actualEnd) continue;
+          if (!selectedDatesSet.has(dDate)) continue;
 
           totalSales += dSales;
           totalRevenue += dRevenue;
@@ -1728,7 +1913,13 @@
           n,
           splitX,
           splitYCoord,
-          splitYDisplayLabel
+          splitYDisplayLabel,
+          prevMomTotals: compMaps.momMap ? {
+            sales: compMaps.momMap.tSales,
+            revenue: compMaps.momMap.tRevenue,
+            profit: compMaps.momMap.tProfit,
+            margin: compMaps.momMap.tMargin
+          } : null
         };
       }
 
@@ -1742,6 +1933,27 @@
         kpiProfitEl.innerText = '¥' + Math.round(data.totalProfit).toLocaleString();
         kpiMarginEl.innerText = data.overallMargin.toFixed(1) + '%';
         totalProductsCountEl.innerText = data.n;
+
+        // Update MoM on KPIs
+        if (data.prevMomTotals) {
+          const renderMom = (curr, prev) => {
+            if (!prev) return '<span class="trend-none">-</span>';
+            const diff = curr - prev;
+            const rate = (diff / prev) * 100;
+            if (rate > 0) return `环比: <span class="trend-up">+${rate.toFixed(1)}%</span>`;
+            if (rate < 0) return `环比: <span class="trend-down">${rate.toFixed(1)}%</span>`;
+            return `环比: <span class="trend-none">0.0%</span>`;
+          };
+          kpiSalesMomEl.innerHTML = renderMom(data.totalSales, data.prevMomTotals.sales);
+          kpiRevenueMomEl.innerHTML = renderMom(data.totalRevenue, data.prevMomTotals.revenue);
+          kpiProfitMomEl.innerHTML = renderMom(data.totalProfit, data.prevMomTotals.profit);
+          kpiMarginMomEl.innerHTML = renderMom(data.overallMargin, data.prevMomTotals.margin);
+        } else {
+          kpiSalesMomEl.innerHTML = '<span class="trend-none">-</span>';
+          kpiRevenueMomEl.innerHTML = '<span class="trend-none">-</span>';
+          kpiProfitMomEl.innerHTML = '<span class="trend-none">-</span>';
+          kpiMarginMomEl.innerHTML = '<span class="trend-none">-</span>';
+        }
 
         // Sort option is now explicitly separated into PROFIT and MARGIN
 
@@ -1958,15 +2170,27 @@
         filteredItems.forEach((item, idx) => {
           const rankClass = idx === 0 ? 'top1' : idx === 1 ? 'top2' : idx === 2 ? 'top3' : '';
           const qClass = item.quadrant.toLowerCase();
-          const isMarginSort = state.sortMode === 'MARGIN';
+          const unitPrice = item.sales > 0 ? (item.revenue / item.sales) : 0;
+          const unitCost = item.sales > 0 ? (item.cost / item.sales) : 0;
 
-          const primaryMetricHtml = isMarginSort
-            ? `毛利率: ${item.marginRate.toFixed(1)}% (第${item.marginRank}名)`
-            : `单菜毛利: ¥${item.unitProfit.toFixed(1)}/份 (第${item.profitRank}名)`;
+          let primaryMetricHtml = '';
+          let metric2Html = '';
+          let metric3Html = '';
 
-          const secondaryMetricHtml = isMarginSort
-            ? `单菜毛利: ¥${item.unitProfit.toFixed(1)}/份 (第${item.profitRank}名)`
-            : `毛利率: ${item.marginRate.toFixed(1)}% (第${item.marginRank}名)`;
+          if (state.sortMode === 'PROFIT') {
+            primaryMetricHtml = `单菜毛利: ¥${item.unitProfit.toFixed(1)}/份`;
+            metric2Html = `销量: ${item.sales.toLocaleString()}份 (第${item.salesRank}名)`;
+            metric3Html = `毛利率: ${item.marginRate.toFixed(1)}% (第${item.marginRank}名)`;
+          } else if (state.sortMode === 'MARGIN') {
+            primaryMetricHtml = `毛利率: ${item.marginRate.toFixed(1)}%`;
+            metric2Html = `销量: ${item.sales.toLocaleString()}份 (第${item.salesRank}名)`;
+            metric3Html = `单菜毛利: ¥${item.unitProfit.toFixed(1)} (第${item.profitRank}名)`;
+          } else {
+            // SALES
+            primaryMetricHtml = `销量: ${item.sales.toLocaleString()}份`;
+            metric2Html = `单菜毛利: ¥${item.unitProfit.toFixed(1)} (第${item.profitRank}名)`;
+            metric3Html = `毛利率: ${item.marginRate.toFixed(1)}% (第${item.marginRank}名)`;
+          }
 
           html += `
             <div class="product-item" data-name="${item.name}">
@@ -1974,15 +2198,18 @@
                 <div class="product-left">
                   <div class="rank-badge ${rankClass}">${idx + 1}</div>
                   <div class="product-info">
-                    <div class="name">${item.name}</div>
-                    <div class="sub">${item.category} | 销量: ${item.sales.toLocaleString()} (第${item.salesRank}名)</div>
+                    <div class="name" style="display: flex; align-items: center; gap: 6px;">
+                      <span>${item.name}</span>
+                      <span class="quadrant-tag ${qClass}">${item.quadrantName}</span>
+                    </div>
+                    <div class="sub">${item.category} | 售价: ¥${unitPrice.toFixed(1)} | 成本: ¥${unitCost.toFixed(1)}</div>
                   </div>
                 </div>
                 <div class="product-right">
-                  <span class="quadrant-tag ${qClass}">${item.quadrantName}</span>
                   <div class="metrics-text" style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                    <span>${primaryMetricHtml}</span>
-                    <span style="font-size: 10px; color: #64748b; font-weight: 400;">${secondaryMetricHtml}</span>
+                    <span style="font-weight: 700; font-size: 13px; color: #0f172a;">${primaryMetricHtml}</span>
+                    <span style="font-size: 10px; color: #64748b; font-weight: 400;">${metric2Html}</span>
+                    <span style="font-size: 10px; color: #64748b; font-weight: 400;">${metric3Html}</span>
                   </div>
                 </div>
               </div>
@@ -2038,9 +2265,12 @@
         const datePickerTrigger = document.getElementById('datePickerTrigger');
         const datePickerPopover = document.getElementById('datePickerPopover');
         const presetContainer = document.getElementById('datePresetPills');
-        const startInputEl = document.getElementById('startDateInput');
-        const endInputEl = document.getElementById('endDateInput');
         const applyCustomBtn = document.getElementById('applyCustomDateBtn');
+        const clearDatesBtn = document.getElementById('clearDatesBtn');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const prevMonthBtn = document.getElementById('prevMonthBtn');
+        const nextMonthBtn = document.getElementById('nextMonthBtn');
+        const calendarMonthText = document.getElementById('calendarMonthText');
 
         const PRESET_NAMES = {
           'THIS_MONTH': '本月',
@@ -2050,10 +2280,86 @@
           'TODAY': '今日'
         };
 
+        let currentCalendarDate = new Date(2026, 7, 1); // Default to August 2026
+
+        function renderCalendar() {
+          const year = currentCalendarDate.getFullYear();
+          const month = currentCalendarDate.getMonth();
+          calendarMonthText.textContent = `${year}年${month + 1}月`;
+
+          // Clear previous dates
+          calendarGrid.querySelectorAll('.cal-date').forEach(el => el.remove());
+
+          const firstDay = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+          // Empty cells for first row
+          for(let i = 0; i < firstDay; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-date disabled';
+            calendarGrid.appendChild(empty);
+          }
+
+          // Days
+          for(let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            const dayEl = document.createElement('div');
+            dayEl.className = 'cal-date';
+            dayEl.textContent = i;
+            dayEl.setAttribute('data-date', dateStr);
+            if (state.selectedDates.includes(dateStr)) {
+              dayEl.classList.add('selected');
+            }
+            
+            dayEl.addEventListener('click', () => {
+               const idx = state.selectedDates.indexOf(dateStr);
+               if (idx > -1) {
+                  state.selectedDates.splice(idx, 1);
+                  dayEl.classList.remove('selected');
+               } else {
+                  state.selectedDates.push(dateStr);
+                  dayEl.classList.add('selected');
+               }
+               checkMatchingPreset();
+            });
+
+            calendarGrid.appendChild(dayEl);
+          }
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+           currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+           renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+           currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+           renderCalendar();
+        });
+
+        clearDatesBtn.addEventListener('click', () => {
+           state.selectedDates = [];
+           renderCalendar();
+           checkMatchingPreset();
+        });
+
         function updateTriggerUI(matchedPreset) {
           const textEl = document.getElementById('dateRangeText');
           const badgeEl = document.getElementById('datePresetBadge');
-          if (textEl) textEl.textContent = `${state.startDate} 至 ${state.endDate}`;
+          if (textEl) {
+             if (state.selectedDates.length === 0) {
+                textEl.textContent = '未选择日期';
+             } else {
+                const sorted = state.selectedDates.slice().sort();
+                if (sorted.length === 1) {
+                   textEl.textContent = sorted[0];
+                } else if (sorted.length === 2) {
+                   textEl.textContent = `${sorted[0]} 及 ${sorted[1]}`;
+                } else {
+                   textEl.textContent = `${sorted[0]} 等 ${sorted.length}天`;
+                }
+             }
+          }
           if (badgeEl) {
             if (matchedPreset && PRESET_NAMES[matchedPreset]) {
               badgeEl.textContent = PRESET_NAMES[matchedPreset];
@@ -2064,14 +2370,13 @@
         }
 
         function checkMatchingPreset() {
-          const s = state.startDate;
-          const e = state.endDate;
+          const currentSorted = state.selectedDates.slice().sort().join(',');
           let matchedPreset = null;
 
           presetContainer.querySelectorAll('.preset-option').forEach(btn => {
             const p = btn.getAttribute('data-preset');
-            const range = getPresetDateRange(p);
-            if (range.start === s && range.end === e) {
+            const presetArr = getPresetDates(p).sort().join(',');
+            if (presetArr === currentSorted && presetArr !== '') {
               matchedPreset = p;
             }
           });
@@ -2087,12 +2392,17 @@
           updateTriggerUI(matchedPreset);
         }
 
+        // Initialize Calendar
+        renderCalendar();
+        checkMatchingPreset();
+
         // Toggle Popover Display
         datePickerTrigger.addEventListener('click', (e) => {
           e.stopPropagation();
           const isOpen = datePickerPopover.style.display !== 'none';
           datePickerPopover.style.display = isOpen ? 'none' : 'block';
           datePickerTrigger.classList.toggle('open', !isOpen);
+          if (!isOpen) renderCalendar(); // refresh calendar to show correct month if needed
         });
 
         // Close Popover on Outside Click
@@ -2107,16 +2417,13 @@
         presetContainer.querySelectorAll('.preset-option').forEach(btn => {
           btn.addEventListener('click', () => {
             const preset = btn.getAttribute('data-preset');
-            const range = getPresetDateRange(preset);
-            state.startDate = range.start;
-            state.endDate = range.end;
-            startInputEl.value = range.start;
-            endInputEl.value = range.end;
+            state.selectedDates = getPresetDates(preset);
 
             presetContainer.querySelectorAll('.preset-option').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
             updateTriggerUI(preset);
+            renderCalendar();
             updateDashboard();
             
             // Close Popover
@@ -2125,22 +2432,7 @@
           });
         });
 
-        // Date Inputs & Custom Apply Button Handler
-        startInputEl.addEventListener('change', () => {
-          if (startInputEl.value > endInputEl.value) {
-            endInputEl.value = startInputEl.value;
-          }
-        });
-
-        endInputEl.addEventListener('change', () => {
-          if (endInputEl.value < startInputEl.value) {
-            startInputEl.value = endInputEl.value;
-          }
-        });
-
         applyCustomBtn.addEventListener('click', () => {
-          state.startDate = startInputEl.value;
-          state.endDate = endInputEl.value;
           checkMatchingPreset();
           updateDashboard();
 
@@ -2153,15 +2445,12 @@
           state.stores = ['ALL'];
           state.channels = ['ALL'];
           state.categories = ['ALL'];
-          state.startDate = '2026-08-01';
-          state.endDate = '2026-08-15';
+          state.selectedDates = getPresetDates('THIS_MONTH');
           state.searchQuery = '';
           state.sortMode = 'SALES';
 
           productSearchEl.value = '';
           sortSelectEl.value = 'SALES';
-          startInputEl.value = '2026-08-01';
-          endInputEl.value = '2026-08-15';
 
           resetPillsGroup('storePills');
           resetPillsGroup('channelPills');
@@ -2173,6 +2462,7 @@
           });
 
           updateTriggerUI('THIS_MONTH');
+          renderCalendar();
           updateDashboard();
         });
 

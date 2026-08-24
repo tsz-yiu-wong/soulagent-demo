@@ -7,14 +7,15 @@
 // 全局响应式状态
 const state = {
   currentAgent: "MyAgent",       // 当前选中的智能体
-  currentView: "new-chat",       // 当前视图: 'new-chat' | 'expert-chat-new' | 'dialog' | 'plaza'
+  currentView: "new-chat",       // 当前视图: 'new-chat' | 'expert-chat-new' | 'dialog' | 'plaza' | 'profile' | ...
   activeChatTitle: null,          // 当前激活的历史对话标题
   activeExpert: null,             // 当前选择的专家对象 (用于专家新对话视图)
   expertSelectMode: null,         // 专家选择来源: 'direct' (广场卡片进)
   chatInputDraft: "",             // 新建对话输入框文本草稿
   isDropdownOpen: false,          // 智能体下拉菜单显隐
   isExpertDropdownOpen: false,    // 专家AI分身下拉菜单显隐
-  plazaSearchKeyword: ""         // 广场搜索关键字
+  plazaSearchKeyword: "",         // 广场搜索关键字
+  profileTab: "files"             // 档案页 Tab: 'files' | 'settings' | 'memory'
 };
 
 // 初始化逻辑
@@ -35,6 +36,8 @@ function renderApp() {
     mainEl.innerHTML = `<iframe src="./帮我听.html#embed" style="width:100%;height:100%;border:none;"></iframe>`;
   } else if (state.currentView === 'schedule') {
     mainEl.innerHTML = `<iframe src="./定时任务.html#embed" style="width:100%;height:100%;border:none;"></iframe>`;
+  } else if (state.currentView === 'profile') {
+    mainEl.innerHTML = renderProfileView();
   } else if (state.currentView === 'expert-chat-new') {
     mainEl.innerHTML = renderExpertNewView(state.activeExpert);
   } else if (state.currentView === 'dialog') {
@@ -247,6 +250,17 @@ function openScheduleView(e) {
   state.activeChatTitle = null;
   state.activeExpert = null;
   state.currentView = 'schedule';
+  state.isDropdownOpen = false;
+  state.isExpertDropdownOpen = false;
+  renderApp();
+}
+
+// 打开智能体档案
+function openProfileView(e) {
+  if (e) e.stopPropagation();
+  state.activeChatTitle = null;
+  state.activeExpert = null;
+  state.currentView = 'profile';
   state.isDropdownOpen = false;
   state.isExpertDropdownOpen = false;
   renderApp();
@@ -491,10 +505,260 @@ function showToast(msg) {
 }
 
 // 点击空白关闭下拉
-window.addEventListener('click', () => {
+window.addEventListener('click', (e) => {
   closeAgentMenu();
   if (state.isExpertDropdownOpen) {
     state.isExpertDropdownOpen = false;
     renderApp();
   }
+  if (e && !e.target.closest('#at-expert-mention-popup') && !e.target.classList.contains('chat-textarea')) {
+    hideAtMentionPopup();
+  }
 });
+
+// -------------------------------------------------------------
+// 艾特 (@) 专家列表 动态输入与光标跟踪定位
+// -------------------------------------------------------------
+
+const atMentionState = {
+  active: false,
+  inputEl: null,
+  atIndex: -1,
+  query: "",
+  selectedIndex: 0,
+  matches: []
+};
+
+// 计算 input/textarea 内指定字符 (或光标) 的屏幕绝对坐标
+function getCaretCoordinates(element, position) {
+  let div = document.getElementById('textarea-caret-mirror-div');
+  if (!div) {
+    div = document.createElement('div');
+    div.id = 'textarea-caret-mirror-div';
+    document.body.appendChild(div);
+  }
+
+  const style = div.style;
+  const computed = window.getComputedStyle(element);
+
+  style.whiteSpace = 'pre-wrap';
+  style.wordWrap = 'break-word';
+  style.position = 'absolute';
+  style.visibility = 'hidden';
+  style.overflow = 'hidden';
+
+  const properties = [
+    'direction', 'boxSizing', 'width', 'height',
+    'overflowX', 'overflowY',
+    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+    'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch',
+    'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily',
+    'textAlign', 'textTransform', 'textIndent', 'letterSpacing', 'wordSpacing'
+  ];
+
+  properties.forEach(prop => {
+    style[prop] = computed[prop];
+  });
+
+  style.width = element.clientWidth + 'px';
+
+  div.textContent = element.value.substring(0, position);
+
+  const span = document.createElement('span');
+  span.textContent = element.value.substring(position, position + 1) || '@';
+  div.appendChild(span);
+
+  const coordinates = {
+    top: span.offsetTop - element.scrollTop,
+    left: span.offsetLeft - element.scrollLeft,
+    height: span.offsetHeight || parseInt(computed.lineHeight) || 20
+  };
+
+  return coordinates;
+}
+
+function handleTextareaInput(e) {
+  const input = e.target;
+  if (!input || !input.classList.contains('chat-textarea')) return;
+
+  const val = input.value;
+  const caretPos = input.selectionStart;
+  if (caretPos === undefined) {
+    hideAtMentionPopup();
+    return;
+  }
+
+  const atIndex = val.lastIndexOf('@', caretPos - 1);
+  if (atIndex !== -1) {
+    const textBetween = val.substring(atIndex + 1, caretPos);
+    if (/^\S*$/.test(textBetween)) {
+      const query = textBetween.toLowerCase();
+      const matches = expertList.filter(exp => 
+        exp.name.toLowerCase().includes(query) ||
+        exp.role.toLowerCase().includes(query) ||
+        (exp.tag && exp.tag.toLowerCase().includes(query))
+      );
+
+      atMentionState.active = true;
+      atMentionState.inputEl = input;
+      atMentionState.atIndex = atIndex;
+      atMentionState.query = query;
+      atMentionState.matches = matches;
+      if (atMentionState.selectedIndex >= matches.length) {
+        atMentionState.selectedIndex = 0;
+      }
+
+      showAtMentionPopup(input, atIndex);
+      return;
+    }
+  }
+
+  hideAtMentionPopup();
+}
+
+function handleTextareaKeydown(e) {
+  const input = e.target;
+  if (!input || !input.classList.contains('chat-textarea')) return;
+
+  if (atMentionState.active && atMentionState.matches.length > 0) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      atMentionState.selectedIndex = (atMentionState.selectedIndex + 1) % atMentionState.matches.length;
+      updateAtMentionPopupList();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      atMentionState.selectedIndex = (atMentionState.selectedIndex - 1 + atMentionState.matches.length) % atMentionState.matches.length;
+      updateAtMentionPopupList();
+      return;
+    }
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      const selectedExp = atMentionState.matches[atMentionState.selectedIndex];
+      if (selectedExp) {
+        selectAtExpert(selectedExp.id);
+      }
+      return;
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      hideAtMentionPopup();
+      return;
+    }
+  }
+}
+
+function renderAtMentionPopupHtml(matches, selectedIndex) {
+  if (!matches || matches.length === 0) {
+    return `<div style="padding: 12px; font-size: 13px; color: var(--text-muted); text-align: center;">未找到匹配专家</div>`;
+  }
+  const itemsHtml = matches.map((exp, idx) => `
+    <div class="at-expert-mention-item ${idx === selectedIndex ? 'selected' : ''}" 
+         onmousedown="event.preventDefault(); selectAtExpert('${exp.id}')">
+      <div class="expert-item-avatar" style="background: ${exp.gradient};">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </div>
+      <div class="expert-item-info">
+        <div class="expert-item-name">${escapeHtml(exp.name)}</div>
+        <div class="expert-item-role">${escapeHtml(exp.role)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="expert-dropdown-header">选择专家 AI 分身</div>
+    <div class="expert-dropdown-list">
+      ${itemsHtml}
+    </div>
+  `;
+}
+
+function showAtMentionPopup(input, atIndex) {
+  let popup = document.getElementById('at-expert-mention-popup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'at-expert-mention-popup';
+    popup.className = 'at-expert-mention-popup';
+    document.body.appendChild(popup);
+  }
+
+  popup.innerHTML = renderAtMentionPopupHtml(atMentionState.matches, atMentionState.selectedIndex);
+  popup.classList.add('show');
+
+  const coords = getCaretCoordinates(input, atIndex);
+  const inputRect = input.getBoundingClientRect();
+
+  const absoluteLeft = inputRect.left + coords.left - input.scrollLeft;
+  const absoluteTop = inputRect.top + coords.top - input.scrollTop;
+
+  const popupHeight = popup.offsetHeight || 240;
+  let top = absoluteTop - popupHeight - 8;
+  let left = absoluteLeft;
+
+  if (top < 10) {
+    top = absoluteTop + coords.height + 6;
+  }
+  if (left + 280 > window.innerWidth - 10) {
+    left = window.innerWidth - 290;
+  }
+  if (left < 10) left = 10;
+
+  popup.style.left = `${left}px`;
+  popup.style.top = `${top}px`;
+}
+
+function updateAtMentionPopupList() {
+  const popup = document.getElementById('at-expert-mention-popup');
+  if (popup && atMentionState.active) {
+    popup.innerHTML = renderAtMentionPopupHtml(atMentionState.matches, atMentionState.selectedIndex);
+    const selectedEl = popup.querySelector('.at-expert-mention-item.selected');
+    if (selectedEl) {
+      selectedEl.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+function hideAtMentionPopup() {
+  atMentionState.active = false;
+  atMentionState.inputEl = null;
+  atMentionState.atIndex = -1;
+  atMentionState.query = "";
+  atMentionState.matches = [];
+  atMentionState.selectedIndex = 0;
+
+  const popup = document.getElementById('at-expert-mention-popup');
+  if (popup) {
+    popup.classList.remove('show');
+  }
+}
+
+function selectAtExpert(expertId) {
+  const exp = expertList.find(e => e.id === expertId);
+  const input = atMentionState.inputEl || document.activeElement;
+  if (!exp || !input) return;
+
+  const val = input.value;
+  const atIndex = atMentionState.atIndex >= 0 ? atMentionState.atIndex : val.lastIndexOf('@');
+  const caretPos = input.selectionStart || val.length;
+
+  if (atIndex !== -1) {
+    const before = val.substring(0, atIndex);
+    const after = val.substring(caretPos);
+    const insertText = `@${exp.name} `;
+    input.value = before + insertText + after;
+    state.chatInputDraft = input.value;
+
+    const newCaretPos = before.length + insertText.length;
+    input.focus();
+    input.setSelectionRange(newCaretPos, newCaretPos);
+  }
+
+  hideAtMentionPopup();
+}
+
+// 绑定全局事件监听器
+document.addEventListener('input', handleTextareaInput);
+document.addEventListener('keydown', handleTextareaKeydown);
+

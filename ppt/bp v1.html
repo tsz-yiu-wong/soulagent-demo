@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulAgent - 从通用智能到个人智能 BP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-active: #2563eb;
+      
+      --accent-blue: #2563eb;
+      --accent-blue-hover: #1d4ed8;
+      --accent-sky: #0284c7;
+      --accent-indigo: #4f46e5;
+      --accent-purple: #7c3aed;
+      --accent-emerald: #059669;
+      --accent-amber: #d97706;
+
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+
+      --font-main: 'Noto Sans SC', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+
+      --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      --gradient-sky: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      --gradient-light-blue: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient Background Glows */
+    .bg-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+    .glow-1 {
+      width: 650px;
+      height: 650px;
+      background: rgba(37, 99, 235, 0.08);
+      top: -100px;
+      left: -100px;
+    }
+    .glow-2 {
+      width: 700px;
+      height: 700px;
+      background: rgba(2, 132, 199, 0.07);
+      bottom: -150px;
+      right: -150px;
+    }
+
+    /* Presentation Layout */
+    .deck-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 1;
+    }
+
+    /* Header Bar */
+    .deck-header {
+      height: 60px;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+    }
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--gradient-primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .deck-title-badge {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      border: 1px solid var(--border-color);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    /* Slides Viewport */
+    .slides-viewport {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Slide Card Canvas (16:9 Ratio Aspect Container) */
+    .slide {
+      position: absolute;
+      width: 90vw;
+      max-width: 1440px;
+      height: calc(90vw * 9 / 16);
+      max-height: 810px;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96) translateY(20px);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 48px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-height: 900px) {
+      .slide {
+        height: calc(100vh - 150px);
+        width: calc((100vh - 150px) * 16 / 9);
+        padding: 36px 48px;
+      }
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+      z-index: 2;
+    }
+
+    /* Slide Header Components */
+    .slide-header {
+      margin-bottom: 24px;
+    }
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-blue);
+      margin-bottom: 10px;
+    }
+    .slide-tag::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+    }
+    .slide-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+    }
+    .slide-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    /* Slide Body Components */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Slide Footer / Key Takeaway */
+    .slide-footer-takeaway {
+      margin-top: 20px;
+      padding: 14px 24px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: #1e3a8a;
+      font-weight: 500;
+    }
+    .slide-footer-takeaway .quote-mark {
+      color: var(--accent-blue);
+      font-weight: 800;
+      font-size: 1.3rem;
+    }
+
+    /* Footer Navigation Bar */
+    .deck-footer {
+      height: 70px;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .btn-icon:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: var(--accent-blue);
+      transform: translateY(-1px);
+    }
+    .btn-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+    .slide-counter {
+      font-family: var(--font-code);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 80px;
+      text-align: center;
+    }
+    .slide-counter span.current {
+      color: var(--accent-blue);
+      font-weight: 700;
+    }
+
+    /* Global Progress Line */
+    .progress-bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: #e2e8f0;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--gradient-primary);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Grid Layout Utilities */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    /* Card Styling */
+    .card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+    }
+    .card:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.08);
+    }
+    .card-highlight {
+      background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+      border: 1px solid #bfdbfe;
+    }
+
+    /* Tag Pills */
+    .pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border: 1px solid #e2e8f0;
+    }
+    .pill-blue { background: #eff6ff; color: var(--accent-blue); border-color: #bfdbfe; }
+    .pill-sky { background: #f0f9ff; color: var(--accent-sky); border-color: #bae6fd; }
+    .pill-purple { background: #f5f3ff; color: var(--accent-purple); border-color: #ddd6fe; }
+    .pill-emerald { background: #ecfdf5; color: var(--accent-emerald); border-color: #a7f3d0; }
+    .pill-amber { background: #fffbeb; color: var(--accent-amber); border-color: #fde68a; }
+
+    /* Custom Table Styling */
+    .table-custom {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+    .table-custom th, .table-custom td {
+      padding: 12px 18px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .table-custom th {
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .table-custom tr:last-child td {
+      border-bottom: none;
+    }
+    .table-custom tr td:last-child {
+      background: #eff6ff;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    /* Slide 1 Specifics */
+    .hero-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+    }
+    .hero-title {
+      font-size: 3.8rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #0f172a 30%, #2563eb 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-slogan {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .hero-subtitle {
+      max-width: 820px;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .hero-visual-box {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 40px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 16px 36px;
+      border-radius: 50px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .hero-stage-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .hero-stage-item .label {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .hero-arrow {
+      font-size: 1.5rem;
+      color: var(--accent-blue);
+    }
+    .hero-keywords {
+      display: flex;
+      gap: 16px;
+    }
+    .keyword-pill {
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 8px 22px;
+      border-radius: 30px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: var(--accent-blue);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Iceberg Model Diagram (Slide 3) */
+    .iceberg-container {
+      position: relative;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .iceberg-waterline {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+      position: relative;
+      z-index: 2;
+    }
+    .iceberg-top {
+      background: #ffffff;
+      padding: 20px;
+      flex: 0.35;
+    }
+    .iceberg-bottom {
+      background: linear-gradient(180deg, #eff6ff 0%, #e0e7ff 100%);
+      padding: 20px;
+      flex: 0.65;
+    }
+
+    /* Layered Stack (Slide 4) */
+    .stack-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .stack-layer {
+      padding: 20px 28px;
+      border-radius: 16px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+    .stack-layer:hover {
+      transform: translateX(6px);
+      border-color: #93c5fd;
+    }
+    .layer-1 { border-left: 5px solid var(--accent-sky); }
+    .layer-2 { border-left: 5px solid var(--accent-indigo); }
+    .layer-3 { border-left: 5px solid var(--accent-blue); background: #eff6ff; border-color: #bfdbfe; }
+
+    /* Overview Modal Overlay */
+    .overview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(248, 250, 252, 0.96);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      padding: 40px;
+    }
+    .overview-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .thumb-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 180px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+    }
+    .thumb-card:hover {
+      border-color: var(--accent-blue);
+      transform: scale(1.03);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
+    }
+    .thumb-card.active {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+      background: #eff6ff;
+    }
+    .thumb-number {
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      color: var(--accent-blue);
+      font-weight: 700;
+    }
+    .thumb-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 8px;
+    }
+
+    /* Helper Animations */
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+    .pulse { animation: pulseGlow 4s infinite ease-in-out; }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Glow Background -->
+  <div class="bg-glow glow-1 pulse"></div>
+  <div class="bg-glow glow-2 pulse" style="animation-delay: 2s;"></div>
+
+  <div class="deck-container">
+    
+    <!-- Top Deck Header -->
+    <header class="deck-header">
+      <div class="brand-logo">
+        <div class="brand-icon">S</div>
+        <span>SoulAgent</span>
+      </div>
+      <div class="deck-title-badge">商业计划书 Business Plan Presentation</div>
+    </header>
+
+    <!-- Main Viewport for Slides -->
+    <main class="slides-viewport">
+
+      <!-- SLIDE 1: 首页 (P1) -->
+      <section class="slide active" data-slide="1">
+        <div class="hero-container">
+          <div class="slide-tag">Personal Intelligence System</div>
+          <h1 class="hero-title" style="font-size: 4.6rem; margin-bottom: 12px;">SoulAgent</h1>
+          <div class="hero-slogan" style="font-size: 1.6rem; font-weight: 700; color: #1e293b; margin-bottom: 16px;">
+            从千人一面的通用智能，到千人千面的个人智能
+          </div>
+          
+
+          <div class="hero-keywords">
+            <div class="keyword-pill">记住你</div>
+            <div class="keyword-pill">理解你</div>
+            <div class="keyword-pill">适应你</div>
+            <div class="keyword-pill">替你行动</div>
+          </div>
+        </div>
+        
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>不做世界上最聪明的 AI，做世界上最懂你的 AI。未来，每个人都应该拥有一个真正属于自己的 AI。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: 现状 (P2) -->
+      <section class="slide" data-slide="2">
+        <div class="slide-header">
+          <div class="slide-tag">P2｜行业演进与趋势</div>
+          <h2 class="slide-title">下一阶段：不只是让 AI 更会做事，而是让 AI 更懂“该为你做什么、怎么做”</h2>
+          <p class="slide-subtitle">AI 已经从“回答问题”演进到“替你做事”，但终局绝非仅仅是工具能力的增强，而是真正理解个人意图与隐性 Context。</p>
+        </div>
+
+        <div class="slide-body">
+          <!-- Unified Master Comparison Table -->
+          <table class="table-custom" style="font-size: 0.88rem; line-height: 1.5;">
+            <thead>
+              <tr>
+                <th style="width: 15%;">演进维度</th>
+                <th style="width: 25%;">第一阶段｜大模型</th>
+                <th style="width: 30%; background: #f5f3ff;">
+                  第二阶段｜Agent
+                  <span class="pill pill-purple" style="font-size: 0.72rem; padding: 2px 8px; margin-left: 6px;">当前状态</span>
+                </th>
+                <th style="width: 30%; background: #eff6ff; color: var(--accent-blue);">
+                  第三阶段｜SoulAgent
+                  <span class="pill pill-blue" style="font-size: 0.72rem; padding: 2px 8px; margin-left: 6px;">未来演进</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>智能定位</strong></td>
+                <td><strong>通用智能</strong> (General)</td>
+                <td><strong>执行智能</strong> (Execution)</td>
+                <td><strong style="color: var(--accent-blue);">个人智能</strong> (Personal Intelligence)</td>
+              </tr>
+              <tr>
+                <td><strong>代表产品</strong></td>
+                <td>ChatGPT / 豆包 / Gemini / DeepSeek</td>
+                <td>Codex / WorkBuddy / Manus 等</td>
+                <td><strong style="color: var(--accent-blue);">SoulAgent </strong></td>
+              </tr>
+              <tr>
+                <td><strong>本质与依据</strong></td>
+                <td>概率生成模型 · 基于海量通用训练数据</td>
+                <td>执行工具 · 基于 Tool Calling / Prompt</td>
+                <td><strong style="color: var(--accent-blue);">个人模型 · 基于用户模型与长期 Context</strong></td>
+              </tr>
+              <tr>
+                <td><strong>交互模式</strong></td>
+                <td>你问我答（单次被动响应）</td>
+                <td>你下令我执行（任务驱动/多步骤）</td>
+                <td><strong style="color: var(--accent-blue);">理解 + 主动协作（隐性意图感知）</strong></td>
+              </tr>
+              <tr>
+                <td><strong>记忆与知识</strong></td>
+                <td>单次对话 / 碎片化信息</td>
+                <td>任务级临时 Context</td>
+                <td><strong style="color: var(--accent-blue);">长期个人记忆体系与认知模型</strong></td>
+              </tr>
+              <tr>
+                <td><strong>一句话总结</strong></td>
+                <td style="color: var(--text-muted);">“知道很多，但不知道你。”</td>
+                <td style="color: var(--text-muted);">“会做很多，但仍需你告诉它怎么做。”</td>
+                <td style="color: #1e3a8a; font-weight: 700; background: #eff6ff;">“不只是知道怎么做，而是知道对你该怎么做。”</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>今天的 Agent 已经具备强大的执行力（当前状态）；未来的 SoulAgent（未来演进）要把碎片化的 AI 能力统一到持续理解用户的 Personal Context 中。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: 痛点 (P3) -->
+      <section class="slide" data-slide="3">
+        <div class="slide-header">
+          <div class="slide-tag">P3｜问题定义与痛点</div>
+          <h2 class="slide-title">你告诉 AI 的，不是你真正全部想要的</h2>
+          <p class="slide-subtitle">Prompt 能表达显性需求，却无法完整承载一个人的知识、偏好、经验与潜意识。</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="grid-2" style="height: 100%; gap: 28px;">
+            
+            <!-- Left: Iceberg Model -->
+            <div class="iceberg-container">
+              <div class="iceberg-top">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span class="pill pill-blue">水面以上｜显性需求（现象）</span>
+                  <span style="font-size: 0.8rem; color: var(--text-dim);">Prompt 能够表达的部分 (~10%)</span>
+                </div>
+                <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin-bottom: 6px;">“帮我做一个 App”</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">包含：基础功能 / 技术栈 / 界面风格 / 格式要求</div>
+              </div>
+
+              <div class="iceberg-waterline"></div>
+              
+              <!-- '通过现象看本质' Central Bridge Tag -->
+              <div style="text-align: center; margin: -13px 0; position: relative; z-index: 5;">
+                <span style="background: var(--accent-blue); color: #ffffff; font-size: 0.82rem; font-weight: 700; padding: 4px 16px; border-radius: 20px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); display: inline-block;">
+                  🔍 通过现象看本质
+                </span>
+              </div>
+
+              <div class="iceberg-bottom" style="padding-top: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <span class="pill pill-purple">水面以下｜隐性需求（本质）</span>
+                  <span style="font-size: 0.8rem; color: var(--accent-purple); font-weight: 600;">真实脑内需求 (~90%)</span>
+                </div>
+                <div class="grid-2" style="gap: 10px; font-size: 0.85rem; color: #1e293b;">
+                  <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">• 希望控制执行节奏</div>
+                  <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">• 习惯特定思考框架</div>
+                  <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">• 不喜欢被否定/评判</div>
+                  <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">• 对风险极其敏感</div>
+                  <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">• 隐性工作流与审美</div>
+                  <div style="background: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">• 自己也未察觉的偏好</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: 3 Words First, then Why Prompt Fails -->
+            <div style="display: flex; flex-direction: column; justify-content: space-between;">
+              
+              <!-- 3 Words Grid (Moved to top as requested) -->
+              <div class="grid-3" style="margin-bottom: 16px;">
+                <div class="card" style="padding: 14px; text-align: center; border-color: #cbd5e1;">
+                  <span style="font-size: 1.1rem; font-weight: 800; color: var(--accent-indigo);">说不全</span>
+                  <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">Prompt无法完整表达需求</p>
+                </div>
+                <div class="card" style="padding: 14px; text-align: center; border-color: #cbd5e1;">
+                  <span style="font-size: 1.1rem; font-weight: 800; color: var(--accent-purple);">想不到</span>
+                  <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">未意识到自身的隐性倾向</p>
+                </div>
+                <div class="card" style="padding: 14px; text-align: center; border-color: #cbd5e1;">
+                  <span style="font-size: 1.1rem; font-weight: 800; color: var(--accent-blue);">记不住</span>
+                  <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 4px;">每次重来，无法沉淀经验</p>
+                </div>
+              </div>
+
+              <!-- Why Prompt Fails Card -->
+              <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 12px;">为什么 Prompt 无法解决？</h3>
+                <div style="margin-bottom: 14px;">
+                  <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">01｜低带宽 (Low Bandwidth)</div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">自然语言本身是有限的表述工具：<br><strong style="color: var(--text-main);">人脑中的完整意图 ≫ 能够被一句 Prompt 表达出的信息</strong></p>
+                </div>
+                <div>
+                  <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">02｜不可自知 (Implicit Subconscious)</div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">更重要的是：<strong>有些需求用户自己也不知道。</strong>稳定偏好与行为模式只能从长期交互中显现。</p>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>通过现象看本质——传统的 AI 只能看见 10% 的 Prompt 现象；SoulAgent 穿透现象，掌控 90% 的隐性意图本质。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: SoulAgent 架构 (P4) -->
+      <section class="slide" data-slide="4">
+        <div class="slide-header">
+          <div class="slide-tag">P4｜SoulAgent 核心系统</div>
+          <h2 class="slide-title">SoulAgent，不只是记住你，而是真正理解你</h2>
+          <p class="slide-subtitle">把一次次交互中的事实、偏好与行为模式，持续沉淀为属于你的 Personal Model。</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="grid-2" style="gap: 32px; align-items: center;">
+            
+            <!-- Left: 3-Layer Architecture Stack -->
+            <div class="stack-container">
+              
+              <div class="stack-layer layer-3">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--accent-blue); font-weight: 700;">LAYER 03｜核心成果</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">Personal Intelligence 个人智能</div>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">把“知道你”转化成“为你个性化精准行动”</div>
+                </div>
+                <span class="pill pill-blue">为你行动</span>
+              </div>
+
+              <div class="stack-layer layer-2">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--accent-indigo); font-weight: 700;">LAYER 02｜深层模型</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">Cognitive Model 认知模型</div>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">理解你是怎么思考和做决策的（思维·情绪·行为模式）</div>
+                </div>
+                <span class="pill pill-purple">为什么做</span>
+              </div>
+
+              <div class="stack-layer layer-1">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--accent-sky); font-weight: 700;">LAYER 01｜基础沉淀</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main);">Memory 记忆系统</div>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">知道你经历过什么（事实·偏好·历史文件·经历Context）</div>
+                </div>
+                <span class="pill pill-amber">说过什么</span>
+              </div>
+
+            </div>
+
+            <!-- Right: Contrast Example -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="card" style="border-left: 4px solid var(--text-dim);">
+                <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px;">场景指令：“帮我写一份汇报。”</div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">普通 AI / 普通 Agent：</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">仅根据单次 Prompt 泛泛生成模板化汇报，缺乏深层上下文。</p>
+              </div>
+
+              <div class="card card-highlight">
+                <div style="font-size: 0.85rem; color: var(--accent-blue); margin-bottom: 6px;">场景指令：“帮我写一份汇报。”</div>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 6px;">SoulAgent 个人智能：</div>
+                <p style="font-size: 0.85rem; color: #1e293b; line-height: 1.6;">
+                  自动结合你的<strong>历史工作方式、表达偏好、领导关注点、项目背景与一贯决策模式</strong>，生成更像你、也更适合你的完美结果。
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>Memory 是“你说过什么”；Cognitive Model 是“你为什么这么做”。三层推进：User Memory ➔ User Model ➔ Personal Intelligence。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: 场景一 - 帮我听 (P5) -->
+      <section class="slide" data-slide="5">
+        <div class="slide-header">
+          <div class="slide-tag">P5｜场景一：替你感知世界</div>
+          <h2 class="slide-title">帮我听——主动向外感知，带回真正重要的信息</h2>
+          <p class="slide-subtitle">你不可能亲自出现在所有地方，但可以让 SoulAgent 替你去听、去看、去理解。</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="grid-3" style="gap: 24px; align-items: stretch;">
+            
+            <!-- Left Column -->
+            <div class="card">
+              <div class="pill pill-amber" style="margin-bottom: 12px;">现实痛点</div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 10px;">用户精力受限的世界</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
+                例如：<strong>智源大会</strong>拥有 8 个并行分论坛，一个人精力和时间有限，只能选择去 1 个。
+              </p>
+              <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #991b1b;">
+                ✖ 另外 7 个论坛的关键信息与商机被彻底错过。
+              </div>
+            </div>
+
+            <!-- Middle Column -->
+            <div class="card card-highlight">
+              <div class="pill pill-blue" style="margin-bottom: 12px;">SoulAgent 行动</div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 10px;">并行感知 Agent 节点</h3>
+              <p style="font-size: 0.85rem; color: var(--text-main); line-height: 1.6; margin-bottom: 16px;">
+                SoulAgent 派出多个分布式感知节点同时深入 Forum A ~ H。
+              </p>
+              <div style="font-size: 0.85rem; font-weight: 700; color: var(--accent-blue); background: #eff6ff; border: 1px solid #bfdbfe; padding: 10px; border-radius: 8px; text-align: center;">
+                实时：听 ➔ 理解 ➔ 记录 ➔ 提炼 ➔ 关联
+              </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="card">
+              <div class="pill pill-emerald" style="margin-bottom: 12px;">感知成果</div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 10px;">你的第二感知系统</h3>
+              <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 16px; line-height: 1.6;">
+                <li>提炼前沿观点与新趋势</li>
+                <li>捕捉关键人物与突破技术</li>
+                <li><strong>匹配与你个人Context强相关的信息</strong></li>
+                <li>关联历史知识，给出行动建议</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>AI 不再只是被动等待你提问，而是主动替你探索世界，并把外部变局与你的个人目标精准打通。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: 场景二 - 个人分身 (P6) -->
+      <section class="slide" data-slide="6">
+        <div class="slide-header">
+          <div class="slide-tag">P6｜场景二：向内理解用户</div>
+          <h2 class="slide-title">个人分身——让“懂你”变得看得见</h2>
+          <p class="slide-subtitle">个人知识、长期记忆与认知模型不断沉淀，最终形成一个可感知、可交互、可成长的数字分身。</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="grid-2" style="gap: 28px;">
+            
+            <!-- Left: Twin Synthesis Pipeline -->
+            <div class="card">
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 16px;">分身沉淀路径</h3>
+              <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+                <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                  <strong style="color: var(--text-main);">多源输入：</strong>文件、文章、作品、工作资料、知识库
+                </div>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);">
+                  <strong style="color: var(--text-main);">交互印记：</strong>提问习惯、决策轨迹、修改记录、表达风格
+                </div>
+                <div style="text-align: center; color: var(--accent-blue); font-weight: 700; font-size: 1.1rem;">↓</div>
+                <div style="background: #eff6ff; padding: 14px; border-radius: 10px; border: 1px solid #bfdbfe; text-align: center;">
+                  <strong style="color: #1e3a8a; font-size: 1rem;">SoulAgent Core</strong><br>
+                  <span style="color: var(--accent-blue); font-size: 0.8rem; font-weight: 600;">Memory System + Cognitive Model</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Two Output Applications -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="card card-highlight">
+                <div class="pill pill-purple" style="margin-bottom: 8px;">形态 ①｜专家分身</div>
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">把一个人的智慧规模化</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                  从“1 个专家服务有限的人”升级为“<strong>1 个专家分身服务无限的人</strong>”，让每个人零成本获得最前沿专家智慧。
+                </p>
+              </div>
+
+              <div class="card card-highlight">
+                <div class="pill pill-emerald" style="margin-bottom: 8px;">形态 ②｜数字员工</div>
+                <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">把组织经验变成数字资产</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                  沉淀专家经验、团队知识与工作流程。<strong>数据严格不出域</strong>，打造企业专属数字生产力。
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>帮我听（向外感知） + 个人分身（向内理解） ➔ 形成“感知世界 ➔ 理解自己 ➔ 反哺自己”的商业闭环。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: 场景三 - 教育 (P7) -->
+      <section class="slide" data-slide="7">
+        <div class="slide-header">
+          <div class="slide-tag">P7｜场景三：赋能生产力工作流</div>
+          <h2 class="slide-title">当 AI 懂一个人，AI 才真正能替他工作</h2>
+          <p class="slide-subtitle">以教育为例：AI 不只是批改作业，而是同时理解老师、学生与班级，让每一次工作都建立在长期认知之上。</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="grid-3" style="gap: 20px;">
+            
+            <div class="card">
+              <div style="font-size: 1.8rem; margin-bottom: 8px;">👨‍🏫</div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 8px;">懂老师 Teacher Model</h3>
+              <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 16px; line-height: 1.6;">
+                <li>教学目标与评分偏好</li>
+                <li>批改要求与讲评重点</li>
+                <li>个人教学风格与教学习惯</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <div style="font-size: 1.8rem; margin-bottom: 8px;">👩‍🎓</div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-purple); margin-bottom: 8px;">懂学生 Student Model</h3>
+              <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 16px; line-height: 1.6;">
+                <li>历史错误与能力优势</li>
+                <li>重复遇到的知识薄弱点</li>
+                <li>多次作业的长期学习轨迹</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <div style="font-size: 1.8rem; margin-bottom: 8px;">🏫</div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-amber); margin-bottom: 8px;">懂班级 Class Model</h3>
+              <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 16px; line-height: 1.6;">
+                <li>班级共性失分点与薄弱项</li>
+                <li>班级间/年级间的学习差异</li>
+                <li>整体教学改进方向</li>
+              </ul>
+            </div>
+
+          </div>
+
+          <!-- Bottom Execution Banner -->
+          <div style="margin-top: 20px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 0.9rem; color: var(--text-muted);">
+              <strong style="color: var(--text-main);">对比传统 AI 批改：</strong> 传统 AI 仅逐题核对对错；<br>
+              <strong style="color: var(--accent-blue);">SoulAgent 懂教学工作台：</strong> 结合老师偏好 + 学生历史错题 + 班级薄弱项 ➔ 输出深度个性化讲评与教学改进方案。
+            </div>
+            <span class="pill pill-emerald" style="white-space: nowrap;">认知转化为生产力</span>
+          </div>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>真正的 AI 生产力工具，必须将 Memory 与 Cognitive Model 融入具体的行业协同流程中。</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: 闭环与总结 (P8) -->
+      <section class="slide" data-slide="8">
+        <div class="slide-header">
+          <div class="slide-tag">P8｜SoulAgent 闭环总览</div>
+          <h2 class="slide-title">一个 SoulAgent，形成完整的个人智能闭环</h2>
+          <p class="slide-subtitle">感知 ➔ 理解 ➔ 行动 ➔ 持续进化</p>
+        </div>
+
+        <div class="slide-body">
+          <!-- 4 Step Loop -->
+          <div class="grid-4" style="margin-bottom: 24px;">
+            <div class="card" style="text-align: center; border-top: 4px solid var(--accent-amber);">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-amber);">STEP 01</div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 6px 0;">感知世界</h4>
+              <p style="font-size: 0.8rem; color: var(--text-dim);">帮我听：探索、理解与记录外部信息</p>
+            </div>
+
+            <div class="card" style="text-align: center; border-top: 4px solid var(--accent-sky);">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-sky);">STEP 02</div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 6px 0;">理解自己</h4>
+              <p style="font-size: 0.8rem; color: var(--text-dim);">个人分身：沉淀知识、记忆与认知模型</p>
+            </div>
+
+            <div class="card" style="text-align: center; border-top: 4px solid var(--accent-indigo);">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-indigo);">STEP 03</div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 6px 0;">替你行动</h4>
+              <p style="font-size: 0.8rem; color: var(--text-dim);">教育/工作/生活：完成个性化高级任务</p>
+            </div>
+
+            <div class="card" style="text-align: center; border-top: 4px solid var(--accent-blue);">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-blue);">STEP 04</div>
+              <h4 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 6px 0;">持续进化</h4>
+              <p style="font-size: 0.8rem; color: var(--text-dim);">交互反馈：越使用 ➔ 越懂你 ➔ 越精准</p>
+            </div>
+          </div>
+
+          <!-- Bottom System Architecture Flow Pill -->
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px; padding: 20px; text-align: center;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;">SoulAgent 底层飞轮系统架构</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 0.9rem; font-weight: 700; flex-wrap: wrap; color: #1e293b;">
+              <span>外部世界 External World</span>
+              <span style="color: var(--accent-blue);">➔</span>
+              <span>感知与获取</span>
+              <span style="color: var(--accent-blue);">➔</span>
+              <span style="color: var(--accent-blue);">Memory</span>
+              <span style="color: var(--accent-blue);">➔</span>
+              <span style="color: var(--accent-purple);">Cognitive Model</span>
+              <span style="color: var(--accent-blue);">➔</span>
+              <span style="color: #1e3a8a;">Personal Intelligence</span>
+              <span style="color: var(--accent-blue);">➔</span>
+              <span style="color: var(--accent-emerald);">个性化行动</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-footer-takeaway">
+          <span class="quote-mark">“</span>
+          <span>SoulAgent 不是三个孤立的工具，而是一套涵盖“感知 ➔ 理解 ➔ 行动”的完整 Personal Intelligence System。</span>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Controls -->
+    <footer class="deck-footer">
+      <div class="nav-controls">
+        <button class="btn-icon" id="btn-prev" title="上一页 (Left Arrow / PageUp)">
+          <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <button class="btn-icon" id="btn-next" title="下一页 (Right Arrow / Space / PageDown)">
+          <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+        </button>
+        <div class="slide-counter">
+          <span class="current" id="current-slide">01</span> / <span id="total-slides">08</span>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <button class="btn-icon" id="btn-overview" title="总览视图 (O / Esc)">
+          <svg viewBox="0 0 24 24"><path d="M4 11h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1zm10 0h6a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1zM4 21h6a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1zm10 0h6a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1z"/></svg>
+        </button>
+        <button class="btn-icon" id="btn-fullscreen" title="全屏 (F)">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        </button>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Overview Grid Modal -->
+  <div class="overview-modal" id="overview-modal">
+    <div class="overview-header">
+      <div class="brand-logo">
+        <div class="brand-icon">S</div>
+        <span>幻灯片总览 Slide Overview</span>
+      </div>
+      <button class="btn-icon" id="btn-close-overview">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+    <div class="overview-grid" id="overview-grid">
+      <!-- Grid items dynamically generated in JS -->
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const slides = document.querySelectorAll('.slide');
+      const totalSlides = slides.length;
+      let currentIndex = 0;
+
+      const currentSlideEl = document.getElementById('current-slide');
+      const totalSlidesEl = document.getElementById('total-slides');
+      const progressBar = document.getElementById('progress-bar');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const btnOverview = document.getElementById('btn-overview');
+      const btnCloseOverview = document.getElementById('btn-close-overview');
+      const btnFullscreen = document.getElementById('btn-fullscreen');
+      const overviewModal = document.getElementById('overview-modal');
+      const overviewGrid = document.getElementById('overview-grid');
+
+      totalSlidesEl.textContent = String(totalSlides).padStart(2, '0');
+
+      // Initialize Overview Grid Items
+      slides.forEach((slide, idx) => {
+        const title = slide.querySelector('.slide-title')?.textContent || `Slide ${idx + 1}`;
+        const tag = slide.querySelector('.slide-tag')?.textContent || `P${idx + 1}`;
+
+        const thumb = document.createElement('div');
+        thumb.className = `thumb-card ${idx === 0 ? 'active' : ''}`;
+        thumb.dataset.index = idx;
+        thumb.innerHTML = `
+          <div class="thumb-number">${String(idx + 1).padStart(2, '0')} | ${tag}</div>
+          <div class="thumb-title">${title}</div>
+          <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: auto;">点击跳转 Click to View</div>
+        `;
+
+        thumb.addEventListener('click', () => {
+          goToSlide(idx);
+          toggleOverview(false);
+        });
+
+        overviewGrid.appendChild(thumb);
+      });
+
+      function updateSlides() {
+        slides.forEach((slide, idx) => {
+          if (idx === currentIndex) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+
+        currentSlideEl.textContent = String(currentIndex + 1).padStart(2, '0');
+        const progressPercentage = ((currentIndex + 1) / totalSlides) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+
+        // Update Overview Cards Active State
+        document.querySelectorAll('.thumb-card').forEach((card, idx) => {
+          if (idx === currentIndex) {
+            card.classList.add('active');
+          } else {
+            card.classList.remove('active');
+          }
+        });
+      }
+
+      function goToSlide(index) {
+        if (index >= 0 && index < totalSlides) {
+          currentIndex = index;
+          updateSlides();
+        }
+      }
+
+      function nextSlide() {
+        if (currentIndex < totalSlides - 1) {
+          currentIndex++;
+          updateSlides();
+        }
+      }
+
+      function prevSlide() {
+        if (currentIndex > 0) {
+          currentIndex--;
+          updateSlides();
+        }
+      }
+
+      function toggleOverview(show) {
+        if (show === undefined) {
+          overviewModal.classList.toggle('active');
+        } else if (show) {
+          overviewModal.classList.add('active');
+        } else {
+          overviewModal.classList.remove('active');
+        }
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+          });
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+
+      // Event Listeners
+      btnNext.addEventListener('click', nextSlide);
+      btnPrev.addEventListener('click', prevSlide);
+      btnOverview.addEventListener('click', () => toggleOverview(true));
+      btnCloseOverview.addEventListener('click', () => toggleOverview(false));
+      btnFullscreen.addEventListener('click', toggleFullscreen);
+
+      // Keyboard Controls
+      document.addEventListener('keydown', (e) => {
+        if (overviewModal.classList.contains('active')) {
+          if (e.key === 'Escape' || e.key === 'o' || e.key === 'O') {
+            toggleOverview(false);
+          }
+          return;
+        }
+
+        switch (e.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+          case ' ':
+          case 'PageDown':
+            nextSlide();
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+          case 'PageUp':
+          case 'Backspace':
+            prevSlide();
+            break;
+          case 'Home':
+            goToSlide(0);
+            break;
+          case 'End':
+            goToSlide(totalSlides - 1);
+            break;
+          case 'o':
+          case 'O':
+          case 'Escape':
+            toggleOverview();
+            break;
+          case 'f':
+          case 'F':
+            toggleFullscreen();
+            break;
+        }
+      });
+
+      // Touch Swiping Support
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        if (touchEndX < touchStartX - 50) {
+          nextSlide();
+        }
+        if (touchEndX > touchStartX + 50) {
+          prevSlide();
+        }
+      }
+
+      // Initial Call
+      updateSlides();
+    });
+  </script>
+</body>
+</html>

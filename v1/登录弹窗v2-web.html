@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 / 注册 - SoulAgent</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary-start: #FFAB38;
+            --primary-end: #FF6B35;
+            --primary-gradient: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+            --primary-shadow: rgba(255, 107, 53, 0.25);
+            --accent-color: #FF7D33;
+            --text-main: #2d3748;
+            --text-secondary: #718096;
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7f9fa;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 登录页背景图高斯模糊和黑色蒙版 */
+        body::before {
+            content: "";
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            right: -20px;
+            bottom: -20px;
+            background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('bg.jpg') no-repeat center center;
+            background-size: cover;
+            filter: blur(3px);
+            z-index: -1;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header h1 span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-logo {
+            height: 22px;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 18px;
+            display: inline-block;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: transparent;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 0;
+            padding: 0 4px;
+            transition: border-color 0.35s ease;
+            animation: fadeIn var(--transition-speed) ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-group:focus-within {
+            background: transparent;
+        }
+
+        .input-group:focus-within::after {
+            transform: scaleX(1);
+        }
+
+        .input-icon {
+            width: 20px;
+            height: 20px;
+            color: #a0aec0;
+            margin-left: 4px;
+            margin-right: 8px;
+            flex-shrink: 0;
+            transition: color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-group:focus-within .input-icon {
+            color: var(--accent-color);
+        }
+
+        /* 账号图标：头部跳动回弹 */
+        .icon-head {
+            transform-origin: center 7px;
+        }
+        .input-group:focus-within .icon-head {
+            animation: headJump 0.5s cubic-bezier(0.28, 0.84, 0.42, 1);
+        }
+        @keyframes headJump {
+            0% { transform: translateY(0) scaleY(1); }
+            30% { transform: translateY(-2px) scaleY(1.05); }
+            60% { transform: translateY(0) scaleY(0.92); }
+            80% { transform: translateY(-0.8px) scaleY(1.02); }
+            100% { transform: translateY(0) scaleY(1); }
+        }
+
+        /* 验证码图标：点依次出现 */
+        .icon-dot {
+            transform-origin: center;
+            transform-box: fill-box;
+        }
+        .input-group:focus-within .icon-dot-1 { animation: dotPop 0.4s 0s both; }
+        .input-group:focus-within .icon-dot-2 { animation: dotPop 0.4s 0.15s both; }
+        .input-group:focus-within .icon-dot-3 { animation: dotPop 0.4s 0.3s both; }
+        
+        @keyframes dotPop {
+            0% { opacity: 0; transform: scale(0.5); }
+            60% { opacity: 1; transform: scale(1.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* 密码图标：锁扣压缩回弹 */
+        .icon-shackle {
+            transform-origin: center 11px;
+        }
+        .input-group:focus-within .icon-shackle {
+            animation: shackleJump 0.6s cubic-bezier(0.28, 0.84, 0.42, 1);
+        }
+        @keyframes shackleJump {
+            0% { transform: scaleY(1) translateY(0); }
+            20% { transform: scaleY(0.8) translateY(0); }
+            50% { transform: scaleY(1.05) translateY(-1.5px); }
+            75% { transform: scaleY(0.92) translateY(0); }
+            100% { transform: scaleY(1) translateY(0); }
+        }
+
+        .toggle-password-eye {
+            width: 20px;
+            height: 20px;
+            color: #a0aec0;
+            cursor: pointer;
+            margin-left: 8px;
+            margin-right: 4px;
+            flex-shrink: 0;
+            transition: color var(--transition-speed), transform 0.2s ease;
+            overflow: visible;
+        }
+
+        .toggle-password-eye:hover {
+            color: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        /* 眨眼/眼睫毛睁开 CSS 过渡动效 */
+        .toggle-password-eye .eye-closed-group,
+        .toggle-password-eye .eye-open-group {
+            transform-origin: 12px 12px;
+            transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.25s ease;
+        }
+
+        /* 默认闭眼状态 (掩码***) */
+        .toggle-password-eye .eye-closed-group {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+
+        .toggle-password-eye .eye-open-group {
+            opacity: 0;
+            transform: scaleY(0) scaleX(0.7);
+            pointer-events: none;
+        }
+
+        /* 睁眼状态 (显示明文) */
+        .toggle-password-eye.is-open .eye-closed-group {
+            opacity: 0;
+            transform: scaleY(0) scaleX(0.7);
+        }
+
+        .toggle-password-eye.is-open .eye-open-group {
+            opacity: 1;
+            transform: scaleY(1) scaleX(1);
+        }
+
+        /* 瞳孔弹性弹出微动画 */
+        .toggle-password-eye .eye-pupil {
+            transform-origin: center center;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .toggle-password-eye.is-open .eye-pupil {
+            animation: pupilPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both;
+        }
+
+        @keyframes pupilPop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .input-group input {
+            width: 100%;
+            flex: 1;
+            padding: 12px 8px;
+            font-size: 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            transition: all var(--transition-speed);
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-image: none;
+        }
+
+        .input-group input::placeholder {
+            color: #a0aec0;
+        }
+
+        /* 验证码特殊的 input group */
+        .code-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-get-code {
+            background: transparent;
+            border: none;
+            color: var(--accent-color);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0 16px;
+            white-space: nowrap;
+            outline: none;
+        }
+
+        .btn-get-code.disabled {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            width: 40%;
+            white-space: nowrap;
+            display: block;
+            margin: 32px auto 0;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(220, 225, 232, 0.75);
+            color: #a0aec0;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: not-allowed;
+            opacity: 0.65;
+            transform: scale(0.98);
+            box-shadow: none;
+            transition: all 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        .btn-primary .btn-text {
+            position: relative;
+            z-index: 2;
+            transition: color 0.38s ease;
+        }
+
+        .btn-primary::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:not(:disabled) {
+            color: #ffffff;
+            cursor: pointer;
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 6px 20px var(--primary-shadow);
+        }
+
+        .btn-primary:not(:disabled)::before {
+            opacity: 1;
+        }
+
+        .btn-primary:not(:disabled):hover {
+            transform: scale(1.03) translateY(-1px);
+            box-shadow: 0 8px 24px var(--primary-shadow);
+        }
+
+        .btn-primary:not(:disabled):active {
+            transform: scale(0.99) translateY(0);
+            box-shadow: 0 4px 12px var(--primary-shadow);
+        }
+
+        /* 密码登录/验证码登录切换按钮居中 */
+        .toggle-mode {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .toggle-mode span {
+            font-size: 12px;
+            color: var(--accent-color);
+            cursor: pointer;
+            transition: color var(--transition-speed);
+        }
+
+        .toggle-mode span:hover {
+            color: var(--primary-end);
+        }
+
+        /* 第三方登录 */
+        .third-party {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .third-party p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+
+        .third-party p::before,
+        .third-party p::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 60px;
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .third-party p::before {
+            left: -70px;
+        }
+
+        .third-party p::after {
+            right: -70px;
+        }
+
+        .icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: all var(--transition-speed);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .icon-btn.pill-btn {
+            width: auto;
+            padding: 0 16px;
+            border-radius: 22px;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .terms {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .terms-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .terms-label input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            background: rgba(255, 255, 255, 0.7);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .terms-label input[type="checkbox"]:hover {
+            border-color: rgba(255, 125, 51, 0.4);
+        }
+
+        .terms-label input[type="checkbox"]:checked {
+            background: var(--primary-gradient);
+            border: none;
+        }
+
+        .terms-label input[type="checkbox"]:checked::after {
+            content: '';
+            width: 4px;
+            height: 8px;
+            border: solid #ffffff;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            margin-bottom: 2px;
+        }
+
+        .terms a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        /* 协议提示弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            width: 88%;
+            max-width: 340px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 28px 24px 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-card h3 {
+            font-size: 18px;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .modal-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .modal-card p a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-modal-agree {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px var(--primary-shadow);
+            transition: all var(--transition-speed);
+        }
+
+        .btn-modal-agree:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px var(--primary-shadow);
+        }
+
+        .pwd-rules-container {
+            background: rgba(0, 0, 0, 0.025);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin: -4px 0 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+        }
+
+        .rule-item.valid {
+            color: #2e7d32;
+            font-weight: 500;
+        }
+
+        .rule-icon {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .rule-icon circle {
+            stroke: #C7C7CC;
+            fill: none;
+            transition: all 0.25s ease;
+        }
+
+        .rule-icon polyline {
+            stroke: #A0A0A5;
+            opacity: 0.4;
+            transition: all 0.25s ease;
+        }
+
+        .rule-item.valid .rule-icon circle {
+            stroke: #34C759;
+            fill: #34C759;
+        }
+
+        .rule-item.valid .rule-icon polyline {
+            stroke: #FFFFFF;
+            opacity: 1;
+        }
+
+        .input-group.has-error {
+            border-bottom-color: #FF3B30 !important;
+        }
+
+        .input-group.has-error::after {
+            background: #FF3B30 !important;
+        }
+
+        .input-group.has-error:focus-within::after {
+            transform: scaleX(1);
+            background: #FF3B30 !important;
+        }
+
+        .input-group.has-error .input-icon {
+            color: #FF3B30 !important;
+        }
+
+        /* 国家区号选择器 */
+        .country-code-wrapper {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-right: 6px;
+            margin-right: 6px;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .country-code-val {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        .country-code-arrow {
+            width: 10px;
+            height: 6px;
+            margin-left: 4px;
+            margin-right: 2px;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        .country-code-select {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+            font-size: 14px;
+        }
+
+        .country-code-select option {
+            background: #ffffff;
+            color: #2d3748;
+            font-size: 14px;
+            padding: 8px;
+        }
+
+        .input-error-msg {
+            font-size: 12px;
+            color: #FF3B30;
+            text-align: left;
+            margin: -8px 0 14px 6px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        
+        <!-- Step 1: 登录 / 注册 表单 -->
+        <div id="step1">
+            <div class="header">
+                <img src="logo.png" alt="SoulAgent" class="header-logo">
+                <p id="headerSubtitle">登录以解锁更多智能体验</p>
+            </div>
+            
+            <!-- Phone Input Group (Default) -->
+            <div class="input-group" id="phoneGroup">
+                <div class="country-code-wrapper">
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
+                    <span id="countryCodeDisplay" class="country-code-val">+86</span>
+                    <svg class="country-code-arrow" viewBox="0 0 10 6">
+                        <path fill="none" stroke="#718096" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M1 1l4 4 4-4"/>
+                    </svg>
+                    <select id="countryCodeSelect" class="country-code-select" onchange="updateCountryCodeDisplay(this)">
+                        <option value="+86">🇨🇳 中国 +86</option>
+                        <option value="+1">🇺🇸 美国 +1</option>
+                        <option value="+852">🇭🇰 中国香港 +852</option>
+                        <option value="+853">🇲🇴 中国澳门 +853</option>
+                        <option value="+886">🇹🇼 中国台湾 +886</option>
+                        <option value="+81">🇯🇵 日本 +81</option>
+                        <option value="+44">🇬🇧 英国 +44</option>
+                        <option value="+49">🇩🇪 德国 +49</option>
+                        <option value="+33">🇫🇷 法国 +33</option>
+                        <option value="+65">🇸🇬 新加坡 +65</option>
+                        <option value="+82">🇰🇷 韩国 +82</option>
+                    </select>
+                </div>
+                <input type="tel" id="phoneInput" placeholder="请输入手机号" autocomplete="off">
+            </div>
+
+            <!-- Email Input Group (Hidden by default) -->
+            <div class="input-group" id="emailGroup" style="display: none;">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <input type="email" id="emailInput" placeholder="请输入邮箱地址" autocomplete="off">
+            </div>
+
+            <!-- Code Input (Default) -->
+            <div class="input-group code-group" id="loginCodeGroup">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    <path class="icon-dot icon-dot-1" d="M8 10h.01"></path>
+                    <path class="icon-dot icon-dot-2" d="M12 10h.01"></path>
+                    <path class="icon-dot icon-dot-3" d="M16 10h.01"></path>
+                </svg>
+                <input type="text" id="loginCodeInput" placeholder="请输入验证码" autocomplete="off">
+                <button class="btn-get-code" id="getCodeBtn" onclick="startCountdown()">获取验证码</button>
+            </div>
+
+            <!-- Password Input (Hidden by Default) -->
+            <div class="input-group" id="loginPasswordGroup" style="display: none;">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path class="icon-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <input type="password" id="loginPasswordInput" placeholder="请输入密码">
+                <svg class="toggle-password-eye" title="显示密码" onmousedown="event.preventDefault()" onclick="togglePasswordVisibility(this, 'loginPasswordInput', event)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="eye-closed-group">
+                        <path d="M2 10s3.5 4 10 4 10-4 10-4"></path>
+                        <path d="M4 11.5L2 14"></path>
+                        <path d="M7 13.5l-1.5 3"></path>
+                        <path d="M12 14v3.5"></path>
+                        <path d="M17 13.5l1.5 3"></path>
+                        <path d="M20 11.5L22 14"></path>
+                    </g>
+                    <g class="eye-open-group">
+                        <path d="M2 13.5s3.5-7 10-7 10 7 10 7"></path>
+                        <path d="M2 13.5s3.5 4.5 10 4.5 10-4.5 10-4.5"></path>
+                        <circle class="eye-pupil" cx="12" cy="12.5" r="2.5" fill="currentColor"></circle>
+                        <path d="M4 10L2.5 7.5"></path>
+                        <path d="M7 7.5l-1.5-2.5"></path>
+                        <path d="M12 6.5V3.5"></path>
+                        <path d="M17 7.5l1.5-2.5"></path>
+                        <path d="M20 10l1.5-2.5"></path>
+                    </g>
+                </svg>
+            </div>
+            
+            <button class="btn-primary" id="submitBtn" onclick="handleLogin()" disabled><span class="btn-text">登录 / 注册</span></button>
+            
+            <div class="toggle-mode">
+                <span id="toggleModeBtn" onclick="toggleLoginMode()">切换密码登录</span>
+            </div>
+
+            <!-- Third Party Login -->
+            <div class="third-party">
+                <p>其他方式登录</p>
+                <div class="icons">
+                    <!-- Toggle Email/Phone Login -->
+                    <div class="icon-btn pill-btn" id="toggleLoginTypeBtn" title="邮箱登录" onclick="toggleLoginType()">
+                        <svg id="emailToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #4A5568;">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <svg id="phoneToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none; color: #4A5568;">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                        <span id="toggleLoginTypeBtnText">邮箱登录</span>
+                    </div>
+                    <!-- Google -->
+                    <div class="icon-btn" title="Google 登录">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                    </div>
+                    <!-- GitHub -->
+                    <div class="icon-btn" title="GitHub 登录">
+                        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terms">
+                <label class="terms-label">
+                    <input type="checkbox" id="termsCheckbox">
+                    <span>登录即代表您同意 <a href="#" onclick="event.preventDefault()">服务协议</a> 和 <a href="#" onclick="event.preventDefault()">隐私政策</a></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Step 2: 验证码登录/注册完后的设置密码步骤 -->
+        <div id="step2" style="display: none;">
+            <div class="header">
+                <h1>设置密码</h1>
+                <p>下次可直接使用密码登录</p>
+            </div>
+
+            <div class="input-group">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path class="icon-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <input type="password" id="newPasswordInput" placeholder="设置新密码">
+                <svg class="toggle-password-eye" title="显示密码" onmousedown="event.preventDefault()" onclick="togglePasswordVisibility(this, 'newPasswordInput', event)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="eye-closed-group">
+                        <path d="M2 10s3.5 4 10 4 10-4 10-4"></path>
+                        <path d="M4 11.5L2 14"></path>
+                        <path d="M7 13.5l-1.5 3"></path>
+                        <path d="M12 14v3.5"></path>
+                        <path d="M17 13.5l1.5 3"></path>
+                        <path d="M20 11.5L22 14"></path>
+                    </g>
+                    <g class="eye-open-group">
+                        <path d="M2 13.5s3.5-7 10-7 10 7 10 7"></path>
+                        <path d="M2 13.5s3.5 4.5 10 4.5 10-4.5 10-4.5"></path>
+                        <circle class="eye-pupil" cx="12" cy="12.5" r="2.5" fill="currentColor"></circle>
+                        <path d="M4 10L2.5 7.5"></path>
+                        <path d="M7 7.5l-1.5-2.5"></path>
+                        <path d="M12 6.5V3.5"></path>
+                        <path d="M17 7.5l1.5-2.5"></path>
+                        <path d="M20 10l1.5-2.5"></path>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- 密码规则提示区域 -->
+            <div class="pwd-rules-container">
+                <div class="rule-item" id="ruleMinLength">
+                    <svg class="rule-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                        <polyline points="16 9 10.5 14.5 8 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    </svg>
+                    <span>至少 8 个字符</span>
+                </div>
+                <div class="rule-item" id="ruleCase">
+                    <svg class="rule-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                        <polyline points="16 9 10.5 14.5 8 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    </svg>
+                    <span>包含大写字母和小写字母</span>
+                </div>
+                <div class="rule-item" id="ruleNumber">
+                    <svg class="rule-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                        <polyline points="16 9 10.5 14.5 8 12" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    </svg>
+                    <span>包含数字</span>
+                </div>
+            </div>
+
+            <div class="input-group" id="confirmPwdGroup">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path class="icon-shackle" d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    <path d="M9 16l2 2 4-4"></path>
+                </svg>
+                <input type="password" id="confirmPasswordInput" placeholder="确认新密码">
+                <svg class="toggle-password-eye" title="显示密码" onmousedown="event.preventDefault()" onclick="togglePasswordVisibility(this, 'confirmPasswordInput', event)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="eye-closed-group">
+                        <path d="M2 10s3.5 4 10 4 10-4 10-4"></path>
+                        <path d="M4 11.5L2 14"></path>
+                        <path d="M7 13.5l-1.5 3"></path>
+                        <path d="M12 14v3.5"></path>
+                        <path d="M17 13.5l1.5 3"></path>
+                        <path d="M20 11.5L22 14"></path>
+                    </g>
+                    <g class="eye-open-group">
+                        <path d="M2 13.5s3.5-7 10-7 10 7 10 7"></path>
+                        <path d="M2 13.5s3.5 4.5 10 4.5 10-4.5 10-4.5"></path>
+                        <circle class="eye-pupil" cx="12" cy="12.5" r="2.5" fill="currentColor"></circle>
+                        <path d="M4 10L2.5 7.5"></path>
+                        <path d="M7 7.5l-1.5-2.5"></path>
+                        <path d="M12 6.5V3.5"></path>
+                        <path d="M17 7.5l1.5-2.5"></path>
+                        <path d="M20 10l1.5-2.5"></path>
+                    </g>
+                </svg>
+            </div>
+            <div class="input-error-msg" id="confirmPwdErrorMsg">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>两次输入的密码不一致</span>
+            </div>
+
+            <button class="btn-primary" id="savePasswordBtn" onclick="handleSetPassword()" disabled><span class="btn-text">完成设置</span></button>
+
+            <div class="toggle-mode" style="margin-top: 16px;">
+                <span onclick="skipSetPassword()" style="color: var(--text-secondary);">暂不设置，直接登录</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 协议弹出询问对话框 -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal-card">
+            <h3>服务协议与隐私政策提示</h3>
+            <p>请您先阅读并同意 <a href="#" onclick="event.preventDefault()">《服务协议》</a> 和 <a href="#" onclick="event.preventDefault()">《隐私政策》</a>，以便为您提供完整服务。</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeTermsModal(false)">不同意</button>
+                <button class="btn-modal-agree" onclick="closeTermsModal(true)">同意</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isPasswordMode = false;
+        let loginType = 'phone'; // 'phone' or 'email'
+        let countdownInterval;
+
+        function updateCountryCodeDisplay(selectEl) {
+            const displayEl = document.getElementById('countryCodeDisplay');
+            if (displayEl && selectEl) {
+                displayEl.textContent = selectEl.value;
+            }
+        }
+
+        function toggleLoginType() {
+            loginType = loginType === 'phone' ? 'email' : 'phone';
+            const phoneGroup = document.getElementById('phoneGroup');
+            const emailGroup = document.getElementById('emailGroup');
+            const emailToggleIcon = document.getElementById('emailToggleIcon');
+            const phoneToggleIcon = document.getElementById('phoneToggleIcon');
+            const toggleBtn = document.getElementById('toggleLoginTypeBtn');
+            const toggleBtnText = document.getElementById('toggleLoginTypeBtnText');
+
+            if (loginType === 'email') {
+                phoneGroup.style.display = 'none';
+                emailGroup.style.display = 'flex';
+                emailToggleIcon.style.display = 'none';
+                phoneToggleIcon.style.display = 'block';
+                toggleBtn.setAttribute('title', '手机号登录');
+                if (toggleBtnText) toggleBtnText.textContent = '手机号登录';
+                setTimeout(() => document.getElementById('emailInput').focus(), 50);
+            } else {
+                emailGroup.style.display = 'none';
+                phoneGroup.style.display = 'flex';
+                emailToggleIcon.style.display = 'block';
+                phoneToggleIcon.style.display = 'none';
+                toggleBtn.setAttribute('title', '邮箱登录');
+                if (toggleBtnText) toggleBtnText.textContent = '邮箱登录';
+                setTimeout(() => document.getElementById('phoneInput').focus(), 50);
+            }
+            checkFormValidity();
+        }
+
+        function checkFormValidity() {
+            let isAccountValid = false;
+
+            if (loginType === 'phone') {
+                const phone = document.getElementById('phoneInput').value.trim();
+                isAccountValid = phone.length >= 5;
+            } else {
+                const email = document.getElementById('emailInput').value.trim();
+                isAccountValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            }
+
+            let isValid = false;
+
+            if (isPasswordMode) {
+                const pwd = document.getElementById('loginPasswordInput').value;
+                const isPwdValid = pwd.trim().length > 0;
+                isValid = isAccountValid && isPwdValid;
+            } else {
+                const code = document.getElementById('loginCodeInput').value.trim();
+                const isCodeValid = /^\d{6}$/.test(code);
+                isValid = isAccountValid && isCodeValid;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = !isValid;
+            }
+        }
+
+        function toggleLoginMode() {
+            isPasswordMode = !isPasswordMode;
+            const codeGroup = document.getElementById('loginCodeGroup');
+            const pwdGroup = document.getElementById('loginPasswordGroup');
+            const toggleBtn = document.getElementById('toggleModeBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const loginPwdInput = document.getElementById('loginPasswordInput');
+            const loginCodeInput = document.getElementById('loginCodeInput');
+            const btnText = submitBtn ? (submitBtn.querySelector('.btn-text') || submitBtn) : null;
+            
+            if (isPasswordMode) {
+                codeGroup.style.display = 'none';
+                pwdGroup.style.display = 'flex';
+                toggleBtn.textContent = '切换验证码登录';
+                if (btnText) btnText.textContent = '登录';
+                setTimeout(() => loginPwdInput.focus(), 50);
+            } else {
+                codeGroup.style.display = 'flex';
+                pwdGroup.style.display = 'none';
+                toggleBtn.textContent = '切换密码登录';
+                if (btnText) btnText.textContent = '登录 / 注册';
+                setTimeout(() => loginCodeInput.focus(), 50);
+            }
+            checkFormValidity();
+        }
+
+        function validateAccount() {
+            if (loginType === 'phone') {
+                const phone = document.getElementById('phoneInput').value.trim();
+                if (!phone) {
+                    alert("请输入手机号");
+                    return false;
+                }
+            } else {
+                const email = document.getElementById('emailInput').value.trim();
+                if (!email) {
+                    alert("请输入邮箱地址");
+                    return false;
+                }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    alert("请输入格式正确的邮箱地址");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function startCountdown() {
+            if (!validateAccount()) return;
+
+            const getCodeBtn = document.getElementById('getCodeBtn');
+            if (getCodeBtn.classList.contains('disabled')) return;
+
+            let timeLeft = 60;
+            getCodeBtn.classList.add('disabled');
+            getCodeBtn.textContent = `重新发送(${timeLeft}s)`;
+            
+            document.getElementById('loginCodeInput').focus();
+            
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    getCodeBtn.classList.remove('disabled');
+                    getCodeBtn.textContent = '获取验证码';
+                } else {
+                    getCodeBtn.textContent = `重新发送(${timeLeft}s)`;
+                }
+            }, 1000);
+        }
+
+        function handleLogin() {
+            if (!validateAccount()) return;
+
+            if (isPasswordMode) {
+                const pwd = document.getElementById('loginPasswordInput').value;
+                if (!pwd) {
+                    alert("请输入密码");
+                    return;
+                }
+            } else {
+                const code = document.getElementById('loginCodeInput').value;
+                if (!code || code.length < 4) {
+                    alert("请输入正确的验证码");
+                    return;
+                }
+            }
+
+            // 检查服务协议勾选状态
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showTermsModal();
+                return;
+            }
+
+            proceedLogin();
+        }
+
+        function showTermsModal() {
+            document.getElementById('termsModal').classList.add('active');
+        }
+
+        function closeTermsModal(agreed) {
+            document.getElementById('termsModal').classList.remove('active');
+            if (agreed) {
+                document.getElementById('termsCheckbox').checked = true;
+                proceedLogin();
+            }
+        }
+
+        function proceedLogin() {
+            if (isPasswordMode) {
+                alert("密码登录成功！");
+            } else {
+                // 验证码登录/注册成功，平滑切页至设置密码步骤
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                setTimeout(() => document.getElementById('newPasswordInput').focus(), 50);
+                checkSetPasswordValidity();
+            }
+        }
+
+        function checkSetPasswordValidity() {
+            const newPwd = document.getElementById('newPasswordInput').value;
+            const confirmPwd = document.getElementById('confirmPasswordInput').value;
+            const saveBtn = document.getElementById('savePasswordBtn');
+            const errorMsg = document.getElementById('confirmPwdErrorMsg');
+            const group = document.getElementById('confirmPwdGroup');
+
+            const isMinLength = newPwd.length >= 8;
+            const hasCase = /[A-Z]/.test(newPwd) && /[a-z]/.test(newPwd);
+            const hasNumber = /[0-9]/.test(newPwd);
+
+            updateRuleState('ruleMinLength', isMinLength);
+            updateRuleState('ruleCase', hasCase);
+            updateRuleState('ruleNumber', hasNumber);
+
+            // 当输入内容纠正为一致或确认密码为空时，清除错误提示
+            if (newPwd === confirmPwd || confirmPwd.length === 0) {
+                if (errorMsg) errorMsg.style.display = 'none';
+                if (group) group.classList.remove('has-error');
+            }
+
+            const isPwdValid = isMinLength && hasCase && hasNumber;
+            const isConfirmValid = confirmPwd.length > 0 && newPwd === confirmPwd;
+
+            if (saveBtn) {
+                saveBtn.disabled = !(isPwdValid && isConfirmValid);
+            }
+        }
+
+        function validateConfirmPasswordOnBlur() {
+            const newPwd = document.getElementById('newPasswordInput').value;
+            const confirmPwd = document.getElementById('confirmPasswordInput').value;
+            const errorMsg = document.getElementById('confirmPwdErrorMsg');
+            const group = document.getElementById('confirmPwdGroup');
+
+            if (confirmPwd.length > 0 && newPwd !== confirmPwd) {
+                if (errorMsg) errorMsg.style.display = 'flex';
+                if (group) group.classList.add('has-error');
+            } else {
+                if (errorMsg) errorMsg.style.display = 'none';
+                if (group) group.classList.remove('has-error');
+            }
+        }
+
+        function updateRuleState(ruleId, isValid) {
+            const el = document.getElementById(ruleId);
+            if (!el) return;
+            if (isValid) {
+                el.classList.add('valid');
+            } else {
+                el.classList.remove('valid');
+            }
+        }
+
+        function handleSetPassword() {
+            const newPwd = document.getElementById('newPasswordInput').value;
+            const confirmPwd = document.getElementById('confirmPasswordInput').value;
+
+            const isMinLength = newPwd.length >= 8;
+            const hasCase = /[A-Z]/.test(newPwd) && /[a-z]/.test(newPwd);
+            const hasNumber = /[0-9]/.test(newPwd);
+
+            if (!isMinLength || !hasCase || !hasNumber) {
+                alert("请满足所有密码复杂度要求");
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                validateConfirmPasswordOnBlur();
+                return;
+            }
+
+            alert("密码设置成功，欢迎登录 SoulAgent！");
+            resetForm();
+        }
+
+        function skipSetPassword() {
+            alert("已跳过设置密码，欢迎登录 SoulAgent！");
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('loginCodeInput').value = '';
+            document.getElementById('loginPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+
+            const countrySelect = document.getElementById('countryCodeSelect');
+            if (countrySelect) {
+                countrySelect.value = '+86';
+                updateCountryCodeDisplay(countrySelect);
+            }
+
+            const errorMsg = document.getElementById('confirmPwdErrorMsg');
+            const group = document.getElementById('confirmPwdGroup');
+            if (errorMsg) errorMsg.style.display = 'none';
+            if (group) group.classList.remove('has-error');
+
+            checkFormValidity();
+            checkSetPasswordValidity();
+        }
+
+        function togglePasswordVisibility(btn, inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            
+            if (isPassword) {
+                btn.classList.add('is-open');
+                btn.setAttribute('title', '隐藏密码');
+            } else {
+                btn.classList.remove('is-open');
+                btn.setAttribute('title', '显示密码');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = ['phoneInput', 'emailInput', 'loginCodeInput', 'loginPasswordInput'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', checkFormValidity);
+                }
+            });
+
+            const pwdInputs = ['newPasswordInput', 'confirmPasswordInput'];
+            pwdInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', checkSetPasswordValidity);
+                }
+            });
+
+            const confirmPwdInput = document.getElementById('confirmPasswordInput');
+            if (confirmPwdInput) {
+                confirmPwdInput.addEventListener('blur', validateConfirmPasswordOnBlur);
+            }
+
+            checkFormValidity();
+            checkSetPasswordValidity();
+        });
+    </script>
+</body>
+</html>

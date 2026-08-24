@@ -89,8 +89,8 @@ category_map = {
 df_raw['品类'] = df_raw['产品名称'].map(category_map).fillna('热菜')
 
 # Simulation Dimensions
-start_date = datetime.date(2026, 8, 1)
-days_count = 31
+start_date = datetime.date(2026, 7, 1)
+days_count = 62
 dates = [start_date + datetime.timedelta(days=i) for i in range(days_count)]
 
 weekday_names = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
@@ -122,6 +122,12 @@ for d in dates:
     else:
         day_factor = 0.85
         
+    # Month factor
+    if d.month == 7:
+        month_factor = 0.85 # July is lower
+    else:
+        month_factor = 1.10 # August is higher
+        
     for store in stores:
         for channel in channels:
             for _, item in df_raw.iterrows():
@@ -132,7 +138,7 @@ for d in dates:
                 cat = item['品类']
                 
                 # Daily expected mean sales volume
-                expected_daily = (base_monthly / 31.0) * store['weight'] * channel['weight'] * day_factor
+                expected_daily = (base_monthly / 31.0) * store['weight'] * channel['weight'] * day_factor * month_factor
                 
                 # Draw from Poisson distribution for natural integer sales count
                 qty = np.random.poisson(lam=expected_daily)
