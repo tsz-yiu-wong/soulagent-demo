@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>定时任务</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* 定时任务页面专属样式与抽屉配置 */
+    .tasks-page-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+      background-color: var(--bg-main, #ffffff);
+    }
+
+    /* 页面主体内容容器 */
+    .page-body {
+      padding: 32px 36px;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* 空态视图 */
+    .empty-state {
+      background-color: #ffffff;
+      border: 1px dashed #d1d5db;
+      border-radius: 16px;
+      padding: 48px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      background-color: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #0284c7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary, #111827);
+      margin-bottom: 20px;
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* 已添加任务列表 */
+    .tasks-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      transition: all 0.15s ease;
+    }
+
+    .task-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .task-card.paused {
+      background-color: #f8fafc;
+      opacity: 0.75;
+    }
+
+    .task-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      padding-right: 20px;
+    }
+
+    .task-line1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .task-next-run {
+      font-size: 12px;
+      color: #6b7280;
+      background-color: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .status-tag-paused {
+      font-size: 12px;
+      color: #ef4444;
+      background-color: #fee2e2;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .status-tag-running {
+      font-size: 12px;
+      color: #10b981;
+      background-color: #d1fae5;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+    }
+
+    .running-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #10b981;
+      display: inline-block;
+      animation: pulse-dot 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.3; transform: scale(0.8); }
+    }
+
+    .task-line2 {
+      font-size: 13px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn-more {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #6b7280;
+      background: transparent;
+      border: none;
+      transition: background-color 0.15s ease;
+    }
+
+    .icon-btn-more:hover {
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+
+    /* 三点操作下拉菜单 */
+    .dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 36px;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 6px 0;
+      width: 120px;
+      z-index: 100;
+      display: none;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.15s ease;
+    }
+
+    .dropdown-item:hover {
+      background-color: #f3f4f6;
+    }
+
+    .dropdown-item.danger {
+      color: #ef4444;
+    }
+
+    .dropdown-item.danger:hover {
+      background-color: #fee2e2;
+    }
+
+    /* 推荐任务区域 */
+    .recommended-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .divider-line {
+      height: 1px;
+      background-color: #e5e7eb;
+      width: 100%;
+    }
+
+    .recommended-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .recommended-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .recommended-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .recommended-card:hover {
+      border-color: #cbd5e1;
+      background-color: #f8fafc;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      transform: translateY(-1px);
+    }
+
+    .rec-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .rec-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .rec-desc {
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    .btn-add-rec {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background-color: #f4f4f6;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .recommended-card:hover .btn-add-rec {
+      background-color: var(--text-primary);
+      border-color: var(--text-primary);
+      color: #ffffff;
+    }
+
+    /* 右侧抽屉 */
+    .drawer-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(15, 23, 42, 0.45);
+      z-index: 500;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: all 0.25s ease;
+    }
+
+    .drawer-overlay.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0; right: -600px;
+      width: 540px;
+      height: 100vh;
+      background-color: #ffffff;
+      z-index: 501;
+      box-shadow: -6px 0 32px rgba(0, 0, 0, 0.12);
+      display: flex;
+      flex-direction: column;
+      visibility: hidden;
+      pointer-events: none;
+      transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+    }
+
+    .drawer.active {
+      right: 0;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .drawer-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .drawer-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #111827;
+      outline: none;
+      background-color: #ffffff;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: #2563eb;
+    }
+
+    /* Segmented Control */
+    .segmented-control {
+      display: flex;
+      background-color: #f1f5f9;
+      border-radius: 10px;
+      padding: 3px;
+      gap: 2px;
+      user-select: none;
+      margin-bottom: 4px;
+    }
+
+    .segmented-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #64748b;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .segmented-tab.active {
+      background-color: #ffffff;
+      color: #111827;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-card {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 4px 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      font-size: 14px;
+      color: #111827;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .form-row.block-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .form-row:last-child {
+      border-bottom: none;
+    }
+
+    /* 开关 Toggle */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #cbd5e1;
+      transition: .25s ease;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .25s ease;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+      background-color: var(--text-primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .date-inputs-inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .date-input-mini {
+      height: 34px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: #111827;
+      background-color: #ffffff;
+      outline: none;
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .pill-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background-color: #ffffff;
+      color: #4b5563;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .pill-btn.active {
+      background-color: var(--text-primary);
+      color: #ffffff;
+      border-color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .day-pill-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      width: 100%;
+    }
+
+    .day-pill {
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background-color: #ffffff;
+      color: #4b5563;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .day-pill.active {
+      background-color: var(--text-primary);
+      color: #ffffff;
+      border-color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .drawer-footer {
+      padding: 20px 32px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 左侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-container" id="main-container" style="padding:0; overflow:hidden;">
+    <div class="tasks-page-view" id="tasksMainView">
+      <!-- 顶部标题区 -->
+      <div class="page-header">
+        <div class="page-title-group">
+          <div class="page-avatar-badge badge-sky">
+            <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#0284c7;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="page-title-row">
+              <h1 class="page-title">定时任务</h1>
+            </div>
+            <p class="page-subtitle">给 SoulAgent 安排自动化任务、设置提醒或监测更新</p>
+          </div>
+        </div>
+
+        <div class="page-header-actions" id="headerActions" style="display: none;">
+          <button type="button" class="btn btn-secondary" id="btnChatCreateTop" onclick="handleChatCreateTask()">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>通过对话创建</span>
+          </button>
+          <button type="button" class="btn btn-primary" id="btnManualCreateTop" onclick="openDrawer()">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>手动创建</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 页面主体 -->
+      <div class="page-body">
+        <!-- 已添加任务列表区域 -->
+        <div class="tasks-section" id="tasksSection" style="display: none;">
+          <div class="section-title">我的定时任务</div>
+          <div class="tasks-list" id="tasksContainer"></div>
+        </div>
+
+        <!-- 空态展示区域 -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg class="icon" viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#0284c7;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="empty-title">设置你的第一个定时任务</div>
+          <div class="empty-actions">
+            <button type="button" class="btn btn-secondary" id="btnChatCreateEmpty" onclick="handleChatCreateTask()">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>通过对话创建</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="btnManualCreateEmpty" onclick="openDrawer()">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>手动创建</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 推荐任务区域 -->
+        <div class="recommended-section" id="recommendedSection">
+          <div class="divider-line"></div>
+          <div class="recommended-header">推荐定时任务</div>
+          <div class="recommended-list" id="recommendedContainer"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 手动设置抽屉 -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="manualDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title">新建定时任务</div>
+      <button class="drawer-close" id="btnCloseDrawer" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <form id="taskForm" onsubmit="event.preventDefault(); saveTaskForm();">
+        <div class="form-group">
+          <label class="form-label">任务标题</label>
+          <input type="text" class="form-input" id="formTitle" placeholder="例如：每日 AI 新闻推送" required oninput="validateForm()">
+        </div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label class="form-label">任务内容描述</label>
+          <textarea class="form-textarea" id="formDesc" rows="3" placeholder="请详细描述 SoulAgent 应该执行的具体内容与操作步骤..." required oninput="validateForm()"></textarea>
+        </div>
+
+        <!-- 频率设置 -->
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">频率设置</label>
+          <div class="segmented-control" id="freqTabGroup">
+            <button type="button" class="segmented-tab active" data-tab="cycle" onclick="switchFreqTab('cycle')">周期</button>
+            <button type="button" class="segmented-tab" data-tab="interval" onclick="switchFreqTab('interval')">间隔</button>
+            <button type="button" class="segmented-tab" data-tab="single" onclick="switchFreqTab('single')">单次</button>
+          </div>
+
+          <div class="form-card freq-card">
+            <!-- Tab 1: 周期 -->
+            <div id="tabPanelCycle" class="tab-panel active">
+              <div class="form-row">
+                <span class="form-row-label">长期有效</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="formPermanentCycle" checked onchange="togglePermanentCycle(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="form-row" id="datePickerRowCycle" style="display: none;">
+                <span class="form-row-label">起止时间</span>
+                <div class="date-inputs-inline">
+                  <input type="date" class="date-input-mini" id="formStartDateCycle" value="2026-08-10">
+                  <span style="color:#86909c;">至</span>
+                  <input type="date" class="date-input-mini" id="formEndDateCycle" value="2026-12-31">
+                </div>
+              </div>
+              <div class="form-row">
+                <span class="form-row-label">重复周期</span>
+                <select class="date-input-mini" id="formRepeatCycle" style="width: 180px;" onchange="handleRepeatCycleChange(this.value)">
+                  <option value="每天">每天</option>
+                  <option value="工作日（含调休）" selected>工作日（含调休）</option>
+                  <option value="每周">每周</option>
+                  <option value="每双周">每双周</option>
+                  <option value="每月">每月</option>
+                </select>
+              </div>
+              <div class="form-row block-row" id="weekDayRow" style="display: none;">
+                <span class="form-row-label">特定星期（可多选）</span>
+                <div class="pill-group" id="weekDayPills">
+                  <button type="button" class="pill-btn active" data-val="周一" onclick="togglePill(this)">周一</button>
+                  <button type="button" class="pill-btn" data-val="周二" onclick="togglePill(this)">周二</button>
+                  <button type="button" class="pill-btn" data-val="周三" onclick="togglePill(this)">周三</button>
+                  <button type="button" class="pill-btn" data-val="周四" onclick="togglePill(this)">周四</button>
+                  <button type="button" class="pill-btn active" data-val="周五" onclick="togglePill(this)">周五</button>
+                  <button type="button" class="pill-btn" data-val="周六" onclick="togglePill(this)">周六</button>
+                  <button type="button" class="pill-btn" data-val="周日" onclick="togglePill(this)">周日</button>
+                </div>
+              </div>
+              <div class="form-row" id="runTimeRowCycle">
+                <span class="form-row-label">运行时间</span>
+                <input type="time" class="date-input-mini" id="formTimeCycle" value="08:00" onchange="validateForm()">
+              </div>
+            </div>
+
+            <!-- Tab 2: 间隔 -->
+            <div id="tabPanelInterval" class="tab-panel" style="display: none;">
+              <div class="form-row">
+                <span class="form-row-label">长期有效</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="formPermanentInterval" checked onchange="togglePermanentInterval(this.checked)">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="form-row" id="datePickerRowInterval" style="display: none;">
+                <span class="form-row-label">起止时间</span>
+                <div class="date-inputs-inline">
+                  <input type="date" class="date-input-mini" id="formStartDateInterval" value="2026-08-10">
+                  <span style="color:#86909c;">至</span>
+                  <input type="date" class="date-input-mini" id="formEndDateInterval" value="2026-12-31">
+                </div>
+              </div>
+              <div class="form-row" id="intervalRow">
+                <span class="form-row-label">间隔时长</span>
+                <div class="date-inputs-inline">
+                  <input type="number" class="date-input-mini" id="intervalVal" value="1" min="1" style="width: 70px;" oninput="validateForm()">
+                  <select class="date-input-mini" id="intervalUnit" style="width: 90px;">
+                    <option value="分钟">分钟</option>
+                    <option value="小时" selected>小时</option>
+                    <option value="天">天</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: 单次 -->
+            <div id="tabPanelSingle" class="tab-panel" style="display: none;">
+              <div class="form-row">
+                <span class="form-row-label">运行日期</span>
+                <input type="date" class="date-input-mini" id="singleRunDate" value="2026-08-26" onchange="validateForm()">
+              </div>
+              <div class="form-row">
+                <span class="form-row-label">运行时间</span>
+                <input type="time" class="date-input-mini" id="singleRunTime" value="09:00" onchange="validateForm()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="drawer-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDrawer()">取消</button>
+      <button type="button" class="btn btn-primary" id="btnSubmitDrawer" disabled onclick="saveTaskForm()">保存设置</button>
+    </div>
+  </div>
+
+  <!-- 引入全局核心脚本 -->
+  <script src="../js/data.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    let tasks = window.scheduleTasks || [];
+    let recommendedTasks = window.scheduleRecommendedTasks || (window.defaultRecommendedTasks ? [...window.defaultRecommendedTasks] : [
+      {
+        id: 'rec-1',
+        title: '每日 AI 新闻推送',
+        desc: '每天早上 8:00 自动搜集并生成 AI 行业最新动态简报',
+        scheduleText: '工作日（含调休） · 早上 8:00',
+        nextRun: '11小时后运行',
+        permanent: true
+      },
+      {
+        id: 'rec-2',
+        title: '每周总结汇报',
+        desc: '每周五晚 10:00 提醒并整理本周工作产出与下周计划',
+        scheduleText: '长期有效 · 每周五 · 晚上 22:00',
+        nextRun: '4天后运行',
+        permanent: true
+      },
+      {
+        id: 'rec-3',
+        title: '监测公众号、小红书账号内容更新',
+        desc: '每 3 小时监测关注账号，有新动态时及时推送汇总通知',
+        scheduleText: '长期有效 · 间隔每 3 小时自动监测',
+        nextRun: '2小时后运行',
+        permanent: true
+      }
+    ]);
+
+    function syncTasksState() {
+      window.scheduleTasks = tasks;
+      window.scheduleRecommendedTasks = recommendedTasks;
+      if (window.syncDataToStorage) {
+        window.syncDataToStorage();
+      }
+    }
+
+    // 通过对话创建：跳转主页新建对话并填充提示词
+    function handleChatCreateTask() {
+      const promptText = "我们一起来设置一个已安排任务吧。首先，说明定时任务在SoulAgent中的工作方式。然后询问我需要安排什么，以及应该在什么时候运行。";
+      window.location.href = getPageUrl('index.html', { prompt: promptText });
+    }
+
+    function renderUI() {
+      const hasTasks = tasks.length > 0;
+      document.getElementById('tasksSection').style.display = hasTasks ? 'flex' : 'none';
+      document.getElementById('emptyState').style.display = hasTasks ? 'none' : 'flex';
+      document.getElementById('headerActions').style.display = hasTasks ? 'flex' : 'none';
+
+      const tasksContainer = document.getElementById('tasksContainer');
+      tasksContainer.innerHTML = tasks.map(task => `
+        <div class="task-card ${task.status === 'paused' ? 'paused' : ''}" id="card-${task.id}">
+          <div class="task-info">
+            <div class="task-line1">
+              <span class="task-title">${escapeHtml(task.title)}</span>
+              ${task.status === 'paused' ? '<span class="status-tag-paused">已暂停</span>' : '<span class="status-tag-running"><span class="running-dot"></span>运行中</span>'}
+              <span class="task-next-run">${escapeHtml(task.nextRun)}</span>
+            </div>
+            <div class="task-line2">
+              <span>🕒 ${escapeHtml(task.scheduleText)}</span>
+              <span>·</span>
+              <span>${escapeHtml(task.desc)}</span>
+            </div>
+          </div>
+
+          <div class="task-actions" style="position:relative;">
+            <button type="button" class="icon-btn-more" onclick="toggleDropdown('${task.id}', event)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </button>
+            <div class="dropdown-menu" id="menu-${task.id}">
+              <div class="dropdown-item" onclick="toggleTaskStatus('${task.id}')">
+                ${task.status === 'paused' ? '恢复运行' : '暂停任务'}
+              </div>
+              <div class="dropdown-item danger" onclick="deleteTask('${task.id}')">删除任务</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      const recContainer = document.getElementById('recommendedContainer');
+      recContainer.innerHTML = recommendedTasks.map(rec => `
+        <div class="recommended-card" onclick="addRecommendedTask('${rec.id}')">
+          <div class="rec-info">
+            <div class="rec-title">${escapeHtml(rec.title)}</div>
+            <div class="rec-desc">${escapeHtml(rec.desc)}</div>
+          </div>
+          <button type="button" class="btn-add-rec" title="添加此任务">+</button>
+        </div>
+      `).join('');
+    }
+
+    function toggleDropdown(taskId, e) {
+      if (e) e.stopPropagation();
+      document.querySelectorAll('.dropdown-menu').forEach(el => {
+        if (el.id !== 'menu-' + taskId) el.classList.remove('show');
+      });
+      const menu = document.getElementById('menu-' + taskId);
+      if (menu) menu.classList.toggle('show');
+    }
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.dropdown-menu').forEach(el => el.classList.remove('show'));
+    });
+
+    function toggleTaskStatus(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = task.status === 'paused' ? 'running' : 'paused';
+        syncTasksState();
+        showToast(task.status === 'paused' ? '已暂停该任务' : '已恢复任务运行');
+        renderUI();
+      }
+    }
+
+    function deleteTask(taskId) {
+      const deletedIndex = tasks.findIndex(t => t.id === taskId);
+      if (deletedIndex !== -1) {
+        const deleted = tasks.splice(deletedIndex, 1)[0];
+        if (deleted && deleted.recId) {
+          const defaultRecs = window.defaultRecommendedTasks || [];
+          const orig = defaultRecs.find(r => r.id === deleted.recId);
+          if (orig && !recommendedTasks.some(r => r.id === orig.id)) {
+            recommendedTasks.push({ ...orig });
+            recommendedTasks.sort((a, b) => a.id.localeCompare(b.id));
+          }
+        }
+        syncTasksState();
+        showToast('已删除该定时任务');
+        renderUI();
+      }
+    }
+
+    function addRecommendedTask(recId) {
+      const recIndex = recommendedTasks.findIndex(r => r.id === recId);
+      if (recIndex !== -1) {
+        const rec = recommendedTasks[recIndex];
+        tasks.push({
+          ...rec,
+          id: 'task-' + Date.now(),
+          status: 'running',
+          recId: rec.id
+        });
+        recommendedTasks.splice(recIndex, 1);
+        syncTasksState();
+        showToast(`已添加推荐任务：“${rec.title}”`);
+        renderUI();
+      }
+    }
+
+    // 抽屉管理
+    function openDrawer() {
+      document.getElementById('drawerOverlay').classList.add('active');
+      document.getElementById('manualDrawer').classList.add('active');
+      validateForm();
+    }
+
+    function closeDrawer() {
+      document.getElementById('drawerOverlay').classList.remove('active');
+      document.getElementById('manualDrawer').classList.remove('active');
+    }
+
+    function switchFreqTab(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('#freqTabGroup .segmented-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      document.getElementById('tabPanelCycle').style.display = (tabName === 'cycle') ? 'block' : 'none';
+      document.getElementById('tabPanelInterval').style.display = (tabName === 'interval') ? 'block' : 'none';
+      document.getElementById('tabPanelSingle').style.display = (tabName === 'single') ? 'block' : 'none';
+      validateForm();
+    }
+
+    function togglePermanentCycle(checked) {
+      document.getElementById('datePickerRowCycle').style.display = checked ? 'none' : 'flex';
+      validateForm();
+    }
+
+    function togglePermanentInterval(checked) {
+      document.getElementById('datePickerRowInterval').style.display = checked ? 'none' : 'flex';
+      validateForm();
+    }
+
+    function handleRepeatCycleChange(val) {
+      document.getElementById('weekDayRow').style.display = (val === '每周' || val === '每双周') ? 'flex' : 'none';
+      validateForm();
+    }
+
+    function togglePill(btn) {
+      btn.classList.toggle('active');
+      validateForm();
+    }
+
+    function validateForm() {
+      const title = document.getElementById('formTitle').value.trim();
+      const desc = document.getElementById('formDesc').value.trim();
+      document.getElementById('btnSubmitDrawer').disabled = !(title && desc);
+    }
+
+    function saveTaskForm() {
+      const title = document.getElementById('formTitle').value.trim();
+      const desc = document.getElementById('formDesc').value.trim();
+      if (!title || !desc) return;
+
+      let scheduleText = '自定义周期';
+      if (currentTab === 'cycle') {
+        const cycle = document.getElementById('formRepeatCycle').value;
+        const time = document.getElementById('formTimeCycle').value;
+        scheduleText = `${cycle} · ${time}`;
+      } else if (currentTab === 'interval') {
+        const val = document.getElementById('intervalVal').value;
+        const unit = document.getElementById('intervalUnit').value;
+        scheduleText = `每隔 ${val} ${unit} 自动运行`;
+      } else if (currentTab === 'single') {
+        const date = document.getElementById('singleRunDate').value;
+        const time = document.getElementById('singleRunTime').value;
+        scheduleText = `单次 · ${date} ${time}`;
+      }
+
+      tasks.unshift({
+        id: 'task-' + Date.now(),
+        title: title,
+        desc: desc,
+        scheduleText: scheduleText,
+        nextRun: '即将运行',
+        status: 'running'
+      });
+
+      syncTasksState();
+      closeDrawer();
+      showToast(`已创建定时任务：“${title}”`);
+      renderUI();
+    }
+
+    renderUI();
+  </script>
+</body>
+
+</html>

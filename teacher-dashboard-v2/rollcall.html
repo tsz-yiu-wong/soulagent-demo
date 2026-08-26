@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师工作台 - 随机点名</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 本地通用核心库 (全部预载，保证离线与快速切换零延迟) -->
+  <script src="js/libs/lucide.js"></script>
+  <script src="js/libs/xlsx.full.min.js"></script>
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/anime.min.js"></script>
+  <script src="js/libs/confetti.browser.min.js"></script>
+  <script src="js/libs/gsap.min.js"></script>
+  <style>
+    /* 老虎机舞台样式 */
+    .slot-stage {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+
+
+    /* 顶部控制容器 */
+    .stage-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 2;
+    }
+
+    /* 人数区 (醒目大方) */
+    .count-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .count-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .count-unit {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stepper-lg {
+      display: inline-flex;
+      align-items: center;
+      border: 1.5px solid var(--border-color);
+      border-radius: 10px;
+      background: #FFFFFF;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .stepper-lg .stepper-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F8FAFC;
+      border: none;
+      cursor: pointer;
+      color: var(--text-main);
+      font-size: 19px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    .stepper-lg .stepper-btn:hover:not(:disabled) {
+      background: #E2E8F0;
+      color: var(--primary);
+    }
+
+    .stepper-lg .stepper-btn:active:not(:disabled) {
+      background: #CBD5E1;
+    }
+
+    .stepper-lg .stepper-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      color: var(--text-muted);
+      background: #F8FAFC;
+    }
+
+    .stepper-lg .stepper-input {
+      width: 56px;
+      height: 40px;
+      text-align: center;
+      border: none;
+      border-left: 1.5px solid var(--border-color);
+      border-right: 1.5px solid var(--border-color);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      outline: none;
+      background: #FFFFFF;
+      -moz-appearance: textfield;
+      appearance: textfield;
+      padding: 0;
+      margin: 0;
+    }
+
+    .stepper-lg .stepper-input::-webkit-outer-spin-button,
+    .stepper-lg .stepper-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* 条件区 (紧凑小巧精致) */
+    .conditions-compact-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      background: #FFFFFF;
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .compact-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border-color);
+    }
+
+    /* 性别分段切换组件 (小巧化) */
+    .gender-segmented-control {
+      display: inline-flex;
+      background: #F1F5F9;
+      padding: 2.5px;
+      border-radius: 7px;
+      gap: 2px;
+    }
+
+    .gender-seg-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .gender-seg-btn:hover:not(.active) {
+      color: var(--text-main);
+    }
+
+    .gender-seg-btn.active {
+      background: #FFFFFF;
+      color: var(--text-main);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+    }
+
+    .gender-seg-btn.active[data-gender="all"] {
+      color: var(--primary);
+    }
+
+    .gender-seg-btn.active[data-gender="male"] {
+      color: var(--male-color);
+    }
+
+    .gender-seg-btn.active[data-gender="female"] {
+      color: var(--female-color);
+    }
+
+    .gender-symbol {
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .gender-symbol.male {
+      color: var(--male-color);
+    }
+
+    .gender-symbol.female {
+      color: var(--female-color);
+    }
+
+    /* 自定义复选框 (与开始按钮翡翠绿背景 + 白色对勾一致) */
+    .custom-checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: color 0.15s;
+    }
+
+    .custom-checkbox:hover {
+      color: var(--text-main);
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    .checkbox-box {
+      width: 15px;
+      height: 15px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-color);
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .checkbox-box svg {
+      width: 10px;
+      height: 10px;
+      stroke: #FFFFFF;
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked + .checkbox-box {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked + .checkbox-box svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 抽选池人数不足提示条 */
+    .pool-warning-tip {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #92400E;
+      background: #FEF3C7;
+      border: 1px solid #FDE68A;
+      padding: 4px 14px;
+      border-radius: var(--radius-full);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      animation: tipFadeIn 0.2s ease;
+    }
+
+    @keyframes tipFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 滚轮视窗容器 */
+    .slots-container {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      margin: 24px 0 28px 0;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .slot-window {
+      width: 246px;
+      height: 166px;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      transition: box-shadow 0.3s ease;
+    }
+
+    /* 跑马灯彩色旋转渐变边框 */
+    .slot-window::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: -60%;
+      width: 220%;
+      height: 220%;
+      background: conic-gradient(
+        var(--primary), 
+        #3B82F6, 
+        #F59E0B, 
+        var(--primary), 
+        #3B82F6, 
+        #F59E0B, 
+        var(--primary)
+      );
+      animation: marqueeRotate 10s linear infinite;
+      z-index: 0;
+      will-change: transform;
+    }
+
+    /* 开始抽选时：跑马灯旋转速度明显加快，并伴随主题色流光光晕 */
+    .slot-window.active::before {
+      animation-duration: 1.2s;
+    }
+
+    .slot-window.active {
+      box-shadow: 0 0 20px rgba(197, 34, 47, 0.28), 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    @keyframes marqueeRotate {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* 抽选框内部白色背景视窗 */
+    .slot-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #FFFFFF;
+      border-radius: 13px;
+      overflow: hidden;
+      z-index: 1;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 上下渐变遮罩 */
+    .slot-inner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0) 75%, rgba(255,255,255,0.92) 100%);
+      z-index: 2;
+    }
+
+    .slot-strip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      transform: translateY(0px);
+      will-change: transform;
+    }
+
+    .slot-item {
+      height: 160px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 10px;
+      user-select: none;
+    }
+
+    .slot-item .slot-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .slot-item .slot-id {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    /* 历史记录胶囊 */
+    .history-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-sm);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 页面头部 -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1><i data-lucide="dices" style="color: var(--warning);"></i> 随机点名</h1>
+    </div>
+  </div>
+
+  <!-- 主舞台 -->
+  <div class="slot-stage">
+
+    <!-- 顶部控制区：第一行人数区，第二行条件区 -->
+    <div class="stage-controls">
+      <!-- 1. 人数区 -->
+      <div class="count-section">
+        <span class="count-label">
+          <span>随机点</span>
+        </span>
+        <div class="stepper-lg">
+          <button class="stepper-btn" id="btn-step-minus" type="button">-</button>
+          <input type="number" id="input-pick-count" class="stepper-input" value="1" min="1" max="10">
+          <button class="stepper-btn" id="btn-step-plus" type="button">+</button>
+        </div>
+        <span class="count-unit">人</span>
+      </div>
+
+      <!-- 2. 条件区 (小巧精致) -->
+      <div class="conditions-compact-bar">
+        <!-- 性别限制 -->
+        <div class="gender-segmented-control" id="gender-filter-group">
+          <button class="gender-seg-btn active" data-gender="all" type="button">全部</button>
+          <button class="gender-seg-btn" data-gender="male" type="button">
+            <span class="gender-symbol male">♂</span> 仅限男生
+          </button>
+          <button class="gender-seg-btn" data-gender="female" type="button">
+            <span class="gender-symbol female">♀</span> 仅限女生
+          </button>
+        </div>
+
+        <div class="compact-divider"></div>
+
+        <!-- 不重复点名 -->
+        <label class="custom-checkbox" title="开启后已抽中的学生在本轮内不会被再次抽中">
+          <input type="checkbox" id="check-no-repeat" checked>
+          <span class="checkbox-box">
+            <svg viewBox="0 0 24 24" fill="none">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </span>
+          <span>不重复点名</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 老虎机视窗容器 -->
+    <div class="slots-container" id="slots-container">
+      <!-- 动态生成滚轮视窗 -->
+    </div>
+
+    <!-- 开始 / 停 控制按钮区 -->
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%;">
+      <!-- 条件不足提示条 (置于开始按钮正上方) -->
+      <div class="pool-warning-tip" id="pool-warning-tip">
+        <i data-lucide="alert-circle" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+        <span id="pool-warning-text">当前待抽人数不足，已自动取消“不重复点名”。请及时清空记录。</span>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="btn-roll" style="width: 180px; font-size: 18px;">
+        <span id="btn-roll-text">开始</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- 历史记录卡片 -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i data-lucide="history" style="color: var(--accent);"></i>
+        <span>本次点名记录</span>
+      </div>
+      <button class="btn btn-danger-outline btn-sm" id="btn-clear-history">
+        <i data-lucide="trash-2"></i> 清空记录
+      </button>
+    </div>
+
+    <div class="history-tags" id="history-container">
+      <!-- 历史胶囊 -->
+    </div>
+
+    <div id="history-empty" style="display: none; text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 13px;">
+      暂无点名记录
+    </div>
+  </div>
+
+  <!-- 引入数据层、弹窗组件与侧边栏 -->
+  <script src="data/db.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/sidebar.js"></script>
+
+  <!-- 老虎机核心逻辑 -->
+  <script>
+    (function () {
+      const ITEM_HEIGHT = 160; // 每项高度严格对齐视窗
+
+    let isRolling = false;
+    let isStopping = false;
+    let currentGenderFilter = 'all'; // 'all' | 'male' | 'female'
+    let excludedIds = new Set(); // 本次会话已抽中学生
+    let activeWheelData = []; // 存储当前滚轮的状态和动画对象
+    let animFrameId = null;
+
+    // 提示条控制函数
+    function showPoolWarning(text) {
+      const tip = document.getElementById('pool-warning-tip');
+      const tipText = document.getElementById('pool-warning-text');
+      tipText.textContent = text;
+      tip.style.display = 'inline-flex';
+      lucide.createIcons();
+    }
+
+    function hidePoolWarning() {
+      const tip = document.getElementById('pool-warning-tip');
+      tip.style.display = 'none';
+    }
+
+    // 获取当前满足性别过滤条件的学生列表
+    function getFilteredStudents() {
+      const all = SchoolDB.getStudents();
+      if (currentGenderFilter === 'male') {
+        return all.filter(s => s.gender === '男');
+      } else if (currentGenderFilter === 'female') {
+        return all.filter(s => s.gender === '女');
+      }
+      return all;
+    }
+
+    // 检查池子容量并在不足时取消不重复点名及提示
+    function checkPoolCapacity() {
+      const students = getFilteredStudents();
+      const pickCount = parseInt(pickCountInput.value) || 1;
+      const noRepeatCheckbox = document.getElementById('check-no-repeat');
+
+      if (noRepeatCheckbox.checked) {
+        const unpicked = students.filter(s => !excludedIds.has(String(s.id)));
+        if (unpicked.length < pickCount) {
+          noRepeatCheckbox.checked = false;
+          showPoolWarning(`当前待抽人数仅剩 ${unpicked.length} 人，已自动取消“不重复点名”。请及时清空记录。`);
+          return;
+        }
+      }
+      hidePoolWarning();
+    }
+
+    // 构建初始滚轮视窗
+    function buildSlots(count = 1) {
+      const container = document.getElementById('slots-container');
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const win = document.createElement('div');
+        win.className = 'slot-window';
+        win.id = `slot-window-${i}`;
+        win.innerHTML = `
+          <div class="slot-inner">
+            <div class="slot-strip" id="slot-strip-${i}">
+              <div class="slot-item">
+                <div class="slot-name" style="color: var(--text-muted); font-size: 26px;">准备就绪</div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(win);
+      }
+    }
+
+    // 步进器人数控制
+    const pickCountInput = document.getElementById('input-pick-count');
+    const btnStepMinus = document.getElementById('btn-step-minus');
+    const btnStepPlus = document.getElementById('btn-step-plus');
+
+    function updatePickCount(newVal) {
+      const students = getFilteredStudents();
+      const minVal = 1;
+      const maxVal = Math.max(1, Math.min(10, students.length || 10));
+      let val = parseInt(newVal) || 1;
+      if (val < minVal) val = minVal;
+      if (val > maxVal) val = maxVal;
+      pickCountInput.value = val;
+
+      // 边界限制时禁用按钮
+      btnStepMinus.disabled = (val <= minVal);
+      btnStepPlus.disabled = (val >= maxVal);
+
+      if (!isRolling && !isStopping) {
+        buildSlots(val);
+      }
+      checkPoolCapacity();
+    }
+
+    document.getElementById('btn-step-minus').onclick = () => updatePickCount(parseInt(pickCountInput.value) - 1);
+    document.getElementById('btn-step-plus').onclick = () => updatePickCount(parseInt(pickCountInput.value) + 1);
+    pickCountInput.onchange = (e) => updatePickCount(e.target.value);
+
+    // 性别限制切换
+    const genderGroup = document.getElementById('gender-filter-group');
+    genderGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.gender-seg-btn');
+      if (!btn || isRolling || isStopping) return;
+
+      const targetGender = btn.dataset.gender;
+      if (targetGender === currentGenderFilter) return;
+
+      genderGroup.querySelectorAll('.gender-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentGenderFilter = targetGender;
+
+      // 调整人数上限并刷新视窗
+      updatePickCount(pickCountInput.value);
+    });
+
+    // 手动切换不重复点名时的容量校验
+    document.getElementById('check-no-repeat').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        const students = getFilteredStudents();
+        const pickCount = parseInt(pickCountInput.value) || 1;
+        const unpicked = students.filter(s => !excludedIds.has(String(s.id)));
+        if (unpicked.length < pickCount) {
+          e.target.checked = false;
+          showPoolWarning(`当前待抽人数仅剩 ${unpicked.length} 人，已自动取消“不重复点名”。请及时清空记录。`);
+        } else {
+          hidePoolWarning();
+        }
+      } else {
+        hidePoolWarning();
+      }
+    });
+
+    // 庆祝礼花
+    function fireConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.65 }
+        });
+      }
+    }
+
+    // 点击按钮：切换 开始 / 停
+    document.getElementById('btn-roll').onclick = () => {
+      if (isStopping) return; // 减速阶段不响应
+      if (isRolling) {
+        stopRoll();
+      } else {
+        startRoll();
+      }
+    };
+
+    // 启动老虎机
+    function startRoll() {
+      const students = getFilteredStudents();
+      if (students.length === 0) return;
+
+      checkPoolCapacity();
+
+      const pickCount = parseInt(pickCountInput.value) || 1;
+      const noRepeat = document.getElementById('check-no-repeat').checked;
+      const pool = noRepeat ? students.filter(s => !excludedIds.has(String(s.id))) : [...students];
+
+      const actualCount = Math.min(pickCount, pool.length);
+      buildSlots(actualCount);
+
+      isRolling = true;
+      isStopping = false;
+
+      const btnRoll = document.getElementById('btn-roll');
+      btnRoll.classList.remove('btn-primary');
+      btnRoll.classList.add('btn-danger');
+      document.getElementById('btn-roll-text').textContent = '停';
+
+      activeWheelData = [];
+
+      // 为每个滚轮准备循环长列表
+      for (let w = 0; w < actualCount; w++) {
+        const winEl = document.getElementById(`slot-window-${w}`);
+        const stripEl = document.getElementById(`slot-strip-${w}`);
+        winEl.classList.add('active');
+
+        // 生成一段打乱的卡片序列（至少 50 张卡片保证滚动充足）
+        const cards = [];
+        for (let cycle = 0; cycle < 15; cycle++) {
+          const shuffled = [...pool].sort(() => Math.random() - 0.5);
+          cards.push(...shuffled);
+        }
+
+        stripEl.innerHTML = cards.map(s => `
+          <div class="slot-item">
+            <div class="slot-name">${s.name}</div>
+            <div class="slot-id">${s.id}</div>
+          </div>
+        `).join('');
+
+        stripEl.style.transform = 'translateY(0px)';
+
+        activeWheelData.push({
+          winEl,
+          stripEl,
+          cards,
+          pool,
+          currentY: 0,
+          speed: 36 + w * 4 // 加快滚动速度
+        });
+      }
+
+      // 启动 RAF 匀速滚动
+      function spinLoop() {
+        if (!isRolling) return;
+        activeWheelData.forEach(wheel => {
+          wheel.currentY -= wheel.speed;
+          // 若滚过前半部分则循环重置位置，保持平滑
+          const maxLoop = (wheel.cards.length - 10) * ITEM_HEIGHT;
+          if (Math.abs(wheel.currentY) >= maxLoop) {
+            wheel.currentY = -ITEM_HEIGHT;
+          }
+          wheel.stripEl.style.transform = `translateY(${wheel.currentY}px)`;
+        });
+        animFrameId = requestAnimationFrame(spinLoop);
+      }
+
+      spinLoop();
+    }
+
+    // 停止并平滑缓慢减速定格
+    function stopRoll() {
+      if (!isRolling || isStopping) return;
+      isRolling = false;
+      isStopping = true;
+      cancelAnimationFrame(animFrameId);
+
+      const btnRoll = document.getElementById('btn-roll');
+      btnRoll.disabled = true;
+
+      const students = getFilteredStudents();
+      const noRepeat = document.getElementById('check-no-repeat').checked;
+      let pool = noRepeat ? students.filter(s => !excludedIds.has(String(s.id))) : [...students];
+      if (pool.length === 0) pool = [...students];
+
+      // 随机选出真正中选的学生（互不重复）
+      const selectedWinners = [];
+      const shuffledPool = [...pool].sort(() => Math.random() - 0.5);
+
+      const finishPromises = activeWheelData.map((wheel, idx) => {
+        const winner = shuffledPool[idx] || shuffledPool[0];
+        selectedWinners.push(winner);
+        if (noRepeat) {
+          excludedIds.add(String(winner.id));
+        }
+
+        // 计算停顿目标位置：平稳缓慢滑行以渐进定格
+        const currentPassedCount = Math.floor(Math.abs(wheel.currentY) / ITEM_HEIGHT);
+        const decelerationExtraItems = 4 + idx * 2; // 缓慢滑行停顿项数
+        const targetIndex = currentPassedCount + decelerationExtraItems;
+
+        // 确保目标位置及其上下文卡片存在
+        while (wheel.cards.length <= targetIndex + 5) {
+          wheel.cards.push(...pool);
+        }
+
+        // 精准将目标索引处的卡片替换为 winner
+        wheel.cards[targetIndex] = winner;
+
+        // 重新渲染 strip 保证 DOM 与数据一致
+        wheel.stripEl.innerHTML = wheel.cards.map(s => `
+          <div class="slot-item">
+            <div class="slot-name">${s.name}</div>
+            <div class="slot-id">${s.id}</div>
+          </div>
+        `).join('');
+
+        const startY = wheel.currentY;
+        const targetY = -(targetIndex * ITEM_HEIGHT);
+        const duration = 1400 + idx * 300; // 停止时平稳缓慢减速
+
+        return new Promise(resolve => {
+          anime({
+            targets: wheel.stripEl,
+            translateY: [startY, targetY],
+            duration: duration,
+            easing: 'easeOutCubic',
+            complete: () => {
+              wheel.winEl.classList.remove('active');
+              const targetItem = wheel.stripEl.children[targetIndex];
+              if (targetItem) {
+                const nameEl = targetItem.querySelector('.slot-name');
+                if (nameEl) nameEl.style.color = 'var(--primary)';
+              }
+              resolve();
+            }
+          });
+        });
+      });
+
+      Promise.all(finishPromises).then(() => {
+        isStopping = false;
+        const btnRoll = document.getElementById('btn-roll');
+        btnRoll.disabled = false;
+        btnRoll.classList.remove('btn-danger');
+        btnRoll.classList.add('btn-primary');
+        document.getElementById('btn-roll-text').textContent = '开始';
+
+        // 撒花与保存历史
+        fireConfetti();
+        SchoolDB.addRollCallRecord(selectedWinners.map(s => ({
+          id: s.id,
+          name: s.name
+        })));
+
+        renderHistory();
+
+        // 抽完后若导致剩余人数不足，自动更新提示与状态
+        checkPoolCapacity();
+      });
+    }
+
+    // 渲染历史记录
+    function renderHistory() {
+      const history = SchoolDB.getRollCallHistory();
+      const container = document.getElementById('history-container');
+      const empty = document.getElementById('history-empty');
+
+      container.innerHTML = '';
+      if (history.length === 0) {
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        history.forEach(item => {
+          const tag = document.createElement('div');
+          tag.className = 'history-item';
+          tag.innerHTML = `
+            <span style="font-weight: 600;">${item.name}</span>
+            <span style="color: var(--text-sub); font-size: 11px;">(${item.id})</span>
+          `;
+          container.appendChild(tag);
+        });
+      }
+    }
+
+    // 清空历史（同时重置已抽过的名单与抽奖框）
+    document.getElementById('btn-clear-history').onclick = async () => {
+      const confirmed = await window.showConfirm({
+        title: '确认要清空点名记录吗？',
+        type: 'warning',
+        confirmText: '确认清空'
+      });
+      if (confirmed) {
+        SchoolDB.clearRollCallHistory();
+        excludedIds.clear();
+        hidePoolWarning();
+        buildSlots(parseInt(pickCountInput.value) || 1);
+        renderHistory();
+      }
+    };
+
+    // 监听数据库变更
+    const unsubRollcall = SchoolDB.onUpdate((evt) => {
+      renderHistory();
+      if (evt && (evt.type === 'history_cleared' || evt.type === 'db_reset') && !isRolling && !isStopping) {
+        excludedIds.clear();
+        hidePoolWarning();
+        buildSlots(parseInt(pickCountInput.value) || 1);
+      }
+    });
+
+    window.cleanupCurrentPage = () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (unsubRollcall) unsubRollcall();
+    };
+
+    // 页面初始化：每次进入重置“本次点名记录”与抽选状态
+    SchoolDB.clearRollCallHistory();
+    excludedIds.clear();
+    hidePoolWarning();
+    lucide.createIcons();
+    updatePickCount(1);
+    renderHistory();
+  })();
+  </script>
+</body>
+</html>

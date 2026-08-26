@@ -300,6 +300,8 @@
 
     saveStudents(students, shouldTrigger = true) {
       localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(students));
+      // 检查座位表是否需要根据学生人数自动扩容
+      this.getSeating();
       if (shouldTrigger) {
         triggerUpdate('students_updated', students);
       }
@@ -311,15 +313,28 @@
       if (exists) {
         throw new Error(`学号 ${student.id} 已存在，不能重复添加`);
       }
-      list.push({
+      const newStudent = {
         id: String(student.id).trim(),
         name: String(student.name).trim(),
         gender: student.gender === '女' ? '女' : '男',
         specialNotes: String(student.specialNotes || student.healthCondition || student.notes || '').trim(),
         contactName: String(student.contactName || student.guardian || '').trim(),
         contactPhone: String(student.contactPhone || student.phone || '').trim()
-      });
+      };
+      list.push(newStudent);
       this.saveStudents(list);
+
+      // 同步将新学生安排到座位表的空位中
+      const seating = this.getSeating();
+      const seatArr = Array.isArray(seating.seats) ? [...seating.seats] : [];
+      if (!seatArr.includes(newStudent.id)) {
+        const emptyIdx = seatArr.indexOf('');
+        if (emptyIdx !== -1) {
+          seatArr[emptyIdx] = newStudent.id;
+          seating.seats = seatArr;
+          this.saveSeating(seating);
+        }
+      }
     },
 
     updateStudent(oldId, newStudent) {
@@ -438,7 +453,8 @@
           errors.push(`${rowLabel} 性别“${gender}”不合规（只能填写“男”或“女”）`);
         }
 
-        const specialNotes = String(item.specialNotes || item['特殊情况'] || item['过敏'] || item['疾病'] || item['健康情况'] || item['身体状况'] || item['备注'] || item['关照备注'] || '').trim();
+        const specialNotesKey = Object.keys(item).find(k => k.includes('关照备注') || k.includes('特殊情况') || k.includes('健康') || k.includes('身体状况') || k.includes('过敏') || k.includes('疾病') || k === '备注' || k === 'specialNotes');
+        const specialNotes = String(item.specialNotes || (specialNotesKey ? item[specialNotesKey] : '') || item['特殊情况'] || item['过敏'] || item['疾病'] || item['健康情况'] || item['身体状况'] || item['备注'] || item['关照备注'] || '').trim();
         const contactName = String(item.contactName || item.guardian || item.parent || item['紧急联系人'] || item['联系人'] || item['监护人'] || item['家长'] || '').trim();
         const contactPhone = String(item.contactPhone || item.phone || item['紧急联系人电话'] || item['联系电话'] || item['手机号'] || item['电话'] || '').trim();
 
@@ -477,7 +493,24 @@
         formatted.forEach(s => {
           map.set(String(s.id), s);
         });
-        this.saveStudents(Array.from(map.values()));
+        const updatedList = Array.from(map.values());
+        this.saveStudents(updatedList);
+
+        // 增量合并：将新增的学生自动填入空座
+        const seating = this.getSeating();
+        const seatArr = Array.isArray(seating.seats) ? [...seating.seats] : [];
+        const seatedSet = new Set(seatArr.filter(Boolean).map(String));
+        formatted.forEach(s => {
+          if (!seatedSet.has(String(s.id))) {
+            const emptyIdx = seatArr.indexOf('');
+            if (emptyIdx !== -1) {
+              seatArr[emptyIdx] = String(s.id);
+              seatedSet.add(String(s.id));
+            }
+          }
+        });
+        seating.seats = seatArr;
+        this.saveSeating(seating);
       }
       return formatted;
     },
@@ -485,20 +518,63 @@
     // ========== 座位表管理 ==========
     getSeating() {
       const raw = localStorage.getItem(STORAGE_KEY_SEATING);
+      let config;
       if (!raw) {
-        this.saveSeating(FALLBACK_SEATING, false);
-        return JSON.parse(JSON.stringify(FALLBACK_SEATING));
+        config = JSON.parse(JSON.stringify(FALLBACK_SEATING));
+      } else {
+        try {
+          const data = JSON.parse(raw);
+          config = {
+            rows: Number(data.rows) || 5,
+            cols: Number(data.cols) || 6,
+            seats: Array.isArray(data.seats) ? data.seats : []
+          };
+        } catch (e) {
+          config = JSON.parse(JSON.stringify(FALLBACK_SEATING));
+        }
       }
-      try {
-        const data = JSON.parse(raw);
-        return {
-          rows: Number(data.rows) || 5,
-          cols: Number(data.cols) || 6,
-          seats: Array.isArray(data.seats) ? data.seats : []
-        };
-      } catch (e) {
-        return JSON.parse(JSON.stringify(FALLBACK_SEATING));
+
+      const students = this.getStudents();
+      const studentCount = students.length;
+      const validStudentIds = new Set(students.map(s => String(s.id)));
+      let changed = false;
+
+      // 1. 自动检查并扩展容量以容纳所有学生
+      if (studentCount > config.rows * config.cols) {
+        let cols = config.cols || 6;
+        let rows = Math.max(config.rows || 5, Math.ceil(studentCount / cols));
+        if (rows > 15) {
+          cols = Math.min(15, Math.ceil(studentCount / 15));
+          rows = Math.min(15, Math.ceil(studentCount / cols));
+        }
+        config.rows = rows;
+        config.cols = cols;
+        changed = true;
       }
+
+      const totalSeats = config.rows * config.cols;
+      let seats = Array.isArray(config.seats) ? [...config.seats] : [];
+      if (seats.length < totalSeats) {
+        seats = seats.concat(new Array(totalSeats - seats.length).fill(''));
+        changed = true;
+      } else if (seats.length > totalSeats) {
+        seats = seats.slice(0, totalSeats);
+        changed = true;
+      }
+
+      // 2. 清理已被彻底删除的学生ID
+      for (let i = 0; i < seats.length; i++) {
+        if (seats[i] && !validStudentIds.has(String(seats[i]))) {
+          seats[i] = '';
+          changed = true;
+        }
+      }
+
+      config.seats = seats;
+      if (changed) {
+        localStorage.setItem(STORAGE_KEY_SEATING, JSON.stringify(config));
+      }
+      return config;
     },
 
     saveSeating(seatingConfig, shouldTrigger = true) {

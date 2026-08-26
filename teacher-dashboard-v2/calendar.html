@@ -6,8 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>老师工作台 - 日历</title>
   <link rel="stylesheet" href="css/style.css">
-  <!-- Lucide 图标库 -->
-  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- 本地通用核心库 (全部预载，保证离线与快速切换零延迟) -->
+  <script src="js/libs/lucide.js"></script>
+  <script src="js/libs/xlsx.full.min.js"></script>
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/anime.min.js"></script>
+  <script src="js/libs/confetti.browser.min.js"></script>
+  <script src="js/libs/gsap.min.js"></script>
   <!-- 本地数据库与弹窗组件 -->
   <script src="data/db.js"></script>
   <script src="js/modal.js"></script>
@@ -1145,9 +1150,11 @@
         renderDayView(true);
         initSplitter();
 
+        window.__calCleanups = window.__calCleanups || [];
+
         // 监听跨页面和本地响应式变更
         if (window.SchoolDB && window.SchoolDB.onUpdate) {
-          window.SchoolDB.onUpdate((evt) => {
+          const unsub = window.SchoolDB.onUpdate((evt) => {
             renderCalendar();
             renderDayView(false);
             if (evt && (evt.type === 'periods_updated' || evt.type === 'db_reset')) {
@@ -1157,27 +1164,41 @@
               }
             }
           });
+          window.__calCleanups.push(() => { if (unsub) unsub(); });
         }
-        window.addEventListener('schooldb_courses_updated', () => {
-          renderCalendar();
-          renderDayView(false);
-        });
-        window.addEventListener('schooldb_todos_updated', () => {
-          renderCalendar();
-          renderDayView(false);
-        });
-        window.addEventListener('schooldb_events_updated', () => {
-          renderCalendar();
-          renderDayView(false);
-        });
-        window.addEventListener('schooldb_periods_updated', () => {
+
+        const handleCourses = () => { renderCalendar(); renderDayView(false); };
+        const handleTodos = () => { renderCalendar(); renderDayView(false); };
+        const handleEvents = () => { renderCalendar(); renderDayView(false); };
+        const handlePeriods = () => {
           renderCalendar();
           renderDayView(false);
           if (document.getElementById('modal-timetable').classList.contains('show')) {
             renderTimetableMatrix();
             renderPeriodList();
           }
+        };
+
+        window.addEventListener('schooldb_courses_updated', handleCourses);
+        window.addEventListener('schooldb_todos_updated', handleTodos);
+        window.addEventListener('schooldb_events_updated', handleEvents);
+        window.addEventListener('schooldb_periods_updated', handlePeriods);
+
+        window.__calCleanups.push(() => {
+          window.removeEventListener('schooldb_courses_updated', handleCourses);
+          window.removeEventListener('schooldb_todos_updated', handleTodos);
+          window.removeEventListener('schooldb_events_updated', handleEvents);
+          window.removeEventListener('schooldb_periods_updated', handlePeriods);
         });
+
+        // 注册全局清理
+        window.cleanupCurrentPage = () => {
+          if (window.__calCleanups) {
+            window.__calCleanups.forEach(fn => fn());
+            window.__calCleanups = [];
+          }
+        };
+
 
         bindEvents();
         if (window.lucide) window.lucide.createIcons();
@@ -1618,21 +1639,29 @@
           document.body.style.userSelect = 'none';
         });
 
-        window.addEventListener('mousemove', (e) => {
+        const handleMouseMove = (e) => {
           if (!isDragging) return;
           const deltaY = e.clientY - startY;
           const containerHeight = container.getBoundingClientRect().height - 52 - 7; // 减去header和splitter高度
           const newHeight = Math.max(80, Math.min(containerHeight - 80, startHeight + deltaY));
           topPanel.style.height = `${newHeight}px`;
-        });
+        };
 
-        window.addEventListener('mouseup', () => {
+        const handleMouseUp = () => {
           if (isDragging) {
             isDragging = false;
             splitter.classList.remove('dragging');
             document.body.style.cursor = '';
             document.body.style.userSelect = '';
           }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        window.__calCleanups = window.__calCleanups || [];
+        window.__calCleanups.push(() => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          window.removeEventListener('mouseup', handleMouseUp);
         });
       }
 

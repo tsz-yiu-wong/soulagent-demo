@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulAgent v5 - 召唤 AI助手</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <!-- 左侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-container" id="main-container">
+    <div class="chat-new-view">
+      <h1 class="hero-title">TY，今天需要帮你做什么</h1>
+
+      <div class="input-card">
+        <textarea class="chat-textarea" id="chat-input" placeholder="给 AI助手 发送消息，或输入 @ 召唤专家分身..."></textarea>
+        
+        <div class="input-card-bottom">
+          <div class="input-card-bottom-left">
+            <button type="button" class="action-btn" title="上传附件" onclick="showToast('已调起附件选择器')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <div id="listen-selector-slot"></div>
+            <div id="expert-selector-slot"></div>
+          </div>
+          
+          <button type="button" class="action-btn send-btn" title="发送" onclick="handleSendNewChat()">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 推荐问卡片区域 (三个一行，每次新建对话随机刷新3个) -->
+      <div class="recommend-cards-grid" id="recommend-cards-container"></div>
+    </div>
+  </main>
+
+  <!-- 引入全局核心脚本 -->
+  <script src="js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // 渲染底部选择器组件
+    document.getElementById('listen-selector-slot').innerHTML = renderListenSelectorHtml();
+    document.getElementById('expert-selector-slot').innerHTML = renderExpertSelectorHtml();
+
+    // 渲染推荐问卡片 (从6个模拟数据中随机选出3个)
+    function renderRecommendCards() {
+      const container = document.getElementById('recommend-cards-container');
+      if (!container || !window.getRandomRecommendQuestions) return;
+      const recs = window.getRandomRecommendQuestions(3);
+      container.innerHTML = recs.map(item => `
+        <div class="recommend-card" onclick="usePrompt('${escapeJsString(item.prompt)}')" title="${escapeHtml(item.prompt)}">
+          <div class="recommend-card-top">
+            <div class="recommend-card-title-group">
+              <span class="recommend-card-icon" style="background: ${item.iconBg}; color: ${item.iconColor};">${item.icon}</span>
+              <span class="recommend-card-tag" style="color: ${item.iconColor};">${escapeHtml(item.tag)}</span>
+            </div>
+            <svg class="recommend-card-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="recommend-card-title">${escapeHtml(item.title)}</div>
+          <p class="recommend-card-desc">${escapeHtml(item.prompt)}</p>
+        </div>
+      `).join('');
+    }
+    window.renderRecommendCards = renderRecommendCards;
+    renderRecommendCards();
+
+    // 检查是否有传入的 prompt 参数并自动填充
+    const promptParam = getQueryParam('prompt');
+    if (promptParam) {
+      const chatInput = document.getElementById('chat-input');
+      if (chatInput) {
+        chatInput.value = decodeURIComponent(promptParam);
+        chatInput.focus();
+        chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+      }
+    }
+  </script>
+</body>
+
+</html>

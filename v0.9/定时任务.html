@@ -1342,10 +1342,21 @@
       });
     }
 
-    // ================= 状态数据 =================
-    let tasks = []; // 已添加的任务列表
+    // ================= 状态数据 & 本地持久化 =================
+    function isPageReload() {
+      try {
+        const navEntries = performance.getEntriesByType('navigation');
+        if (navEntries && navEntries.length > 0) {
+          return navEntries[0].type === 'reload';
+        }
+        if (window.performance && window.performance.navigation) {
+          return window.performance.navigation.type === 1;
+        }
+      } catch (e) {}
+      return false;
+    }
 
-    let recommendedTasks = [
+    const defaultRecommendedTasks = [
       {
         id: 'rec-1',
         title: '每日 AI 新闻推送',
@@ -1371,6 +1382,45 @@
         permanent: true
       }
     ];
+
+    if (isPageReload()) {
+      try {
+        sessionStorage.removeItem('soulagent_scheduleTasks');
+        sessionStorage.removeItem('soulagent_scheduleRecommendedTasks');
+        localStorage.removeItem('soulagent_scheduleTasks');
+        localStorage.removeItem('soulagent_scheduleRecommendedTasks');
+      } catch (e) {}
+    }
+
+    function loadTasksFromStorage() {
+      try {
+        const raw = sessionStorage.getItem('soulagent_scheduleTasks') || localStorage.getItem('soulagent_scheduleTasks');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function loadRecFromStorage() {
+      try {
+        const raw = sessionStorage.getItem('soulagent_scheduleRecommendedTasks') || localStorage.getItem('soulagent_scheduleRecommendedTasks');
+        return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaultRecommendedTasks));
+      } catch (e) {
+        return JSON.parse(JSON.stringify(defaultRecommendedTasks));
+      }
+    }
+
+    function saveTasksToStorage() {
+      try {
+        sessionStorage.setItem('soulagent_scheduleTasks', JSON.stringify(tasks));
+        sessionStorage.setItem('soulagent_scheduleRecommendedTasks', JSON.stringify(recommendedTasks));
+        localStorage.setItem('soulagent_scheduleTasks', JSON.stringify(tasks));
+        localStorage.setItem('soulagent_scheduleRecommendedTasks', JSON.stringify(recommendedTasks));
+      } catch (e) {}
+    }
+
+    let tasks = loadTasksFromStorage(); // 已添加的任务列表
+    let recommendedTasks = loadRecFromStorage();
 
     // ================= DOM 元素获取 & 全局状态 =================
     let currentTab = 'cycle'; // 'cycle' | 'interval' | 'single'
@@ -1667,6 +1717,7 @@
         paused: false
       });
       recommendedTasks.splice(idx, 1);
+      saveTasksToStorage();
       showToast(`已成功添加定时任务：“${item.title}”`);
       renderUI();
     }
@@ -1712,6 +1763,7 @@
       if (e) e.stopPropagation();
       closeAllDropdowns();
       tasks[index].paused = !tasks[index].paused;
+      saveTasksToStorage();
       showToast(tasks[index].paused ? '任务已暂停' : '任务已恢复');
       renderUI();
     }
@@ -1728,6 +1780,7 @@
             recommendedTasks.sort((a, b) => a.id.localeCompare(b.id));
           }
         }
+        saveTasksToStorage();
         showToast(`已删除任务：“${deleted.title}”`);
       }
       renderUI();
@@ -1873,6 +1926,7 @@
         paused: false
       });
 
+      saveTasksToStorage();
       closeDrawer();
       showToast('定时任务创建成功！');
       resetTaskForm();

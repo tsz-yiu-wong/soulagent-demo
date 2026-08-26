@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>构建AI分身</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* 顶部置中醒目模拟按钮 */
+    .distill-top-action-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 2px;
+    }
+
+    .btn-simulate-complete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 28px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+    }
+
+    .btn-simulate-complete::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(255, 255, 255, 0.22), transparent);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .btn-simulate-complete:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+    }
+
+    .btn-simulate-complete:hover::before {
+      opacity: 1;
+    }
+
+    .btn-simulate-complete:active {
+      transform: translateY(0) scale(0.99);
+    }
+
+    .btn-spark-icon {
+      font-size: 16px;
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+      animation: sparkPulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes sparkPulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* 步骤切换容器与动画 */
+    .step-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: stepFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .step-section.active {
+      display: flex;
+    }
+
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 表单向导主卡片 */
+    .wizard-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 32px 40px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .wizard-card-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .wizard-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .wizard-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* 表单项 */
+    .form-group {
+      margin-bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-label .sub-tip {
+      font-size: 12.5px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 13px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      background: #ffffff;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    /* 身份标签药丸选择 */
+    .tag-select-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tag-chip {
+      padding: 6px 14px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .tag-chip:hover {
+      background: #e2e8f0;
+      color: var(--text-primary);
+    }
+
+    .tag-chip.selected {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+      color: #4338ca;
+      font-weight: 600;
+    }
+
+    /* 提示条 */
+    .notice-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    /* 协议勾选 */
+    .agreement-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 28px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .agreement-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #4f46e5;
+      cursor: pointer;
+    }
+
+    .agreement-link {
+      color: #4f46e5;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .agreement-link:hover {
+      text-decoration: underline;
+    }
+
+    /* 操作按钮组 */
+    .wizard-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-step-next {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 32px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 600;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+
+    .btn-step-next:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+    }
+
+    .btn-step-prev {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-step-prev:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+      border-color: #cbd5e1;
+    }
+
+    /* Step 2 上传与绑定数据源样式 */
+    .section-sub-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upload-dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 24px 20px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 14px;
+    }
+
+    .upload-dropzone:hover {
+      border-color: #4f46e5;
+      background: #eef2ff;
+    }
+
+    .upload-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px auto;
+      color: #4f46e5;
+    }
+
+    .upload-main-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+
+    .upload-sub-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .link-add-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn-add-link {
+      padding: 0 20px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-add-link:hover {
+      border-color: #4f46e5;
+      color: #4f46e5;
+      background: #f8fafc;
+    }
+
+    .btn-open-ds-modal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 18px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+
+    .btn-open-ds-modal:hover {
+      background: #fdf4ff;
+      border-color: #a855f7;
+    }
+
+    .added-item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .added-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 15px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .added-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .badge-icon {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 6px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .badge-icon.pdf { background: #ef4444; }
+    .badge-icon.doc { background: #3b82f6; }
+    .badge-icon.json { background: #f59e0b; }
+    .badge-icon.web { background: #0284c7; }
+    .badge-icon.rss { background: #8b5cf6; }
+
+    .added-item-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .added-item-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .select-usage-pill {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .select-usage-pill.train {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: #fde68a;
+    }
+
+    .select-usage-pill.retrieval {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+
+    .btn-remove-item {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.15s ease;
+    }
+
+    .btn-remove-item:hover {
+      color: #ef4444;
+    }
+
+    /* 弹窗遮罩 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-panel {
+      background: #ffffff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalScaleIn {
+      from { transform: scale(0.95) translateY(10px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.15s ease;
+    }
+
+    .modal-close-btn:hover {
+      color: #0f172a;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid #f1f5f9;
+      background: #f8fafc;
+    }
+
+    /* 步骤条可点击 */
+    .stepper-step {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 左侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-container" id="main-container">
+    <div class="distill-view" id="distill-view">
+      <!-- 顶部返回栏 -->
+      <div class="distill-nav">
+        <a class="btn-back-link" href="profile.html" style="text-decoration:none;">
+          <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>返回</span>
+        </a>
+      </div>
+
+      <!-- 顶部置中醒目模拟完成构建按钮 -->
+      <div class="distill-top-action-bar">
+        <button type="button" class="btn-simulate-complete" id="btn-top-complete">
+          <span class="btn-spark-icon">⚡</span>
+          <span class="btn-text">点击此处模拟完成构建 →</span>
+        </button>
+      </div>
+
+      <!-- 3-Step 进度指示条：第一步基础信息，第二步上传资料，第三步构建 -->
+      <div class="distill-stepper-card" id="distill-stepper">
+        <div class="stepper-step active" id="step-node-1" onclick="goToStep(1)">
+          <div class="step-icon-circle">
+            <span class="num-text">1</span>
+          </div>
+          <div class="step-info">
+            <div class="step-num">Step 1</div>
+            <div class="step-name">基础信息</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-1"></div>
+
+        <div class="stepper-step" id="step-node-2" onclick="goToStep(2)">
+          <div class="step-icon-circle">
+            <span class="num-text">2</span>
+          </div>
+          <div class="step-info">
+            <div class="step-num">Step 2</div>
+            <div class="step-name">上传资料</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-2"></div>
+
+        <div class="stepper-step" id="step-node-3" onclick="goToStep(3)">
+          <div class="step-icon-circle">
+            <span class="num-text">3</span>
+          </div>
+          <div class="step-info">
+            <div class="step-num">Step 3</div>
+            <div class="step-name">构建</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 0: 介绍 (什么是AI分身、核心价值与创建向导)           -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-0">
+        <div class="wizard-card" style="max-width: 840px; padding: 36px 44px; display: flex; flex-direction: column; gap: 32px;">
+          <!-- Hero 介绍 -->
+          <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 68px; height: 68px; border-radius: 18px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 24px rgba(124, 58, 237, 0.35); margin-bottom: 18px;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 34px; height: 34px; stroke-width: 2.2;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <h2 style="font-size: 28px; font-weight: 800; color: var(--text-primary); margin: 0;">创建你的专属AI分身</h2>
+            </div>
+            <p style="font-size: 14px; line-height: 1.7; color: var(--text-secondary); max-width: 660px; margin: 0 auto;">
+              AI分身将通过深度学习您的学术著作、工作文档、表达习惯与思维方式，构建高度契合您个人风格的数字孪生体。在您忙碌时，分身可以作为您的“数字替身”，全天候提供专业解答、业务初筛与对外交流协作。
+            </p>
+          </div>
+
+          <!-- 四大核心能力 -->
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 17px; height: 17px; stroke: #4f46e5;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>AI 分身能为您带来什么？</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 16px;">🎭</span>
+                  <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);">思维与语言风格孪生</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">深度拟合用词偏好与论述逻辑，精准表达您的观点与思考方式。</p>
+              </div>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 16px;">📚</span>
+                  <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);">私有知识长效记忆</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">沉淀挂载专业论文、文档与课件，形成随身携带的长效私有大脑。</p>
+              </div>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 16px;">⚡</span>
+                  <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);">24/7 全天候协作代办</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">全天候承接日常专业咨询与问答初筛，极大释放个人时间与精力。</p>
+              </div>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-size: 16px;">🔄</span>
+                  <span style="font-size: 14px; font-weight: 700; color: var(--text-primary);">持续进化与自成长</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">支持公众号/知乎等数据源持续同步，交互中沉淀记忆，越用越懂您。</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 行动 CTA 按钮与协议勾选 -->
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+            <label class="agreement-row" style="margin: 0; font-size: 13px;">
+              <input type="checkbox" id="createAgreeCheck" checked>
+              <span>我已阅读并同意 <a href="javascript:void(0)" class="agreement-link">《数字分身构建协议》</a>，授权平台基于公开信息构建数字分身</span>
+            </label>
+            <button type="button" class="btn-step-next" onclick="goToStep(1)" style="padding: 14px 44px; font-size: 15.5px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);">
+              <span>开始创建 AI 分身</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width: 17px; height: 17px; stroke: #fff;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 1: 基础信息 (分身名称、身份描述、身份标签) -->
+      <!-- ============================================================ -->
+      <div class="step-section active" id="stage-step-1">
+        <div class="wizard-card">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">填写分身资料</h2>
+            <p class="wizard-desc">输入名称、身份描述与专业标签，AI 自动完成分身画像构建准备</p>
+          </div>
+
+          <!-- 1. 分身名称 -->
+          <div class="form-group">
+            <label class="form-label" for="personaNameInput">
+              <span>分身名称</span>
+              <span class="sub-tip">（必填，将作为分身的展示名）</span>
+            </label>
+            <input type="text" class="form-input" id="personaNameInput" placeholder="为你的分身起个名字，例如：王仲远" value="王仲远">
+          </div>
+
+          <!-- 2. 身份描述 -->
+          <div class="form-group">
+            <label class="form-label" for="personaInput">
+              <span>身份描述</span>
+              <span class="sub-tip">（必填，用一句话描述身份与领域，用于检索资料）</span>
+            </label>
+            <input type="text" class="form-input" id="personaInput" placeholder="XXX机构或公司 · XXX领域 · 擅长XXX方向" value="北京智源人工智能研究院 · 大模型与具身智能专家 · 擅长前沿算法">
+          </div>
+
+          <!-- 3. 身份标签 -->
+          <div class="form-group">
+            <label class="form-label" for="personaTagsInput">
+              <span>身份标签</span>
+              <span class="sub-tip">（输入或点击快捷标签，多个标签用逗号分隔）</span>
+            </label>
+            <input type="text" class="form-input" id="personaTagsInput" placeholder="例如：大模型, 具身智能, 学术前沿" value="大模型, 具身智能, 学术前沿">
+            <div class="tag-select-row" id="tagSelectRow">
+              <span class="tag-chip selected" onclick="toggleTagChip(this)">大模型</span>
+              <span class="tag-chip selected" onclick="toggleTagChip(this)">具身智能</span>
+              <span class="tag-chip selected" onclick="toggleTagChip(this)">学术前沿</span>
+              <span class="tag-chip" onclick="toggleTagChip(this)">算法架构</span>
+              <span class="tag-chip" onclick="toggleTagChip(this)">智能决策</span>
+              <span class="tag-chip" onclick="toggleTagChip(this)">技术领军</span>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(0)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>上一步：分身介绍</span>
+            </button>
+            <button type="button" class="btn-step-next" id="startCreateBtn" onclick="goToStep(2)">
+              <span>下一步：上传资料</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 2: 上传资料 (上传自有资料 + 绑定数据源) -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-2">
+        <div class="wizard-card">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">上传与配置学习资料</h2>
+            <p class="wizard-desc">补充自有资料、绑定持续同步数据源，并设置训练与检索用途</p>
+          </div>
+
+          <!-- A. 上传自有资料 -->
+          <div class="section-sub-title">
+            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#4f46e5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>上传自有资料</span>
+            <span style="font-size:12.5px;font-weight:400;color:var(--text-muted);">（添加演讲、访谈、课程、文章等语料）</span>
+          </div>
+
+          <!-- 拖拽上传区 -->
+          <div class="upload-dropzone" onclick="triggerFileUpload()">
+            <div class="upload-icon-box">
+              <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#4f46e5;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="upload-main-text">点击或拖拽文件到此处</div>
+            <div class="upload-sub-text">PDF / Word / PPT / Excel / 视频 / 音频 / 文本，单文件最大 100MB</div>
+            <input type="file" id="step2-file-input" style="display:none;" multiple onchange="handleStep2FileSelected(event)">
+          </div>
+
+          <!-- 添加链接 -->
+          <div class="link-add-group">
+            <input type="text" class="form-input" id="createLinkInput" placeholder="粘贴网页/视频链接，回车添加">
+            <button type="button" class="btn-add-link" id="createLinkAddBtn" onclick="handleAddStep2Link()">添加</button>
+          </div>
+
+          <!-- 已添加自有资料列表 -->
+          <div class="added-item-list" id="step2FileList">
+            <div class="added-item-row">
+              <div class="added-item-left">
+                <span class="badge-icon pdf">PDF</span>
+                <div>
+                  <div class="added-item-name">专属学术论文及代表作集_2026.pdf</div>
+                  <div class="added-item-sub">14.2 MB · 自有资料</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <select class="select-usage-pill train" onchange="changeUsagePill(this)">
+                  <option value="train" selected>训练 + 检索</option>
+                  <option value="retrieval">仅检索</option>
+                </select>
+                <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+                  <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="added-item-row">
+              <div class="added-item-left">
+                <span class="badge-icon json">JSON</span>
+                <div>
+                  <div class="added-item-name">经典问答与核心思维范式.json</div>
+                  <div class="added-item-sub">3.8 MB · 问答语料 · 1,200 条微调样本</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <select class="select-usage-pill train" onchange="changeUsagePill(this)">
+                  <option value="train" selected>训练 + 检索</option>
+                  <option value="retrieval">仅检索</option>
+                </select>
+                <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+                  <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- B. 绑定数据源（可选） -->
+          <div class="section-sub-title" style="margin-top:24px;">
+            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#a855f7;"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+            <span>绑定数据源</span>
+            <span style="font-size:12.5px;font-weight:400;color:var(--text-muted);">（添加公众号、知乎等持续同步来源）</span>
+          </div>
+
+          <button type="button" class="btn-open-ds-modal" onclick="openCreateDsModal()">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="width:28px;height:28px;border-radius:8px;background:#fdf4ff;display:flex;align-items:center;justify-content:center;color:#a855f7;">+</span>
+              <span style="font-size:13.5px;font-weight:600;color:var(--text-primary);">点击绑定新数据源 (微信公众号 / 知乎 / 飞书等)</span>
+            </div>
+            <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#94a3b8;"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+
+          <!-- 已绑定数据源列表 -->
+          <div class="added-item-list" id="createDataSourceList">
+            <div class="added-item-row">
+              <div class="added-item-left">
+                <span class="badge-icon rss">微信公众号</span>
+                <div>
+                  <div class="added-item-name">公众号：智源研究院</div>
+                  <div class="added-item-sub">微信公众号 · 持续同步最新文章</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <select class="select-usage-pill retrieval" onchange="changeUsagePill(this)">
+                  <option value="train">训练 + 检索</option>
+                  <option value="retrieval" selected>仅检索</option>
+                </select>
+                <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+                  <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(1)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>上一步：修改基础信息</span>
+            </button>
+            <button type="button" class="btn-step-next" onclick="goToStep(3)">
+              <span>开始自动构建 (Step 3)</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 3: 构建 (原型里的第二步构建流程与终端) -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-3">
+        <!-- 页头 Header -->
+        <div class="distill-header" id="distill-header">
+          <!-- 动态注入 Header -->
+        </div>
+
+        <div class="distill-main-grid">
+          <!-- 左侧：已就绪学习资料源 -->
+          <div class="distill-card">
+            <div class="distill-card-header">
+              <div class="distill-card-title">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>已就绪学习资料源</span>
+              </div>
+              <span class="badge-tag" id="step3SourceBadge">3 份资料源</span>
+            </div>
+            <div class="distill-file-list" id="step3FileList">
+              <div class="distill-file-item">
+                <div class="file-icon-box pdf">PDF</div>
+                <div class="file-meta">
+                  <div class="file-title">专属学术论文及代表作集_2026.pdf</div>
+                  <div class="file-sub">14.2 MB · 训练+检索 · 已抽取 284 个高维特征</div>
+                </div>
+                <div class="file-check">✓</div>
+              </div>
+              <div class="distill-file-item">
+                <div class="file-icon-box json">JSON</div>
+                <div class="file-meta">
+                  <div class="file-title">经典问答与核心思维范式.json</div>
+                  <div class="file-sub">3.8 MB · 训练+检索 · 已加载 1,200 条问答</div>
+                </div>
+                <div class="file-check">✓</div>
+              </div>
+              <div class="distill-file-item">
+                <div class="file-icon-box" style="background:#8b5cf6;">RSS</div>
+                <div class="file-meta">
+                  <div class="file-title">微信公众号：智源研究院</div>
+                  <div class="file-sub">持续同步源 · 仅检索 · 42 篇深度技术解读</div>
+                </div>
+                <div class="file-check">✓</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：构建引擎实时终端日志 -->
+          <div class="distill-card terminal-card" style="flex:1;">
+            <div class="distill-card-header">
+              <div class="distill-card-title">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>构建引擎实时终端日志</span>
+              </div>
+              <div class="live-dot-tag"><span class="green-dot"></span> RUNNING</div>
+            </div>
+            <div class="terminal-console" id="terminal-console" style="min-height: 280px;">
+              <div class="log-line text-muted">[00:01] 启动 SoulAgent 混合分布式构建集群...</div>
+              <div class="log-line text-muted">[00:02] 加载预训练通用基座模型 (Soul-Large-v3)...</div>
+              <div class="log-line text-success">[00:04] ✓ 数据源解析完成：抽取 1,342 个核心特征维度</div>
+              <div class="log-line text-info">[00:06] 正在构建注意力掩码微调 (LoRA Matrix Adaption)...</div>
+              <div class="log-line text-info">[00:09] 正在提炼人设偏好分布 (Loss: 0.0241)...</div>
+              <div class="log-line highlight">[00:12] ⚡ 正在提炼 Core-Memory 特征节点 (进度: 68%)...</div>
+            </div>
+            <div class="terminal-progress-wrapper">
+              <div class="terminal-progress-bar">
+                <div class="terminal-progress-fill" style="width: 68%;"></div>
+              </div>
+              <div class="terminal-progress-text">构建进度 68% · 预估剩余 12 秒</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- 绑定数据源弹窗 (参考专家分身原型) -->
+  <!-- ============================================================ -->
+  <div id="createDsModal" class="modal-overlay" onclick="closeCreateDsModalOnOverlay(event)">
+    <div class="modal-panel" onclick="event.stopPropagation();">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, #4f46e5, #7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;">
+            <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#fff;"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+          </div>
+          <div>
+            <div class="modal-title">绑定数据源</div>
+            <div style="font-size:12px;color:var(--text-muted);">添加持续同步来源，定期丰富分身知识库</div>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeCreateDsModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="notice-bar" style="margin-bottom:14px;background:#f8fafc;">
+          <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#4f46e5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span style="font-size:12.5px;">绑定后，系统将定期从数据源抓取最新内容，自动纳入分身知识库。</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="font-size:13.5px;">媒体平台</label>
+          <select id="createDsPlatform" class="form-input" onchange="updateDsInputByPlatform()">
+            <option value="wechat">微信公众号</option>
+            <option value="zhihu">知乎</option>
+            <option value="bilibili">B站 (Bilibili)</option>
+            <option value="xiaohongshu">小红书</option>
+            <option value="google_scholar">Google Scholar</option>
+            <option value="feishu">飞书知识库</option>
+            <option value="other">其他网站 / RSS</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="createDsInputLabel" style="font-size:13.5px;">公众号名称</label>
+          <input type="text" class="form-input" id="createDsInput" placeholder="例如：智源研究院">
+        </div>
+
+        <div class="form-group" id="createDsSampleWrap">
+          <label class="form-label" style="font-size:13.5px;">示例文章链接</label>
+          <input type="text" class="form-input" id="createDsSampleInput" placeholder="粘贴任意一篇公众号文章链接，如 mp.weixin.qq.com/s/...">
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">填写公众号名称和任意一篇文章链接，即可抓取该公众号全部内容</div>
+        </div>
+
+        <button type="button" class="btn-step-next" style="width:100%;margin-top:8px;padding:10px 0;font-size:13.5px;" onclick="addCreateDataSource()">
+          <span>添加数据源</span>
+        </button>
+
+        <div style="margin-top:18px;">
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">已添加的数据源</div>
+          <div class="added-item-list" id="modalDsList" style="max-height:140px;overflow-y:auto;">
+            <div class="added-item-row">
+              <div class="added-item-left">
+                <span class="badge-icon rss">微信公众号</span>
+                <div>
+                  <div class="added-item-name">公众号：智源研究院</div>
+                  <div class="added-item-sub">微信公众号 · 持续同步</div>
+                </div>
+              </div>
+              <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-step-prev" onclick="closeCreateDsModal()">关闭</button>
+        <button type="button" class="btn-step-next" style="padding:10px 24px;" onclick="closeCreateDsModal()">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入核心脚本 -->
+  <script src="../js/data.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const stepParam = getQueryParam('step');
+    let currentStep = (stepParam !== null && !isNaN(parseInt(stepParam))) ? parseInt(stepParam) : 0;
+    const cloneId = getQueryParam('id');
+    let clone = null;
+    if (cloneId) {
+      clone = (window.myClones || []).find(c => c.id === cloneId);
+    }
+    if (!clone) {
+      const existingClones = window.myClones || [];
+      const presets = window.presetCloneTemplates || [];
+      const nextPreset = presets.find(p => !existingClones.some(c => c.id === p.id || c.name === p.name)) || presets[existingClones.length % presets.length];
+      if (nextPreset) {
+        clone = JSON.parse(JSON.stringify(nextPreset));
+      } else {
+        clone = {
+          id: 'clone-' + Date.now(),
+          name: '王仲远',
+          avatar: '王',
+          gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+          tag: '专属分身',
+          desc: '北京智源人工智能研究院 · 大模型与具身智能专家 · 擅长前沿算法'
+        };
+      }
+    }
+
+    if (clone) {
+      if (document.getElementById('personaNameInput')) {
+        document.getElementById('personaNameInput').value = clone.name || '王仲远';
+      }
+      if (document.getElementById('personaInput')) {
+        document.getElementById('personaInput').value = clone.desc || '北京智源人工智能研究院 · 大模型与具身智能专家 · 擅长前沿算法';
+      }
+    }
+
+    function toggleTagChip(el) {
+      el.classList.toggle('selected');
+      const input = document.getElementById('personaTagsInput');
+      if (!input) return;
+      const selectedChips = Array.from(document.querySelectorAll('#tagSelectRow .tag-chip.selected')).map(c => c.textContent.trim());
+      input.value = selectedChips.join(', ');
+    }
+
+    // 步骤切换
+    function goToStep(step) {
+      if (step < 0 || step > 3) return;
+
+      if (currentStep === 0 && step > 0) {
+        const agreeCheck = document.getElementById('createAgreeCheck');
+        if (agreeCheck && !agreeCheck.checked) {
+          showToast('请先阅读并勾选《数字分身构建协议》');
+          return;
+        }
+      }
+
+      if (currentStep === 1 && step > 1) {
+        const nameInput = document.getElementById('personaNameInput');
+        const name = nameInput ? nameInput.value.trim() : '';
+        if (!name) {
+          alert('请先填写分身名称！');
+          return;
+        }
+        if (clone) {
+          clone.name = name;
+          const descInput = document.getElementById('personaInput');
+          clone.desc = descInput ? descInput.value.trim() : '';
+          const tagInput = document.getElementById('personaTagsInput');
+          if (tagInput && tagInput.value.trim()) {
+            clone.tag = tagInput.value.trim().split(/[,，\s]+/)[0] || '专属定制';
+          }
+        }
+      }
+
+      currentStep = step;
+
+      const s0 = document.getElementById('stage-step-0');
+      const s1 = document.getElementById('stage-step-1');
+      const s2 = document.getElementById('stage-step-2');
+      const s3 = document.getElementById('stage-step-3');
+
+      if (s0) s0.classList.toggle('active', currentStep === 0);
+      if (s1) s1.classList.toggle('active', currentStep === 1);
+      if (s2) s2.classList.toggle('active', currentStep === 2);
+      if (s3) s3.classList.toggle('active', currentStep === 3);
+
+      updateStepperUI(currentStep);
+
+      if (currentStep === 3) {
+        renderStep3Header();
+      }
+
+      const main = document.getElementById('distill-view');
+      if (main) main.scrollTop = 0;
+    }
+
+    function updateStepperUI(step) {
+      const stepper = document.getElementById('distill-stepper');
+      const s1 = document.getElementById('step-node-1');
+      const s2 = document.getElementById('step-node-2');
+      const s3 = document.getElementById('step-node-3');
+      const c1 = document.getElementById('connector-1');
+      const c2 = document.getElementById('connector-2');
+
+      if (step === 0) {
+        if (stepper) stepper.style.display = 'none';
+        return;
+      } else {
+        if (stepper) stepper.style.display = 'flex';
+      }
+
+      [s1, s2, s3].forEach(s => s.className = 'stepper-step');
+      [c1, c2].forEach(c => c.className = 'step-connector');
+
+      if (step === 1) {
+        s1.classList.add('active');
+        s1.querySelector('.num-text').innerHTML = '1';
+        s2.querySelector('.num-text').innerHTML = '2';
+        s3.querySelector('.num-text').innerHTML = '3';
+      } else if (step === 2) {
+        s1.classList.add('completed');
+        s1.querySelector('.num-text').innerHTML = '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#059669;"><polyline points="20 6 9 17 4 12"/></svg>';
+        c1.classList.add('completed');
+        s2.classList.add('active');
+        s2.querySelector('.num-text').innerHTML = '2';
+        s3.querySelector('.num-text').innerHTML = '3';
+      } else if (step === 3) {
+        s1.classList.add('completed');
+        s1.querySelector('.num-text').innerHTML = '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#059669;"><polyline points="20 6 9 17 4 12"/></svg>';
+        c1.classList.add('completed');
+
+        s2.classList.add('completed');
+        s2.querySelector('.num-text').innerHTML = '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#059669;"><polyline points="20 6 9 17 4 12"/></svg>';
+        c2.classList.add('active');
+
+        s3.classList.add('active');
+        s3.querySelector('.num-text').innerHTML = '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+      }
+    }
+
+    function renderStep3Header() {
+      const currentAgent = clone ? clone.name : '专属AI分身';
+      const gradient = clone ? clone.gradient : "linear-gradient(135deg, #64748b, #475569)";
+      const avatar = clone ? (clone.avatar || clone.name.charAt(0)) : currentAgent.charAt(0).toUpperCase();
+
+      document.getElementById('distill-header').innerHTML = `
+        <div class="distill-title-group">
+          <div class="distill-avatar-badge" style="background: ${gradient};">
+            ${escapeHtml(avatar)}
+          </div>
+          <div>
+            <div class="distill-title">正在自动构建分身：${escapeHtml(currentAgent)}</div>
+            <div class="distill-subtitle">SoulAgent 自动构建引擎 · 正在完成 Step 3 模型训练与画像生成</div>
+          </div>
+        </div>
+        <div class="distill-status-pill">
+          <span class="distill-dot-pulse"></span>
+          <span>自动构建中 (68%)</span>
+        </div>
+      `;
+    }
+
+    // Step 2 文件操作
+    function triggerFileUpload() {
+      document.getElementById('step2-file-input').click();
+    }
+
+    function handleStep2FileSelected(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = file.name.split('.').pop().toLowerCase();
+        let badgeClass = 'doc';
+        let badgeText = ext.toUpperCase();
+        if (ext === 'pdf') { badgeClass = 'pdf'; }
+        else if (ext === 'json') { badgeClass = 'json'; }
+
+        const rowHtml = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon ${badgeClass}">${badgeText}</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(file.name)}</div>
+                <div class="added-item-sub">${(file.size / (1024 * 1024)).toFixed(1)} MB · 自有资料</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <select class="select-usage-pill train" onchange="changeUsagePill(this)">
+                <option value="train" selected>训练 + 检索</option>
+                <option value="retrieval">仅检索</option>
+              </select>
+              <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+                <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+        document.getElementById('step2FileList').insertAdjacentHTML('afterbegin', rowHtml);
+      }
+      showToast(`已成功添加 ${files.length} 个文件`);
+    }
+
+    function handleAddStep2Link() {
+      const input = document.getElementById('createLinkInput');
+      const val = input.value.trim();
+      if (!val) {
+        showToast('请输入有效的网页或视频链接');
+        return;
+      }
+      const rowHtml = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+            <span class="badge-icon web">WEB</span>
+            <div>
+              <div class="added-item-name">${escapeHtml(val)}</div>
+              <div class="added-item-sub">网络语料链接</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <select class="select-usage-pill retrieval" onchange="changeUsagePill(this)">
+              <option value="train">训练 + 检索</option>
+              <option value="retrieval" selected>仅检索</option>
+            </select>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('step2FileList').insertAdjacentHTML('afterbegin', rowHtml);
+      input.value = '';
+      showToast('已添加网络语料链接');
+    }
+
+    // Step 2 绑定数据源弹窗
+    const dsPlatformConfig = {
+      wechat: { label: '公众号名称', placeholder: '例如：智源研究院' },
+      zhihu: { label: '知乎链接', placeholder: '粘贴知乎专栏/回答链接，如 zhihu.com/...' },
+      bilibili: { label: 'B站链接', placeholder: '粘贴B站视频/主页链接，如 bilibili.com/...' },
+      xiaohongshu: { label: '小红书链接', placeholder: '粘贴小红书笔记/主页链接' },
+      google_scholar: { label: '学者主页链接', placeholder: '粘贴 Google Scholar 学者主页链接' },
+      feishu: { label: '飞书文档链接', placeholder: '粘贴飞书文档/知识库链接' },
+      other: { label: '数据源链接', placeholder: '粘贴数据源链接' }
+    };
+
+    function updateDsInputByPlatform() {
+      const p = document.getElementById('createDsPlatform').value;
+      const cfg = dsPlatformConfig[p] || dsPlatformConfig.other;
+      document.getElementById('createDsInputLabel').textContent = cfg.label;
+      document.getElementById('createDsInput').placeholder = cfg.placeholder;
+      document.getElementById('createDsSampleWrap').style.display = (p === 'wechat') ? 'block' : 'none';
+    }
+
+    function openCreateDsModal() {
+      document.getElementById('createDsModal').classList.add('active');
+      updateDsInputByPlatform();
+    }
+
+    function closeCreateDsModal() {
+      document.getElementById('createDsModal').classList.remove('active');
+    }
+
+    function closeCreateDsModalOnOverlay(e) {
+      if (e.target.id === 'createDsModal') {
+        closeCreateDsModal();
+      }
+    }
+
+    function addCreateDataSource() {
+      const input = document.getElementById('createDsInput');
+      const val = input.value.trim();
+      if (!val) {
+        showToast('请输入有效的数据源名称或链接');
+        return;
+      }
+      const platformSelect = document.getElementById('createDsPlatform');
+      const platformText = platformSelect.options[platformSelect.selectedIndex].text;
+      const displayVal = (platformSelect.value === 'wechat' ? '公众号：' : '') + val;
+
+      const itemHtml = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+            <span class="badge-icon rss">${platformText}</span>
+            <div>
+              <div class="added-item-name">${escapeHtml(displayVal)}</div>
+              <div class="added-item-sub">${platformText} · 持续同步</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <select class="select-usage-pill retrieval" onchange="changeUsagePill(this)">
+              <option value="train">训练 + 检索</option>
+              <option value="retrieval" selected>仅检索</option>
+            </select>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()" title="移除">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modalDsList').insertAdjacentHTML('afterbegin', itemHtml);
+      document.getElementById('createDataSourceList').insertAdjacentHTML('afterbegin', itemHtml);
+      input.value = '';
+      if (document.getElementById('createDsSampleInput')) {
+        document.getElementById('createDsSampleInput').value = '';
+      }
+      showToast(`已成功绑定 ${platformText} 数据源`);
+    }
+
+    function changeUsagePill(select) {
+      if (select.value === 'train') {
+        select.className = 'select-usage-pill train';
+      } else {
+        select.className = 'select-usage-pill retrieval';
+      }
+    }
+
+    // 模拟完成构建
+    const handleComplete = () => {
+      const nameInput = document.getElementById('personaNameInput');
+      const currentAgent = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : (clone ? clone.name : '专属AI分身');
+      completeAgentDistill(currentAgent, clone ? clone.id : null);
+    };
+
+    document.getElementById('btn-top-complete').onclick = handleComplete;
+
+    // 初始化
+    goToStep(currentStep);
+  </script>
+</body>
+
+</html>

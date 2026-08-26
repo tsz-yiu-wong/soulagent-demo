@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>对话详情</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <!-- 左侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-container" id="main-container" style="padding: 0; overflow: hidden;">
+    <div class="chat-dialog-view">
+      <!-- 顶部对话 Header -->
+      <div class="dialog-header">
+        <div class="dialog-header-title">
+          <span id="dialog-header-title">对话记录</span>
+        </div>
+      </div>
+
+      <!-- 消息流容器 -->
+      <div class="dialog-messages" id="dialog-messages">
+        <!-- 动态注入消息流与卡片 -->
+      </div>
+
+      <!-- 底部输入框组件 -->
+      <div class="dialog-bottom-input">
+        <div class="input-card" style="border-radius: 16px; padding: 12px 14px;">
+          <textarea class="chat-textarea" id="dialog-chat-input" style="min-height: 48px; max-height: 120px;" placeholder="输入消息，或输入 @ 召唤专家分身协同..."></textarea>
+          
+          <div class="input-card-bottom">
+            <div class="input-card-bottom-left">
+              <button type="button" class="action-btn" title="上传附件" onclick="showToast('已调起附件选择器')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <div id="dialog-listen-slot"></div>
+              <div id="dialog-expert-slot"></div>
+            </div>
+
+            <button type="button" class="action-btn send-btn" title="发送" onclick="handleSendDialogChat()">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入核心脚本 -->
+  <script src="../js/data.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const chatTitle = decodeURIComponent(getQueryParam('title') || '世界模型与物理仿真探讨');
+
+    function initDialogPage() {
+      document.title = `${chatTitle} - SoulAgent`;
+      document.getElementById('dialog-header-title').innerText = chatTitle;
+
+      renderDialogMessages();
+
+      const listenSlot = document.getElementById('dialog-listen-slot');
+      if (listenSlot) listenSlot.innerHTML = renderListenSelectorHtml();
+      const expertSlot = document.getElementById('dialog-expert-slot');
+      if (expertSlot) expertSlot.innerHTML = renderExpertSelectorHtml();
+
+      const conv = window.mockConversations[chatTitle];
+      const isGroup = (conv && conv.type === 'group') || chatTitle.includes('群聊');
+      if (conv && isGroup && conv.messages && conv.messages.length === 1 && conv.messages[0].role === 'user') {
+        if (typeof window.triggerGroupSequentialReplies === 'function') {
+          window.triggerGroupSequentialReplies(conv, conv.messages[0].content);
+        }
+      }
+    }
+
+    function renderDialogMessages(typingExpert = null) {
+      const conv = window.mockConversations[chatTitle] || generateDynamicConversation(chatTitle, false, null, null);
+
+      let dialogExp = null;
+      if (conv && conv.expertId && conv.type === 'twin') {
+        dialogExp = window.expertList ? window.expertList.find(e => e.id === conv.expertId) : null;
+      } else if (chatTitle.startsWith('与') && chatTitle.endsWith('对话')) {
+        const expName = chatTitle.substring(1, chatTitle.length - 2);
+        dialogExp = window.expertList ? window.expertList.find(e => e.name === expName) : null;
+      }
+
+      let dialogClone = null;
+      if (conv && conv.cloneId && conv.type === 'clone') {
+        dialogClone = window.myClones ? window.myClones.find(c => c.id === conv.cloneId) : null;
+      }
+
+      const isTwin = (conv && conv.type === 'twin') || (dialogExp && (!conv || conv.type === 'twin'));
+
+      let isGroup = (conv && conv.type === 'group') || chatTitle.includes('群聊');
+
+      // 介绍卡片（群聊无需顶部大信息卡片）
+      let introCardHtml = '';
+      if (isGroup) {
+        introCardHtml = '';
+      } else if (dialogClone) {
+        const p1 = `请介绍你在 ${dialogClone.tag || '专属领域'} 的核心专长`;
+        const p2 = `基于知识文件，帮我分析关键要点`;
+        const p3 = `给出具体的执行与调优方案`;
+
+        introCardHtml = `
+          <div class="expert-intro-card clone-intro-card" style="margin-top: 0; margin-bottom: 12px;">
+            <div class="intro-avatar-box clone-avatar-box" style="background: ${dialogClone.gradient};">
+              <span style="font-size:28px;font-weight:700;color:#fff;">${escapeHtml(dialogClone.avatar || dialogClone.name.charAt(0))}</span>
+            </div>
+            <div class="intro-meta">
+              <div class="clone-intro-header-row" style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                <h2 class="intro-name" style="margin-bottom:0;">${escapeHtml(dialogClone.name)}</h2>
+                <span class="clone-status-pill ready"><span class="ready-dot"></span>已就绪</span>
+              </div>
+              <div class="intro-role" style="background:#fce7f3;color:#be185d;">${escapeHtml(dialogClone.tag || '专属AI分身')} · 我的分身</div>
+              <p class="intro-desc">${escapeHtml(dialogClone.desc)}</p>
+            </div>
+            <div class="intro-prompts">
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p1)}')">💡 ${escapeHtml(p1)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p2)}')">🎯 ${escapeHtml(p2)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p3)}')">⚙️ ${escapeHtml(p3)}</div>
+            </div>
+          </div>
+        `;
+      } else if (dialogExp && (conv.type === 'twin' || isTwin)) {
+        const p1 = `探讨 ${dialogExp.tag || '大模型'} 前沿发展路线`;
+        const p2 = `请介绍您的代表性研究成果`;
+        const p3 = `如何与 SoulAgent 结合实践落地`;
+
+        introCardHtml = `
+          <div class="expert-intro-card" style="margin-top: 0; margin-bottom: 12px;">
+            <div class="intro-avatar-box" style="background: ${dialogExp.gradient};">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div class="intro-meta">
+              <h2 class="intro-name">${escapeHtml(dialogExp.name)}的AI分身</h2>
+              <div class="intro-role">${escapeHtml(dialogExp.role || 'AI 分身专家')}</div>
+              <p class="intro-desc">${escapeHtml(dialogExp.desc)}</p>
+            </div>
+            <div class="intro-prompts">
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p1)}')">💡 ${escapeHtml(p1)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p2)}')">🎯 ${escapeHtml(p2)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p3)}')">⚙️ ${escapeHtml(p3)}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      const messagesHtml = conv.messages.map(msg => {
+        if (msg.role === 'user') {
+          return `
+            <div class="msg-row user">
+              <div class="msg-bubble-user">${escapeHtml(msg.content)}</div>
+            </div>
+          `;
+        } else {
+          // 检查是否是群聊中的专家消息或指定专家消息
+          let msgExp = null;
+          if (msg.expertId) {
+            msgExp = (window.expertList || []).find(e => e.id === msg.expertId);
+          } else if (msg.expertName) {
+            msgExp = (window.expertList || []).find(e => e.name === msg.expertName);
+          }
+
+          if (isGroup && !msgExp && conv.expertIds && conv.expertIds.length > 0) {
+            msgExp = (window.expertList || []).find(e => e.id === conv.expertIds[0]);
+          }
+
+          if (msgExp) {
+            return `
+              <div class="msg-row assistant twin-assistant" style="align-items:flex-start;">
+                <div class="twin-avatar-box" style="background: ${msgExp.gradient}; margin-top: 2px;" title="${escapeHtml(msgExp.name)}">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="msg-wrapper" style="display:flex;flex-direction:column;max-width:85%;">
+                  <div class="msg-author-header" style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:12.5px;">
+                    <span style="font-weight:600;color:var(--text-primary);">${escapeHtml(msgExp.name)}</span>
+                    <span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:500;padding:1px 7px;border-radius:4px;">${escapeHtml(msgExp.role || msgExp.tag || '专家')}</span>
+                  </div>
+                  <div class="msg-content-twin msg-text">
+                    ${msg.htmlContent || `<p>${escapeHtml(msg.content)}</p>`}
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (dialogClone || (conv && conv.type === 'clone')) {
+            const c = dialogClone || (window.myClones && window.myClones.find(item => item.id === conv.cloneId)) || window.myClones[0];
+            return `
+              <div class="msg-row assistant twin-assistant">
+                <div class="twin-avatar-box" style="background: ${c.gradient};" title="${escapeHtml(c.name)}">
+                  <span style="font-weight:700;font-size:14px;color:#fff;">${escapeHtml(c.avatar || c.name.charAt(0))}</span>
+                </div>
+                <div class="msg-content-twin msg-text">
+                  ${msg.htmlContent || escapeHtml(msg.content)}
+                </div>
+              </div>
+            `;
+          } else if (dialogExp || (conv && conv.type === 'twin') || isTwin) {
+            const exp = dialogExp || (window.expertList && window.expertList.find(e => e.id === conv.expertId)) || window.expertList[0];
+            return `
+              <div class="msg-row assistant twin-assistant">
+                <div class="twin-avatar-box" style="background: ${exp.gradient};" title="${escapeHtml(exp.name)}">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="msg-content-twin msg-text">
+                  ${msg.htmlContent || escapeHtml(msg.content)}
+                </div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="msg-row assistant">
+                <div class="msg-bubble-assistant msg-text">
+                  ${msg.htmlContent || escapeHtml(msg.content)}
+                </div>
+              </div>
+            `;
+          }
+        }
+      }).join('');
+
+      let typingHtml = '';
+      if (typingExpert) {
+        typingHtml = `
+          <div class="msg-row assistant twin-assistant" style="align-items:flex-start;">
+            <div class="twin-avatar-box" style="background: ${typingExpert.gradient || 'linear-gradient(135deg, #6366f1, #8b5cf6)'}; margin-top: 2px;" title="${escapeHtml(typingExpert.name)}">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="msg-wrapper" style="display:flex;flex-direction:column;max-width:85%;">
+              <div class="msg-author-header" style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:12.5px;">
+                <span style="font-weight:600;color:var(--text-primary);">${escapeHtml(typingExpert.name)}</span>
+                <span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:500;padding:1px 7px;border-radius:4px;">${escapeHtml(typingExpert.role || typingExpert.tag || '专家')}</span>
+              </div>
+              <div class="msg-content-twin msg-text" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;width:fit-content;color:#64748b;font-size:13px;">
+                <span class="typing-dots"><span></span><span></span><span></span></span>
+                <span>正在思考并组织见解...</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const msgContainer = document.getElementById('dialog-messages');
+      msgContainer.innerHTML = introCardHtml + messagesHtml + typingHtml;
+      msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    initDialogPage();
+  </script>
+</body>
+
+</html>

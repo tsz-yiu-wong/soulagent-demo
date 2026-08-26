@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI分身广场</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <!-- 左侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-container" id="main-container">
+    <div class="plaza-view">
+      <!-- 顶部 Header -->
+      <div class="page-header">
+        <div class="page-title-group">
+          <div class="page-avatar-badge badge-violet">
+            <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#7c3aed;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="page-title-row">
+              <h1 class="page-title">AI分身广场</h1>
+            </div>
+            <p class="page-subtitle">探索并对话各个领域的行业专家与权威智囊分身，获取即时专业的分析与建议</p>
+          </div>
+        </div>
+
+        <div class="page-header-actions" style="display:flex;align-items:center;gap:10px;">
+          <button class="btn btn-secondary" id="btn-group-toggle" onclick="toggleGroupSelectMode()" style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13.5px;font-weight:600;cursor:pointer;">
+            <svg class="icon" id="btn-group-icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span id="btn-group-text">发起群聊</span>
+          </button>
+          <a class="btn btn-primary" href="distill.html" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;font-size:13.5px;font-weight:600;text-decoration:none;cursor:pointer;">
+            <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2.5;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>创建我的分身</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="plaza-content">
+        <div class="expert-grid" id="expert-grid">
+          <!-- 动态渲染专家卡片 -->
+        </div>
+      </div>
+
+      <!-- 底部操作栏 (群聊勾选模式下展示) -->
+      <div class="plaza-bottom-bar" id="plaza-bottom-bar" style="display: none;">
+        <div class="plaza-bottom-left">
+          <div class="plaza-bottom-count">
+            已选择 <strong id="selected-count">0</strong> 位专家分身
+          </div>
+          <div class="plaza-selected-avatars" id="selected-avatars-container"></div>
+        </div>
+
+        <div class="plaza-bottom-right">
+          <button type="button" class="btn btn-secondary" onclick="selectAllExperts()" style="font-size:13px;padding:8px 14px;border-radius:8px;">全选</button>
+          <button type="button" class="btn btn-secondary" onclick="clearSelectedExperts()" style="font-size:13px;padding:8px 14px;border-radius:8px;">清空</button>
+          <button type="button" class="btn btn-launch-group" onclick="launchGroupChat()">
+            <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>发起群聊</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入核心脚本 -->
+  <script src="../js/data.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    let isSelectMode = false;
+    let selectedExpertIds = new Set();
+
+    function toggleGroupSelectMode() {
+      isSelectMode = !isSelectMode;
+      const toggleBtn = document.getElementById('btn-group-toggle');
+      const toggleText = document.getElementById('btn-group-text');
+      const toggleIcon = document.getElementById('btn-group-icon');
+      const bottomBar = document.getElementById('plaza-bottom-bar');
+      const expertGrid = document.getElementById('expert-grid');
+
+      if (isSelectMode) {
+        toggleBtn.classList.remove('btn-primary');
+        toggleBtn.classList.add('btn-secondary');
+        toggleText.innerText = '退出选择';
+        toggleIcon.innerHTML = `<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`;
+        bottomBar.style.display = 'flex';
+        expertGrid.classList.add('is-select-mode');
+      } else {
+        toggleBtn.classList.add('btn-primary');
+        toggleBtn.classList.remove('btn-secondary');
+        toggleText.innerText = '发起群聊';
+        toggleIcon.innerHTML = `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`;
+        bottomBar.style.display = 'none';
+        expertGrid.classList.remove('is-select-mode');
+        selectedExpertIds.clear();
+      }
+
+      renderExpertGrid();
+      updateBottomBar();
+    }
+
+    function toggleExpertSelect(expertId, event) {
+      if (event) event.stopPropagation();
+      if (!isSelectMode) return;
+
+      if (selectedExpertIds.has(expertId)) {
+        selectedExpertIds.delete(expertId);
+      } else {
+        selectedExpertIds.add(expertId);
+      }
+
+      renderExpertGrid();
+      updateBottomBar();
+    }
+
+    function selectAllExperts() {
+      (window.expertList || []).forEach(e => selectedExpertIds.add(e.id));
+      renderExpertGrid();
+      updateBottomBar();
+    }
+
+    function clearSelectedExperts() {
+      selectedExpertIds.clear();
+      renderExpertGrid();
+      updateBottomBar();
+    }
+
+    function updateBottomBar() {
+      const countEl = document.getElementById('selected-count');
+      if (countEl) countEl.innerText = selectedExpertIds.size;
+
+      const avatarContainer = document.getElementById('selected-avatars-container');
+      if (avatarContainer) {
+        const selectedList = (window.expertList || []).filter(e => selectedExpertIds.has(e.id));
+        avatarContainer.innerHTML = selectedList.map(e => `
+          <span class="plaza-avatar-pill">
+            <span class="plaza-avatar-pill-dot" style="background:${e.gradient};">${escapeHtml(e.name.charAt(0))}</span>
+            <span>${escapeHtml(e.name)}</span>
+          </span>
+        `).join('');
+      }
+    }
+
+    function renderExpertGrid() {
+      const experts = window.expertList || [];
+
+      if (experts.length === 0) {
+        document.getElementById('expert-grid').innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 0; color: var(--text-muted); font-size: 14px;">
+            暂无专家分身
+          </div>
+        `;
+        return;
+      }
+
+      const cardsHtml = experts.map(exp => {
+        const isSelected = selectedExpertIds.has(exp.id);
+        const expertHref = getPageUrl('expert-new.html', { id: exp.id });
+
+        const cardClickHandler = isSelectMode 
+          ? `onclick="toggleExpertSelect('${exp.id}', event)"`
+          : `onclick="window.location.href='${expertHref}'"`;
+
+        const checkboxHtml = isSelectMode ? `
+          <div class="expert-card-checkbox" onclick="toggleExpertSelect('${exp.id}', event)">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        ` : '';
+
+        return `
+          <div class="expert-card ${isSelectMode ? 'selectable' : ''} ${isSelected ? 'is-selected' : ''}" ${cardClickHandler}>
+            ${checkboxHtml}
+            <div class="expert-avatar-container">
+              <div class="expert-avatar-box" style="background: ${exp.gradient};">
+                <svg class="expert-person-svg" viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="expert-status-badge"></div>
+            </div>
+            <div class="expert-name">${escapeHtml(exp.name)}</div>
+            <div class="expert-role">${escapeHtml(exp.role)}</div>
+            <div class="expert-desc">${escapeHtml(exp.desc)}</div>
+
+            <div class="expert-footer">
+              <span>${escapeHtml(exp.stat)}</span>
+              <span>·</span>
+              <span>专家分身</span>
+            </div>
+
+            <div class="expert-card-hover-action">
+              <a class="btn-chat-now" href="${expertHref}" onclick="event.stopPropagation();" style="text-decoration:none;">
+                <svg class="icon" style="width:14px;height:14px;stroke:currentColor;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>新建对话</span>
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('expert-grid').innerHTML = cardsHtml;
+    }
+
+    function launchGroupChat() {
+      if (selectedExpertIds.size === 0) {
+        showToast('请至少勾选 1 位专家分身发起群聊！');
+        return;
+      }
+
+      const selectedExperts = (window.expertList || []).filter(e => selectedExpertIds.has(e.id));
+      const names = selectedExperts.map(e => e.name);
+
+      let chatTitle = '';
+      if (names.length === 1) {
+        chatTitle = `${names[0]} 专家群聊`;
+      } else if (names.length === 2) {
+        chatTitle = `${names[0]}、${names[1]} 专家群聊`;
+      } else {
+        chatTitle = `${names[0]}、${names[1]} 等专家群聊`;
+      }
+
+      // 如果已有同名，可加时间戳或复用
+      const existingConv = window.mockConversations && window.mockConversations[chatTitle];
+      if (!existingConv) {
+        window.mockConversations[chatTitle] = {
+          type: "group",
+          expertIds: Array.from(selectedExpertIds),
+          messages: [
+            {
+              role: "user",
+              content: `各位专家好（${names.join('、')}），我想就多领域前沿技术与方案协同探讨向大家请教。`
+            }
+          ]
+        };
+      }
+
+      const chats = getAgentChats("AI助手");
+      if (!chats.includes(chatTitle)) {
+        chats.unshift(chatTitle);
+      }
+      window.syncDataToStorage();
+
+      if (typeof showToast === 'function') {
+        showToast(`已为您创建【${chatTitle}】`);
+      }
+      
+      const targetUrl = getPageUrl('dialog.html', { title: chatTitle });
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 300);
+    }
+
+    renderExpertGrid();
+  </script>
+</body>
+
+</html>

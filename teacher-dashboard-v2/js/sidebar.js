@@ -29,6 +29,16 @@
 
   // SPA 无刷新路由切换核心函数
   async function navigateTo(targetPath, pushToHistory = true) {
+    const current = getCurrentFilename();
+    if (targetPath === current) {
+      return;
+    }
+
+    if (window.location.protocol === 'file:') {
+      window.location.href = targetPath;
+      return;
+    }
+
     try {
       const response = await fetch(targetPath);
       if (!response.ok) throw new Error('页面加载失败');
@@ -57,6 +67,12 @@
       // 3. 提取目标页面的主体内容并置换
       const contentEl = document.querySelector('.app-content');
       if (contentEl) {
+        // 清理上一页面的全局事件监听器
+        if (typeof window.cleanupCurrentPage === 'function') {
+          try { window.cleanupCurrentPage(); } catch(e){}
+        }
+        window.cleanupCurrentPage = null;
+
         // 清理原有所有弹出层和内容
         contentEl.innerHTML = '';
 
@@ -84,6 +100,21 @@
         window.history.pushState({ path: targetPath }, '', targetPath);
       }
 
+      // 5.5 收集并按序加载目标页声明的外部 JS 库（如 gsap、anime 等）
+      const externalScripts = Array.from(doc.querySelectorAll('script[src]'));
+      for (const s of externalScripts) {
+        const src = s.getAttribute('src');
+        if (src && !document.querySelector(`script[src="${src}"]`)) {
+          await new Promise((resolve) => {
+            const scriptTag = document.createElement('script');
+            scriptTag.src = src;
+            scriptTag.onload = resolve;
+            scriptTag.onerror = resolve;
+            document.head.appendChild(scriptTag);
+          });
+        }
+      }
+
       // 6. 执行目标页面专属内嵌业务逻辑脚本
       const scripts = doc.querySelectorAll('body script');
       scripts.forEach(script => {
@@ -91,7 +122,7 @@
         // 排除通用库与侧边栏自身
         if (!src) {
           const newScript = document.createElement('script');
-          newScript.textContent = script.textContent;
+          newScript.textContent = `(function(){\n${script.textContent}\n})();`;
           document.body.appendChild(newScript);
           setTimeout(() => newScript.remove(), 50);
         }
@@ -113,7 +144,8 @@
 
   function updateActiveMenuItem(currentPath) {
     let cleanPath = decodeURIComponent(currentPath).split('?')[0].split('#')[0];
-    const filename = cleanPath.substring(cleanPath.lastIndexOf('/') + 1) || getCurrentFilename();
+    let filename = cleanPath.substring(cleanPath.lastIndexOf('/') + 1) || getCurrentFilename();
+    if (filename === 'index.html') filename = 'roster.html';
     document.querySelectorAll('.app-sidebar-item').forEach(item => {
       const href = item.getAttribute('href');
       if (href && (filename === href || cleanPath.endsWith(href))) {
@@ -212,17 +244,27 @@
       if (link) {
         const href = link.getAttribute('href');
         if (href && !href.startsWith('http') && !href.startsWith('#')) {
-          e.preventDefault();
           const targetFile = href.split('#')[0];
-          if (targetFile !== getCurrentFilename()) {
-            navigateTo(targetFile, true);
+          const currentFile = getCurrentFilename();
+          if (targetFile === currentFile) {
+            e.preventDefault();
+            return;
           }
+          if (window.location.protocol === 'file:') {
+            // file: 协议下交由原生 <a> 跳转，避免 JS 写入 location.href 引发沙箱告警
+            return;
+          }
+          e.preventDefault();
+          navigateTo(targetFile, true);
         }
       }
     });
 
     // 5. 监听浏览器前进/后退
     window.addEventListener('popstate', () => {
+      if (window.location.protocol === 'file:') {
+        return; // file: 协议下浏览器原生负责页面切换，不重复触发 navigateTo
+      }
       const current = getCurrentFilename();
       navigateTo(current, false);
     });
@@ -306,21 +348,13 @@
     checkAndShowDemoNotice();
   }
 
-  // 检查并弹出 Demo 测试版数据安全提醒 (仅在进入 index.html 时触发)
+  // 检查并弹出 Demo 测试版数据安全提醒 (首次进入会话触发)
   function checkAndShowDemoNotice() {
     if (window.__demoNoticeChecked) return;
     window.__demoNoticeChecked = true;
 
-    // 只有通过 index.html 入口进入系统时才触发提醒
-    try {
-      const shouldTrigger = sessionStorage.getItem('trigger_demo_notice') === '1';
-      if (!shouldTrigger) return;
-      sessionStorage.removeItem('trigger_demo_notice');
-    } catch (e) {
-      return;
-    }
-
     const storageKey = 'teacher_demo_notice_dismissed_date';
+    const sessionKey = 'teacher_demo_notice_shown_session';
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -329,6 +363,10 @@
       if (dismissedDate === todayStr) {
         return; // 今日已勾选不再提醒
       }
+      if (sessionStorage.getItem(sessionKey) === '1') {
+        return; // 本次会话已提醒过
+      }
+      sessionStorage.setItem(sessionKey, '1');
     } catch (e) {
       console.warn('读取本地存储失败', e);
     }

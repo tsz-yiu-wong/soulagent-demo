@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>档案中心</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <!-- 左侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 右侧主内容区 -->
+  <main class="main-container" id="main-container">
+    <div class="profile-view">
+      <!-- 顶部标题区 -->
+      <div class="page-header profile-header">
+        <div class="page-title-group">
+          <div class="page-avatar-badge badge-indigo">
+            <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#4f46e5;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div>
+            <div class="page-title-row">
+              <h1 class="page-title">档案中心</h1>
+            </div>
+            <p class="page-subtitle">管理MyAgent的知识库文件、记忆图谱与设定</p>
+          </div>
+        </div>
+
+        <!-- 划线 Tab 栏 (Underline Tabs) -->
+        <div class="profile-line-tabs" id="profile-tabs-header">
+          <div class="profile-tab-item active" data-tab="files" onclick="switchProfileTab('files')">
+            <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>文件库</span>
+            <span class="tab-badge" id="profile-badge-files">0</span>
+          </div>
+          <div class="profile-tab-item" data-tab="memory" onclick="switchProfileTab('memory')">
+            <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+            <span>记忆</span>
+            <span class="tab-badge" id="profile-badge-memory">0</span>
+          </div>
+          <div class="profile-tab-item" data-tab="settings" onclick="switchProfileTab('settings')">
+            <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Agent设定</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 主体内容区 -->
+      <div class="profile-body" id="profile-tab-content">
+        <!-- 动态渲染 Tab 面板 -->
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入核心脚本 -->
+  <script src="../js/data.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    let activeProfileTab = 'files';
+    let activeSourceFilter = 'all';
+    let activeMemoryTypeFilter = 'all';
+
+    function initProfilePage() {
+      const allFiles = getAllAggregatedProfileFiles();
+      const memories = (window.agentProfileData && window.agentProfileData.memories) || [];
+
+      document.getElementById('profile-badge-files').innerText = allFiles.length;
+      document.getElementById('profile-badge-memory').innerText = memories.length;
+
+      renderProfileContent();
+    }
+
+    function switchProfileTab(tabName) {
+      activeProfileTab = tabName;
+      document.querySelectorAll('#profile-tabs-header .profile-tab-item').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('data-tab') === tabName);
+      });
+      renderProfileContent();
+    }
+
+    function setProfileSourceFilter(sourceId) {
+      activeSourceFilter = sourceId;
+      renderProfileContent();
+    }
+
+    function setProfileMemoryTypeFilter(type) {
+      activeMemoryTypeFilter = type;
+      renderProfileContent();
+    }
+
+    function renderProfileContent() {
+      const container = document.getElementById('profile-tab-content');
+      if (activeProfileTab === 'files') {
+        container.innerHTML = renderProfileFilesHtml();
+      } else if (activeProfileTab === 'memory') {
+        container.innerHTML = renderProfileMemoryHtml();
+      } else if (activeProfileTab === 'settings') {
+        container.innerHTML = renderProfileSettingsHtml();
+      }
+    }
+
+    function renderProfileFilesHtml() {
+      const allFiles = getAllAggregatedProfileFiles();
+      const hasClones = Array.isArray(window.myClones) && window.myClones.length > 0;
+
+      const sourceOptions = [{ id: 'all', name: '全部', count: allFiles.length }];
+      if (hasClones) {
+        window.myClones.forEach(c => {
+          const cFiles = (c.files && c.files.length) || 0;
+          sourceOptions.push({ id: c.id, name: c.name, count: cFiles });
+        });
+      }
+
+      const displayedFiles = allFiles.filter(f => {
+        if (!hasClones || activeSourceFilter === 'all') return true;
+        return f.cloneId === activeSourceFilter;
+      });
+
+      let filterBarHtml = '';
+      if (hasClones) {
+        const filterChipsHtml = sourceOptions.map(opt => {
+          const isActive = (activeSourceFilter === opt.id);
+          return `
+            <div class="source-filter-chip ${isActive ? 'active' : ''}" onclick="setProfileSourceFilter('${escapeJsString(opt.id)}')">
+              <span>${escapeHtml(opt.name)}</span>
+              <span class="chip-count">${opt.count}</span>
+            </div>
+          `;
+        }).join('');
+
+        filterBarHtml = `
+          <div class="profile-source-filter-bar in-table">
+            <span class="source-filter-label">来源：</span>
+            <div class="source-filter-chips-wrap">
+              ${filterChipsHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      const fileRowsHtml = displayedFiles.map(file => {
+        let typeBg = '#e0f2fe'; let typeColor = '#0369a1'; let typeLabel = 'PDF';
+        if (file.type === 'doc') { typeBg = '#dbeafe'; typeColor = '#1d4ed8'; typeLabel = 'DOC'; }
+        else if (file.type === 'md') { typeBg = '#fce7f3'; typeColor = '#be185d'; typeLabel = 'MD'; }
+        else if (file.type === 'xls') { typeBg = '#dcfce7'; typeColor = '#15803d'; typeLabel = 'XLS'; }
+
+        const sourceBadgeHtml = file.isClone
+          ? `<span class="file-source-badge" style="background: ${file.sourceGradient};">${escapeHtml(file.source)}</span>`
+          : `<span style="color:var(--text-muted);font-size:13px;">-</span>`;
+
+        return `
+          <tr class="file-table-row">
+            <td>
+              <div class="file-name-cell">
+                <div class="file-type-icon" style="background:${typeBg};color:${typeColor};">${typeLabel}</div>
+                <div class="file-title-info">
+                  <span class="file-name-text" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+                  <span class="file-tokens-text">已提取约 ${file.tokens || '0'} Tokens</span>
+                </div>
+              </div>
+            </td>
+            <td>${sourceBadgeHtml}</td>
+            <td class="file-size-cell">${file.size}</td>
+            <td>
+              <span class="file-status-badge">
+                <span class="status-dot"></span>
+                ${escapeHtml(file.status)}
+              </span>
+            </td>
+            <td class="file-time-cell">${file.time}</td>
+            <td class="file-actions-cell">
+              <button type="button" class="icon-btn-text" onclick="handlePreviewMasterFile('${file.id}')">
+                <span>预览</span>
+              </button>
+              <button type="button" class="icon-btn-text danger" onclick="handleDeleteMasterFile('${file.id}', ${file.isClone ? `'${file.cloneId}'` : 'null'})">
+                <span>删除</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="files-panel">
+          <div class="file-upload-dropzone" onclick="handleUploadMasterFile()">
+            <div class="dropzone-icon-box">
+              <svg class="icon" viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#4f46e5;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="dropzone-text">
+              <span class="dropzone-highlight">点击上传</span> 或将文件拖拽至此处
+            </div>
+            <div class="dropzone-subtext">支持 PDF、DOCX、TXT、MD、XLSX 格式，上传后将由向量引擎自动构建语义切片</div>
+          </div>
+
+          <div class="files-table-card">
+            <div class="table-header-title">
+              <span>知识库文档列表 (${displayedFiles.length})</span>
+            </div>
+            ${filterBarHtml}
+
+            <table class="files-table">
+              <thead>
+                <tr>
+                  <th>文件名</th>
+                  <th>所属来源</th>
+                  <th>大小</th>
+                  <th>解析状态</th>
+                  <th>上传时间</th>
+                  <th style="text-align:right;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${displayedFiles.length > 0 ? fileRowsHtml : '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">暂无匹配的知识库文件</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProfileMemoryHtml() {
+      const memories = (window.agentProfileData && window.agentProfileData.memories) || [];
+      const shortMemories = memories.filter(m => m.type === 'short');
+      const longMemories = memories.filter(m => m.type !== 'short');
+
+      const displayedMemories = memories.filter(m => {
+        if (activeMemoryTypeFilter === 'all') return true;
+        if (activeMemoryTypeFilter === 'short') return m.type === 'short';
+        if (activeMemoryTypeFilter === 'long') return m.type !== 'short';
+        return true;
+      });
+
+      const memoryCardsHtml = displayedMemories.map(mem => {
+        let impBg = '#f1f5f9'; let impColor = '#475569';
+        if (mem.importance === '高') { impBg = '#fee2e2'; impColor = '#991b1b'; }
+        else if (mem.importance === '中') { impBg = '#fef3c7'; impColor = '#92400e'; }
+
+        const isShort = mem.type === 'short';
+        const typeBg = isShort ? '#e0f2fe' : '#f3e8ff';
+        const typeColor = isShort ? '#0284c7' : '#7c3aed';
+        const typeLabel = isShort ? '短期记忆' : '长期记忆';
+
+        return `
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-tag-box">
+                <span class="memory-type-badge" style="background:${typeBg};color:${typeColor};">${typeLabel}</span>
+                <span class="memory-category-tag">${escapeHtml(mem.category)}</span>
+                <span class="memory-importance-tag" style="background:${impBg};color:${impColor};">重要度: ${escapeHtml(mem.importance)}</span>
+              </div>
+              <button type="button" class="icon-btn-small" onclick="handleDeleteMasterMemory('${mem.id}')" title="忘记此条记忆">
+                <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+            <div class="memory-content-text">${escapeHtml(mem.content)}</div>
+            <div class="memory-footer-time">
+              <svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:var(--text-muted);"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>记录时间: ${mem.time}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="memory-panel">
+          <div class="memory-top-stats">
+            <div class="stat-box" style="cursor:pointer;" onclick="setProfileMemoryTypeFilter('${activeMemoryTypeFilter === 'short' ? 'all' : 'short'}')">
+              <div class="stat-num">${shortMemories.length}</div>
+              <div class="stat-label">短期记忆</div>
+            </div>
+            <div class="stat-box" style="cursor:pointer;" onclick="setProfileMemoryTypeFilter('${activeMemoryTypeFilter === 'long' ? 'all' : 'long'}')">
+              <div class="stat-num">${longMemories.length}</div>
+              <div class="stat-label">长期记忆</div>
+            </div>
+            <div class="stat-box-action">
+              <button type="button" class="btn btn-primary" onclick="handleAddMasterMemory()" style="font-size:13px;display:flex;align-items:center;gap:6px;">
+                <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fff;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>添加记忆</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 记忆类型筛选 Bar -->
+          <div class="profile-source-filter-bar" style="margin-top: 16px; margin-bottom: 20px;">
+            <span class="source-filter-label">记忆类型筛选：</span>
+            <div class="source-filter-chips-wrap">
+              <div class="source-filter-chip ${activeMemoryTypeFilter === 'all' ? 'active' : ''}" onclick="setProfileMemoryTypeFilter('all')">
+                <span>全部</span>
+                <span class="chip-count">${memories.length}</span>
+              </div>
+              <div class="source-filter-chip ${activeMemoryTypeFilter === 'short' ? 'active' : ''}" onclick="setProfileMemoryTypeFilter('short')">
+                <span>短期记忆</span>
+                <span class="chip-count">${shortMemories.length}</span>
+              </div>
+              <div class="source-filter-chip ${activeMemoryTypeFilter === 'long' ? 'active' : ''}" onclick="setProfileMemoryTypeFilter('long')">
+                <span>长期记忆</span>
+                <span class="chip-count">${longMemories.length}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="memory-grid">
+            ${displayedMemories.length > 0 ? memoryCardsHtml : '<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-muted);font-size:14px;">暂无匹配的记忆条目</div>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProfileSettingsHtml() {
+      const s = (window.agentProfileData && window.agentProfileData.settings) || {
+        systemPrompt: "你是一个专业、严谨且富有洞察力的 AI 智能助手 (MyAgent)。"
+      };
+
+      return `
+        <div class="settings-panel">
+          <form onsubmit="handleSaveMasterSettings(event)">
+            <!-- 系统提示词 / 人设 -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <div>
+                  <h3 class="settings-card-title">主智能体全局提示词 (System Prompt)</h3>
+                  <p class="settings-card-desc">定义 AI 助手的基础人设、语言风格、回答规范与核心原则</p>
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding:7px 18px;font-size:13px;flex-shrink:0;">保存全局设定</button>
+              </div>
+              <div class="prompt-textarea-wrapper">
+                <textarea id="master-setting-prompt" class="settings-textarea" rows="8" oninput="document.getElementById('master-prompt-char-count').innerText = this.value.length + ' 字符'">${escapeHtml(s.systemPrompt || '')}</textarea>
+                <div class="textarea-footer-info">
+                  <span>Markdown 格式支持</span>
+                  <span id="master-prompt-char-count">${(s.systemPrompt || '').length} 字符</span>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    // 交互操作
+    function handleUploadMasterFile() {
+      const newFile = {
+        id: 'f_' + Date.now(),
+        name: 'SoulAgent_前沿技术规范文档_' + Math.floor(Math.random() * 899 + 100) + '.pdf',
+        size: '3.6 MB',
+        time: new Date().toLocaleString('zh-CN', { hour12: false }),
+        status: '解析完成',
+        type: 'pdf',
+        tokens: '21,800'
+      };
+      window.agentProfileData.files.unshift(newFile);
+      window.syncDataToStorage();
+      showToast('已成功上传新文档！');
+      initProfilePage();
+    }
+
+    function handleDeleteMasterFile(fileId, cloneId) {
+      if (cloneId) {
+        const clone = window.myClones.find(c => c.id === cloneId);
+        if (clone) clone.files = clone.files.filter(f => f.id !== fileId);
+      } else {
+        window.agentProfileData.files = window.agentProfileData.files.filter(f => f.id !== fileId);
+      }
+      window.syncDataToStorage();
+      showToast('文件已从知识库中移除');
+      initProfilePage();
+    }
+
+    function handlePreviewMasterFile(fileId) {
+      const all = getAllAggregatedProfileFiles();
+      const f = all.find(item => item.id === fileId);
+      if (f) {
+        alert(`【文件预览】\n文件名: ${f.name}\n所属: ${f.isClone ? f.source : '-'}\n大小: ${f.size}\nTokens: ${f.tokens || '未知'}\n状态: ${f.status}`);
+      }
+    }
+
+    function handleAddMasterMemory() {
+      const text = prompt('请输入想要让 AI助手 记住的内容：', '');
+      if (text && text.trim()) {
+        const isShort = confirm('是否添加为【短期记忆】？\n点击“确定”为短期记忆，点击“取消”为长期记忆');
+        const newMem = {
+          id: 'm_' + Date.now(),
+          type: isShort ? 'short' : 'long',
+          category: isShort ? '短期上下文' : '长期特征',
+          content: text.trim(),
+          time: new Date().toLocaleString('zh-CN', { hour12: false }),
+          importance: '高'
+        };
+        window.agentProfileData.memories.unshift(newMem);
+        window.syncDataToStorage();
+        showToast(`已添加新${isShort ? '短期' : '长期'}记忆条目！`);
+        initProfilePage();
+      }
+    }
+
+    function handleDeleteMasterMemory(memId) {
+      window.agentProfileData.memories = window.agentProfileData.memories.filter(m => m.id !== memId);
+      window.syncDataToStorage();
+      showToast('已移除该条记忆');
+      initProfilePage();
+    }
+
+    function handleSaveMasterSettings(e) {
+      if (e) e.preventDefault();
+      const promptEl = document.getElementById('master-setting-prompt');
+      if (promptEl) {
+        if (!window.agentProfileData.settings) window.agentProfileData.settings = {};
+        window.agentProfileData.settings.systemPrompt = promptEl.value;
+      }
+
+      window.syncDataToStorage();
+      showToast('档案设定已成功保存！');
+    }
+
+    initProfilePage();
+  </script>
+</body>
+
+</html>
