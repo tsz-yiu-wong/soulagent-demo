@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新建对话 - SoulAgent</title>
+  <!-- 全局基础样式 -->
+  <link rel="stylesheet" href="../css/common.css">
+
+  <!-- 本页面专属 CSS (自包含) -->
+  <style>
+    .chat-new-view {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+
+    /* 输入卡片 */
+    .input-card {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 14px 16px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .input-card:focus-within {
+      border-color: #cbd5e1;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 64px;
+      max-height: 160px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: transparent;
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .input-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+      border-top: 1px solid #f8fafc;
+    }
+
+    .input-card-bottom-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .action-btn.send-btn {
+      background: var(--text-primary);
+      color: #ffffff;
+    }
+
+    .action-btn.send-btn:hover {
+      background: #334155;
+    }
+
+    /* 下拉选择器按钮与浮层 */
+    .expert-select-wrapper {
+      position: relative;
+    }
+
+    .expert-select-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .expert-select-btn:hover, .expert-select-btn.open {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .expert-select-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      min-width: 220px;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      padding: 6px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .expert-select-dropdown.show {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .expert-dropdown-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      text-transform: uppercase;
+    }
+
+    .dropdown-category-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      padding: 6px 8px 2px 8px;
+      border-top: 1px solid #f1f5f9;
+      margin-top: 4px;
+    }
+
+    .expert-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .expert-dropdown-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .expert-item-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .expert-item-avatar svg { width: 14px; height: 14px; stroke: #fff; }
+
+    .expert-item-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .expert-item-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .expert-item-role {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 推荐问卡片网格 */
+    .recommend-cards-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .recommend-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 115px;
+    }
+
+    .recommend-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .recommend-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .recommend-card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .recommend-card-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .recommend-card-tag {
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .recommend-card-arrow {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+      fill: none;
+      transition: stroke 0.15s ease;
+    }
+
+    .recommend-card:hover .recommend-card-arrow {
+      stroke: var(--text-primary);
+    }
+
+    .recommend-card-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .recommend-card-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 主内容区 -->
+  <main class="main-container" id="main-container">
+    <div class="chat-new-view">
+      <h1 class="hero-title">TY，今天需要帮你做什么</h1>
+
+      <div class="input-card">
+        <textarea class="chat-textarea" id="chat-input" placeholder="给 AI助手 发送消息，或输入 @ 召唤专家分身..."></textarea>
+
+        <div class="input-card-bottom">
+          <div class="input-card-bottom-left">
+            <button type="button" class="action-btn" title="上传附件" onclick="Toast.show('已调起附件选择器')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <div id="listen-selector-slot"></div>
+            <div id="expert-selector-slot"></div>
+          </div>
+
+          <button type="button" class="action-btn send-btn" title="发送" onclick="handleSendNewChat()">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 推荐提问卡片区域 (随机3个) -->
+      <div class="recommend-cards-grid" id="recommend-cards-container"></div>
+    </div>
+  </main>
+
+  <!-- 引入全局底座与组件 -->
+  <script src="../core.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/sidebar.js"></script>
+
+  <!-- 本页面专属 JS (自包含) -->
+  <script>
+    let isListenOpen = false;
+    let isExpertOpen = false;
+
+    // 1. 渲染选择器下拉
+    function renderSelectors() {
+      // 听会选择器
+      const listenSlot = document.getElementById('listen-selector-slot');
+      const listenItems = [
+        { name: '智源大会', desc: '北京智源人工智能大会' },
+        { name: 'GDEC', desc: '全球数字经济大会' },
+        { name: 'WAIC', desc: '世界人工智能大会' }
+      ];
+      listenSlot.innerHTML = `
+        <div class="expert-select-wrapper" id="listen-select-wrapper">
+          <button type="button" class="expert-select-btn ${isListenOpen ? 'open' : ''}" onclick="toggleListenDropdown(event)" title="帮我听会">
+            <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2H3z"/></svg>
+            <span>帮我听会</span>
+            <svg class="icon" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="expert-select-dropdown ${isListenOpen ? 'show' : ''}">
+            <div class="expert-dropdown-header">选择会议频道</div>
+            ${listenItems.map(item => `
+              <div class="expert-dropdown-item" onclick="selectListenOption('${escapeJsString(item.name)}', event)">
+                <div class="expert-item-avatar" style="background:#3b82f6;">🎧</div>
+                <div class="expert-item-info">
+                  <div class="expert-item-name">${escapeHtml(item.name)}</div>
+                  <div class="expert-item-role">${escapeHtml(item.desc)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      // 专家/分身选择器
+      const expertSlot = document.getElementById('expert-selector-slot');
+      const clones = (Store && Store.myClones) || [];
+      const experts = (Store && Store.expertList) || [];
+
+      expertSlot.innerHTML = `
+        <div class="expert-select-wrapper" id="expert-select-wrapper">
+          <button type="button" class="expert-select-btn ${isExpertOpen ? 'open' : ''}" onclick="toggleExpertDropdown(event)" title="选择 AI分身">
+            <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>AI分身</span>
+            <svg class="icon" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="expert-select-dropdown ${isExpertOpen ? 'show' : ''}">
+            <div class="expert-dropdown-header">选择 AI 分身</div>
+            ${clones.length > 0 ? `
+              <div class="dropdown-category-header">我的分身</div>
+              ${clones.map(c => `
+                <div class="expert-dropdown-item" onclick="selectMentionTarget('@${escapeJsString(c.name)}', event)">
+                  <div class="expert-item-avatar" style="background:${c.gradient};">${escapeHtml(c.avatar || c.name.charAt(0))}</div>
+                  <div class="expert-item-info">
+                    <div class="expert-item-name">${escapeHtml(c.name)}</div>
+                    <div class="expert-item-role">${escapeHtml(c.tag || '专属分身')}</div>
+                  </div>
+                </div>
+              `).join('')}
+            ` : ''}
+            <div class="dropdown-category-header">专家分身</div>
+            ${experts.map(e => `
+              <div class="expert-dropdown-item" onclick="selectMentionTarget('@${escapeJsString(e.name)}', event)">
+                <div class="expert-item-avatar" style="background:${e.gradient};"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+                <div class="expert-item-info">
+                  <div class="expert-item-name">${escapeHtml(e.name)}</div>
+                  <div class="expert-item-role">${escapeHtml(e.role)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleListenDropdown(e) {
+      if (e) e.stopPropagation();
+      isListenOpen = !isListenOpen;
+      isExpertOpen = false;
+      renderSelectors();
+    }
+
+    function toggleExpertDropdown(e) {
+      if (e) e.stopPropagation();
+      isExpertOpen = !isExpertOpen;
+      isListenOpen = false;
+      renderSelectors();
+    }
+
+    function selectListenOption(name, e) {
+      if (e) e.stopPropagation();
+      const input = document.getElementById('chat-input');
+      if (input) {
+        input.value = `帮我听 ${name}`;
+        input.focus();
+      }
+      isListenOpen = false;
+      renderSelectors();
+    }
+
+    function selectMentionTarget(prefix, e) {
+      if (e) e.stopPropagation();
+      const input = document.getElementById('chat-input');
+      if (input) {
+        input.value = `${prefix} ` + input.value.trimStart();
+        input.focus();
+      }
+      isExpertOpen = false;
+      renderSelectors();
+    }
+
+    document.addEventListener('click', () => {
+      if (isListenOpen || isExpertOpen) {
+        isListenOpen = false;
+        isExpertOpen = false;
+        renderSelectors();
+      }
+    });
+
+    // 2. 渲染推荐问卡片
+    function renderRecommendCards() {
+      const container = document.getElementById('recommend-cards-container');
+      if (!container || !Store) return;
+      const recs = Store.getRandomRecommend(3);
+      container.innerHTML = recs.map(item => `
+        <div class="recommend-card" onclick="usePrompt('${escapeJsString(item.prompt)}')" title="${escapeHtml(item.prompt)}">
+          <div class="recommend-card-top">
+            <div class="recommend-card-title-group">
+              <span class="recommend-card-icon" style="background: ${item.iconBg}; color: ${item.iconColor};">${item.icon}</span>
+              <span class="recommend-card-tag" style="color: ${item.iconColor};">${escapeHtml(item.tag)}</span>
+            </div>
+            <svg class="recommend-card-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="recommend-card-title">${escapeHtml(item.title)}</div>
+          <p class="recommend-card-desc">${escapeHtml(item.prompt)}</p>
+        </div>
+      `).join('');
+    }
+    window.renderRecommendCards = renderRecommendCards;
+
+    function usePrompt(text) {
+      const input = document.getElementById('chat-input');
+      if (input) {
+        input.value = text;
+        handleSendNewChat();
+      }
+    }
+    window.usePrompt = usePrompt;
+
+    // 3. 发送新建对话
+    function handleSendNewChat() {
+      const input = document.getElementById('chat-input');
+      const val = input ? input.value.trim() : '';
+      if (!val) return;
+
+      // 提取会话标题
+      let baseTitle = val.replace(/@\S+\s*/g, '').trim();
+      if (!baseTitle) baseTitle = val;
+      baseTitle = baseTitle.length > 20 ? baseTitle.substring(0, 20) + '...' : baseTitle;
+
+      let sessionTitle = baseTitle;
+      let count = 1;
+      while (Store.getAgentChats("AI助手").includes(sessionTitle)) {
+        sessionTitle = `${baseTitle} (${count++})`;
+      }
+
+      // 检查是否包含 @ 专家或分身
+      let mentionedExp = null;
+      let mentionedClone = null;
+      for (let c of (Store.myClones || [])) {
+        if (val.includes(`@${c.name}`)) { mentionedClone = c; break; }
+      }
+      if (!mentionedClone) {
+        for (let e of (Store.expertList || [])) {
+          if (val.includes(`@${e.name}`)) { mentionedExp = e; break; }
+        }
+      }
+
+      let replyHtml = '';
+      if (mentionedClone) {
+        replyHtml = generateConsultingReply(mentionedClone, val, true);
+      } else if (mentionedExp) {
+        replyHtml = generateConsultingReply(mentionedExp, val, false);
+      } else {
+        replyHtml = `
+          <p>你好，我是SoulAgent。</p>
+          <p>收到关于“<strong>${escapeHtml(sessionTitle)}</strong>”的需求！正在为您结合专属模型与上下文进行协同处理。</p>
+          <p>我将从全局架构、具体步骤与落地验证三方面为您提供支持。</p>
+        `;
+      }
+
+      const convData = {
+        type: 'agent', // 新建对话始终是主 Agent 协同会话，非专家直聊
+        messages: [
+          { role: 'user', content: val },
+          { role: 'assistant', htmlContent: replyHtml }
+        ]
+      };
+
+      Store.createConversation(sessionTitle, convData);
+      window.location.href = getPageUrl('chat-dialog.html', { title: sessionTitle });
+    }
+    window.handleSendNewChat = handleSendNewChat;
+
+    // 快捷键支持 (Enter 发送, Shift+Enter 换行)
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendNewChat();
+      }
+    });
+
+    // 页面初始化
+    renderSelectors();
+    renderRecommendCards();
+
+    // 检查 URL 是否带 prompt 参数
+    const promptParam = getQueryParam('prompt');
+    if (promptParam) {
+      const input = document.getElementById('chat-input');
+      if (input) {
+        input.value = decodeURIComponent(promptParam);
+        input.focus();
+      }
+    }
+  </script>
+</body>
+
+</html>

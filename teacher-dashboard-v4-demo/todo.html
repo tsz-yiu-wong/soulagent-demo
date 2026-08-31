@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师工作台 - 待办</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 本地通用核心库 (全部预载，保证离线与快速切换零延迟) -->
+  <script src="js/libs/lucide.js"></script>
+  <script src="js/libs/xlsx.full.min.js"></script>
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/anime.min.js"></script>
+  <script src="js/libs/confetti.browser.min.js"></script>
+  <script src="js/libs/gsap.min.js"></script>
+  <style>
+    /* ========== 顶部添加待办卡片 (自适应宽度选项) ========== */
+    .add-todo-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .add-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .add-card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .add-input-main {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      font-size: 13.5px;
+      color: var(--text-main);
+      background: #F8FAFC;
+      outline: none;
+      box-sizing: border-box;
+      transition: all 0.15s;
+    }
+
+    .add-input-main:focus {
+      background: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    /* 各字段自适应宽度排布 */
+    .add-fields-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .field-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      width: auto;
+    }
+
+    .field-control {
+      height: 32px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0 8px;
+      font-size: 12.5px;
+      color: var(--text-main);
+      background: #FFFFFF;
+      outline: none;
+      transition: border-color 0.15s;
+      box-sizing: border-box;
+    }
+
+    .field-control:focus {
+      border-color: var(--primary);
+    }
+
+    .field-control.control-date {
+      width: 136px;
+    }
+
+    .field-control.control-time {
+      width: 105px;
+    }
+
+    .field-control.control-category {
+      width: 135px;
+    }
+
+    .field-item-flag {
+      flex: 0 0 auto;
+    }
+
+    .flag-checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      user-select: none;
+      padding: 0 4px;
+      white-space: nowrap;
+    }
+
+    .flag-checkbox-label input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #F59E0B;
+      cursor: pointer;
+    }
+
+    .field-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+      margin-left: auto;
+    }
+
+    /* ========== 下方待办事项主布局 ========== */
+    .reminders-layout {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      gap: 20px;
+      align-items: start;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 992px) {
+      .reminders-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 左侧：智能分类卡片 2x2 网格 (全部待办、今日待办、旗标、已完成) */
+    .smart-lists-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .smart-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .smart-card:hover {
+      border-color: var(--text-muted);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .smart-card.active {
+      background: #F8FAFC;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .smart-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .smart-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      flex-shrink: 0;
+    }
+
+    .smart-count {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .smart-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    /* 左侧：工作分类菜单 */
+    .category-section {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .category-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 10px 8px 10px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .category-item:hover {
+      background: var(--bg-main);
+    }
+
+    .category-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .category-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-item-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #F1F5F9;
+      padding: 1px 7px;
+      border-radius: 99px;
+      font-weight: 500;
+    }
+
+    .category-item.active .category-item-count {
+      background: #FFFFFF;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ========== 右侧主待办列表区 ========== */
+    .reminders-main {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* 待办列表卡片：高度固定与左侧保持一致，内部独立滚动 */
+    .task-list-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+      max-height: 480px;
+      box-sizing: border-box;
+    }
+
+    .task-list-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FAFAFC;
+      flex-shrink: 0;
+      height: 52px;
+      box-sizing: border-box;
+    }
+
+    .task-list-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .task-list-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    /* 自定义复选框 (翡翠绿背景 + 白色对勾，与随机点名保持一致) */
+    .custom-checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: color 0.15s;
+    }
+
+    .custom-checkbox:hover {
+      color: var(--text-main);
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    .checkbox-box {
+      width: 15px;
+      height: 15px;
+      border-radius: 4px;
+      border: 1.5px solid var(--border-color);
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .checkbox-box svg {
+      width: 10px;
+      height: 10px;
+      stroke: #FFFFFF;
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked+.checkbox-box {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .custom-checkbox input[type="checkbox"]:checked+.checkbox-box svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 待办条目列表：固定高度内部上下滚动 */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: calc(100% - 52px);
+      max-height: calc(100% - 52px);
+      min-height: 0;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    .task-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .task-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .task-list::-webkit-scrollbar-thumb {
+      background: #E2E8F0;
+      border-radius: 99px;
+    }
+
+    .task-list::-webkit-scrollbar-thumb:hover {
+      background: #CBD5E1;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.15s ease;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .task-row:last-child {
+      border-bottom: none;
+    }
+
+    .task-row:hover {
+      background: #F8FAFC;
+    }
+
+    .task-row.completed {
+      opacity: 0.6;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Apple 圆圈 Checkbox */
+    .apple-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+      background: #FFFFFF;
+    }
+
+    .apple-checkbox:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .apple-checkbox.checked {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFFFFF;
+    }
+
+    .apple-checkbox svg {
+      width: 12px;
+      height: 12px;
+      stroke-width: 3;
+    }
+
+    .task-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      word-break: break-all;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .task-row.completed .task-title-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* 分类标签胶囊 */
+    .tag-category-pill {
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      line-height: 1.4;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .task-right-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      opacity: 0;
+    }
+
+    .task-row:hover .action-icon-btn {
+      opacity: 1;
+    }
+
+    /* 设为旗标之后常显实心黄色旗子 */
+    .action-icon-btn.btn-flag.active {
+      color: #F59E0B !important;
+      opacity: 1 !important;
+    }
+
+    .action-icon-btn.btn-flag.active svg {
+      fill: #F59E0B;
+      stroke: #F59E0B;
+    }
+
+    .action-icon-btn:hover {
+      background: #F1F5F9;
+      color: var(--text-main);
+    }
+
+    .action-icon-btn.btn-danger-hover:hover {
+      color: var(--danger);
+      background: #FEE2E2;
+    }
+
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      width: 44px;
+      height: 44px;
+      stroke-width: 1.5;
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    /* 待办详情编辑弹窗 */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .form-control-modal {
+      height: 36px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      padding: 0 12px;
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.15s;
+      background: #FFFFFF;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .form-control-modal:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(197, 34, 47, 0.15);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* 上传拖拽区域 */
+    .upload-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      background: #F8FAFC;
+      transition: all 0.2s;
+    }
+
+    .upload-dropzone:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 页面头部标题与批量操作区 -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1><i data-lucide="check-square" style="color: var(--primary);"></i> 待办</h1>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <button class="btn btn-secondary" id="btn-open-import-modal">
+        <i data-lucide="file-up"></i> 批量导入
+      </button>
+      <button class="btn btn-secondary" id="btn-export-excel">
+        <i data-lucide="download"></i> 导出
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. 顶部：添加待办卡片 (自适应宽度，字段无优先级，按钮为「添加」) -->
+  <div class="add-todo-card">
+    <div class="add-card-header">
+      <div class="add-card-title">
+        <i data-lucide="plus-circle" style="width: 16px; height: 16px; color: var(--primary);"></i>
+        <span>添加待办</span>
+      </div>
+    </div>
+
+    <!-- 待办内容输入 -->
+    <input type="text" id="add-input-title" class="add-input-main" placeholder="输入待办内容..." autofocus />
+
+    <!-- 字段选项行 (自适应宽度，仅 icon) -->
+    <div class="add-fields-row">
+      <!-- 日期 (默认为空) -->
+      <div class="field-item" title="截止日期">
+        <i data-lucide="calendar" style="width: 15px; height: 15px; color: var(--text-sub); flex-shrink: 0;"></i>
+        <input type="date" id="add-input-date" class="field-control control-date" min="1970-01-01" max="2099-12-31" />
+      </div>
+
+      <!-- 时间 (默认为空) -->
+      <div class="field-item" title="截止时间">
+        <i data-lucide="clock" style="width: 15px; height: 15px; color: var(--text-sub); flex-shrink: 0;"></i>
+        <input type="time" id="add-input-time" class="field-control control-time" />
+      </div>
+
+      <!-- 分类 (默认为空) -->
+      <div class="field-item" title="工作分类">
+        <i data-lucide="tag" style="width: 15px; height: 15px; color: var(--text-sub); flex-shrink: 0;"></i>
+        <select id="add-select-category" class="field-control control-category">
+          <option value="">选择分类</option>
+          <option value="teaching">📚 教学备课</option>
+          <option value="class">👥 班级管理</option>
+          <option value="parent">📞 家校沟通</option>
+          <option value="admin">💼 行政事务</option>
+          <option value="personal">✨ 个人事项</option>
+        </select>
+      </div>
+
+      <!-- 设为旗标 (勾选框) -->
+      <div class="field-item field-item-flag">
+        <label class="flag-checkbox-label">
+          <input type="checkbox" id="add-input-flagged" />
+          <span>设为旗标</span>
+        </label>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="field-item-actions">
+        <button type="button" class="btn btn-secondary" id="btn-add-reset"
+          style="height: 32px; padding: 0 12px; font-size: 12px;">清空</button>
+        <button type="button" class="btn btn-primary" id="btn-add-submit"
+          style="height: 32px; padding: 0 14px; font-size: 12px;">
+          <i data-lucide="plus" style="width: 14px; height: 14px;"></i> 添加
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 下方主体区域：左侧 4 项智能分类与工作分类 + 右侧待办事项列表 -->
+  <div class="reminders-layout">
+
+    <!-- 左侧导航 -->
+    <aside>
+      <!-- 智能分类 2x2 网格：全部待办，今日待办，旗标，已完成 -->
+      <div class="smart-lists-grid">
+        <!-- 1. 全部待办 (默认) -->
+        <div class="smart-card active" data-filter="all">
+          <div class="smart-card-top">
+            <div class="smart-icon" style="background: #64748B;">
+              <i data-lucide="inbox" style="width: 18px; height: 18px;"></i>
+            </div>
+            <span class="smart-count" id="count-all">0</span>
+          </div>
+          <span class="smart-label">全部待办</span>
+        </div>
+
+        <!-- 2. 今日待办 -->
+        <div class="smart-card" data-filter="today">
+          <div class="smart-card-top">
+            <div class="smart-icon" style="background: #3B82F6;">
+              <i data-lucide="calendar" style="width: 18px; height: 18px;"></i>
+            </div>
+            <span class="smart-count" id="count-today">0</span>
+          </div>
+          <span class="smart-label">今日待办</span>
+        </div>
+
+        <!-- 3. 旗标 -->
+        <div class="smart-card" data-filter="flagged">
+          <div class="smart-card-top">
+            <div class="smart-icon" style="background: #F59E0B;">
+              <i data-lucide="flag" style="width: 18px; height: 18px;"></i>
+            </div>
+            <span class="smart-count" id="count-flagged">0</span>
+          </div>
+          <span class="smart-label">旗标</span>
+        </div>
+
+        <!-- 4. 已完成 -->
+        <div class="smart-card" data-filter="completed">
+          <div class="smart-card-top">
+            <div class="smart-icon" style="background: #10B981;">
+              <i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i>
+            </div>
+            <span class="smart-count" id="count-completed">0</span>
+          </div>
+          <span class="smart-label">已完成</span>
+        </div>
+      </div>
+
+      <!-- 工作分类菜单 -->
+      <div class="category-section">
+        <div class="category-section-title">工作分类</div>
+
+        <div class="category-item" data-category="teaching">
+          <div class="category-item-left">
+            <i data-lucide="book-open" style="width: 16px; height: 16px; color: var(--primary);"></i>
+            <span>教学备课</span>
+          </div>
+          <span class="category-item-count" id="count-cat-teaching">0</span>
+        </div>
+
+        <div class="category-item" data-category="class">
+          <div class="category-item-left">
+            <i data-lucide="users" style="width: 16px; height: 16px; color: #3B82F6;"></i>
+            <span>班级管理</span>
+          </div>
+          <span class="category-item-count" id="count-cat-class">0</span>
+        </div>
+
+        <div class="category-item" data-category="parent">
+          <div class="category-item-left">
+            <i data-lucide="phone-call" style="width: 16px; height: 16px; color: #EC4899;"></i>
+            <span>家校沟通</span>
+          </div>
+          <span class="category-item-count" id="count-cat-parent">0</span>
+        </div>
+
+        <div class="category-item" data-category="admin">
+          <div class="category-item-left">
+            <i data-lucide="file-text" style="width: 16px; height: 16px; color: #8B5CF6;"></i>
+            <span>行政事务</span>
+          </div>
+          <span class="category-item-count" id="count-cat-admin">0</span>
+        </div>
+
+        <div class="category-item" data-category="personal">
+          <div class="category-item-left">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #F97316;"></i>
+            <span>个人事项</span>
+          </div>
+          <span class="category-item-count" id="count-cat-personal">0</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧：待办事项列表 -->
+    <main class="reminders-main">
+      <div class="task-list-card">
+        <div class="task-list-header">
+          <div class="task-list-title">
+            <span id="active-view-title">全部待办</span>
+            <span class="task-list-count" id="active-view-count">0 项</span>
+          </div>
+
+          <!-- 右侧：是否展示已完成开关 -->
+          <label class="custom-checkbox" title="切换是否展示已完成待办事项">
+            <input type="checkbox" id="chk-show-completed" checked>
+            <span class="checkbox-box">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>展示已完成</span>
+          </label>
+        </div>
+
+        <!-- 任务列表容器 -->
+        <div class="task-list" id="task-list-container">
+          <!-- JS 动态渲染待办条目 -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 批量导入待办 Excel 弹窗 -->
+  <div class="modal-backdrop" id="import-modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="modal-title">批量导入待办</div>
+          <button class="btn btn-primary btn-sm" id="btn-download-template" type="button"
+            style="font-size: 12px; padding: 4px 10px; height: 28px;">
+            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i> 下载导入模板
+          </button>
+        </div>
+        <button class="modal-close" id="btn-close-import"><i data-lucide="x"></i></button>
+      </div>
+
+      <!-- 上传拖拽区域 -->
+      <div class="upload-dropzone" id="dropzone" style="margin-bottom: 16px;">
+        <i data-lucide="upload-cloud" style="width: 38px; height: 38px; color: var(--primary); margin-bottom: 8px;"></i>
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;" id="dropzone-text">点击或拖拽 Excel 文件到此处</div>
+        <div style="font-size: 12px; color: var(--text-muted);">支持 .xlsx, .xls, .csv 格式表格</div>
+        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+      </div>
+
+      <!-- 导入模式选项 -->
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <label
+          style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+          <input type="radio" name="import-mode" value="append" checked>
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">增量合并导入 (推荐)</div>
+            <div style="font-size: 11.5px; color: var(--text-muted);">追加导入新待办，保留原有待办事项</div>
+          </div>
+        </label>
+        <label
+          style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+          <input type="radio" name="import-mode" value="replace">
+          <div>
+            <div style="font-weight: 600; font-size: 13px; color: var(--danger);">覆盖导入</div>
+            <div style="font-size: 11.5px; color: var(--text-muted);">清空当前所有待办事项并完全替换为本次表格内容</div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-secondary" id="btn-cancel-import">取消</button>
+        <button class="btn btn-primary" id="btn-confirm-import" disabled>确认导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 待办编辑弹窗 (Modal) -->
+  <div class="modal-backdrop" id="modal-todo" style="z-index: 2000;">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑待办</h3>
+        <button class="modal-close" id="btn-close-todo-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="todo-edit-id" value="" />
+
+        <div class="form-group">
+          <label>待办内容 <span style="color: var(--danger);">*</span></label>
+          <input type="text" id="todo-title" class="form-control-modal" placeholder="输入待办内容..." />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="todo-date" class="form-control-modal" min="1970-01-01" max="2099-12-31" />
+          </div>
+          <div class="form-group">
+            <label>时间</label>
+            <input type="time" id="todo-time" class="form-control-modal" />
+          </div>
+        </div>
+
+        <div class="form-row" style="align-items: flex-end; margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>分类</label>
+            <select id="todo-category" class="form-control-modal">
+              <option value="">选择分类 (无)</option>
+              <option value="teaching">📚 教学备课</option>
+              <option value="class">👥 班级管理</option>
+              <option value="parent">📞 家校沟通</option>
+              <option value="admin">💼 行政事务</option>
+              <option value="personal">✨ 个人事项</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>旗标</label>
+            <label
+              style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #FFFFFF; font-size: 13px; color: var(--text-main); cursor: pointer; user-select: none; box-sizing: border-box;">
+              <input type="checkbox" id="todo-flagged"
+                style="width: 16px; height: 16px; accent-color: #F59E0B; cursor: pointer;" />
+              <span>设为旗标</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-todo">取消</button>
+        <button class="btn btn-primary" id="btn-save-todo">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示 Toast 容器 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- 核心数据与侧边栏脚本 -->
+  <script src="data/db.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/ai-assistant.js"></script>
+
+  <!-- 待办页面交互与渲染逻辑 -->
+  <script>
+    (function () {
+      const CATEGORY_NAMES = {
+        teaching: '教学备课',
+        class: '班级管理',
+        parent: '家校沟通',
+        admin: '行政事务',
+        personal: '个人事项'
+      };
+
+      const CATEGORY_COLORS = {
+        teaching: '#C5222F',
+        class: '#3B82F6',
+        parent: '#EC4899',
+        admin: '#8B5CF6',
+        personal: '#F97316'
+      };
+
+      function formatDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+          <i data-lucide="${type === 'success' ? 'check-circle-2' : 'alert-circle'}" 
+             style="color: ${type === 'success' ? 'var(--primary)' : 'var(--danger)'};"></i>
+          <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          toast.style.transition = 'all 0.2s ease';
+          setTimeout(() => toast.remove(), 2200);
+        }, 2200);
+      }
+      window.showToast = showToast;
+
+      const STORAGE_KEY_FILTER = 'teacher_todo_active_filter';
+
+      // 当前筛选器状态（默认全部待办，支持从 localStorage 缓存恢复）
+      let activeFilterType = 'smart';
+      let activeFilterValue = 'all';
+
+      try {
+        const cached = localStorage.getItem(STORAGE_KEY_FILTER);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && (parsed.type === 'smart' || parsed.type === 'category') && parsed.value) {
+            activeFilterType = parsed.type;
+            activeFilterValue = parsed.value;
+          }
+        }
+      } catch (e) { }
+
+      function saveFilterState(type, value) {
+        activeFilterType = type;
+        activeFilterValue = value;
+        try {
+          localStorage.setItem(STORAGE_KEY_FILTER, JSON.stringify({ type, value }));
+        } catch (e) { }
+      }
+
+      function updateActiveFilterUI() {
+        document.querySelectorAll('.smart-card, .category-item').forEach(el => el.classList.remove('active'));
+        let targetEl = null;
+        if (activeFilterType === 'smart') {
+          targetEl = document.querySelector(`.smart-card[data-filter="${activeFilterValue}"]`);
+        } else if (activeFilterType === 'category') {
+          targetEl = document.querySelector(`.category-item[data-category="${activeFilterValue}"]`);
+        }
+
+        if (targetEl) {
+          targetEl.classList.add('active');
+        } else {
+          // 若缓存分类不存在则回退至全部待办
+          activeFilterType = 'smart';
+          activeFilterValue = 'all';
+          const defaultEl = document.querySelector('.smart-card[data-filter="all"]');
+          if (defaultEl) defaultEl.classList.add('active');
+        }
+      }
+
+      // ==================== 添加待办卡片 ====================
+      const addInputTitle = document.getElementById('add-input-title');
+      const addInputDate = document.getElementById('add-input-date');
+      const addInputTime = document.getElementById('add-input-time');
+      const addSelectCategory = document.getElementById('add-select-category');
+      const addInputFlagged = document.getElementById('add-input-flagged');
+      const btnAddReset = document.getElementById('btn-add-reset');
+      const btnAddSubmit = document.getElementById('btn-add-submit');
+
+      function resetAddForm() {
+        addInputTitle.value = '';
+        addInputDate.value = '';
+        addInputTime.value = '';
+        addSelectCategory.value = '';
+        addInputFlagged.checked = false;
+      }
+
+      // 默认字段均为空
+      resetAddForm();
+
+      btnAddReset.onclick = resetAddForm;
+
+      function handleAddTodo() {
+        const title = addInputTitle.value.trim();
+        if (!title) {
+          showToast('请输入待办事项内容', 'error');
+          addInputTitle.focus();
+          return;
+        }
+
+        try {
+          window.SchoolDB.addTodo({
+            title,
+            dueDate: addInputDate.value.trim(),
+            dueTime: addInputTime.value.trim(),
+            category: addSelectCategory.value.trim(),
+            flagged: addInputFlagged.checked
+          });
+          resetAddForm();
+          showToast('已成功添加待办事项');
+          renderAll();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      }
+
+      btnAddSubmit.onclick = handleAddTodo;
+
+      // ==================== 侧边筛选切换 ====================
+      function setupFilters() {
+        // 初始化高亮对应分类卡片
+        updateActiveFilterUI();
+
+        // 智能分类卡片
+        document.querySelectorAll('.smart-card').forEach(card => {
+          card.onclick = () => {
+            saveFilterState('smart', card.dataset.filter);
+            updateActiveFilterUI();
+            renderAll();
+          };
+        });
+
+        // 工作分类菜单
+        document.querySelectorAll('.category-item').forEach(item => {
+          item.onclick = () => {
+            saveFilterState('category', item.dataset.category);
+            updateActiveFilterUI();
+            renderAll();
+          };
+        });
+
+        // 是否展示已完成开关监听
+        const chkShowCompleted = document.getElementById('chk-show-completed');
+        if (chkShowCompleted) {
+          chkShowCompleted.onchange = () => {
+            renderAll();
+          };
+        }
+      }
+
+      // ==================== 统计与列表渲染 ====================
+      function renderAll() {
+        let allTodos = window.SchoolDB.getTodos();
+        const todayStr = formatDate(new Date());
+
+        // 如果现有数据不足，重新加载丰富 fallback
+        if (allTodos.length <= 6) {
+          try {
+            window.SchoolDB.resetData();
+            allTodos = window.SchoolDB.getTodos();
+          } catch (e) { }
+        }
+
+        // 1. 更新统计角标 (4 个智能清单)
+        const countToday = allTodos.filter(t => !t.completed && (t.dueDate === todayStr || (t.dueDate && t.dueDate < todayStr))).length;
+        const countAll = allTodos.filter(t => !t.completed).length;
+        const countFlagged = allTodos.filter(t => !t.completed && t.flagged).length;
+        const countCompleted = allTodos.filter(t => t.completed).length;
+
+        document.getElementById('count-today').textContent = countToday;
+        document.getElementById('count-all').textContent = countAll;
+        document.getElementById('count-flagged').textContent = countFlagged;
+        document.getElementById('count-completed').textContent = countCompleted;
+
+        // 分类统计
+        ['teaching', 'class', 'parent', 'admin', 'personal'].forEach(cat => {
+          const catCount = allTodos.filter(t => !t.completed && t.category === cat).length;
+          const el = document.getElementById(`count-cat-${cat}`);
+          if (el) el.textContent = catCount;
+        });
+
+        // 2. 根据当前筛选过滤列表
+        let filteredList = [];
+        let viewTitle = '全部待办';
+
+        if (activeFilterType === 'smart') {
+          if (activeFilterValue === 'today') {
+            viewTitle = '今日待办';
+            filteredList = allTodos.filter(t => t.dueDate === todayStr || (!t.completed && t.dueDate && t.dueDate < todayStr));
+          } else if (activeFilterValue === 'all') {
+            viewTitle = '全部待办';
+            filteredList = [...allTodos];
+          } else if (activeFilterValue === 'flagged') {
+            viewTitle = '旗标待办';
+            filteredList = allTodos.filter(t => t.flagged);
+          } else if (activeFilterValue === 'completed') {
+            viewTitle = '已完成待办';
+            filteredList = allTodos.filter(t => t.completed);
+          }
+        } else if (activeFilterType === 'category') {
+          viewTitle = `${CATEGORY_NAMES[activeFilterValue] || '分类'}待办`;
+          filteredList = allTodos.filter(t => t.category === activeFilterValue);
+        }
+
+        // 是否展示已完成开关过滤 (在"已完成"专属视图外受开关控制)
+        const chkShowCompleted = document.getElementById('chk-show-completed');
+        const showCompleted = chkShowCompleted ? chkShowCompleted.checked : true;
+        if (activeFilterValue !== 'completed' && !showCompleted) {
+          filteredList = filteredList.filter(t => !t.completed);
+        }
+
+        // 排序规则：
+        // 1. 未完成在前，已完成置底
+        // 2. 按 DDL 排序：有日期无时间的排在当天最后(23:59:59)，无日期的排在全部最后(9999-99-99 23:59:59)
+        // 3. DDL 相同情况下，旗标事项排在前面
+        filteredList.sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+
+          const ddlA = a.dueDate ? `${a.dueDate} ${a.dueTime || '23:59:59'}` : '9999-99-99 23:59:59';
+          const ddlB = b.dueDate ? `${b.dueDate} ${b.dueTime || '23:59:59'}` : '9999-99-99 23:59:59';
+          const ddlCmp = ddlA.localeCompare(ddlB);
+          if (ddlCmp !== 0) return ddlCmp;
+
+          if (a.flagged !== b.flagged) return a.flagged ? -1 : 1;
+          return 0;
+        });
+
+        document.getElementById('active-view-title').textContent = viewTitle;
+        document.getElementById('active-view-count').textContent = `${filteredList.length} 项`;
+
+        // 3. 渲染待办条目 (分类放在具体待办之前，日期时间为灰色普通文本，旗标常显黄色实心旗)
+        const container = document.getElementById('task-list-container');
+        if (filteredList.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i data-lucide="check-circle-2"></i>
+              <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">当前列表暂无待办事项</div>
+              <div style="font-size: 13px;">可以在上方卡片添加新待办，随时保持井井有条</div>
+            </div>
+          `;
+        } else {
+          container.innerHTML = filteredList.map(t => {
+            // 日期与时间显示 (普通灰色文本，无需气泡背景)
+            let dateBadge = '';
+            if (t.dueDate) {
+              const isToday = t.dueDate === todayStr;
+              const isOverdue = !t.completed && t.dueDate < todayStr;
+              const dateText = isToday ? `今天 ${t.dueTime || ''}` : (isOverdue ? `已逾期 · ${t.dueDate} ${t.dueTime || ''}` : `${t.dueDate} ${t.dueTime || ''}`);
+              const dateColor = isOverdue ? 'var(--danger)' : (isToday ? 'var(--text-sub)' : 'var(--text-muted)');
+              dateBadge = `<span style="font-size: 12px; color: ${dateColor}; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width: 12px; height: 12px;"></i> ${dateText.trim()}</span>`;
+            } else if (t.dueTime) {
+              dateBadge = `<span style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width: 12px; height: 12px;"></i> ${t.dueTime}</span>`;
+            }
+
+            // 分类标签 (置于标题前面)
+            let catBadge = '';
+            if (t.category && CATEGORY_NAMES[t.category]) {
+              const catName = CATEGORY_NAMES[t.category];
+              const catColor = CATEGORY_COLORS[t.category] || '#C5222F';
+              catBadge = `<span class="tag-category-pill" style="color: ${catColor}; border-color: ${catColor}35;">${catName}</span>`;
+            }
+
+            return `
+              <div class="task-row ${t.completed ? 'completed' : ''}" data-id="${t.id}">
+                <div class="task-left">
+                  <div class="apple-checkbox ${t.completed ? 'checked' : ''}" data-id="${t.id}" title="${t.completed ? '标记为未完成' : '完成待办'}">
+                    ${t.completed ? '<i data-lucide="check"></i>' : ''}
+                  </div>
+                  <div class="task-content">
+                    <div class="task-title">
+                      ${catBadge}
+                      <span class="task-title-text">${t.title}</span>
+                    </div>
+                    ${dateBadge ? `<div class="task-meta">${dateBadge}</div>` : ''}
+                  </div>
+                </div>
+                <div class="task-right-actions">
+                  <button class="action-icon-btn btn-flag ${t.flagged ? 'active' : ''}" data-id="${t.id}" title="${t.flagged ? '取消旗标' : '设为旗标'}">
+                    <i data-lucide="flag" style="${t.flagged ? 'fill: #F59E0B; stroke: #F59E0B;' : ''} width: 14px; height: 14px;"></i>
+                  </button>
+                  <button class="action-icon-btn btn-edit-todo" data-id="${t.id}" title="编辑待办">
+                    <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                  </button>
+                  <button class="action-icon-btn btn-danger-hover btn-del-todo" data-id="${t.id}" title="删除待办">
+                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // 绑定列表内交互
+          container.querySelectorAll('.apple-checkbox').forEach(chk => {
+            chk.onclick = (e) => {
+              e.stopPropagation();
+              const id = chk.dataset.id;
+              window.SchoolDB.toggleTodo(id);
+              renderAll();
+            };
+          });
+
+          container.querySelectorAll('.btn-flag').forEach(btn => {
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              const id = btn.dataset.id;
+              window.SchoolDB.toggleFlagTodo(id);
+              renderAll();
+            };
+          });
+
+          container.querySelectorAll('.btn-edit-todo').forEach(btn => {
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              openEditModal(btn.dataset.id);
+            };
+          });
+
+          container.querySelectorAll('.task-row').forEach(row => {
+            row.onclick = () => {
+              openEditModal(row.dataset.id);
+            };
+          });
+
+          container.querySelectorAll('.btn-del-todo').forEach(btn => {
+            btn.onclick = async (e) => {
+              e.stopPropagation();
+              const confirmed = await window.showConfirm({
+                title: '删除待办',
+                content: '确定要删除这条待办事项吗？',
+                type: 'danger',
+                confirmText: '确认删除'
+              });
+              if (confirmed) {
+                window.SchoolDB.deleteTodo(btn.dataset.id);
+                showToast('已删除待办事项');
+                renderAll();
+              }
+            };
+          });
+        }
+
+        if (window.lucide) window.lucide.createIcons();
+        syncLayoutHeight();
+      }
+
+      // ==================== 待办编辑弹窗 ====================
+      const modalTodo = document.getElementById('modal-todo');
+      const todoEditId = document.getElementById('todo-edit-id');
+      const todoTitle = document.getElementById('todo-title');
+      const todoDate = document.getElementById('todo-date');
+      const todoTime = document.getElementById('todo-time');
+      const todoCategory = document.getElementById('todo-category');
+      const todoFlagged = document.getElementById('todo-flagged');
+
+      function openEditModal(id) {
+        const todos = window.SchoolDB.getTodos();
+        const t = todos.find(item => String(item.id) === String(id));
+        if (!t) return;
+
+        todoEditId.value = t.id;
+        todoTitle.value = t.title || '';
+        todoDate.value = t.dueDate || '';
+        todoTime.value = t.dueTime || '';
+        todoCategory.value = t.category || '';
+        todoFlagged.checked = Boolean(t.flagged);
+
+        modalTodo.classList.add('show');
+        todoTitle.focus();
+      }
+
+      document.getElementById('btn-close-todo-modal').onclick = () => modalTodo.classList.remove('show');
+      document.getElementById('btn-cancel-todo').onclick = () => modalTodo.classList.remove('show');
+
+      document.getElementById('btn-save-todo').onclick = () => {
+        const title = todoTitle.value.trim();
+        if (!title) {
+          showToast('待办内容不能为空', 'error');
+          todoTitle.focus();
+          return;
+        }
+
+        try {
+          window.SchoolDB.updateTodo(todoEditId.value, {
+            title,
+            dueDate: todoDate.value.trim(),
+            dueTime: todoTime.value.trim(),
+            category: todoCategory.value.trim(),
+            flagged: todoFlagged.checked
+          });
+          modalTodo.classList.remove('show');
+          showToast('已保存修改');
+          renderAll();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      };
+
+      // ==================== 批量导入 / 导出 Excel ====================
+      const importModal = document.getElementById('import-modal');
+      const btnOpenImportModal = document.getElementById('btn-open-import-modal');
+      const btnCloseImport = document.getElementById('btn-close-import');
+      const btnCancelImport = document.getElementById('btn-cancel-import');
+      const btnConfirmImport = document.getElementById('btn-confirm-import');
+      const dropzone = document.getElementById('dropzone');
+      const dropzoneText = document.getElementById('dropzone-text');
+      const fileInput = document.getElementById('excel-file-input');
+      const btnDownloadTemplate = document.getElementById('btn-download-template');
+      const btnExportExcel = document.getElementById('btn-export-excel');
+
+      let parsedExcelData = [];
+
+      btnOpenImportModal.onclick = () => {
+        parsedExcelData = [];
+        dropzoneText.innerHTML = '点击或拖拽 Excel 文件到此处';
+        btnConfirmImport.disabled = true;
+        fileInput.value = '';
+        importModal.classList.add('show');
+      };
+
+      btnCloseImport.onclick = () => importModal.classList.remove('show');
+      btnCancelImport.onclick = () => importModal.classList.remove('show');
+
+      dropzone.onclick = () => fileInput.click();
+
+      dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--primary)';
+        dropzone.style.background = 'var(--primary-light)';
+      };
+
+      dropzone.ondragleave = () => {
+        dropzone.style.borderColor = 'var(--border-color)';
+        dropzone.style.background = '#F8FAFC';
+      };
+
+      dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--border-color)';
+        dropzone.style.background = '#F8FAFC';
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          processExcelFile(e.dataTransfer.files[0]);
+        }
+      };
+
+      fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+          processExcelFile(e.target.files[0]);
+        }
+        fileInput.value = '';
+      };
+
+      function processExcelFile(file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet);
+
+            if (!json || json.length === 0) {
+              parsedExcelData = [];
+              btnConfirmImport.disabled = true;
+              dropzoneText.innerHTML = '<span style="color: var(--danger); font-weight: 600;">Excel 表格中未识别到待办数据，请检查表格内容</span>';
+              showToast('Excel 表格中未识别到待办数据', 'error');
+              return;
+            }
+
+            // 校验待办数据格式（待办内容必填）
+            const validated = window.SchoolDB.validateTodos(json);
+            parsedExcelData = validated;
+            dropzoneText.innerHTML = `已成功解析文件 <b style="color: var(--primary);">${file.name}</b>（共 ${validated.length} 项待办，格式校验通过）`;
+            btnConfirmImport.disabled = false;
+          } catch (err) {
+            parsedExcelData = [];
+            btnConfirmImport.disabled = true;
+            dropzoneText.innerHTML = `<span style="color: var(--danger); font-weight: 600;">❌ 解析失败：格式校验未通过</span><div style="font-size: 11.5px; color: var(--text-sub); margin-top: 4px;">请按提示修改 Excel 表格后重新上传</div>`;
+            if (window.showAlert) {
+              window.showAlert(err.message, '导入解析失败（格式不合规）', 'danger');
+            } else {
+              showToast(err.message, 'error');
+            }
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      btnConfirmImport.onclick = () => {
+        if (!parsedExcelData || parsedExcelData.length === 0) return;
+        const mode = document.querySelector('input[name="import-mode"]:checked').value;
+        try {
+          const imported = window.SchoolDB.importTodos(parsedExcelData, mode);
+          importModal.classList.remove('show');
+          showToast(`成功导入 ${imported.length} 项待办事项！`);
+          renderAll();
+        } catch (err) {
+          if (window.showAlert) {
+            window.showAlert(err.message, '导入失败', 'danger');
+          } else {
+            showToast('导入失败：' + err.message, 'error');
+          }
+        }
+      };
+
+      // 下载导入模板
+      btnDownloadTemplate.onclick = (e) => {
+        e.stopPropagation();
+        const sample = [
+          { '待办内容': '批改六年级(1)班单元测试卷', '截止日期': '2026-08-25', '截止时间': '16:30', '工作分类': '教学备课', '是否设为旗标': '是' },
+          { '待办内容': '组织周五主题班会准备发言稿', '截止日期': '2026-08-28', '截止时间': '15:00', '工作分类': '班级管理', '是否设为旗标': '否' },
+          { '待办内容': '与张宇航家长电话沟通课后辅导情况', '截止日期': '2026-08-26', '截止时间': '17:30', '工作分类': '家校沟通', '是否设为旗标': '是' },
+          { '待办内容': '上交本月教学常规周报表', '截止日期': '2026-08-29', '截止时间': '11:00', '工作分类': '行政事务', '是否设为旗标': '否' },
+          { '待办内容': '个人教研论文素材整理归纳', '截止日期': '2026-08-30', '截止时间': '18:00', '工作分类': '个人事项', '是否设为旗标': '否' }
+        ];
+        const ws = XLSX.utils.json_to_sheet(sample);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '待办导入模板');
+        XLSX.writeFile(wb, '待办事项导入模板.xlsx');
+        showToast('已下载 Excel 导入模板');
+      };
+
+      // 导出 Excel
+      btnExportExcel.onclick = () => {
+        const todos = window.SchoolDB.getTodos();
+        if (todos.length === 0) {
+          showToast('当前待办列表为空，无法导出', 'error');
+          return;
+        }
+
+        const exportData = todos.map((t, idx) => ({
+          '序号': idx + 1,
+          '待办内容': t.title,
+          '截止日期': t.dueDate || '',
+          '截止时间': t.dueTime || '',
+          '工作分类': CATEGORY_NAMES[t.category] || '',
+          '设为旗标': t.flagged ? '是' : '否',
+          '状态': t.completed ? '已完成' : '未完成'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '待办事项');
+        XLSX.writeFile(wb, `待办事项清单_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast('已导出 Excel 待办清单');
+      };
+
+      // 保持右侧待办卡片高度与左侧分类栏完全同步
+      function syncLayoutHeight() {
+        const asideEl = document.querySelector('.reminders-layout aside');
+        const taskCard = document.querySelector('.task-list-card');
+        if (asideEl && taskCard && window.innerWidth > 992) {
+          const leftH = asideEl.offsetHeight;
+          if (leftH > 100) {
+            taskCard.style.height = leftH + 'px';
+            taskCard.style.maxHeight = leftH + 'px';
+          }
+        } else if (taskCard) {
+          taskCard.style.height = '480px';
+          taskCard.style.maxHeight = '480px';
+        }
+      }
+
+      const resizeHandler = syncLayoutHeight;
+      window.addEventListener('resize', resizeHandler);
+
+      // 监听全局数据库更新
+      const unsub = window.SchoolDB.onUpdate(() => {
+        renderAll();
+      });
+
+      // 注册页面级清理函数，防止 SPA 切换时产生内存泄漏与重复绑定
+      window.cleanupCurrentPage = () => {
+        window.removeEventListener('resize', resizeHandler);
+        if (unsub) unsub();
+      };
+
+      // 初始化
+      setupFilters();
+      renderAll();
+      setTimeout(syncLayoutHeight, 50);
+    })();
+  </script>
+</body>
+
+</html>

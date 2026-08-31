@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>对话详情 - SoulAgent</title>
+  <!-- 全局基础样式 -->
+  <link rel="stylesheet" href="../css/common.css">
+
+  <!-- 本页面专属 CSS (自包含) -->
+  <style>
+    .chat-dialog-view {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+      background: #ffffff;
+    }
+
+    /* 顶部 Header */
+    .dialog-header {
+      height: 54px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .dialog-header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 消息流容器 */
+    .dialog-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px 10px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* 消息气泡行 */
+    .msg-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-row.assistant {
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    .msg-bubble-user {
+      background: #f1f5f9;
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 18px 18px 4px 18px;
+      font-size: 14.5px;
+      line-height: 1.55;
+      max-width: 75%;
+      word-break: break-word;
+    }
+
+    .msg-bubble-assistant {
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 14.5px;
+      line-height: 1.65;
+      max-width: 90%;
+      word-break: break-word;
+    }
+
+    .twin-avatar-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .twin-avatar-box svg { width: 16px; height: 16px; stroke: #fff; }
+
+    .msg-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 88%;
+    }
+
+    .msg-author-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 12.5px;
+    }
+
+    .msg-content-twin {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-primary);
+    }
+
+    .msg-content-twin p, .msg-bubble-assistant p {
+      margin-bottom: 8px;
+    }
+    .msg-content-twin p:last-child, .msg-bubble-assistant p:last-child {
+      margin-bottom: 0;
+    }
+
+    .poem-block {
+      background: #fff1f2;
+      border-left: 3px solid #f43f5e;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin: 8px 0;
+      line-height: 1.8;
+      color: #1e293b;
+      font-size: 14.5px;
+    }
+
+    .expert-quote-block {
+      background: #f8fafc;
+      border-left: 3px solid #6366f1;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin: 8px 0;
+      color: #334155;
+    }
+
+    /* 顶部介绍卡片 (左右居中) */
+    .expert-intro-card {
+      width: 100%;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 28px 24px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+
+    .intro-avatar-box {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.18);
+      margin-bottom: 14px;
+      color: #ffffff;
+    }
+    .intro-avatar-box svg { width: 40px; height: 40px; stroke: #fff; }
+
+    .intro-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .intro-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .intro-role {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 3px 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .intro-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto 16px auto;
+    }
+
+    .intro-prompts {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .prompt-chip {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .prompt-chip:hover {
+      border-color: #4f46e5;
+      color: #4f46e5;
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+
+    /* 底部输入框 */
+    .dialog-bottom-input {
+      padding: 12px 20px 16px 20px;
+      background: #ffffff;
+      border-top: 1px solid #f1f5f9;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+      flex-shrink: 0;
+    }
+
+    .input-card {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 10px 14px 8px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-card:focus-within {
+      border-color: #cbd5e1;
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 48px;
+      max-height: 120px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 14.5px;
+      line-height: 1.5;
+      color: var(--text-primary);
+    }
+
+    .input-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .input-card-bottom-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* 选择器与下拉菜单 */
+    .expert-select-wrapper {
+      position: relative;
+    }
+
+    .expert-select-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .expert-select-btn:hover, .expert-select-btn.open {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .expert-select-dropdown {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      min-width: 220px;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      padding: 6px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .expert-select-dropdown.show {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .expert-dropdown-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      text-transform: uppercase;
+    }
+
+    .dropdown-category-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      padding: 6px 8px 2px 8px;
+      border-top: 1px solid #f1f5f9;
+      margin-top: 4px;
+    }
+
+    .expert-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .expert-dropdown-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .expert-item-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .expert-item-avatar svg { width: 14px; height: 14px; stroke: #fff; }
+
+    .expert-item-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .expert-item-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .expert-item-role {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .typing-dots span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #6366f1;
+      animation: typingDot 1.4s infinite ease-in-out both;
+    }
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typingDot {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .msg-author-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 12.5px;
+    }
+    .msg-author-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .msg-author-role {
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 1px 7px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 主内容区 -->
+  <main class="main-container" id="main-container" style="overflow: hidden; padding: 0;">
+    <div class="chat-dialog-view">
+      <!-- 顶部 Header -->
+      <div class="dialog-header">
+        <div class="dialog-header-title" id="dialog-header-title">对话记录</div>
+      </div>
+
+      <!-- 消息流容器 -->
+      <div class="dialog-messages" id="dialog-messages"></div>
+
+      <!-- 底部输入框 -->
+      <div class="dialog-bottom-input">
+        <div class="input-card">
+          <textarea class="chat-textarea" id="dialog-chat-input" placeholder="输入消息，或输入 @ 召唤专家分身协同..."></textarea>
+          
+          <div class="input-card-bottom">
+            <div class="input-card-bottom-left">
+              <button type="button" class="action-btn" title="上传附件" onclick="Toast.show('已调起附件选择器')">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <div id="listen-selector-slot"></div>
+              <div id="expert-selector-slot"></div>
+            </div>
+
+            <button type="button" class="action-btn send-btn" title="发送" onclick="handleSendDialogReply()">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入全局底座与组件 -->
+  <script src="../core.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/sidebar.js"></script>
+
+  <!-- 本页面专属 JS (自包含) -->
+  <script>
+    const chatTitle = decodeURIComponent(getQueryParam('title') || '智能系统与环境仿真探讨');
+    const autoGroup = getQueryParam('autoGroup') === 'true';
+    let isGroupGenerating = false;
+    let isListenOpen = false;
+    let isExpertOpen = false;
+
+    function initDialogPage() {
+      document.title = `${chatTitle} - SoulAgent`;
+      document.getElementById('dialog-header-title').innerText = chatTitle;
+
+      renderDialogMessages();
+      renderSelectors();
+
+      const conv = Store.getConversation(chatTitle);
+      const isGroup = (conv && conv.type === 'group') || chatTitle.includes('群聊');
+
+      if (isGroup && (autoGroup || (conv && conv.messages.length === 1 && conv.messages[0].role === 'user'))) {
+        const firstMsg = conv.messages[0].content;
+        triggerGroupSequentialReplies(conv, firstMsg);
+      }
+    }
+
+    // 渲染输入框底部的选择器 (帮我听会 & @ 召唤分身/专家)
+    function renderSelectors() {
+      const conv = Store.getConversation(chatTitle);
+      const isClone = conv && conv.cloneId;
+      const isDirectExp = conv && conv.expertId && (conv.type === 'expert' || conv.type === 'twin');
+      
+      const listenSlot = document.getElementById('listen-selector-slot');
+      const expertSlot = document.getElementById('expert-selector-slot');
+
+      if (!listenSlot || !expertSlot) return;
+
+      // 只有分身或专家 1v1 对话才没有，主 Agent 协同对话均具备
+      if (isClone || isDirectExp) {
+        listenSlot.innerHTML = '';
+        expertSlot.innerHTML = '';
+        return;
+      }
+
+      // 听会选择器
+      const listenItems = [
+        { name: '智源大会', desc: '北京智源人工智能大会' },
+        { name: 'GDEC', desc: '全球数字经济大会' },
+        { name: 'WAIC', desc: '世界人工智能大会' }
+      ];
+      listenSlot.innerHTML = `
+        <div class="expert-select-wrapper" id="listen-select-wrapper">
+          <button type="button" class="expert-select-btn ${isListenOpen ? 'open' : ''}" onclick="toggleListenDropdown(event)" title="帮我听会">
+            <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2H3z"/></svg>
+            <span>帮我听会</span>
+            <svg class="icon" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="expert-select-dropdown ${isListenOpen ? 'show' : ''}">
+            <div class="expert-dropdown-header">选择会议频道</div>
+            ${listenItems.map(item => `
+              <div class="expert-dropdown-item" onclick="selectListenOption('${escapeJsString(item.name)}', event)">
+                <div class="expert-item-avatar" style="background:#3b82f6;">🎧</div>
+                <div class="expert-item-info">
+                  <div class="expert-item-name">${escapeHtml(item.name)}</div>
+                  <div class="expert-item-role">${escapeHtml(item.desc)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      // 专家/分身召唤选择器
+      const clones = Store.myClones || [];
+      const experts = Store.expertList || [];
+
+      expertSlot.innerHTML = `
+        <div class="expert-select-wrapper" id="expert-select-wrapper">
+          <button type="button" class="expert-select-btn ${isExpertOpen ? 'open' : ''}" onclick="toggleExpertDropdown(event)" title="召唤分身或专家">
+            <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <span>@ 召唤分身/专家</span>
+            <svg class="icon" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="expert-select-dropdown ${isExpertOpen ? 'show' : ''}">
+            ${clones.length > 0 ? `
+              <div class="expert-dropdown-header">我的专属分身</div>
+              ${clones.map(c => `
+                <div class="expert-dropdown-item" onclick="selectMentionTarget('@${escapeJsString(c.name)}', event)">
+                  <div class="expert-item-avatar" style="background:${c.gradient};">${escapeHtml(c.avatar || c.name.charAt(0))}</div>
+                  <div class="expert-item-info">
+                    <div class="expert-item-name">${escapeHtml(c.name)}</div>
+                    <div class="expert-item-role">${escapeHtml(c.tag || '专属分身')}</div>
+                  </div>
+                </div>
+              `).join('')}
+            ` : ''}
+
+            <div class="${clones.length > 0 ? 'dropdown-category-header' : 'expert-dropdown-header'}">行业专家分身</div>
+            ${experts.map(e => `
+              <div class="expert-dropdown-item" onclick="selectMentionTarget('@${escapeJsString(e.name)}', event)">
+                <div class="expert-item-avatar" style="background:${e.gradient};">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="expert-item-info">
+                  <div class="expert-item-name">${escapeHtml(e.name)}</div>
+                  <div class="expert-item-role">${escapeHtml(e.role)}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleListenDropdown(e) {
+      if (e) e.stopPropagation();
+      isListenOpen = !isListenOpen;
+      isExpertOpen = false;
+      renderSelectors();
+    }
+
+    function toggleExpertDropdown(e) {
+      if (e) e.stopPropagation();
+      isExpertOpen = !isExpertOpen;
+      isListenOpen = false;
+      renderSelectors();
+    }
+
+    function selectListenOption(name, e) {
+      if (e) e.stopPropagation();
+      const input = document.getElementById('dialog-chat-input');
+      if (input) {
+        input.value = `帮我听 ${name} ` + input.value.trimStart();
+        input.focus();
+      }
+      isListenOpen = false;
+      renderSelectors();
+    }
+
+    function selectMentionTarget(prefix, e) {
+      if (e) e.stopPropagation();
+      const input = document.getElementById('dialog-chat-input');
+      if (input) {
+        input.value = `${prefix} ` + input.value.trimStart();
+        input.focus();
+      }
+      isExpertOpen = false;
+      renderSelectors();
+    }
+
+    document.addEventListener('click', () => {
+      if (isListenOpen || isExpertOpen) {
+        isListenOpen = false;
+        isExpertOpen = false;
+        renderSelectors();
+      }
+    });
+
+    function renderDialogMessages(typingExpert = null) {
+      const conv = Store.getConversation(chatTitle);
+      const isGroup = (conv && conv.type === 'group') || chatTitle.includes('群聊');
+
+      // 专家或分身对象
+      let dialogExp = null;
+      if (conv && conv.expertId) {
+        dialogExp = (Store.expertList || []).find(e => e.id === conv.expertId);
+      }
+      if (!dialogExp && !isGroup) {
+        dialogExp = (Store.expertList || []).find(e => chatTitle.includes(e.name));
+      }
+
+      let dialogClone = null;
+      if (conv && conv.cloneId) {
+        dialogClone = (Store.myClones || []).find(c => c.id === conv.cloneId);
+      }
+      if (!dialogClone && !isGroup && !dialogExp) {
+        dialogClone = (Store.myClones || []).find(c => chatTitle.includes(c.name));
+      }
+
+      // 顶部介绍卡片 (居中卡片与 Prompt Chips，群聊不显示顶部大卡片)
+      let introCardHtml = '';
+      if (dialogClone) {
+        const p1 = `请介绍你在 ${dialogClone.tag || '专属领域'} 的核心专长`;
+        const p2 = `基于知识文件，帮我分析关键要点`;
+        const p3 = `给出具体的执行与调优方案`;
+
+        introCardHtml = `
+          <div class="expert-intro-card">
+            <div class="intro-avatar-box" style="background: ${dialogClone.gradient}; font-weight: 700; font-size: 28px;">
+              ${escapeHtml(dialogClone.avatar || dialogClone.name.charAt(0))}
+            </div>
+            <div class="intro-meta">
+              <div class="intro-name">${escapeHtml(dialogClone.name)}</div>
+              <div class="intro-role" style="background: #fce7f3; color: #be185d;">${escapeHtml(dialogClone.tag || '专属AI分身')} · 我的分身</div>
+              <p class="intro-desc">${escapeHtml(dialogClone.desc)}</p>
+            </div>
+            <div class="intro-prompts">
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p1)}')">💡 ${escapeHtml(p1)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p2)}')">🎯 ${escapeHtml(p2)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p3)}')">⚙️ ${escapeHtml(p3)}</div>
+            </div>
+          </div>
+        `;
+      } else if (dialogExp && !isGroup) {
+        const p1 = `探讨 ${dialogExp.tag || '大模型'} 前沿发展路线`;
+        const p2 = `请介绍您的代表性研究成果`;
+        const p3 = `如何与 SoulAgent 结合实践落地`;
+
+        introCardHtml = `
+          <div class="expert-intro-card">
+            <div class="intro-avatar-box" style="background: ${dialogExp.gradient};">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="intro-meta">
+              <div class="intro-name">${escapeHtml(dialogExp.name)}</div>
+              <div class="intro-role">${escapeHtml(dialogExp.role || 'AI 分身专家')}</div>
+              <p class="intro-desc">${escapeHtml(dialogExp.desc)}</p>
+            </div>
+            <div class="intro-prompts">
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p1)}')">💡 ${escapeHtml(p1)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p2)}')">🎯 ${escapeHtml(p2)}</div>
+              <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p3)}')">⚙️ ${escapeHtml(p3)}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 消息列表
+      const messagesHtml = (conv.messages || []).map(msg => {
+        if (msg.role === 'user') {
+          return `
+            <div class="msg-row user">
+              <div class="msg-bubble-user">${escapeHtml(msg.content)}</div>
+            </div>
+          `;
+        } else {
+          let authorExp = dialogExp;
+          if (msg.expertId) {
+            authorExp = (Store.expertList || []).find(e => e.id === msg.expertId) || authorExp;
+          } else if (msg.expertName) {
+            authorExp = (Store.expertList || []).find(e => e.name === msg.expertName) || authorExp;
+          }
+
+          let authorClone = dialogClone;
+          if (msg.cloneId) {
+            authorClone = (Store.myClones || []).find(c => c.id === msg.cloneId) || authorClone;
+          }
+
+          if (isGroup && authorExp) {
+            return `
+              <div class="msg-row assistant" style="align-items:flex-start;">
+                <div class="twin-avatar-box" style="background:${authorExp.gradient};margin-top:2px;" title="${escapeHtml(authorExp.name)}">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div style="display:flex;flex-direction:column;max-width:85%;">
+                  <div class="msg-author-header">
+                    <span class="msg-author-name">${escapeHtml(authorExp.name)}</span>
+                    <span class="msg-author-role">${escapeHtml(authorExp.role || authorExp.tag || '专家')}</span>
+                  </div>
+                  <div class="msg-content-twin">
+                    ${msg.htmlContent || `<p>${escapeHtml(msg.content)}</p>`}
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (authorExp) {
+            return `
+              <div class="msg-row assistant">
+                <div class="twin-avatar-box" style="background:${authorExp.gradient};" title="${escapeHtml(authorExp.name)}">
+                  <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <div class="msg-content-twin" style="max-width: 88%;">
+                  ${msg.htmlContent || `<p>${escapeHtml(msg.content)}</p>`}
+                </div>
+              </div>
+            `;
+          } else if (authorClone) {
+            return `
+              <div class="msg-row assistant">
+                <div class="twin-avatar-box" style="background:${authorClone.gradient};font-weight:700;font-size:12px;" title="${escapeHtml(authorClone.name)}">
+                  ${escapeHtml(authorClone.avatar || authorClone.name.charAt(0))}
+                </div>
+                <div class="msg-content-twin" style="max-width: 88%;">
+                  ${msg.htmlContent || `<p>${escapeHtml(msg.content)}</p>`}
+                </div>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="msg-row assistant">
+                <div class="msg-bubble-assistant">
+                  ${msg.htmlContent || `<p>${escapeHtml(msg.content)}</p>`}
+                </div>
+              </div>
+            `;
+          }
+        }
+      }).join('');
+
+      let typingHtml = '';
+      if (typingExpert) {
+        typingHtml = `
+          <div class="msg-row assistant" style="align-items:flex-start;">
+            <div class="twin-avatar-box" style="background: ${typingExpert.gradient}; margin-top: 2px;" title="${escapeHtml(typingExpert.name)}">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div style="display:flex;flex-direction:column;max-width:85%;">
+              <div class="msg-author-header">
+                <span class="msg-author-name">${escapeHtml(typingExpert.name)}</span>
+                <span class="msg-author-role">${escapeHtml(typingExpert.role || typingExpert.tag || '专家')}</span>
+              </div>
+              <div class="msg-content-twin" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;color:#64748b;font-size:13px;">
+                <span class="typing-dots"><span></span><span></span><span></span></span>
+                <span>正在思考并组织见解...</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const container = document.getElementById('dialog-messages');
+      container.innerHTML = introCardHtml + messagesHtml + typingHtml;
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function triggerGroupSequentialReplies(conv, userPrompt, onComplete) {
+      if (!conv || isGroupGenerating) return;
+
+      let groupExps = [];
+      if (conv.expertIds && Array.isArray(conv.expertIds)) {
+        groupExps = conv.expertIds.map(id => (Store.expertList || []).find(e => e.id === id)).filter(Boolean);
+      }
+      if (groupExps.length === 0 && Store.expertList) {
+        groupExps = Store.expertList.slice(0, 3);
+      }
+
+      if (groupExps.length === 0) {
+        if (onComplete) onComplete();
+        return;
+      }
+
+      isGroupGenerating = true;
+      const sendBtn = document.querySelector('.dialog-bottom-input .send-btn');
+      const chatInput = document.getElementById('dialog-chat-input');
+      if (sendBtn) sendBtn.style.opacity = '0.5';
+      if (chatInput) chatInput.disabled = true;
+
+      let currentIdx = 0;
+
+      function processNext() {
+        if (currentIdx >= groupExps.length) {
+          isGroupGenerating = false;
+          if (sendBtn) sendBtn.style.opacity = '1';
+          if (chatInput) {
+            chatInput.disabled = false;
+            chatInput.focus();
+          }
+          renderDialogMessages(null);
+          if (onComplete) onComplete();
+          return;
+        }
+
+        const exp = groupExps[currentIdx];
+
+        // 1. 展示当前专家的思考打字动效
+        renderDialogMessages(exp);
+
+        // 2. 拟人化延时生成回复
+        setTimeout(() => {
+          const opinion = getExpertOpinion(exp, userPrompt);
+
+          Store.appendMessage(chatTitle, {
+            role: 'assistant',
+            expertId: exp.id,
+            expertName: exp.name,
+            expertRole: exp.role,
+            expertGradient: exp.gradient,
+            htmlContent: `<p>${escapeHtml(opinion)}</p>`
+          });
+
+          renderDialogMessages(null);
+
+          currentIdx++;
+          setTimeout(processNext, 450);
+        }, 1150);
+      }
+
+      processNext();
+    }
+
+    function usePrompt(text) {
+      const input = document.getElementById('dialog-chat-input');
+      if (input) {
+        input.value = text;
+        handleSendDialogReply();
+      }
+    }
+    window.usePrompt = usePrompt;
+
+    function handleSendDialogReply() {
+      if (isGroupGenerating) return;
+
+      const input = document.getElementById('dialog-chat-input');
+      const val = input ? input.value.trim() : '';
+      if (!val) return;
+
+      const conv = Store.getConversation(chatTitle);
+      const isGroup = (conv && conv.type === 'group') || chatTitle.includes('群聊');
+
+      // 1. 追加用户消息
+      Store.appendMessage(chatTitle, { role: 'user', content: val });
+      input.value = '';
+      renderDialogMessages(null);
+
+      // 2. 针对群聊还是单专家/分身触发回复
+      if (isGroup) {
+        triggerGroupSequentialReplies(conv, val);
+      } else if (conv.expertId) {
+        const exp = (Store.expertList || []).find(e => e.id === conv.expertId);
+        setTimeout(() => {
+          const opinion = getExpertOpinion(exp, val);
+          Store.appendMessage(chatTitle, {
+            role: 'assistant',
+            expertId: conv.expertId,
+            htmlContent: `<p>${escapeHtml(opinion)}</p>`
+          });
+          renderDialogMessages(null);
+        }, 500);
+      } else if (conv.cloneId) {
+        const clone = (Store.myClones || []).find(c => c.id === conv.cloneId);
+        setTimeout(() => {
+          Store.appendMessage(chatTitle, {
+            role: 'assistant',
+            cloneId: conv.cloneId,
+            htmlContent: getCloneOpinion(clone, val)
+          });
+          renderDialogMessages(null);
+        }, 500);
+      } else {
+        // 主 Agent 会话 (支持 @ 专家/分身协同咨询)
+        let mentionedExp = null;
+        let mentionedClone = null;
+        for (let c of (Store.myClones || [])) {
+          if (val.includes(`@${c.name}`)) { mentionedClone = c; break; }
+        }
+        if (!mentionedClone) {
+          for (let e of (Store.expertList || [])) {
+            if (val.includes(`@${e.name}`)) { mentionedExp = e; break; }
+          }
+        }
+
+        setTimeout(() => {
+          let replyHtml = '';
+          if (mentionedClone) {
+            replyHtml = generateConsultingReply(mentionedClone, val, true);
+          } else if (mentionedExp) {
+            replyHtml = generateConsultingReply(mentionedExp, val, false);
+          } else {
+            replyHtml = `<p>你好，我是SoulAgent。针对您补充的“<strong>${escapeHtml(val)}</strong>”，我已经结合上下文与相关资料完成了进一步推演与要点补充。</p>`;
+          }
+
+          Store.appendMessage(chatTitle, {
+            role: 'assistant',
+            htmlContent: replyHtml
+          });
+          renderDialogMessages(null);
+        }, 500);
+      }
+    }
+    window.handleSendDialogReply = handleSendDialogReply;
+
+    // 快捷键支持
+    document.getElementById('dialog-chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendDialogReply();
+      }
+    });
+
+    initDialogPage();
+  </script>
+</body>
+
+</html>

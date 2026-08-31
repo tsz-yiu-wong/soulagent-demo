@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师工作台 - 日历</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 本地通用核心库 (全部预载，保证离线与快速切换零延迟) -->
+  <script src="js/libs/lucide.js"></script>
+  <script src="js/libs/xlsx.full.min.js"></script>
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/anime.min.js"></script>
+  <script src="js/libs/confetti.browser.min.js"></script>
+  <script src="js/libs/gsap.min.js"></script>
+  <!-- 本地数据库与弹窗组件 -->
+  <script src="data/db.js"></script>
+  <script src="js/modal.js"></script>
+  <style>
+    /* ========== 全局视口防溢出容器 (严禁页面级滚动) ========== */
+    .calendar-page-layout {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 100px);
+      min-height: 520px;
+      gap: 12px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .calendar-main-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    @media (max-width: 1024px) {
+      .calendar-page-layout {
+        height: auto;
+        overflow: visible;
+      }
+      .calendar-main-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+      }
+    }
+
+    /* ========== 左侧主日历卡片 (纯净月历) ========== */
+    .cal-main-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .cal-header-bar {
+      height: 52px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFFFFF;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .cal-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cal-current-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      min-width: 130px;
+      text-align: center;
+      letter-spacing: -0.2px;
+    }
+
+    /* 月视图表头 */
+    .cal-weekday-header {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--border-color);
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+      padding: 8px 0;
+      flex-shrink: 0;
+    }
+
+    .cal-weekday-header .weekend {
+      color: #94A3B8;
+    }
+
+    /* 6行等分自适应填满容器高度，绝不溢出屏幕 */
+    .cal-grid-month {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      grid-template-rows: repeat(6, 1fr);
+      background: var(--border-color);
+      gap: 1px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .cal-cell {
+      background: #FFFFFF;
+      padding: 4px 6px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: background-color 0.12s ease;
+      position: relative;
+      user-select: none;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .cal-cell:hover {
+      background: #F8FAFC;
+    }
+
+    .cal-cell.other-month {
+      background: #FAFAFA;
+      opacity: 0.45;
+    }
+
+    .cal-cell.selected {
+      background: #F0FDF4 !important;
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+      z-index: 2;
+    }
+
+    .cal-cell-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+
+    .cal-day-num {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      border-radius: 50%;
+      transition: all 0.15s;
+    }
+
+    /* 今日实心圆徽章 */
+    .cal-cell.is-today .cal-day-num {
+      background: var(--primary);
+      color: #FFFFFF;
+      box-shadow: 0 1px 4px rgba(197, 34, 47, 0.4);
+    }
+
+    .cal-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    .cal-badge {
+      font-size: 10.5px;
+      padding: 1.5px 5px;
+      border-radius: 3px;
+      font-weight: 500;
+      line-height: 1.25;
+      min-width: 0;
+      max-width: 100%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .cal-badge.line-1 {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    .cal-badge.line-2 {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+
+    .cal-badge.type-course {
+      background: var(--primary-light);
+      color: var(--primary-hover);
+      border-left: 2.5px solid var(--primary);
+    }
+
+    .cal-badge.type-todo {
+      background: #FFFBEB;
+      color: #D97706;
+      border-left: 2.5px solid #F59E0B;
+    }
+
+    .cal-badge.type-todo.is-done {
+      background: #F1F5F9;
+      color: #94A3B8;
+      text-decoration: line-through;
+      border-left: 2.5px solid #CBD5E1;
+    }
+
+    .cal-badge.type-event {
+      background: #F5F3FF;
+      color: #7C3AED;
+      border-left: 2.5px solid #8B5CF6;
+    }
+
+    /* 居中的 +X 徽章 */
+    .cal-badge-more.centered {
+      font-size: 10.5px;
+      color: var(--text-sub);
+      text-align: center;
+      font-weight: 600;
+      flex-shrink: 0;
+      line-height: 1.2;
+      padding: 1px 0;
+    }
+
+    /* ========== 右侧日维度看板 (双板块 + 可拖动分割线) ========== */
+    .agenda-sidebar {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .agenda-header {
+      height: 52px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-color);
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+
+    .agenda-date-big {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.2px;
+    }
+
+    .agenda-stat-pill {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: #E2E8F0;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+
+    /* 右侧上半板块：单日 24 小时时间轴 (默认高度 64%) */
+    .day-timeline-panel {
+      height: 64%;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      position: relative;
+      background: #FFFFFF;
+    }
+
+    .day-timeline-body {
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      height: 1200px; /* 24小时 * 50px/小时 */
+      position: relative;
+      width: 100%;
+    }
+
+    .day-time-gutter {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      background: #FAFAFA;
+      user-select: none;
+    }
+
+    .day-gutter-hour {
+      height: 50px;
+      box-sizing: border-box;
+      font-size: 10.5px;
+      color: #94A3B8;
+      text-align: center;
+      padding-top: 2px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+
+    .day-column-content {
+      position: relative;
+      height: 1200px;
+      box-sizing: border-box;
+      background-image: linear-gradient(to bottom, transparent 49px, #F1F5F9 49px, #F1F5F9 50px);
+      background-size: 100% 50px;
+    }
+
+    /* 绝对定位事项卡片 (支持重叠缩进与Hover分层) */
+    .day-event-card {
+      position: absolute;
+      border-radius: 4px;
+      padding: 2px 6px;
+      box-sizing: border-box;
+      overflow: hidden;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.25;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: transform 0.12s, box-shadow 0.12s, z-index 0.12s;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .day-event-card:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+      z-index: 30 !important;
+    }
+
+    .day-event-card.type-course {
+      background: var(--primary-light);
+      color: var(--primary-hover);
+      border: 1px solid var(--primary-border);
+      border-left: 3.5px solid var(--primary);
+    }
+
+    .day-event-card.type-event {
+      background: #F5F3FF;
+      color: #7C3AED;
+      border: 1px solid #DDD6FE;
+      border-left: 3.5px solid #8B5CF6;
+    }
+
+    /* 实时当前时间指示线 */
+    .day-now-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 0;
+      border-top: 1.5px dashed #EF4444;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    .day-now-dot {
+      position: absolute;
+      left: -4px;
+      top: -4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #EF4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+    }
+
+    /* 中间可拖拽分割线 (Splitter) */
+    .day-splitter {
+      height: 7px;
+      background: #F1F5F9;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      cursor: row-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .day-splitter:hover,
+    .day-splitter.dragging {
+      background: #E2E8F0;
+    }
+
+    .day-splitter-handle {
+      width: 28px;
+      height: 3px;
+      border-radius: 2px;
+      background: #CBD5E1;
+    }
+
+    /* 右侧下半板块：当日待办与排期清单 */
+    .day-agenda-panel {
+      flex: 1;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #FFFFFF;
+    }
+
+    .agenda-list {
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .agenda-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 12px;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .agenda-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+    }
+
+    .agenda-card.card-todo {
+      border-left: 3.5px solid #F59E0B;
+    }
+
+    /* Apple 风格圆圈 Checkbox (与待办模块 100% 统一：主题绿底 + 白色对勾) */
+    .apple-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.8px solid #CBD5E1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+      background: #FFFFFF;
+      box-sizing: border-box;
+    }
+
+    .apple-checkbox:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .apple-checkbox.checked {
+      background: var(--primary) !important;
+      border-color: var(--primary) !important;
+      color: #FFFFFF !important;
+    }
+
+    .apple-checkbox svg,
+    .apple-checkbox i {
+      width: 11px;
+      height: 11px;
+      stroke-width: 3.2;
+      color: #FFFFFF !important;
+      stroke: #FFFFFF !important;
+      display: block;
+    }
+
+    .agenda-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .agenda-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .agenda-card-title.is-done {
+      text-decoration: line-through;
+      opacity: 0.55;
+    }
+
+    .agenda-card-meta {
+      font-size: 11px;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      line-height: 1;
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .meta-item i,
+    .meta-item svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+      vertical-align: -1px;
+    }
+
+    .agenda-empty {
+      padding: 30px 16px;
+      text-align: center;
+      color: #94A3B8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+
+    /* ========== 课表管理大弹窗样式 ========== */
+    .timetable-modal-dialog {
+      max-width: 960px;
+      width: 95%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .timetable-matrix {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin-top: 0;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .timetable-matrix th {
+      background: #F8FAFC;
+      color: var(--text-sub);
+      font-weight: 600;
+      padding: 8px 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .timetable-matrix td {
+      border: 1px solid var(--border-color);
+      padding: 4px;
+      height: 56px;
+      vertical-align: top;
+      background: #FFFFFF;
+      transition: background 0.15s;
+    }
+
+    .timetable-matrix td:hover {
+      background: #F8FAFC;
+    }
+
+    .timetable-period-col {
+      background: #F8FAFC !important;
+      font-weight: 600;
+      color: var(--text-sub);
+      width: 105px;
+      vertical-align: middle !important;
+      padding: 6px 4px;
+      position: relative;
+      text-align: center;
+    }
+
+    .period-time-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-family: monospace;
+      color: #475569;
+      background: #F1F5F9;
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #E2E8F0;
+      margin-top: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .period-time-pill:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary-border);
+    }
+
+    .period-delete-btn {
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      color: #94A3B8;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      padding: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.15s;
+    }
+
+    .timetable-period-col:hover .period-delete-btn {
+      opacity: 1;
+    }
+
+    .period-delete-btn:hover {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+
+    .btn-clear-courses:hover {
+      color: var(--danger) !important;
+      border-color: #FECACA !important;
+      background: #FEF2F2 !important;
+    }
+
+    .timetable-add-row-btn {
+      width: 100%;
+      padding: 8px;
+      background: #F8FAFC;
+      border: 1.5px dashed #CBD5E1;
+      border-radius: 6px;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+
+    .timetable-add-row-btn:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+
+    .cell-course-box {
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      border-radius: 6px;
+      padding: 4px 6px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .cell-course-box:hover {
+      box-shadow: 0 2px 6px rgba(197, 34, 47, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .cell-course-sub {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-hover);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cell-course-info {
+      font-size: 10.5px;
+      color: var(--primary);
+      margin-top: 1px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cell-add-btn {
+      width: 100%;
+      height: 100%;
+      min-height: 42px;
+      border: 1px dashed #CBD5E1;
+      border-radius: 6px;
+      background: transparent;
+      color: #94A3B8;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      transition: all 0.15s;
+    }
+
+    .cell-add-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* 快捷预设科目标签 */
+    .subject-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .subject-chip {
+      font-size: 11.5px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      background: #F1F5F9;
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .subject-chip:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary-border);
+    }
+
+    /* 弹窗底部仅图标删除按钮 (默认无边框、中性灰，hover变红底红字) */
+    .btn-modal-delete-icon {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted, #94A3B8);
+      border-radius: var(--radius-sm, 6px);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: all 0.15s ease;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .btn-modal-delete-icon:hover {
+      color: var(--danger, #EF4444);
+      background: #FEF2F2;
+    }
+
+    .btn-modal-delete-icon i,
+    .btn-modal-delete-icon svg {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+    }
+
+    /* 节次管理抽屉/面板 */
+    .period-manager-box {
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .period-row-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px dashed #E2E8F0;
+    }
+
+    .period-row-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 页面头部 -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1><i data-lucide="calendar" style="color: var(--primary);"></i> 日历</h1>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <button class="btn btn-secondary" id="btn-open-timetable">
+        <i data-lucide="table"></i> 设置课程表
+      </button>
+      <button class="btn btn-primary" id="btn-open-add-event">
+        <i data-lucide="plus"></i> 新建日程
+      </button>
+    </div>
+  </div>
+
+  <!-- 日历核心容器 (严禁超出视口) -->
+  <div class="calendar-page-layout">
+    <div class="calendar-main-grid">
+      <!-- 左侧主日历卡片 (纯净月历) -->
+      <div class="cal-main-card">
+        <!-- 顶部月历工具栏 (< 2026年 8月 > 居中) -->
+        <div class="cal-header-bar">
+          <div class="cal-nav-group">
+            <button class="btn btn-secondary btn-icon" id="btn-prev-month" title="上一月">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <div class="cal-current-title" id="cal-current-title">2026年 8月</div>
+            <button class="btn btn-secondary btn-icon" id="btn-next-month" title="下一月">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 月视图表头 -->
+        <div class="cal-weekday-header">
+          <div>周一</div>
+          <div>周二</div>
+          <div>周三</div>
+          <div>周四</div>
+          <div>周五</div>
+          <div class="weekend">周六</div>
+          <div class="weekend">周日</div>
+        </div>
+
+        <!-- 月视图网格 (严格 6 行等分填满高度) -->
+        <div class="cal-grid-month" id="cal-month-grid">
+          <!-- 动态 JS 填充 42 格 -->
+        </div>
+      </div>
+
+      <!-- 右侧日维度看板 (双板块 + 可上下拖动分割线) -->
+      <div class="agenda-sidebar" id="agenda-sidebar-container">
+        <!-- 头部：日期、星期与待办数置左 | 今天按钮置右 -->
+        <div class="agenda-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="agenda-date-big">
+              <span id="agenda-date-title">8月24日</span>
+              <span id="agenda-weekday-str">星期一</span>
+            </div>
+            <span class="agenda-stat-pill" id="agenda-count-pill">0 项待办</span>
+          </div>
+          <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px;" id="btn-today">今天</button>
+        </div>
+
+        <!-- 上半板块：单日 24 小时时间轴 -->
+        <div class="day-timeline-panel" id="day-timeline-panel">
+          <div class="day-timeline-body">
+            <div class="day-time-gutter" id="day-time-gutter">
+              <!-- 00:00 - 23:00 -->
+            </div>
+            <div class="day-column-content" id="day-column-content">
+              <!-- 绝对定位渲染当天课程、日程与当前时间红线 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 中间可上下拖动的分割线 -->
+        <div class="day-splitter" id="day-splitter" title="按住上下拖动调整两块区域高度">
+          <div class="day-splitter-handle"></div>
+        </div>
+
+        <!-- 下半板块：当日待办清单与排期流 -->
+        <div class="day-agenda-panel" id="day-agenda-panel">
+          <div class="agenda-list" id="agenda-items-container">
+            <!-- 动态渲染待办与日程 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 学期课程表可视化管理大弹窗 ========== -->
+  <div class="modal-backdrop" id="modal-timetable">
+    <div class="modal-content timetable-modal-dialog">
+      <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; flex: 1; min-width: 0;">
+          <div class="modal-title" style="display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 17px; font-weight: 700; flex-shrink: 0;">
+            <i data-lucide="table" style="color: var(--primary); width: 20px; height: 20px; display: inline-block; vertical-align: middle;"></i>
+            <span>学期课程表</span>
+          </div>
+          <select class="input-text" id="timetable-select" style="font-weight: 600; font-size: 13px; height: 32px; padding: 4px 10px; max-width: 440px; background: #F8FAFC; border-color: #CBD5E1; flex-shrink: 1; text-overflow: ellipsis;"></select>
+          <button class="btn btn-secondary" id="btn-edit-current-timetable" style="padding: 4px 10px; font-size: 12px; height: 32px; flex-shrink: 0; white-space: nowrap;" title="修改当前学期名称与起止日期">
+            <i data-lucide="edit-2" style="width: 12px; height: 12px;"></i> 修改
+          </button>
+          <button class="btn btn-secondary" id="btn-open-add-timetable" style="padding: 4px 10px; font-size: 12px; height: 32px; flex-shrink: 0; white-space: nowrap;" title="新增学期课表">
+            <i data-lucide="plus" style="width: 12px; height: 12px;"></i> 新增
+          </button>
+        </div>
+        <button class="modal-close" id="btn-close-timetable" style="flex-shrink: 0;"><i data-lucide="x"></i></button>
+      </div>
+
+      <div class="modal-body" style="padding: 12px 20px; overflow-y: auto; flex: 1; min-height: 280px; display: flex; flex-direction: column;">
+        <!-- 表格视图 -->
+        <div id="timetable-matrix-container" style="overflow-x: auto; width: 100%;">
+          <table class="timetable-matrix">
+            <thead>
+              <tr>
+                <th style="width: 105px;">节次 / 时间</th>
+                <th style="width: calc((100% - 105px) / 5);">周一</th>
+                <th style="width: calc((100% - 105px) / 5);">周二</th>
+                <th style="width: calc((100% - 105px) / 5);">周三</th>
+                <th style="width: calc((100% - 105px) / 5);">周四</th>
+                <th style="width: calc((100% - 105px) / 5);">周五</th>
+              </tr>
+            </thead>
+            <tbody id="timetable-matrix-body">
+              <!-- 动态根据当前选中学期课表生成 -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 课程表为空时的空态引导 -->
+        <div id="timetable-empty-container" style="display: none; padding: 48px 20px; text-align: center; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <i data-lucide="calendar-plus" style="width: 28px; height: 28px;"></i>
+          </div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--text-main);">暂无学期课程表</div>
+          <div style="font-size: 13px; color: var(--text-sub); max-width: 340px; line-height: 1.6;">
+            请先创建一份学期课表并设置生效起止日期，再进行排课。
+          </div>
+          <button class="btn btn-primary" id="btn-empty-add-timetable" type="button" style="margin-top: 6px;">
+            <i data-lucide="plus"></i> 立即创建学期课表
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer" id="timetable-modal-footer" style="padding: 12px 20px; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-secondary" id="btn-cancel-timetable">关闭</button>
+        <button class="btn btn-primary" id="btn-done-timetable">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 新建/编辑学期课表信息子弹窗 ========== -->
+  <div class="modal-backdrop" id="modal-edit-timetable-info" style="z-index: 2200;">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-timetable-info-title">新建学期课表</div>
+        <button class="modal-close" id="btn-close-timetable-info"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+        <input type="hidden" id="edit-timetable-id">
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">学期/课表名称 *</label>
+          <input type="text" class="input-text" id="edit-timetable-name" placeholder="例如：2026-2027学年 第一学期" style="width: 100%;">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">生效起始日期 *</label>
+            <input type="date" class="input-text" id="edit-timetable-start" min="1970-01-01" max="2099-12-31" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">生效结束日期 *</label>
+            <input type="date" class="input-text" id="edit-timetable-end" min="1970-01-01" max="2099-12-31" style="width: 100%;">
+          </div>
+        </div>
+        <div id="box-copy-timetable-courses" style="background: #F8FAFC; border: 1px solid var(--border-color); padding: 10px 12px; border-radius: 6px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-main); font-weight: 500;">
+            <input type="checkbox" id="edit-timetable-copy-check" checked style="accent-color: var(--primary);">
+            <span>从当前课表复制排课</span>
+          </label>
+        </div>
+        <div style="font-size: 12px; color: #64748B; line-height: 1.4;">
+          💡 课表将根据起止时间同步至日历内
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; justify-content: space-between;">
+        <button class="btn-modal-delete-icon" id="btn-delete-current-timetable" title="删除课表" type="button" style="display: none;">
+          <i data-lucide="trash-2"></i>
+        </button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="btn btn-secondary" id="btn-cancel-timetable-info">取消</button>
+          <button class="btn btn-primary" id="btn-save-timetable-info">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 轻量时间修改子弹窗 ========== -->
+  <div class="modal-backdrop" id="modal-edit-period-time" style="z-index: 2200;">
+    <div class="modal-content" style="max-width: 360px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-period-time-title">修改节次时间</div>
+        <button class="modal-close" id="btn-close-period-time"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+        <input type="hidden" id="edit-period-num">
+        <div>
+          <label style="font-size: 12.5px; font-weight: 600; margin-bottom: 4px; display: block;">上课时间 *</label>
+          <input type="time" class="input-text" id="period-start-time" style="width: 100%;">
+        </div>
+        <div>
+          <label style="font-size: 12.5px; font-weight: 600; margin-bottom: 4px; display: block;">下课时间 *</label>
+          <input type="time" class="input-text" id="period-end-time" style="width: 100%;">
+        </div>
+        <div id="period-time-boundary-hint" style="font-size: 11.5px; color: #64748B; background: #F8FAFC; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); line-height: 1.4;">
+          <!-- 动态提示上下节时间约束 -->
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; justify-content: space-between;">
+        <button class="btn-modal-delete-icon" id="btn-delete-period-time" title="删除此课节" type="button" style="display: none;">
+          <i data-lucide="trash-2"></i>
+        </button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="btn btn-secondary" id="btn-cancel-period-time">取消</button>
+          <button class="btn btn-primary" id="btn-save-period-time">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 课程排课编辑/新增子弹窗 ========== -->
+  <div class="modal-backdrop" id="modal-edit-course" style="z-index: 2100;">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-edit-course-title">设置排课</div>
+        <button class="modal-close" id="btn-close-edit-course"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 20px;">
+        <input type="hidden" id="course-form-id">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">星期 *</label>
+            <select id="course-form-day" class="select" style="width: 100%;">
+              <option value="1">星期一</option>
+              <option value="2">星期二</option>
+              <option value="3">星期三</option>
+              <option value="4">星期四</option>
+              <option value="5">星期五</option>
+              <option value="6">星期六</option>
+              <option value="7">星期日</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">上课节次 *</label>
+            <select id="course-form-period-select" class="select" style="width: 100%;">
+              <!-- 动态填充当前已有节次 -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">科目名称 *</label>
+          <input type="text" class="input-text" id="course-form-subject" placeholder="例如：英语" style="width: 100%;">
+          <div class="subject-chips-row" id="course-subject-chips"></div>
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">授课班级 *</label>
+          <input type="text" class="input-text" id="course-form-class" placeholder="例如：六(1)班" style="width: 100%;">
+          <div class="subject-chips-row" id="course-class-chips"></div>
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">授课地点</label>
+          <input type="text" class="input-text" id="course-form-room" placeholder="例如：致远楼 302" style="width: 100%;">
+          <div class="subject-chips-row" id="course-room-chips"></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between; padding: 12px 20px;">
+        <button class="btn-modal-delete-icon" id="btn-delete-course" title="删除此节课" type="button" style="display: none;">
+          <i data-lucide="trash-2"></i>
+        </button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="btn btn-secondary" id="btn-cancel-edit-course">取消</button>
+          <button class="btn btn-primary" id="btn-save-course">保存课程</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 新建/编辑特定日程弹窗 ========== -->
+  <div class="modal-backdrop" id="modal-event-form">
+    <div class="modal-content" style="max-width: 460px;">
+      <div class="modal-header">
+        <div class="modal-title" id="event-modal-title">新建日程</div>
+        <button class="modal-close" id="btn-close-event-modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 20px;">
+        <input type="hidden" id="event-form-id">
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">日程标题 *</label>
+          <input type="text" class="input-text" id="event-form-title" placeholder="例如：数学学科组公开课教研磨课" style="width: 100%;" required>
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">日程日期 *</label>
+          <input type="date" class="input-text" id="event-form-date" min="1970-01-01" max="2099-12-31" style="width: 100%;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">开始时间</label>
+            <input type="time" class="input-text" id="event-form-start" value="14:30" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">结束时间</label>
+            <input type="time" class="input-text" id="event-form-end" value="16:00" style="width: 100%;">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">地点 / 备注</label>
+          <input type="text" class="input-text" id="event-form-location" placeholder="例如：二楼阶梯会议室" style="width: 100%;">
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between; padding: 12px 20px;">
+        <button class="btn-modal-delete-icon" id="btn-delete-event" title="删除日程" type="button" style="display: none;">
+          <i data-lucide="trash-2"></i>
+        </button>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+          <button class="btn btn-secondary" id="btn-cancel-event-modal">取消</button>
+          <button class="btn btn-primary" id="btn-save-event">保存日程</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 侧边栏及交互逻辑 -->
+  <script src="js/sidebar.js"></script>
+
+  <script>
+    (function () {
+      // ========== 日历核心状态 ==========
+      const state = {
+        currentDate: new Date(),
+        selectedDateStr: formatDateStr(new Date())
+      };
+
+      function formatDateStr(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      function parseDateStr(str) {
+        const [y, m, d] = str.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function getWeekdayName(dayOfWeek) {
+        const map = { 1: '星期一', 2: '星期二', 3: '星期三', 4: '星期四', 5: '星期五', 6: '星期六', 7: '星期日' };
+        return map[dayOfWeek] || '';
+      }
+
+      function timeToMinutes(timeStr, fallbackMin = 0) {
+        if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return fallbackMin;
+        const [h, m] = timeStr.split(':').map(Number);
+        return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m);
+      }
+
+      // ========== 初始化与事件监听 ==========
+      function init() {
+        renderHeaderControls();
+        renderCalendar();
+        renderDayView(true);
+        initSplitter();
+
+        window.__calCleanups = window.__calCleanups || [];
+
+        // 监听跨页面和本地响应式变更
+        if (window.SchoolDB && window.SchoolDB.onUpdate) {
+          const unsub = window.SchoolDB.onUpdate((evt) => {
+            renderCalendar();
+            renderDayView(false);
+            if (evt && (evt.type === 'periods_updated' || evt.type === 'db_reset')) {
+              if (document.getElementById('modal-timetable').classList.contains('show')) {
+                renderTimetableMatrix();
+              }
+            }
+          });
+          window.__calCleanups.push(() => { if (unsub) unsub(); });
+        }
+
+        const handleCourses = () => { renderCalendar(); renderDayView(false); };
+        const handleTodos = () => { renderCalendar(); renderDayView(false); };
+        const handleEvents = () => { renderCalendar(); renderDayView(false); };
+        const handlePeriods = () => {
+          renderCalendar();
+          renderDayView(false);
+          if (document.getElementById('modal-timetable').classList.contains('show')) {
+            renderTimetableMatrix();
+          }
+        };
+
+        window.addEventListener('schooldb_courses_updated', handleCourses);
+        window.addEventListener('schooldb_todos_updated', handleTodos);
+        window.addEventListener('schooldb_events_updated', handleEvents);
+        window.addEventListener('schooldb_periods_updated', handlePeriods);
+
+        window.__calCleanups.push(() => {
+          window.removeEventListener('schooldb_courses_updated', handleCourses);
+          window.removeEventListener('schooldb_todos_updated', handleTodos);
+          window.removeEventListener('schooldb_events_updated', handleEvents);
+          window.removeEventListener('schooldb_periods_updated', handlePeriods);
+        });
+
+        // 注册全局清理
+        window.cleanupCurrentPage = () => {
+          if (window.__calCleanups) {
+            window.__calCleanups.forEach(fn => fn());
+            window.__calCleanups = [];
+          }
+        };
+
+
+        bindEvents();
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function bindEvents() {
+        // 月份翻页与今日
+        document.getElementById('btn-prev-month').onclick = () => navigateMonth(-1);
+        document.getElementById('btn-next-month').onclick = () => navigateMonth(1);
+        document.getElementById('btn-today').onclick = () => goToToday();
+
+        // 课表管理弹窗
+        document.getElementById('btn-open-timetable').onclick = openTimetableModal;
+        document.getElementById('btn-close-timetable').onclick = closeTimetableModal;
+        document.getElementById('btn-cancel-timetable').onclick = closeTimetableModal;
+        document.getElementById('btn-done-timetable').onclick = closeTimetableModal;
+
+        // 学期课表切换与编辑
+        document.getElementById('timetable-select').onchange = (e) => handleTimetableSelectChange(e.target.value);
+        document.getElementById('btn-edit-current-timetable').onclick = openEditTimetableModal;
+        document.getElementById('btn-open-add-timetable').onclick = openAddTimetableModal;
+        const btnEmptyAdd = document.getElementById('btn-empty-add-timetable');
+        if (btnEmptyAdd) btnEmptyAdd.onclick = openAddTimetableModal;
+        document.getElementById('btn-close-timetable-info').onclick = closeTimetableInfoModal;
+        document.getElementById('btn-cancel-timetable-info').onclick = closeTimetableInfoModal;
+        document.getElementById('btn-save-timetable-info').onclick = saveTimetableInfo;
+        document.getElementById('btn-delete-current-timetable').onclick = deleteCurrentTimetable;
+
+        // 轻量时间修改子弹窗
+        document.getElementById('btn-close-period-time').onclick = closeEditPeriodTimeModal;
+        document.getElementById('btn-cancel-period-time').onclick = closeEditPeriodTimeModal;
+        document.getElementById('btn-save-period-time').onclick = validateAndSavePeriodTime;
+        document.getElementById('btn-delete-period-time').onclick = handleDeletePeriodFromModal;
+
+        // 课程排课子弹窗
+        document.getElementById('btn-close-edit-course').onclick = closeCourseEditModal;
+        document.getElementById('btn-cancel-edit-course').onclick = closeCourseEditModal;
+        document.getElementById('btn-save-course').onclick = saveCourseForm;
+        document.getElementById('btn-delete-course').onclick = deleteCourseItem;
+        document.getElementById('course-form-subject').oninput = validateCourseForm;
+        document.getElementById('course-form-class').oninput = validateCourseForm;
+
+        // 新建日程弹窗
+        document.getElementById('btn-open-add-event').onclick = () => openEventModal();
+        document.getElementById('btn-close-event-modal').onclick = closeEventModal;
+        document.getElementById('btn-cancel-event-modal').onclick = closeEventModal;
+        document.getElementById('btn-save-event').onclick = saveEventForm;
+        document.getElementById('btn-delete-event').onclick = deleteEventItem;
+      }
+
+      function navigateMonth(direction) {
+        state.currentDate.setMonth(state.currentDate.getMonth() + direction);
+        renderCalendar();
+      }
+
+      function goToToday() {
+        const today = new Date();
+        state.currentDate = new Date();
+        state.selectedDateStr = formatDateStr(today);
+        renderCalendar();
+        renderDayView(true);
+      }
+
+      function renderHeaderControls() {
+        const year = state.currentDate.getFullYear();
+        const month = state.currentDate.getMonth() + 1;
+        document.getElementById('cal-current-title').textContent = `${year}年 ${month}月`;
+      }
+
+      // ========== 渲染左侧月历视图 ==========
+      function renderCalendar() {
+        renderHeaderControls();
+        const grid = document.getElementById('cal-month-grid');
+        grid.innerHTML = '';
+
+        const year = state.currentDate.getFullYear();
+        const month = state.currentDate.getMonth();
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        let startDayOfWeek = firstDayOfMonth.getDay();
+        startDayOfWeek = startDayOfWeek === 0 ? 7 : startDayOfWeek;
+
+        const todayStr = formatDateStr(new Date());
+
+        const startDate = new Date(firstDayOfMonth);
+        startDate.setDate(startDate.getDate() - (startDayOfWeek - 1));
+
+        for (let i = 0; i < 42; i++) {
+          const currentCellDate = new Date(startDate);
+          currentCellDate.setDate(startDate.getDate() + i);
+
+          const cellDateStr = formatDateStr(currentCellDate);
+          const isCurrentMonth = currentCellDate.getMonth() === month;
+          const isToday = cellDateStr === todayStr;
+          const isSelected = cellDateStr === state.selectedDateStr;
+
+          const schedule = SchoolDB.getScheduleForDate(cellDateStr);
+          const { courses, todos, events } = schedule;
+
+          const cellEl = document.createElement('div');
+          cellEl.className = `cal-cell ${isCurrentMonth ? '' : 'other-month'} ${isToday ? 'is-today' : ''} ${isSelected ? 'selected' : ''}`;
+          cellEl.onclick = () => {
+            state.selectedDateStr = cellDateStr;
+            renderCalendar();
+            renderDayView(true);
+          };
+
+          let badgesHTML = '';
+          const previewItems = [
+            ...courses.map(c => ({
+              type: 'course',
+              id: c.id,
+              period: c.period,
+              startTime: c.startTime || '',
+              text: c.className ? `${c.subject} · ${c.className}` : c.subject
+            })),
+            ...events.map(e => ({
+              type: 'event',
+              id: e.id,
+              startTime: e.startTime || '',
+              text: e.title
+            })),
+            ...todos.map(t => ({
+              type: 'todo',
+              id: t.id,
+              startTime: t.dueTime || '99:99',
+              text: t.title,
+              done: t.completed
+            }))
+          ];
+
+          previewItems.sort((a, b) => (a.startTime || '99:99').localeCompare(b.startTime || '99:99'));
+
+          const total = previewItems.length;
+          const cellDay = currentCellDate.getDay() === 0 ? 7 : currentCellDate.getDay();
+
+          function getItemClickAttr(item) {
+            if (item.type === 'event') {
+              return `onclick="event.stopPropagation(); window.openEventModal('${item.id}');" style="cursor:pointer;"`;
+            }
+            return '';
+          }
+
+          if (total === 1) {
+            const item = previewItems[0];
+            badgesHTML += `<div class="cal-badge line-2 type-${item.type} ${item.done ? 'is-done' : ''}" title="${escapeHtml(item.text)}" ${getItemClickAttr(item)}>${escapeHtml(item.text)}</div>`;
+          } else if (total === 2) {
+            const item1 = previewItems[0];
+            const item2 = previewItems[1];
+            badgesHTML += `<div class="cal-badge line-2 type-${item1.type} ${item1.done ? 'is-done' : ''}" title="${escapeHtml(item1.text)}" ${getItemClickAttr(item1)}>${escapeHtml(item1.text)}</div>`;
+            badgesHTML += `<div class="cal-badge line-1 type-${item2.type} ${item2.done ? 'is-done' : ''}" title="${escapeHtml(item2.text)}" ${getItemClickAttr(item2)}>${escapeHtml(item2.text)}</div>`;
+          } else if (total === 3) {
+            previewItems.forEach(item => {
+              badgesHTML += `<div class="cal-badge line-1 type-${item.type} ${item.done ? 'is-done' : ''}" title="${escapeHtml(item.text)}" ${getItemClickAttr(item)}>${escapeHtml(item.text)}</div>`;
+            });
+          } else if (total >= 4) {
+            const item1 = previewItems[0];
+            const item2 = previewItems[1];
+            badgesHTML += `<div class="cal-badge line-1 type-${item1.type} ${item1.done ? 'is-done' : ''}" title="${escapeHtml(item1.text)}" ${getItemClickAttr(item1)}>${escapeHtml(item1.text)}</div>`;
+            badgesHTML += `<div class="cal-badge line-1 type-${item2.type} ${item2.done ? 'is-done' : ''}" title="${escapeHtml(item2.text)}" ${getItemClickAttr(item2)}>${escapeHtml(item2.text)}</div>`;
+            const remaining = total - 2;
+            badgesHTML += `<div class="cal-badge-more centered">+${remaining}</div>`;
+          }
+
+          cellEl.innerHTML = `
+            <div class="cal-cell-top">
+              <span class="cal-day-num">${currentCellDate.getDate()}</span>
+              ${isToday ? '<span style="font-size:9.5px; color:var(--primary); font-weight:700;">今日</span>' : ''}
+            </div>
+            <div class="cal-events-list">
+              ${badgesHTML}
+            </div>
+          `;
+
+          grid.appendChild(cellEl);
+        }
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // ========== 渲染右侧日维度两大板块 (时间轴 + 纯待办) ==========
+      function renderDayView(shouldScrollToNow = true) {
+        const dateStr = state.selectedDateStr;
+        const targetDate = parseDateStr(dateStr);
+        const dayOfWeek = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
+
+        // 头部信息
+        document.getElementById('agenda-date-title').textContent = `${targetDate.getMonth() + 1}月${targetDate.getDate()}日`;
+        document.getElementById('agenda-weekday-str').textContent = getWeekdayName(dayOfWeek);
+
+        const schedule = SchoolDB.getScheduleForDate(dateStr);
+        const { courses, todos, events } = schedule;
+
+        // 统计显示待办项数
+        document.getElementById('agenda-count-pill').textContent = `${todos.length} 项待办`;
+
+        // 1. 渲染上半板块：单日 24 小时时间轴 (绿色课程只读，紫色日程可点击编辑)
+        renderDayTimeline(schedule, dateStr, dayOfWeek, shouldScrollToNow);
+
+        // 2. 渲染下半板块：只展示待办清单
+        renderDayAgendaList(todos);
+      }
+
+      // 渲染单日 24 小时时间轴
+      function renderDayTimeline(schedule, dateStr, dayOfWeek, shouldScrollToNow = true) {
+        const timeGutter = document.getElementById('day-time-gutter');
+        const columnContent = document.getElementById('day-column-content');
+        const timelinePanel = document.getElementById('day-timeline-panel');
+
+        timeGutter.innerHTML = '';
+        columnContent.innerHTML = '';
+
+        // 刻度 00:00 - 23:00 (每小时 50px)
+        for (let h = 0; h < 24; h++) {
+          const hourEl = document.createElement('div');
+          hourEl.className = 'day-gutter-hour';
+          hourEl.textContent = `${String(h).padStart(2, '0')}:00`;
+          timeGutter.appendChild(hourEl);
+        }
+
+        const now = new Date();
+        const todayStr = formatDateStr(now);
+        const isToday = dateStr === todayStr;
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        const scale = 50 / 60; // 50px / 60min
+
+        // 如果是今天，绘制红色当前时间线
+        if (isToday) {
+          const line = document.createElement('div');
+          line.className = 'day-now-line';
+          line.style.top = `${nowMinutes * scale}px`;
+          line.innerHTML = '<div class="day-now-dot"></div>';
+          columnContent.appendChild(line);
+        }
+
+        // 统一汇总并解析当天所有事项
+        const allTimelineItems = [
+          ...schedule.courses.map(c => {
+            const startMin = timeToMinutes(c.startTime, 8 * 60);
+            const endMin = timeToMinutes(c.endTime, startMin + 45);
+            return {
+              type: 'course',
+              id: c.id,
+              title: c.className ? `${c.subject} · ${c.className}` : c.subject,
+              location: c.classroom || '',
+              startTime: c.startTime || '08:00',
+              endTime: c.endTime || '08:45',
+              startMin,
+              endMin
+            };
+          }),
+          ...schedule.events.map(ev => {
+            const startMin = timeToMinutes(ev.startTime, 14 * 60);
+            const endMin = timeToMinutes(ev.endTime, startMin + 60);
+            return {
+              type: 'event',
+              id: ev.id,
+              title: ev.title,
+              location: ev.location || '',
+              startTime: ev.startTime || '14:30',
+              endTime: ev.endTime || '16:00',
+              startMin,
+              endMin
+            };
+          })
+        ];
+
+        // 按开始时间排序
+        allTimelineItems.sort((a, b) => a.startMin - b.startMin || (b.endMin - a.endMin));
+
+        // 渲染绝对定位事项卡片 (带重叠碰撞检测与缩进)
+        allTimelineItems.forEach((item, idx) => {
+          const topPx = item.startMin * scale;
+          const heightPx = Math.max(22, (item.endMin - item.startMin) * scale);
+
+          // 检测是否与前面的卡片存在时间重叠
+          let isOverlapping = false;
+          for (let p = 0; p < idx; p++) {
+            const prev = allTimelineItems[p];
+            if (item.startMin < prev.endMin && item.endMin > prev.startMin) {
+              isOverlapping = true;
+              break;
+            }
+          }
+
+          const card = document.createElement('div');
+          card.className = `day-event-card type-${item.type}`;
+          card.style.top = `${topPx}px`;
+          card.style.height = `${heightPx}px`;
+
+          // 重叠时向右内缩进，露出底层左侧部分，方便 hover/click 底层卡片
+          if (isOverlapping) {
+            card.style.left = '20px';
+            card.style.right = '4px';
+            card.style.zIndex = '8';
+          } else {
+            card.style.left = '4px';
+            card.style.right = '4px';
+            card.style.zIndex = '5';
+          }
+
+          const timeStr = `${item.startTime}-${item.endTime}`;
+          const timeAndLoc = item.location ? `${timeStr} · ${item.location}` : timeStr;
+
+          if (heightPx >= 32) {
+            // 两行展示：第1行 名字；第2行 时间 · 地点
+            card.innerHTML = `
+              <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.title)}</div>
+              <div style="font-size:10px; opacity:0.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px;">${escapeHtml(timeAndLoc)}</div>
+            `;
+          } else {
+            // 单行自适应展示：名字 · 地点 · 时间 紧随其后 (优先展示名字)
+            const parts = [item.title];
+            if (item.location) parts.push(item.location);
+            parts.push(timeStr);
+            card.innerHTML = `
+              <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(parts.join(' · '))}</div>
+            `;
+          }
+
+          card.title = `${timeStr} ${item.title}${item.location ? ' (' + item.location + ')' : ''}`;
+
+          if (item.type === 'event') {
+            card.style.cursor = 'pointer';
+            card.onclick = (e) => {
+              e.stopPropagation();
+              window.openEventModal(item.id);
+            };
+          }
+
+          columnContent.appendChild(card);
+        });
+
+        // 点击时间轴空白区域：快捷在对应时间创建日程 (跨度半小时)
+        columnContent.onclick = (e) => {
+          if (e.target.closest('.day-event-card')) return;
+
+          const rect = columnContent.getBoundingClientRect();
+          const offsetY = e.clientY - rect.top;
+          const rawMin = Math.max(0, Math.min(1410, offsetY / scale));
+
+          // 对齐到就近半小时 (00 或 30 分)
+          const startMin = Math.floor(rawMin / 30) * 30;
+          const endMin = Math.min(1440, startMin + 30);
+
+          const sH = Math.floor(startMin / 60);
+          const sM = startMin % 60;
+          const eH = Math.floor(endMin / 60);
+          const eM = endMin % 60;
+
+          const startTime = `${String(sH).padStart(2, '0')}:${String(sM).padStart(2, '0')}`;
+          const endTime = `${String(eH).padStart(2, '0')}:${String(eM).padStart(2, '0')}`;
+
+          openEventModal(null, startTime, endTime, dateStr);
+        };
+
+        // 智能自适应平滑滚动动画：当日滚动至当前时间，非当日自动滚动到第一个事项
+        if (timelinePanel && shouldScrollToNow) {
+          let targetMinute = 8 * 60; // 默认早8点
+          if (isToday) {
+            targetMinute = nowMinutes;
+          } else if (allTimelineItems.length > 0) {
+            targetMinute = allTimelineItems[0].startMin;
+          }
+
+          const targetTop = Math.max(0, (targetMinute * scale) - 50);
+          setTimeout(() => {
+            timelinePanel.scrollTo({ top: targetTop, behavior: 'smooth' });
+          }, 30);
+        }
+      }
+
+      // 渲染下半板块：只展示待办清单
+      function renderDayAgendaList(todos) {
+        const container = document.getElementById('agenda-items-container');
+        container.innerHTML = '';
+
+        if (!todos || todos.length === 0) {
+          container.innerHTML = `
+            <div class="agenda-empty">
+              <i data-lucide="check-circle" style="width:32px; height:32px; color:#CBD5E1;"></i>
+              <div>今日待办全部搞定，轻松一下~</div>
+            </div>
+          `;
+          if (window.lucide) window.lucide.createIcons();
+          return;
+        }
+
+        // 待办事项渲染 (使用与待办页统一的 apple-checkbox：主题绿底 + 白色对勾)
+        todos.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'agenda-card card-todo';
+          const isDone = Boolean(t.completed);
+          const catName = t.category === 'teaching' ? '教学教务' : t.category === 'class' ? '班级管理' : t.category === 'parent' ? '家校沟通' : t.category === 'admin' ? '行政事务' : '个人待办';
+
+          card.innerHTML = `
+            <div class="apple-checkbox ${isDone ? 'checked' : ''}" data-todo-id="${t.id}" title="${isDone ? '标记为未完成' : '完成待办'}">
+              ${isDone ? '<i data-lucide="check"></i>' : ''}
+            </div>
+            <div class="agenda-card-body">
+              <div class="agenda-card-title ${isDone ? 'is-done' : ''}">${escapeHtml(t.title)}</div>
+              <div class="agenda-card-meta">
+                <span class="meta-item"><i data-lucide="clock"></i> ${t.dueTime || '全天'}</span>
+                <span class="meta-item"><i data-lucide="tag"></i> ${catName}</span>
+              </div>
+            </div>
+          `;
+
+          const chk = card.querySelector('.apple-checkbox');
+          chk.onclick = (e) => {
+            e.stopPropagation();
+            const nextDone = !isDone;
+            SchoolDB.updateTodo(t.id, {
+              completed: nextDone,
+              completedAt: nextDone ? new Date().toISOString() : null
+            });
+            renderCalendar();
+            renderDayView(false); // 打勾时保持当前滚动位置，不跳动
+          };
+
+          container.appendChild(card);
+        });
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // ========== 中间分割线拖拽调整高度控制器 ==========
+      function initSplitter() {
+        const splitter = document.getElementById('day-splitter');
+        const topPanel = document.getElementById('day-timeline-panel');
+        const container = document.getElementById('agenda-sidebar-container');
+
+        let isDragging = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        splitter.addEventListener('mousedown', (e) => {
+          isDragging = true;
+          startY = e.clientY;
+          startHeight = topPanel.getBoundingClientRect().height;
+          splitter.classList.add('dragging');
+          document.body.style.cursor = 'row-resize';
+          document.body.style.userSelect = 'none';
+        });
+
+        const handleMouseMove = (e) => {
+          if (!isDragging) return;
+          const deltaY = e.clientY - startY;
+          const containerHeight = container.getBoundingClientRect().height - 52 - 7; // 减去header和splitter高度
+          const newHeight = Math.max(80, Math.min(containerHeight - 80, startHeight + deltaY));
+          topPanel.style.height = `${newHeight}px`;
+        };
+
+        const handleMouseUp = () => {
+          if (isDragging) {
+            isDragging = false;
+            splitter.classList.remove('dragging');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+          }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        window.__calCleanups = window.__calCleanups || [];
+        window.__calCleanups.push(() => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          window.removeEventListener('mouseup', handleMouseUp);
+        });
+      }
+
+      // ========== 每周课程表管理大弹窗 ==========
+      function openTimetableModal() {
+        renderTimetableSelect();
+        renderTimetableMatrix();
+        document.getElementById('modal-timetable').classList.add('show');
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function closeTimetableModal() {
+        document.getElementById('modal-timetable').classList.remove('show');
+      }
+
+      // 渲染学期下拉选择
+      function renderTimetableSelect() {
+        const select = document.getElementById('timetable-select');
+        const btnEdit = document.getElementById('btn-edit-current-timetable');
+        const btnAdd = document.getElementById('btn-open-add-timetable');
+        const timetables = SchoolDB.getTimetables();
+        const curId = SchoolDB.getSelectedTimetableId();
+
+        select.innerHTML = '';
+        if (timetables.length === 0) {
+          select.style.display = 'none';
+          if (btnEdit) btnEdit.style.display = 'none';
+          if (btnAdd) btnAdd.style.display = 'none';
+        } else {
+          select.style.display = 'inline-block';
+          if (btnEdit) btnEdit.style.display = 'inline-flex';
+          if (btnAdd) btnAdd.style.display = 'inline-flex';
+          timetables.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = `${t.name} （${t.startDate || ''} ~ ${t.endDate || ''}）`;
+            if (t.id === curId) opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      }
+
+      function handleTimetableSelectChange(newId) {
+        SchoolDB.setSelectedTimetableId(newId);
+        renderTimetableSelect();
+        renderTimetableMatrix();
+        renderCalendar();
+        renderDayView(false);
+      }
+
+      // 打开新建学期课表弹窗
+      function openAddTimetableModal() {
+        const timetables = SchoolDB.getTimetables();
+        const curId = SchoolDB.getSelectedTimetableId();
+        const hasExisting = timetables.length > 0 && curId && SchoolDB.getTimetableById(curId);
+
+        document.getElementById('modal-timetable-info-title').textContent = '新建学期课表';
+        document.getElementById('edit-timetable-id').value = '';
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        if (month >= 2 && month <= 7) {
+          document.getElementById('edit-timetable-name').value = `${year}-${year + 1}学年 第二学期`;
+          document.getElementById('edit-timetable-start').value = `${year}-02-15`;
+          document.getElementById('edit-timetable-end').value = `${year}-06-30`;
+        } else {
+          document.getElementById('edit-timetable-name').value = `${year}-${year + 1}学年 第一学期`;
+          document.getElementById('edit-timetable-start').value = `${year}-09-01`;
+          document.getElementById('edit-timetable-end').value = `${year + 1}-01-31`;
+        }
+
+        document.getElementById('box-copy-timetable-courses').style.display = hasExisting ? 'block' : 'none';
+        document.getElementById('edit-timetable-copy-check').checked = Boolean(hasExisting);
+        document.getElementById('btn-delete-current-timetable').style.display = 'none';
+
+        document.getElementById('modal-edit-timetable-info').classList.add('show');
+        setTimeout(() => document.getElementById('edit-timetable-name').focus(), 60);
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // 打开编辑当前学期课表弹窗
+      function openEditTimetableModal() {
+        const curId = SchoolDB.getSelectedTimetableId();
+        const tt = SchoolDB.getTimetableById(curId);
+        if (!tt) return;
+
+        document.getElementById('modal-timetable-info-title').textContent = '修改学期课表信息';
+        document.getElementById('edit-timetable-id').value = tt.id;
+        document.getElementById('edit-timetable-name').value = tt.name || '';
+        document.getElementById('edit-timetable-start').value = tt.startDate || '';
+        document.getElementById('edit-timetable-end').value = tt.endDate || '';
+        document.getElementById('box-copy-timetable-courses').style.display = 'none';
+        document.getElementById('btn-delete-current-timetable').style.display = 'inline-flex';
+
+        document.getElementById('modal-edit-timetable-info').classList.add('show');
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function closeTimetableInfoModal() {
+        document.getElementById('modal-edit-timetable-info').classList.remove('show');
+      }
+
+      // 保存学期课表信息
+      function saveTimetableInfo() {
+        const id = document.getElementById('edit-timetable-id').value;
+        const name = document.getElementById('edit-timetable-name').value.trim();
+        const startDate = document.getElementById('edit-timetable-start').value;
+        const endDate = document.getElementById('edit-timetable-end').value;
+        const copyCheck = document.getElementById('edit-timetable-copy-check').checked;
+
+        if (!name) {
+          showAlert('请输入学期/课表名称', 'warning');
+          return;
+        }
+        if (!startDate || !endDate) {
+          showAlert('请设置完整的生效起止日期', 'warning');
+          return;
+        }
+        if (startDate >= endDate) {
+          showAlert('起始日期必须早于结束日期', 'warning');
+          return;
+        }
+
+        if (id) {
+          SchoolDB.updateTimetable(id, { name, startDate, endDate });
+        } else {
+          const curId = SchoolDB.getSelectedTimetableId();
+          SchoolDB.addTimetable({
+            name,
+            startDate,
+            endDate,
+            copyFromId: copyCheck ? curId : null,
+            isBlank: !copyCheck
+          });
+        }
+
+        closeTimetableInfoModal();
+        renderTimetableSelect();
+        renderTimetableMatrix();
+        renderCalendar();
+        renderDayView(false);
+      }
+
+      // 删除当前学期课表
+      async function deleteCurrentTimetable() {
+        const id = document.getElementById('edit-timetable-id').value;
+        const name = document.getElementById('edit-timetable-name').value.trim() || '该课表';
+        if (!id) return;
+
+        const ok = await showConfirm({
+          title: '删除学期课表确认',
+          content: `确定要删除课表「${name}」吗？删除后该学期的排课和数据将永久移除。`,
+          type: 'danger'
+        });
+
+        if (ok) {
+          try {
+            SchoolDB.deleteTimetable(id);
+            closeTimetableInfoModal();
+            renderTimetableSelect();
+            renderTimetableMatrix();
+            renderCalendar();
+            renderDayView(false);
+          } catch (err) {
+            showAlert(err.message, 'warning');
+          }
+        }
+      }
+
+      // 渲染每周课程表表格矩阵
+      function renderTimetableMatrix() {
+        const matrixContainer = document.getElementById('timetable-matrix-container');
+        const emptyContainer = document.getElementById('timetable-empty-container');
+        const footer = document.getElementById('timetable-modal-footer');
+
+        const timetables = SchoolDB.getTimetables();
+        const curId = SchoolDB.getSelectedTimetableId();
+        const curTimetable = SchoolDB.getTimetableById(curId);
+
+        if (timetables.length === 0 || !curTimetable) {
+          if (matrixContainer) matrixContainer.style.display = 'none';
+          if (emptyContainer) emptyContainer.style.display = 'flex';
+          if (footer) {
+            footer.style.display = 'flex';
+            const btnDone = document.getElementById('btn-done-timetable');
+            if (btnDone) btnDone.style.display = 'none';
+          }
+          if (window.lucide) window.lucide.createIcons();
+          return;
+        }
+
+        if (matrixContainer) matrixContainer.style.display = 'block';
+        if (emptyContainer) emptyContainer.style.display = 'none';
+        if (footer) {
+          footer.style.display = 'flex';
+          const btnDone = document.getElementById('btn-done-timetable');
+          if (btnDone) btnDone.style.display = 'inline-flex';
+        }
+
+        const tbody = document.getElementById('timetable-matrix-body');
+        tbody.innerHTML = '';
+
+        const periods = SchoolDB.getPeriods(curId).sort((a, b) => Number(a.period) - Number(b.period));
+        const courses = SchoolDB.getCourses(curId);
+        const totalPeriods = periods.length;
+
+        periods.forEach((p, idx) => {
+          const tr = document.createElement('tr');
+
+          // 第1列：节次名居中，Hover时右上角浮动删除按钮（节次总数>1时可用）
+          const th = document.createElement('td');
+          th.className = 'timetable-period-col';
+          th.innerHTML = `
+            ${totalPeriods > 1 ? `
+              <button class="period-delete-btn" onclick="window.handleDeletePeriod(${p.period})" title="删除【${escapeHtml(p.name)}】">
+                <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
+              </button>
+            ` : ''}
+            <div style="font-weight:700; color:var(--text-main); font-size:12.5px; text-align:center;">${escapeHtml(p.name)}</div>
+            <div class="period-time-pill" onclick="window.openEditPeriodTimeModal(${p.period})" title="点击修改时间">
+              ${p.startTime}-${p.endTime}
+            </div>
+          `;
+          tr.appendChild(th);
+
+          // 第2-6列：周一至周五
+          for (let day = 1; day <= 5; day++) {
+            const td = document.createElement('td');
+            const matchCourse = courses.find(c => Number(c.dayOfWeek) === day && Number(c.period) === Number(p.period));
+
+            if (matchCourse) {
+              td.innerHTML = `
+                <div class="cell-course-box" onclick="window.openEditCourse('${matchCourse.id}', ${day}, ${p.period})">
+                  <div class="cell-course-sub">${escapeHtml(matchCourse.subject)}</div>
+                  <div class="cell-course-info">${escapeHtml(matchCourse.className)}${matchCourse.classroom ? ' · ' + escapeHtml(matchCourse.classroom) : ''}</div>
+                </div>
+              `;
+            } else {
+              td.innerHTML = `
+                <button class="cell-add-btn" onclick="window.openAddCourse(${day}, ${p.period})">
+                  <i data-lucide="plus" style="width:13px; height:13px;"></i>
+                </button>
+              `;
+            }
+            tr.appendChild(td);
+          }
+
+          tbody.appendChild(tr);
+        });
+
+        // 最后一节课下方：通栏【+ 新增课节】按钮
+        const addRowTr = document.createElement('tr');
+        addRowTr.innerHTML = `
+          <td colspan="6" style="padding: 8px 4px; background:#FFFFFF;">
+            <button class="timetable-add-row-btn" onclick="window.handleAddNewPeriod()">
+              <i data-lucide="plus" style="width:14px; height:14px;"></i> 新增课节
+            </button>
+          </td>
+        `;
+        tbody.appendChild(addRowTr);
+
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // 打开修改单节时间弹窗
+      window.openEditPeriodTimeModal = function (periodNum) {
+        const periods = SchoolDB.getPeriods().sort((a, b) => Number(a.period) - Number(b.period));
+        const idx = periods.findIndex(p => Number(p.period) === Number(periodNum));
+        if (idx === -1) return;
+
+        const currentP = periods[idx];
+        document.getElementById('edit-period-num').value = currentP.period;
+        document.getElementById('modal-period-time-title').textContent = `修改【${currentP.name}】时间`;
+        document.getElementById('period-start-time').value = currentP.startTime;
+        document.getElementById('period-end-time').value = currentP.endTime;
+        document.getElementById('btn-delete-period-time').style.display = periods.length > 1 ? 'inline-flex' : 'none';
+
+        // 构建精炼单行约束提示
+        let hintText = '';
+        if (idx > 0 && idx < periods.length - 1) {
+          hintText = `上课时间不能早于 ${periods[idx - 1].endTime}，下课时间不能晚于 ${periods[idx + 1].startTime}`;
+        } else if (idx === 0 && periods.length > 1) {
+          hintText = `下课时间不能晚于 ${periods[1].startTime}`;
+        } else if (idx === periods.length - 1 && idx > 0) {
+          hintText = `上课时间不能早于 ${periods[idx - 1].endTime}`;
+        } else {
+          hintText = `上课时间需早于下课时间`;
+        }
+
+        document.getElementById('period-time-boundary-hint').textContent = hintText;
+        document.getElementById('modal-edit-period-time').classList.add('show');
+        if (window.lucide) window.lucide.createIcons();
+      };
+
+      function closeEditPeriodTimeModal() {
+        document.getElementById('modal-edit-period-time').classList.remove('show');
+      }
+
+      // 保存时间（严格时间范围校验）
+      function validateAndSavePeriodTime() {
+        const periodNum = Number(document.getElementById('edit-period-num').value);
+        const startTime = document.getElementById('period-start-time').value;
+        const endTime = document.getElementById('period-end-time').value;
+
+        if (!startTime || !endTime) {
+          showAlert('请填写完整的上课时间和下课时间', 'warning');
+          return;
+        }
+        if (startTime >= endTime) {
+          showAlert('上课时间必须早于下课时间', 'warning');
+          return;
+        }
+
+        const periods = SchoolDB.getPeriods().sort((a, b) => Number(a.period) - Number(b.period));
+        const idx = periods.findIndex(p => Number(p.period) === periodNum);
+        if (idx === -1) return;
+
+        // 校验不能早于上一节下课时间
+        if (idx > 0) {
+          const prevP = periods[idx - 1];
+          if (startTime < prevP.endTime) {
+            showAlert(`上课时间不能早于上一节(${prevP.name})的下课时间 ${prevP.endTime}`, 'warning');
+            return;
+          }
+        }
+
+        // 校验不能晚于下一节上课时间
+        if (idx < periods.length - 1) {
+          const nextP = periods[idx + 1];
+          if (endTime > nextP.startTime) {
+            showAlert(`下课时间不能晚于下一节(${nextP.name})的上课时间 ${nextP.startTime}`, 'warning');
+            return;
+          }
+        }
+
+        // 保存更新
+        SchoolDB.updatePeriod(periodNum, { startTime, endTime });
+        closeEditPeriodTimeModal();
+        renderTimetableMatrix();
+        renderCalendar();
+        renderDayView(false);
+      }
+
+      // 课节删除处理函数（支持表格直接点击与弹窗内点击）
+      window.handleDeletePeriod = async function (periodNum) {
+        const periods = SchoolDB.getPeriods().sort((a, b) => Number(a.period) - Number(b.period));
+        if (periods.length <= 1) {
+          showAlert('至少需要保留一个课节，无法删除', 'warning');
+          return;
+        }
+
+        const targetP = periods.find(p => Number(p.period) === Number(periodNum));
+        const pName = targetP ? targetP.name : `第${periodNum}节`;
+
+        const ok = await showConfirm({
+          title: '删除课节确认',
+          content: `确定要删除【${pName}】吗？删除后该节次及对应排课将一并移除，后续课节将自动重新编序。`,
+          type: 'danger'
+        });
+
+        if (ok) {
+          try {
+            SchoolDB.deletePeriod(periodNum);
+            closeEditPeriodTimeModal();
+            renderTimetableMatrix();
+            renderCalendar();
+            renderDayView(false);
+          } catch (err) {
+            showAlert(err.message || '删除失败', 'warning');
+          }
+        }
+      };
+
+      function handleDeletePeriodFromModal() {
+        const periodNum = Number(document.getElementById('edit-period-num').value);
+        if (periodNum) {
+          window.handleDeletePeriod(periodNum);
+        }
+      }
+
+      // 在最底部新增课节
+      window.handleAddNewPeriod = function () {
+        const periods = SchoolDB.getPeriods().sort((a, b) => Number(a.period) - Number(b.period));
+        const nextNum = periods.length > 0 ? Math.max(...periods.map(p => Number(p.period) || 0)) + 1 : 1;
+        
+        let startStr = '18:00';
+        let endStr = '18:45';
+
+        if (periods.length > 0) {
+          const lastP = periods[periods.length - 1];
+          const lastEndMin = timeToMinutes(lastP.endTime, 17 * 60);
+          const newStartMin = lastEndMin + 10;
+          const newEndMin = newStartMin + 45;
+
+          const sH = Math.min(23, Math.floor(newStartMin / 60));
+          const sM = newStartMin % 60;
+          const eH = Math.min(23, Math.floor(newEndMin / 60));
+          const eM = newEndMin % 60;
+
+          startStr = `${String(sH).padStart(2, '0')}:${String(sM).padStart(2, '0')}`;
+          endStr = `${String(eH).padStart(2, '0')}:${String(eM).padStart(2, '0')}`;
+        }
+
+        SchoolDB.addPeriod({
+          period: nextNum,
+          name: `第${nextNum}节`,
+          startTime: startStr,
+          endTime: endStr
+        });
+
+        renderTimetableMatrix();
+        renderCalendar();
+        renderDayView(false);
+      };
+
+      function populatePeriodSelect(selectedPeriod) {
+        const select = document.getElementById('course-form-period-select');
+        select.innerHTML = '';
+        const periods = SchoolDB.getPeriods();
+
+        periods.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.period;
+          opt.textContent = `${p.name} (${p.startTime}-${p.endTime})`;
+          if (Number(p.period) === Number(selectedPeriod)) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      function getFrequentCourseValues(field) {
+        const curId = SchoolDB.getSelectedTimetableId();
+        const tt = SchoolDB.getTimetableById(curId);
+        const courses = (tt && Array.isArray(tt.courses)) ? tt.courses : [];
+        const counts = {};
+        courses.forEach(c => {
+          const val = (c[field] || '').trim();
+          if (val) {
+            counts[val] = (counts[val] || 0) + 1;
+          }
+        });
+        // 按照当前课表内录入频次由高到低排序
+        return Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .map(entry => entry[0]);
+      }
+
+      function renderCourseFormChips() {
+        const subjectChipsEl = document.getElementById('course-subject-chips');
+        const classChipsEl = document.getElementById('course-class-chips');
+        const roomChipsEl = document.getElementById('course-room-chips');
+
+        function renderChipsForField(container, field, inputId) {
+          if (!container) return;
+          container.innerHTML = '';
+          const items = getFrequentCourseValues(field);
+          if (items.length === 0) {
+            container.style.display = 'none';
+            return;
+          }
+          container.style.display = 'flex';
+          items.forEach(val => {
+            const chip = document.createElement('span');
+            chip.className = 'subject-chip';
+            chip.textContent = val;
+            chip.onclick = () => {
+              const input = document.getElementById(inputId);
+              if (input) {
+                input.value = val;
+                validateCourseForm();
+                input.focus();
+              }
+            };
+            container.appendChild(chip);
+          });
+        }
+
+        renderChipsForField(subjectChipsEl, 'subject', 'course-form-subject');
+        renderChipsForField(classChipsEl, 'className', 'course-form-class');
+        renderChipsForField(roomChipsEl, 'classroom', 'course-form-room');
+      }
+
+      function validateCourseForm() {
+        const sub = (document.getElementById('course-form-subject').value || '').trim();
+        const cls = (document.getElementById('course-form-class').value || '').trim();
+        const btnSave = document.getElementById('btn-save-course');
+        if (btnSave) {
+          btnSave.disabled = (!sub || !cls);
+        }
+      }
+
+      window.openAddCourse = function (day, period) {
+        populatePeriodSelect(period);
+        renderCourseFormChips();
+        document.getElementById('modal-edit-course-title').textContent = '添加课程';
+        document.getElementById('course-form-id').value = '';
+        document.getElementById('course-form-day').value = day;
+        document.getElementById('course-form-subject').value = '';
+        document.getElementById('course-form-class').value = '';
+        document.getElementById('course-form-room').value = '';
+        document.getElementById('btn-delete-course').style.display = 'none';
+        validateCourseForm();
+
+        document.getElementById('modal-edit-course').classList.add('show');
+        setTimeout(() => {
+          document.getElementById('course-form-subject').focus();
+        }, 60);
+        if (window.lucide) window.lucide.createIcons();
+      };
+
+      window.openEditCourse = function (id, day, period) {
+        const courses = SchoolDB.getCourses();
+        const course = courses.find(c => String(c.id) === String(id));
+        if (!course) return;
+
+        populatePeriodSelect(period || course.period);
+        renderCourseFormChips();
+        document.getElementById('modal-edit-course-title').textContent = '编辑课程';
+        document.getElementById('course-form-id').value = course.id;
+        document.getElementById('course-form-day').value = day;
+        document.getElementById('course-form-subject').value = course.subject;
+        document.getElementById('course-form-class').value = course.className || '';
+        document.getElementById('course-form-room').value = course.classroom || '';
+        document.getElementById('btn-delete-course').style.display = 'inline-flex';
+        validateCourseForm();
+
+        document.getElementById('modal-edit-course').classList.add('show');
+        if (window.lucide) window.lucide.createIcons();
+      };
+
+      window.setSubjectInput = function (sub) {
+        document.getElementById('course-form-subject').value = sub;
+        validateCourseForm();
+      };
+
+      function closeCourseEditModal() {
+        document.getElementById('modal-edit-course').classList.remove('show');
+      }
+
+      function saveCourseForm() {
+        const id = document.getElementById('course-form-id').value;
+        const day = Number(document.getElementById('course-form-day').value);
+        const period = Number(document.getElementById('course-form-period-select').value);
+        const subject = document.getElementById('course-form-subject').value.trim();
+        const className = document.getElementById('course-form-class').value.trim();
+        const classroom = document.getElementById('course-form-room').value.trim();
+
+        if (!subject || !className) {
+          showAlert('请填写科目名称和授课班级', 'warning');
+          validateCourseForm();
+          return;
+        }
+
+        const periods = SchoolDB.getPeriods();
+        const matchPeriod = periods.find(p => Number(p.period) === period);
+        const startTime = matchPeriod ? matchPeriod.startTime : '08:00';
+        const endTime = matchPeriod ? matchPeriod.endTime : '08:45';
+
+        if (id) {
+          SchoolDB.updateCourse(id, {
+            dayOfWeek: day,
+            period,
+            subject,
+            className,
+            classroom,
+            startTime,
+            endTime
+          });
+        } else {
+          SchoolDB.addCourse({
+            dayOfWeek: day,
+            period,
+            subject,
+            className,
+            classroom,
+            startTime,
+            endTime
+          });
+        }
+
+        closeCourseEditModal();
+        renderTimetableMatrix();
+        renderCalendar();
+        renderDayView(false);
+      }
+
+      async function deleteCourseItem() {
+        const id = document.getElementById('course-form-id').value;
+        if (!id) return;
+
+        const ok = await showConfirm({
+          title: '删除排课确认',
+          content: '确定要删除该节排课吗？删除后日历对应排期将同步移除。',
+          type: 'danger'
+        });
+
+        if (ok) {
+          SchoolDB.deleteCourse(id);
+          closeCourseEditModal();
+          renderTimetableMatrix();
+          renderCalendar();
+          renderDayView(false);
+        }
+      }
+
+      // ========== 新建/编辑日程弹窗逻辑 ==========
+      function openEventModal(eventId = null, defaultStart = '14:30', defaultEnd = '16:00', defaultDate = null) {
+        document.getElementById('event-form-id').value = eventId || '';
+        if (eventId) {
+          const events = SchoolDB.getEvents();
+          const ev = events.find(e => String(e.id) === String(eventId));
+          if (ev) {
+            document.getElementById('event-modal-title').textContent = '编辑日程';
+            document.getElementById('event-form-title').value = ev.title || '';
+            document.getElementById('event-form-date').value = ev.date || state.selectedDateStr;
+            document.getElementById('event-form-start').value = ev.startTime || defaultStart;
+            document.getElementById('event-form-end').value = ev.endTime || defaultEnd;
+            document.getElementById('event-form-location').value = ev.location || '';
+            document.getElementById('btn-delete-event').style.display = 'inline-flex';
+          }
+        } else {
+          document.getElementById('event-modal-title').textContent = '新建日程';
+          document.getElementById('event-form-title').value = '';
+          document.getElementById('event-form-date').value = defaultDate || state.selectedDateStr;
+          document.getElementById('event-form-start').value = defaultStart;
+          document.getElementById('event-form-end').value = defaultEnd;
+          document.getElementById('event-form-location').value = '';
+          document.getElementById('btn-delete-event').style.display = 'none';
+        }
+
+        document.getElementById('modal-event-form').classList.add('show');
+        setTimeout(() => {
+          document.getElementById('event-form-title').focus();
+        }, 60);
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      window.openEventModal = openEventModal;
+      window.editCalendarEvent = function (id) {
+        openEventModal(id);
+      };
+
+      function closeEventModal() {
+        document.getElementById('modal-event-form').classList.remove('show');
+      }
+
+      function saveEventForm() {
+        const id = document.getElementById('event-form-id').value;
+        const title = document.getElementById('event-form-title').value.trim();
+        const date = document.getElementById('event-form-date').value;
+        const startTime = document.getElementById('event-form-start').value;
+        const endTime = document.getElementById('event-form-end').value;
+        const location = document.getElementById('event-form-location').value.trim();
+
+        if (!title) {
+          showAlert('请输入日程标题');
+          return;
+        }
+        if (!date) {
+          showAlert('请选择日程日期');
+          return;
+        }
+
+        if (id) {
+          SchoolDB.updateEvent(id, { title, date, startTime, endTime, location });
+        } else {
+          SchoolDB.addEvent({ title, date, startTime, endTime, location });
+        }
+
+        closeEventModal();
+        renderCalendar();
+        renderDayView(false);
+      }
+
+      async function deleteEventItem() {
+        const id = document.getElementById('event-form-id').value;
+        if (!id) return;
+
+        const ok = await showConfirm({
+          title: '删除日程',
+          content: '确定要删除此项日程吗？',
+          type: 'danger'
+        });
+        if (ok) {
+          SchoolDB.deleteEvent(id);
+          closeEventModal();
+          renderCalendar();
+          renderDayView(false);
+        }
+      }
+
+      window.deleteCalendarEvent = async function (id) {
+        const ok = await showConfirm({
+          title: '删除日程',
+          content: '确定要删除此项日程吗？',
+          type: 'danger'
+        });
+        if (ok) {
+          SchoolDB.deleteEvent(id);
+          renderCalendar();
+          renderDayView(false);
+        }
+      };
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // 启动初始化
+      init();
+    })();
+  </script>
+</body>
+
+</html>

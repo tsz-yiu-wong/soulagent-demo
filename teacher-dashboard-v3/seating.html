@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师工作台 - 座位安排</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 本地通用核心库 (全部预载，保证离线与快速切换零延迟) -->
+  <script src="js/libs/lucide.js"></script>
+  <script src="js/libs/xlsx.full.min.js"></script>
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/anime.min.js"></script>
+  <script src="js/libs/confetti.browser.min.js"></script>
+  <script src="js/libs/gsap.min.js"></script>
+</head>
+
+<body>
+
+  <!-- 页面头部与操作区 -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1><i data-lucide="layout-grid" style="color: var(--primary); width: 24px; height: 24px; flex-shrink: 0;"></i> 座位安排</h1>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; flex-shrink: 0;">
+      <button class="btn btn-secondary" id="btn-export-excel" style="white-space: nowrap;">
+        <i data-lucide="download"></i> 导出 Excel
+      </button>
+      <button class="btn btn-secondary" id="btn-export-image" style="white-space: nowrap;">
+        <i data-lucide="image"></i> 导出为图片
+      </button>
+      <button class="btn btn-secondary btn-danger-hover" id="btn-clear-seats" style="white-space: nowrap;">
+        <i data-lucide="trash-2"></i> 清空座位表
+      </button>
+    </div>
+  </div>
+
+  <!-- 参数与排位规则控制卡片 -->
+  <div class="card" style="display: flex; flex-direction: column; gap: 14px; padding: 18px 24px;">
+    
+    <!-- 第一行：教室布局设置 -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);">
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: nowrap; flex-shrink: 0;">
+        <div style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text-main); white-space: nowrap; flex-shrink: 0;">
+          <i data-lucide="sliders" style="width: 16px; height: 16px; color: var(--primary); flex-shrink: 0;"></i>
+          <span>教室布局</span>
+        </div>
+
+        <!-- 行数步进器 -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+          <span style="font-size: 13px; color: var(--text-sub);">行数</span>
+          <div class="stepper">
+            <button class="stepper-btn" id="btn-row-minus" type="button">-</button>
+            <input type="number" id="input-rows" class="stepper-input" value="5" min="1" max="20">
+            <button class="stepper-btn" id="btn-row-plus" type="button">+</button>
+          </div>
+        </div>
+
+        <!-- 列数步进器 -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+          <span style="font-size: 13px; color: var(--text-sub);">列数</span>
+          <div class="stepper">
+            <button class="stepper-btn" id="btn-col-minus" type="button">-</button>
+            <input type="number" id="input-cols" class="stepper-input" value="6" min="1" max="20">
+            <button class="stepper-btn" id="btn-col-plus" type="button">+</button>
+          </div>
+        </div>
+
+        <!-- 实时座位数提示 -->
+        <div id="wrap-capacity-tip" style="font-size: 13px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; transition: color 0.15s ease;">
+          <span>当前座位数：<span id="capacity-badge" style="font-weight: 700; color: var(--primary); font-size: 14px;">30</span>人</span>
+          <span id="capacity-normal">，当前学生数量：<span id="student-count-normal-badge" style="font-weight: 700; color: var(--primary); font-size: 14px;">30</span>人</span>
+          <span id="capacity-warning" style="display: none;">，小于学生人数：<span id="student-count-badge" style="font-weight: 700; font-size: 14px;">32</span>人</span>
+        </div>
+      </div>
+
+      <!-- 保存布局按钮 (只有行或列发生变动时才高亮激活) -->
+      <button class="btn btn-primary" id="btn-apply-layout" disabled style="flex-shrink: 0; white-space: nowrap;">
+        <i data-lucide="check"></i> 保存布局
+      </button>
+    </div>
+
+    <!-- 第二行：全量排座设置 -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: nowrap; overflow-x: auto;">
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: nowrap; flex-shrink: 0;">
+        <!-- 排座规则 -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <div style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text-main); white-space: nowrap; flex-shrink: 0;">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px; color: var(--warning); flex-shrink: 0;"></i>
+            <span>排座规则</span>
+          </div>
+          <select id="select-arrange-mode" class="select" style="font-size: 13px; width: 140px; height: 34px; padding: 0 8px;">
+            <option value="id_asc">按学号顺序</option>
+            <option value="id_desc">按学号倒序</option>
+            <option value="random">完全随机</option>
+            <option value="gender_cross">按男女交替随机</option>
+          </select>
+        </div>
+
+        <!-- 空座规则（容量 > 人数时同级动态显示） -->
+        <div id="wrap-empty-strategy" style="display: none; align-items: center; gap: 8px; flex-shrink: 0;">
+          <div style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text-main); white-space: nowrap; flex-shrink: 0;">
+            <i data-lucide="sofa" style="width: 16px; height: 16px; color: var(--text-sub); flex-shrink: 0;"></i>
+            <span>空座规则</span>
+          </div>
+          <select id="select-empty-strategy" class="select" style="font-size: 13px; width: 120px; height: 34px; padding: 0 8px;">
+            <option value="back">优先空最后</option>
+            <option value="flanks">优先空两侧</option>
+            <option value="random">随机空座</option>
+          </select>
+        </div>
+
+        <!-- 换座提示：跟在空座规则后 -->
+        <span style="font-size: 13px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0;">
+          💡 拖拽卡片可直接换座
+        </span>
+      </div>
+
+      <!-- 一键排座按钮 -->
+      <button class="btn btn-primary" id="btn-generate-arrange" style="flex-shrink: 0; white-space: nowrap;">
+        <i data-lucide="play"></i> 一键排座
+      </button>
+    </div>
+
+  </div>
+
+  <!-- 座位平移与微调操作栏 (独立于导出画板之外，导出时不包含) -->
+  <div class="card" style="padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: nowrap; overflow-x: auto;">
+    <div style="display: flex; align-items: center; gap: 16px; flex-shrink: 0;">
+      <div style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; color: var(--text-main); white-space: nowrap;">
+        <i data-lucide="move" style="width: 16px; height: 16px; color: var(--primary);"></i>
+        <span>座位平移</span>
+      </div>
+      <div class="shift-btn-group" style="flex-wrap: nowrap; white-space: nowrap;">
+        <button class="shift-btn" data-shift="row_shift_up" title="所有座位向前平移 1 排">
+          <i data-lucide="arrow-up" style="width: 13px; height: 13px;"></i> 向前
+        </button>
+        <button class="shift-btn" data-shift="row_shift_down" title="所有座位向后平移 1 排">
+          <i data-lucide="arrow-down" style="width: 13px; height: 13px;"></i> 向后
+        </button>
+        <button class="shift-btn" data-shift="col_shift_left" title="所有座位向左平移 1 列">
+          <i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i> 向左
+        </button>
+        <button class="shift-btn" data-shift="col_shift_right" title="所有座位向右平移 1 列">
+          <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i> 向右
+        </button>
+        <button class="shift-btn" data-shift="diag_shift_upleft" title="向前 1 排且向左 1 列">
+          <i data-lucide="arrow-up-left" style="width: 13px; height: 13px;"></i> 左前
+        </button>
+        <button class="shift-btn" data-shift="diag_shift_downleft" title="向后 1 排且向左 1 列">
+          <i data-lucide="arrow-down-left" style="width: 13px; height: 13px;"></i> 左后
+        </button>
+        <button class="shift-btn" data-shift="diag_shift_upright" title="向前 1 排且向右 1 列">
+          <i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i> 右前
+        </button>
+        <button class="shift-btn" data-shift="diag_shift_downright" title="向后 1 排且向右 1 列">
+          <i data-lucide="arrow-down-right" style="width: 13px; height: 13px;"></i> 右后
+        </button>
+      </div>
+    </div>
+
+    <!-- 撤销按钮：同排紧跟在右侧不折行 -->
+    <div style="flex-shrink: 0;">
+      <button class="btn btn-outline btn-sm" id="btn-undo" disabled title="撤销上一次平移操作" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+        <i data-lucide="undo-2" style="width: 14px; height: 14px;"></i> 撤销
+      </button>
+    </div>
+  </div>
+
+  <!-- 座位表展示区 (可导出为高清图片，仅包含讲台与座位) -->
+  <div class="card seating-board" id="seating-export-board" style="background: #FFFFFF; padding: 28px 24px;">
+
+    <!-- 画板内容：滚动容器包含讲台与网格 -->
+    <div class="seating-scroll-container">
+      <!-- 讲台 / 黑板标识 -->
+      <div class="lectern" style="margin-bottom: 24px;">
+        <i data-lucide="presentation" style="width: 18px; height: 18px;"></i>
+        讲 台 / 黑 板 (前 方)
+      </div>
+
+      <!-- 网格容器 -->
+      <div class="seats-grid" id="seats-grid">
+        <!-- 动态生成座位卡片 -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 快捷指派学生弹窗 -->
+  <div class="modal-backdrop" id="assign-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="assign-modal-title">选择学生入座</div>
+        <button class="modal-close" id="btn-close-assign"><i data-lucide="x"></i></button>
+      </div>
+      <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 12px;">
+        未安排座位的学生列表：
+      </div>
+      <div id="unseated-list"
+        style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+        <!-- 未入座学生 -->
+      </div>
+      <div id="unseated-empty"
+        style="display: none; text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+        所有学生均已安排座位
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示容器 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- 引入后端 API 客户端、数据层、弹窗组件与侧边栏 -->
+  <script src="data/api.js"></script>
+  <script src="data/db.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/sidebar.js"></script>
+
+  <!-- 业务逻辑 -->
+  <script>
+    (function () {
+      function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle-2' : 'alert-circle'}" style="color: ${type === 'success' ? 'var(--primary)' : 'var(--danger)'};"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.2s ease';
+        setTimeout(() => toast.remove(), 200);
+      }, 2600);
+    }
+    window.showToast = showToast;
+
+    let draggedIndex = null;
+    let selectedSeatIndex = null;
+    let isAnimating = false;
+
+    // 平移专属撤销历史栈
+    const shiftHistoryStack = [];
+    const btnUndo = document.getElementById('btn-undo');
+
+    function saveShiftSnapshot() {
+      const config = SchoolDB.getSeating();
+      shiftHistoryStack.push([...(config.seats || [])]);
+      if (shiftHistoryStack.length > 20) {
+        shiftHistoryStack.shift();
+      }
+      updateUndoBtnState();
+    }
+
+    function clearShiftHistory() {
+      shiftHistoryStack.length = 0;
+      updateUndoBtnState();
+    }
+
+    function updateUndoBtnState() {
+      btnUndo.disabled = (shiftHistoryStack.length === 0);
+    }
+
+    btnUndo.onclick = () => {
+      if (shiftHistoryStack.length === 0 || isAnimating) return;
+      const prevSeats = shiftHistoryStack.pop();
+      const config = SchoolDB.getSeating();
+      config.seats = prevSeats;
+      updateUndoBtnState();
+      showToast('已撤销上一次平移');
+      animateShiftTransition('undo', () => {
+        SchoolDB.saveSeating(config);
+        renderSeatingGrid();
+      });
+    };
+
+    // 步进器与实时容量联动
+    const rowsInput = document.getElementById('input-rows');
+    const colsInput = document.getElementById('input-cols');
+    const capacityBadge = document.getElementById('capacity-badge');
+    const wrapEmptyStrategy = document.getElementById('wrap-empty-strategy');
+    const selectArrangeMode = document.getElementById('select-arrange-mode');
+    const selectEmptyStrategy = document.getElementById('select-empty-strategy');
+    const btnApplyLayout = document.getElementById('btn-apply-layout');
+
+    // 本地缓存：排座规则与空座规则
+    const CACHE_ARRANGE_MODE_KEY = 'teacher_seating_arrange_mode';
+    const CACHE_EMPTY_STRATEGY_KEY = 'teacher_seating_empty_strategy';
+
+    function initRulesFromCache() {
+      const cachedArrange = localStorage.getItem(CACHE_ARRANGE_MODE_KEY);
+      if (cachedArrange && Array.from(selectArrangeMode.options).some(o => o.value === cachedArrange)) {
+        selectArrangeMode.value = cachedArrange;
+      }
+      const cachedEmpty = localStorage.getItem(CACHE_EMPTY_STRATEGY_KEY);
+      if (cachedEmpty && Array.from(selectEmptyStrategy.options).some(o => o.value === cachedEmpty)) {
+        selectEmptyStrategy.value = cachedEmpty;
+      }
+    }
+
+    selectArrangeMode.addEventListener('change', () => {
+      localStorage.setItem(CACHE_ARRANGE_MODE_KEY, selectArrangeMode.value);
+    });
+
+    selectEmptyStrategy.addEventListener('change', () => {
+      localStorage.setItem(CACHE_EMPTY_STRATEGY_KEY, selectEmptyStrategy.value);
+    });
+
+    // 刷新容量数值、空座规则显隐与【保存布局】按钮激活态
+    function checkLayoutChanges() {
+      const config = SchoolDB.getSeating();
+      const dbRows = parseInt(config.rows) || 5;
+      const dbCols = parseInt(config.cols) || 6;
+
+      const r = parseInt(rowsInput.value) || 1;
+      const c = parseInt(colsInput.value) || 1;
+      const totalCapacity = r * c;
+
+      capacityBadge.textContent = `${totalCapacity}`;
+
+      const students = SchoolDB.getStudents();
+      const studentCount = students.length;
+      const wrapTip = document.getElementById('wrap-capacity-tip');
+      const normalEl = document.getElementById('capacity-normal');
+      const warningEl = document.getElementById('capacity-warning');
+      const studentCountNormalBadge = document.getElementById('student-count-normal-badge');
+      const studentCountBadge = document.getElementById('student-count-badge');
+
+      if (totalCapacity < studentCount) {
+        // 座位数少于学生人数：保存布局 disable，整句话全部变成警告红色
+        btnApplyLayout.disabled = true;
+        if (wrapTip) wrapTip.style.color = 'var(--danger)';
+        capacityBadge.style.color = 'var(--danger)';
+        if (studentCountBadge) {
+          studentCountBadge.textContent = `${studentCount}`;
+        }
+        if (normalEl) {
+          normalEl.style.display = 'none';
+        }
+        if (warningEl) {
+          warningEl.style.display = 'inline';
+        }
+      } else {
+        if (wrapTip) wrapTip.style.color = 'var(--text-muted)';
+        capacityBadge.style.color = 'var(--primary)';
+        if (studentCountNormalBadge) {
+          studentCountNormalBadge.textContent = `${studentCount}`;
+        }
+        if (normalEl) {
+          normalEl.style.display = 'inline';
+        }
+        if (warningEl) {
+          warningEl.style.display = 'none';
+        }
+        // 只有行或列发生变动且容量充足时才激活保存布局按钮
+        btnApplyLayout.disabled = (r === dbRows && c === dbCols);
+      }
+
+      // 检查空座规则容器显隐（容量 > 学生人数时显示）
+      wrapEmptyStrategy.style.display = (totalCapacity > studentCount) ? 'flex' : 'none';
+
+      updateStepperBtnStates();
+    }
+
+    function updateStepperBtnStates() {
+      const r = parseInt(rowsInput.value) || 1;
+      const c = parseInt(colsInput.value) || 1;
+      const btnRowMinus = document.getElementById('btn-row-minus');
+      const btnRowPlus = document.getElementById('btn-row-plus');
+      const btnColMinus = document.getElementById('btn-col-minus');
+      const btnColPlus = document.getElementById('btn-col-plus');
+      if (btnRowMinus) btnRowMinus.disabled = (r <= 1);
+      if (btnRowPlus) btnRowPlus.disabled = (r >= 20);
+      if (btnColMinus) btnColMinus.disabled = (c <= 1);
+      if (btnColPlus) btnColPlus.disabled = (c >= 20);
+    }
+
+    function handleStepper(inputEl, delta) {
+      let val = (parseInt(inputEl.value) || 1) + delta;
+      if (val < 1) val = 1;
+      if (val > 20) val = 20;
+      inputEl.value = val;
+      checkLayoutChanges();
+    }
+
+    function handleInputDirect(inputEl) {
+      if (inputEl.value === '') {
+        checkLayoutChanges();
+        return;
+      }
+      let val = parseInt(inputEl.value);
+      if (!isNaN(val)) {
+        if (val > 20) {
+          inputEl.value = 20;
+        } else if (val < 1) {
+          inputEl.value = 1;
+        }
+      }
+      checkLayoutChanges();
+    }
+
+    function handleChangeDirect(inputEl) {
+      let val = parseInt(inputEl.value);
+      if (isNaN(val) || val < 1) {
+        inputEl.value = 1;
+      } else if (val > 20) {
+        inputEl.value = 20;
+      }
+      checkLayoutChanges();
+    }
+
+    document.getElementById('btn-row-minus').onclick = () => handleStepper(rowsInput, -1);
+    document.getElementById('btn-row-plus').onclick = () => handleStepper(rowsInput, 1);
+    document.getElementById('btn-col-minus').onclick = () => handleStepper(colsInput, -1);
+    document.getElementById('btn-col-plus').onclick = () => handleStepper(colsInput, 1);
+    rowsInput.oninput = () => handleInputDirect(rowsInput);
+    colsInput.oninput = () => handleInputDirect(colsInput);
+    rowsInput.onchange = () => handleChangeDirect(rowsInput);
+    colsInput.onchange = () => handleChangeDirect(colsInput);
+
+    // 判定是否属于排座相关关照备注（近视、散光、前排、视力等）
+    function isSeatingRelevantNote(note) {
+      if (!note) return false;
+      return /近视|散光|前排|视力|斜视|弱视|听力/i.test(note);
+    }
+
+    // 1. 教室规格应用 (清空平移历史)
+    btnApplyLayout.onclick = () => {
+      const rows = parseInt(rowsInput.value) || 5;
+      const cols = parseInt(colsInput.value) || 6;
+
+      clearShiftHistory();
+
+      const config = SchoolDB.getSeating();
+      const oldSeats = config.seats || [];
+      const newSeats = new Array(rows * cols).fill('');
+
+      // 尽量保留原有位置学生
+      for (let i = 0; i < Math.min(oldSeats.length, newSeats.length); i++) {
+        newSeats[i] = oldSeats[i];
+      }
+
+      config.rows = rows;
+      config.cols = cols;
+      config.seats = newSeats;
+
+      SchoolDB.saveSeating(config);
+      showToast(`已应用为 ${rows} 行 × ${cols} 列布局`);
+      renderSeatingGrid();
+
+      if (typeof gsap !== 'undefined') {
+        gsap.from('#seats-grid .seat-card', {
+          scale: 0.8,
+          opacity: 0,
+          duration: 0.35,
+          stagger: { amount: 0.2, from: 'start' },
+          ease: 'power2.out'
+        });
+      }
+    };
+
+    // 渲染座位网格
+    function renderSeatingGrid() {
+      const seatingConfig = SchoolDB.getSeating();
+      const students = SchoolDB.getStudents();
+      const studentMap = new Map(students.map(s => [String(s.id), s]));
+
+      const rows = parseInt(seatingConfig.rows) || 5;
+      const cols = parseInt(seatingConfig.cols) || 6;
+
+      rowsInput.value = rows;
+      colsInput.value = cols;
+      checkLayoutChanges();
+
+      const gridEl = document.getElementById('seats-grid');
+      gridEl.style.gridTemplateColumns = `repeat(${cols}, minmax(84px, 1fr))`;
+      gridEl.style.minWidth = 'auto';
+      gridEl.innerHTML = '';
+
+      const totalSeats = rows * cols;
+      const seats = seatingConfig.seats || [];
+
+      for (let i = 0; i < totalSeats; i++) {
+        const studentId = seats[i] ? String(seats[i]) : '';
+        const student = studentMap.get(studentId);
+
+        const rowNum = Math.floor(i / cols) + 1;
+        const colNum = (i % cols) + 1;
+
+        const seatCard = document.createElement('div');
+        seatCard.className = `seat-card ${student ? 'occupied' : ''}`;
+        seatCard.setAttribute('draggable', 'true');
+        seatCard.dataset.index = i;
+        seatCard.dataset.studentId = studentId;
+        seatCard.dataset.row = rowNum;
+        seatCard.dataset.col = colNum;
+
+        if (student) {
+          const hasSeatingNote = isSeatingRelevantNote(student.specialNotes);
+
+          seatCard.innerHTML = `
+            <span class="seat-number">${rowNum}-${colNum}</span>
+            <button class="seat-del-btn btn-seat-action" title="移出此座位">×</button>
+            <div class="student-name" style="display: flex; align-items: center; justify-content: center;">
+              <span>${student.name}</span>
+              ${hasSeatingNote ? `
+                <span class="seating-note-icon" 
+                      data-tooltip="关照备注：${student.specialNotes}" 
+                      data-html2canvas-ignore="true" 
+                      style="font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #FEF3C7; color: #D97706; margin-left: 3px; vertical-align: middle;">⚠️</span>
+              ` : ''}
+            </div>
+            <div class="student-id">${student.id}</div>
+            <span class="badge ${student.gender === '男' ? 'badge-male' : 'badge-female'}" style="font-size: 10px; padding: 1px 6px; margin-top: 4px;">
+              <i data-lucide="${student.gender === '男' ? 'mars' : 'venus'}" style="width: 10px; height: 10px;"></i>
+              ${student.gender}
+            </span>
+          `;
+        } else {
+          seatCard.innerHTML = `
+            <span class="seat-number">${rowNum}-${colNum}</span>
+            <div class="empty-label">+ 点击选人</div>
+          `;
+        }
+
+        // 点击事件
+        seatCard.onclick = (e) => {
+          if (e.target.classList.contains('btn-seat-action')) {
+            if (typeof gsap !== 'undefined') {
+              gsap.to(seatCard, {
+                scale: 0.6,
+                opacity: 0,
+                duration: 0.2,
+                onComplete: () => {
+                  seats[i] = '';
+                  seatingConfig.seats = seats;
+                  SchoolDB.saveSeating(seatingConfig);
+                  showToast('已将学生移出座位');
+                  renderSeatingGrid();
+                }
+              });
+            } else {
+              seats[i] = '';
+              seatingConfig.seats = seats;
+              SchoolDB.saveSeating(seatingConfig);
+              showToast('已将学生移出座位');
+              renderSeatingGrid();
+            }
+            return;
+          }
+          if (!student) {
+            openAssignModal(i, rowNum, colNum);
+          }
+        };
+
+        // 拖拽事件监听
+        seatCard.addEventListener('dragstart', (e) => {
+          draggedIndex = i;
+          seatCard.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        seatCard.addEventListener('dragend', () => {
+          seatCard.classList.remove('dragging');
+          draggedIndex = null;
+        });
+
+        seatCard.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          seatCard.classList.add('drag-over');
+        });
+
+        seatCard.addEventListener('dragleave', () => {
+          seatCard.classList.remove('drag-over');
+        });
+
+        seatCard.addEventListener('drop', (e) => {
+          e.preventDefault();
+          seatCard.classList.remove('drag-over');
+
+          const targetIndex = i;
+          if (draggedIndex !== null && draggedIndex !== targetIndex) {
+            swapSeats(draggedIndex, targetIndex);
+          }
+        });
+
+        gridEl.appendChild(seatCard);
+      }
+
+      lucide.createIcons();
+    }
+
+    // 调换座位
+    function swapSeats(fromIdx, toIdx) {
+      const config = SchoolDB.getSeating();
+      const seats = [...(config.seats || [])];
+
+      const temp = seats[fromIdx] || '';
+      seats[fromIdx] = seats[toIdx] || '';
+      seats[toIdx] = temp;
+
+      config.seats = seats;
+      SchoolDB.saveSeating(config);
+      showToast('座位调换成功');
+      renderSeatingGrid();
+
+      if (typeof gsap !== 'undefined') {
+        const gridEl = document.getElementById('seats-grid');
+        const cardA = gridEl.querySelector(`[data-index="${fromIdx}"]`);
+        const cardB = gridEl.querySelector(`[data-index="${toIdx}"]`);
+        if (cardA) {
+          gsap.fromTo(cardA, 
+            { scale: 1.15, borderColor: 'var(--primary)', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' },
+            { scale: 1, borderColor: '', boxShadow: 'none', duration: 0.35, ease: 'back.out(2)' }
+          );
+        }
+        if (cardB) {
+          gsap.fromTo(cardB, 
+            { scale: 1.15, borderColor: 'var(--primary)', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' },
+            { scale: 1, borderColor: '', boxShadow: 'none', duration: 0.35, ease: 'back.out(2)' }
+          );
+        }
+      }
+    }
+
+    // 弹窗指派未入座学生
+    const assignModal = document.getElementById('assign-modal');
+
+    function openAssignModal(seatIdx, row, col) {
+      selectedSeatIndex = seatIdx;
+      document.getElementById('assign-modal-title').textContent = `为【${row}排${col}座】选择学生`;
+
+      const allStudents = SchoolDB.getStudents();
+      const config = SchoolDB.getSeating();
+      const seatedIds = new Set((config.seats || []).filter(Boolean).map(String));
+
+      const unseated = allStudents.filter(s => !seatedIds.has(String(s.id)));
+      const listEl = document.getElementById('unseated-list');
+      const emptyEl = document.getElementById('unseated-empty');
+
+      listEl.innerHTML = '';
+      if (unseated.length === 0) {
+        emptyEl.style.display = 'block';
+      } else {
+        emptyEl.style.display = 'none';
+        unseated.forEach(s => {
+          const item = document.createElement('div');
+          item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer;';
+          const hasSeatingNote = isSeatingRelevantNote(s.specialNotes);
+          item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 600;">${s.name}</span>
+              <span style="font-size: 12px; color: var(--text-sub);">${s.id}</span>
+              ${hasSeatingNote ? `<span style="font-size: 11px; color: #D97706; background: #FEF3C7; padding: 1px 6px; border-radius: 4px;">⚠️ ${s.specialNotes}</span>` : ''}
+            </div>
+            <span class="badge ${s.gender === '男' ? 'badge-male' : 'badge-female'}">
+              <i data-lucide="${s.gender === '男' ? 'mars' : 'venus'}" style="width: 10px; height: 10px;"></i>
+              ${s.gender}
+            </span>
+          `;
+          item.onmouseover = () => item.style.background = 'var(--primary-light)';
+          item.onmouseout = () => item.style.background = '#F8FAFC';
+          item.onclick = () => {
+            const seats = [...(config.seats || [])];
+            seats[selectedSeatIndex] = String(s.id);
+            config.seats = seats;
+            SchoolDB.saveSeating(config);
+            assignModal.classList.remove('show');
+            showToast(`已安排【${s.name}】就座`);
+            renderSeatingGrid();
+            if (typeof gsap !== 'undefined') {
+              const newSeat = document.querySelector(`[data-index="${selectedSeatIndex}"]`);
+              if (newSeat) {
+                gsap.fromTo(newSeat, 
+                  { scale: 0.35, opacity: 0 },
+                  { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.8)' }
+                );
+              }
+            }
+          };
+          listEl.appendChild(item);
+        });
+      }
+
+      assignModal.classList.add('show');
+      lucide.createIcons();
+    }
+
+    document.getElementById('btn-close-assign').onclick = () => assignModal.classList.remove('show');
+
+    // ==================== GSAP 专业动效引擎 ====================
+
+    // 1. 完全随机 / 男女交替随机动效：全部卡片聚到中央洗牌，再从中心如发牌般散开各就各位
+    function animateRandomGatherAndScatter(callback) {
+      const gridEl = document.getElementById('seats-grid');
+      const cards = Array.from(gridEl.querySelectorAll('.seat-card'));
+      if (cards.length === 0 || typeof gsap === 'undefined') {
+        callback();
+        return;
+      }
+
+      isAnimating = true;
+      const gridRect = gridEl.getBoundingClientRect();
+      const centerX = gridRect.width / 2;
+      const centerY = gridRect.height / 2;
+
+      // 阶段一：当前所有卡片聚向中央成一叠洗牌
+      const gatherTl = gsap.timeline({
+        onComplete: () => {
+          // 聚在中央的瞬间更新真实数据与 DOM
+          callback();
+
+          // 重新获取新生成的卡片和网格尺寸
+          const newGridRect = gridEl.getBoundingClientRect();
+          const newCenterX = newGridRect.width / 2;
+          const newCenterY = newGridRect.height / 2;
+          const newCards = Array.from(gridEl.querySelectorAll('.seat-card'));
+          let completed = 0;
+
+          // 批量读取尺寸，避免 layout thrashing
+          const cardItems = newCards.map((card, idx) => {
+            const cardRect = card.getBoundingClientRect();
+            const cardCenterX = (cardRect.left - newGridRect.left) + cardRect.width / 2;
+            const cardCenterY = (cardRect.top - newGridRect.top) + cardRect.height / 2;
+            const startDx = newCenterX - cardCenterX;
+            const startDy = newCenterY - cardCenterY;
+            const distFromCenter = Math.hypot(startDx, startDy);
+            const startRot = (Math.random() - 0.5) * 20;
+            return { card, idx, startDx, startDy, startRot, distFromCenter };
+          });
+
+          // 按离中央的距离由远及近排序（离中心最远的外圈先发牌，最近的内圈后发牌）
+          cardItems.sort((a, b) => b.distFromCenter - a.distFromCenter);
+
+          // 立即同步锁定在中央堆叠姿态（预设最高 zIndex 降序，全硬件加速）
+          cardItems.forEach((item, dealIdx) => {
+            gsap.set(item.card, {
+              x: item.startDx + (Math.random() - 0.5) * 12,
+              y: item.startDy + (Math.random() - 0.5) * 12,
+              rotation: item.startRot,
+              scale: 0.88,
+              opacity: 1,
+              zIndex: 100 - dealIdx,
+              force3D: true
+            });
+          });
+
+          // 阶段二：从中央发牌散回各自的新座次 (纯 GPU transform，极致丝滑 60/120 FPS)
+          cardItems.forEach((item, dealIdx) => {
+            const card = item.card;
+            gsap.to(card, {
+              x: 0,
+              y: 0,
+              rotation: 0,
+              scale: 1,
+              opacity: 1,
+              duration: 0.42,
+              delay: 0.015 + dealIdx * 0.016,
+              ease: 'power2.out',
+              force3D: true,
+              onComplete: () => {
+                gsap.set(card, { clearProps: 'transform,zIndex' });
+                completed++;
+                if (completed >= cardItems.length) {
+                  isAnimating = false;
+                }
+              }
+            });
+          });
+        }
+      });
+
+      cards.forEach((card, idx) => {
+        const cardRect = card.getBoundingClientRect();
+        const cardCenterX = (cardRect.left - gridRect.left) + cardRect.width / 2;
+        const cardCenterY = (cardRect.top - gridRect.top) + cardRect.height / 2;
+        const targetDx = centerX - cardCenterX;
+        const targetDy = centerY - cardCenterY;
+
+        gatherTl.to(card, {
+          x: targetDx + (Math.random() - 0.5) * 20,
+          y: targetDy + (Math.random() - 0.5) * 20,
+          rotation: (Math.random() - 0.5) * 24,
+          scale: 0.88,
+          zIndex: 50 + idx,
+          duration: 0.32,
+          ease: 'power2.inOut',
+          force3D: true
+        }, 0);
+      });
+
+      // 中央轻微洗牌震颤
+      gatherTl.to(cards, {
+        x: '+=' + (Math.random() * 8 - 4),
+        y: '+=' + (Math.random() * 8 - 4),
+        rotation: '+=' + (Math.random() * 8 - 4),
+        duration: 0.12,
+        ease: 'sine.inOut',
+        force3D: true
+      });
+    }
+
+    // 2. 规则排座动效：挪来挪去的 FLIP 飞行穿梭
+    function animateIntelligentRearrange(callback) {
+      const gridEl = document.getElementById('seats-grid');
+      const oldCards = Array.from(gridEl.querySelectorAll('.seat-card'));
+      const oldPosMap = new Map();
+
+      oldCards.forEach(card => {
+        const sId = card.dataset.studentId;
+        if (sId) {
+          oldPosMap.set(sId, card.getBoundingClientRect());
+        }
+      });
+
+      isAnimating = true;
+      callback();
+
+      if (typeof gsap === 'undefined') {
+        isAnimating = false;
+        return;
+      }
+
+      const newCards = Array.from(gridEl.querySelectorAll('.seat-card'));
+      let completedCount = 0;
+      const totalCards = newCards.length;
+
+      newCards.forEach((card, idx) => {
+        const sId = card.dataset.studentId;
+        const newRect = card.getBoundingClientRect();
+
+        if (sId && oldPosMap.has(sId)) {
+          const oldRect = oldPosMap.get(sId);
+          const dx = oldRect.left - newRect.left;
+          const dy = oldRect.top - newRect.top;
+
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+            gsap.set(card, {
+              x: dx,
+              y: dy,
+              scale: 1.07,
+              boxShadow: '0 10px 24px rgba(0,0,0,0.16)',
+              zIndex: 40
+            });
+            gsap.to(card, {
+              x: 0,
+              y: 0,
+              scale: 1,
+              boxShadow: 'none',
+              zIndex: 1,
+              duration: 0.5,
+              delay: (idx % 6) * 0.03 + Math.floor(idx / 6) * 0.025,
+              ease: 'power3.out',
+              onComplete: () => {
+                gsap.set(card, { clearProps: 'transform,zIndex,boxShadow' });
+                completedCount++;
+                if (completedCount >= totalCards) isAnimating = false;
+              }
+            });
+          } else {
+            completedCount++;
+          }
+        } else if (sId) {
+          gsap.fromTo(card, 
+            { scale: 0.3, opacity: 0 },
+            { 
+              scale: 1, 
+              opacity: 1, 
+              duration: 0.45, 
+              delay: (idx % 6) * 0.03, 
+              ease: 'back.out(1.6)',
+              onComplete: () => {
+                gsap.set(card, { clearProps: 'transform,zIndex,boxShadow' });
+                completedCount++;
+                if (completedCount >= totalCards) isAnimating = false;
+              }
+            }
+          );
+        } else {
+          gsap.fromTo(card,
+            { opacity: 0.4 },
+            {
+              opacity: 1,
+              duration: 0.3,
+              delay: 0.1,
+              onComplete: () => {
+                gsap.set(card, { clearProps: 'transform,zIndex,boxShadow' });
+                completedCount++;
+                if (completedCount >= totalCards) isAnimating = false;
+              }
+            }
+          );
+        }
+      });
+    }
+
+    // 3. 座位平移与撤销动画：完全保持从原始位置到目标位置的连续平移穿梭
+    function animateShiftTransition(mode, callback) {
+      const gridEl = document.getElementById('seats-grid');
+      const oldCards = Array.from(gridEl.querySelectorAll('.seat-card'));
+      const oldPosMap = new Map();
+
+      oldCards.forEach(card => {
+        const sId = card.dataset.studentId;
+        if (sId) {
+          oldPosMap.set(sId, card.getBoundingClientRect());
+        }
+      });
+
+      isAnimating = true;
+      callback();
+
+      if (typeof gsap === 'undefined' || oldPosMap.size === 0) {
+        isAnimating = false;
+        return;
+      }
+
+      const newCards = Array.from(gridEl.querySelectorAll('.seat-card'));
+      let completedCount = 0;
+      const totalCards = newCards.length;
+
+      newCards.forEach((card, idx) => {
+        const sId = card.dataset.studentId;
+        const newRect = card.getBoundingClientRect();
+
+        if (sId && oldPosMap.has(sId)) {
+          const oldRect = oldPosMap.get(sId);
+          const dx = oldRect.left - newRect.left;
+          const dy = oldRect.top - newRect.top;
+
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+            gsap.set(card, {
+              x: dx,
+              y: dy,
+              scale: 1.05,
+              boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+              zIndex: 30
+            });
+            gsap.to(card, {
+              x: 0,
+              y: 0,
+              scale: 1,
+              boxShadow: 'none',
+              zIndex: 1,
+              duration: 0.45,
+              ease: 'power2.out',
+              onComplete: () => {
+                gsap.set(card, { clearProps: 'transform,zIndex,boxShadow' });
+                completedCount++;
+                if (completedCount >= totalCards) isAnimating = false;
+              }
+            });
+          } else {
+            completedCount++;
+          }
+        } else {
+          completedCount++;
+        }
+      });
+
+      setTimeout(() => {
+        isAnimating = false;
+      }, 500);
+    }
+
+    // 2. 全量规则排座 (清空平移历史)
+    document.getElementById('btn-generate-arrange').onclick = () => {
+      if (isAnimating) return;
+
+      const allStudents = SchoolDB.getStudents();
+      if (allStudents.length === 0) {
+        showToast('花名册中暂无学生，请先添加学生', 'error');
+        return;
+      }
+
+      clearShiftHistory();
+
+      const config = SchoolDB.getSeating();
+      const rows = config.rows;
+      const cols = config.cols;
+      const totalSeats = rows * cols;
+
+      const arrangeMode = selectArrangeMode.value;
+      const emptyStrategy = selectEmptyStrategy.value;
+
+      let orderedStudents = [];
+      if (arrangeMode === 'id_asc') {
+        orderedStudents = [...allStudents].sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+        showToast('已按【学号顺序】重新排座');
+      } else if (arrangeMode === 'id_desc') {
+        orderedStudents = [...allStudents].sort((a, b) => String(b.id).localeCompare(String(a.id), undefined, { numeric: true }));
+        showToast('已按【学号倒序】重新排座');
+      } else if (arrangeMode === 'random') {
+        orderedStudents = [...allStudents].sort(() => Math.random() - 0.5);
+        showToast('已完成【完全随机】排座');
+      } else if (arrangeMode === 'gender_cross') {
+        const males = allStudents.filter(s => s.gender === '男').sort(() => Math.random() - 0.5);
+        const females = allStudents.filter(s => s.gender === '女').sort(() => Math.random() - 0.5);
+        const maxLen = Math.max(males.length, females.length);
+        for (let i = 0; i < maxLen; i++) {
+          if (i < males.length) orderedStudents.push(males[i]);
+          if (i < females.length) orderedStudents.push(females[i]);
+        }
+        showToast('已完成【男女交替随机】排座');
+      }
+
+      // 计算空座策略
+      const validIndices = [];
+      const studentCount = orderedStudents.length;
+
+      if (emptyStrategy === 'back') {
+        for (let i = 0; i < Math.min(studentCount, totalSeats); i++) {
+          validIndices.push(i);
+        }
+      } else if (emptyStrategy === 'flanks') {
+        const centerPreferredIndices = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const distFromCenter = Math.abs(c - (cols - 1) / 2);
+            centerPreferredIndices.push({ idx: r * cols + c, dist: distFromCenter });
+          }
+        }
+        centerPreferredIndices.sort((a, b) => a.dist - b.dist);
+        const picked = centerPreferredIndices.slice(0, Math.min(studentCount, totalSeats)).map(item => item.idx).sort((a, b) => a - b);
+        validIndices.push(...picked);
+      } else if (emptyStrategy === 'random') {
+        const allIndices = Array.from({ length: totalSeats }, (_, i) => i).sort(() => Math.random() - 0.5);
+        const picked = allIndices.slice(0, Math.min(studentCount, totalSeats)).sort((a, b) => a - b);
+        validIndices.push(...picked);
+      }
+
+      const newSeats = new Array(totalSeats).fill('');
+      validIndices.forEach((seatIdx, sIdx) => {
+        if (orderedStudents[sIdx]) {
+          newSeats[seatIdx] = String(orderedStudents[sIdx].id);
+        }
+      });
+
+      config.seats = newSeats;
+
+      if (arrangeMode === 'random' || arrangeMode === 'gender_cross') {
+        animateRandomGatherAndScatter(() => {
+          SchoolDB.saveSeating(config);
+          renderSeatingGrid();
+        });
+      } else {
+        animateIntelligentRearrange(() => {
+          SchoolDB.saveSeating(config);
+          renderSeatingGrid();
+        });
+      }
+    };
+
+    // 3. 即点即生效的 8 方向平移轮换 (专属保存快照)
+    function shiftSeats(mode) {
+      if (isAnimating) return;
+
+      const allStudents = SchoolDB.getStudents();
+      if (allStudents.length === 0) {
+        showToast('花名册中暂无学生', 'error');
+        return;
+      }
+
+      saveShiftSnapshot();
+
+      const config = SchoolDB.getSeating();
+      const rows = config.rows;
+      const cols = config.cols;
+      const totalSeats = rows * cols;
+
+      const currentSeats = config.seats || [];
+      const hasSeated = currentSeats.some(Boolean);
+      const baseSeats = hasSeated
+        ? [...currentSeats]
+        : new Array(totalSeats).fill('').map((_, idx) => allStudents[idx] ? String(allStudents[idx].id) : '');
+
+      const matrix = [];
+      for (let r = 0; r < rows; r++) {
+        matrix.push(baseSeats.slice(r * cols, (r + 1) * cols));
+      }
+
+      const newMatrix = Array.from({ length: rows }, () => new Array(cols).fill(''));
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          let targetR = r;
+          let targetC = c;
+
+          if (mode === 'col_shift_right') {
+            targetC = (c + 1) % cols;
+          } else if (mode === 'col_shift_left') {
+            targetC = (c - 1 + cols) % cols;
+          } else if (mode === 'row_shift_down') {
+            targetR = (r + 1) % rows;
+          } else if (mode === 'row_shift_up') {
+            targetR = (r - 1 + rows) % rows;
+          } else if (mode === 'diag_shift_upright') {
+            targetR = (r - 1 + rows) % rows;
+            targetC = (c + 1) % cols;
+          } else if (mode === 'diag_shift_upleft') {
+            targetR = (r - 1 + rows) % rows;
+            targetC = (c - 1 + cols) % cols;
+          } else if (mode === 'diag_shift_downright') {
+            targetR = (r + 1) % rows;
+            targetC = (c + 1) % cols;
+          } else if (mode === 'diag_shift_downleft') {
+            targetR = (r + 1) % rows;
+            targetC = (c - 1 + cols) % cols;
+          }
+
+          newMatrix[targetR][targetC] = matrix[r][c];
+        }
+      }
+
+      const shiftLabels = {
+        'row_shift_up': '向前平移',
+        'row_shift_down': '向后平移',
+        'col_shift_left': '向左平移',
+        'col_shift_right': '向右平移',
+        'diag_shift_upleft': '左前平移',
+        'diag_shift_downleft': '左后平移',
+        'diag_shift_upright': '右前平移',
+        'diag_shift_downright': '右后平移'
+      };
+
+      config.seats = newMatrix.flat();
+      showToast(`已完成【${shiftLabels[mode]}】`);
+
+      animateShiftTransition(mode, () => {
+        SchoolDB.saveSeating(config);
+        renderSeatingGrid();
+      });
+    }
+
+    // 绑定所有平移按钮
+    document.querySelectorAll('.shift-btn').forEach(btn => {
+      btn.onclick = () => {
+        shiftSeats(btn.dataset.shift);
+      };
+    });
+
+    // ==================== 导出 Excel ====================
+    document.getElementById('btn-export-excel').onclick = () => {
+      const seatingConfig = SchoolDB.getSeating();
+      const students = SchoolDB.getStudents();
+      const studentMap = new Map(students.map(s => [String(s.id), s]));
+
+      const rows = seatingConfig.rows;
+      const cols = seatingConfig.cols;
+      const seats = seatingConfig.seats || [];
+
+      // 构建二维导出矩阵
+      const aoa = [
+        ['讲台 / 黑板 (前 方)']
+      ];
+
+      // 表头：第 1 组 ~ 第 N 组
+      const headerRow = [];
+      for (let c = 1; c <= cols; c++) {
+        headerRow.push(`第 ${c} 组`);
+      }
+      aoa.push(headerRow);
+
+      // 每排座位
+      for (let r = 0; r < rows; r++) {
+        const rowData = [];
+        for (let c = 0; c < cols; c++) {
+          const seatIdx = r * cols + c;
+          const sId = seats[seatIdx] ? String(seats[seatIdx]) : '';
+          const student = studentMap.get(sId);
+          if (student) {
+            rowData.push(`${student.name} (${student.id} / ${student.gender})`);
+          } else {
+            rowData.push('【空座】');
+          }
+        }
+        aoa.push(rowData);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '班级座位表');
+      XLSX.writeFile(wb, `班级座位表_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showToast('已导出 Excel 座位表');
+    };
+
+    // ==================== 导出为图片 (html2canvas 全尺寸无裁切) ====================
+    document.getElementById('btn-export-image').onclick = async () => {
+      const board = document.getElementById('seating-export-board');
+      showToast('正在生成座位表高清图片...', 'info');
+
+      try {
+        const canvas = await html2canvas(board, {
+          scale: 2,
+          backgroundColor: '#FFFFFF',
+          useCORS: true,
+          onclone: (clonedDoc) => {
+            const clonedBoard = clonedDoc.getElementById('seating-export-board');
+            const clonedScroll = clonedBoard.querySelector('.seating-scroll-container');
+            const clonedGrid = clonedBoard.querySelector('.seats-grid');
+
+            // 彻底移除克隆沙箱中的所有尺寸约束与滚动隐藏
+            clonedBoard.style.width = 'max-content';
+            clonedBoard.style.maxWidth = 'none';
+            clonedBoard.style.overflow = 'visible';
+
+            if (clonedScroll) {
+              clonedScroll.style.width = 'max-content';
+              clonedScroll.style.maxWidth = 'none';
+              clonedScroll.style.overflow = 'visible';
+            }
+
+            if (clonedGrid) {
+              clonedGrid.style.width = 'max-content';
+            }
+
+            // 彻底移除所有排座关照感叹号图标，保证导出的图片完全干净
+            clonedDoc.querySelectorAll('.seating-note-icon').forEach(el => el.remove());
+          }
+        });
+
+        const link = document.createElement('a');
+        link.download = `班级座位表_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('座位表图片导出成功！');
+      } catch (err) {
+        showToast('导出图片失败：' + err.message, 'error');
+      }
+    };
+
+    // ==================== 清空座位表 ====================
+    document.getElementById('btn-clear-seats').onclick = async () => {
+      const confirmed = await window.showConfirm({
+        title: '清空座位表',
+        content: '确定要清空当前所有座位安排吗？花名册学生名单不受影响。',
+        type: 'danger',
+        confirmText: '确认清空'
+      });
+      if (confirmed) {
+        const config = SchoolDB.getSeating();
+        config.seats = new Array(config.rows * config.cols).fill('');
+        SchoolDB.saveSeating(config);
+        showToast('座位表已清空');
+        renderSeatingGrid();
+      }
+    };
+
+    // 监听数据库变更动态刷新
+    const unsubSeating = SchoolDB.onUpdate(() => {
+      renderSeatingGrid();
+    });
+
+    window.cleanupCurrentPage = () => {
+      if (unsubSeating) unsubSeating();
+    };
+
+    // 页面初始化
+    initRulesFromCache();
+    renderSeatingGrid();
+  })();
+  </script>
+</body>
+
+</html>

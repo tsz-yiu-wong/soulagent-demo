@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=roster.html">
+  <title>正在跳转 - 老师工作台</title>
+  <script>
+    try {
+      sessionStorage.setItem('trigger_demo_notice', '1');
+    } catch (e) {}
+    window.location.replace('roster.html');
+  </script>
+</head>
+<body>
+  <p>正在跳转至学生花名册... <a href="roster.html" onclick="try{sessionStorage.setItem('trigger_demo_notice','1')}catch(e){}">若未自动跳转请点击此处</a></p>
+</body>
+</html>

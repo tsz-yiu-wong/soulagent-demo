@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新建分身对话 - SoulAgent</title>
+  <!-- 全局基础样式 -->
+  <link rel="stylesheet" href="../css/common.css">
+
+  <!-- 本页面专属 CSS (自包含) -->
+  <style>
+    .chat-new-view {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      box-sizing: border-box;
+      max-width: 820px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* 顶部操作条 (管理分身入口) */
+    .clone-top-action-bar {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      z-index: 10;
+    }
+
+    .btn-manage-clone {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s ease;
+    }
+
+    .btn-manage-clone:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+
+    /* 分身/专家专属介绍卡片 (居中) */
+    .clone-intro-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .intro-avatar-box {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      margin-bottom: 16px;
+    }
+
+    .intro-avatar-text {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .intro-avatar-box svg {
+      width: 42px;
+      height: 42px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .intro-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .intro-role {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .intro-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      max-width: 580px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .intro-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      max-width: 700px;
+    }
+
+    .prompt-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    .prompt-chip:hover {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #4338ca;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* 输入框卡片 */
+    .input-card {
+      width: 100%;
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 18px;
+      box-shadow: var(--shadow-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .input-card:focus-within {
+      border-color: #4f46e5;
+      box-shadow: 0 8px 30px rgba(79, 70, 229, 0.12);
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 60px;
+      max-height: 160px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: transparent;
+      padding: 0;
+    }
+
+    .input-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .input-card-bottom-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    .send-btn {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    .send-btn:hover {
+      background: #1e293b;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 主内容区 -->
+  <main class="main-container" id="main-container">
+    <div class="chat-new-view">
+      <!-- 顶部管理入口 (仅专属分身展示) -->
+      <div class="clone-top-action-bar" id="clone-top-action-bar"></div>
+
+      <!-- 分身/专家介绍卡片 (居中展示，无聊天记录) -->
+      <div class="clone-intro-card" id="clone-intro-card"></div>
+
+      <!-- 输入卡片 -->
+      <div class="input-card">
+        <textarea class="chat-textarea" id="chat-input" placeholder="发送消息..."></textarea>
+        
+        <div class="input-card-bottom">
+          <div class="input-card-bottom-left">
+            <button type="button" class="action-btn" title="上传附件" onclick="Toast.show('已调起附件选择器')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+          </div>
+          
+          <button type="button" class="action-btn send-btn" title="发送" onclick="handleSendFirstMessage()">
+            <svg class="icon" viewBox="0 0 24 24" style="stroke:#fff;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入全局底座与组件 -->
+  <script src="../core.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/sidebar.js"></script>
+
+  <!-- 本页面专属 JS (自包含) -->
+  <script>
+    const cloneId = getQueryParam('id');
+    const expertId = getQueryParam('expertId');
+
+    let target = null;
+    let isClone = false;
+
+    if (expertId) {
+      target = (Store.expertList || []).find(e => e.id === expertId);
+    } else if (cloneId) {
+      target = Store.getClone(cloneId);
+      isClone = true;
+    } else {
+      target = (Store.myClones && Store.myClones[0]) || (Store.expertList && Store.expertList[0]);
+      isClone = (target && target.id && target.id.startsWith('clone-'));
+    }
+
+    function initPage() {
+      if (!target) return;
+
+      document.title = `与 ${target.name} 对话 - SoulAgent`;
+      document.getElementById('chat-input').placeholder = `给 ${target.name} 发送消息...`;
+
+      // 顶部操作栏
+      const topBar = document.getElementById('clone-top-action-bar');
+      if (isClone) {
+        topBar.innerHTML = `
+          <a class="btn-manage-clone" href="${getPageUrl('persona-mgmt.html', { id: target.id })}">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>管理分身</span>
+          </a>
+        `;
+      } else {
+        topBar.innerHTML = '';
+      }
+
+      // 推荐问题
+      let p1 = `请介绍你在【${target.tag || target.role || '专业领域'}】的核心专长与经验`;
+      let p2 = `基于你的专属知识库，帮我梳理关键要点`;
+      let p3 = `针对当前业务目标，给出落地实施的具体执行建议`;
+
+      if (target.name.includes('诗')) {
+        p1 = `以“秋月微风”为题，创作一首七言绝句`;
+        p2 = `解析宋词长短句格律与平水韵声律规则`;
+        p3 = `规划一组现代抒情诗歌创作意境提纲`;
+      } else if (target.name.includes('品牌')) {
+        p1 = `为新产品提炼一套极具穿透力的高级文案 Slogan`;
+        p2 = `制定面向科技媒体的全案公关传播策略`;
+        p3 = `梳理品牌调性塑造与社交媒体爆款策划方案`;
+      } else if (target.name.includes('代码') || target.name.includes('审计')) {
+        p1 = `排查分布式系统中的高并发死锁与性能瓶颈`;
+        p2 = `审查微服务架构的高可用与企业安全编码规范`;
+        p3 = `提供模块解耦与代码异味重构优化建议`;
+      } else if (target.name.includes('具身') || target.name.includes('王老师')) {
+        p1 = `探讨具身智能物理仿真与VLA模型控制`;
+        p2 = `Sim-to-Real 跨域迁移算法实践建议`;
+        p3 = `机械臂运动轨迹规划策略`;
+      } else if (target.name.includes('张院士')) {
+        p1 = `探讨国家级人工智能前沿发展战略与顶层架构`;
+        p2 = `统一多模态大模型底座的跨域泛化理论`;
+        p3 = `大模型与垂类任务因果逻辑链构建方案`;
+      }
+
+      const avatarContent = isClone 
+        ? `<span class="intro-avatar-text">${escapeHtml(target.avatar || target.name.charAt(0))}</span>`
+        : `<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+
+      const roleBadge = isClone
+        ? `<div class="intro-role" style="background:#fce7f3;color:#be185d;">${escapeHtml(target.tag || '专属AI分身')} · 我的分身</div>`
+        : `<div class="intro-role" style="background:#eef2ff;color:#4f46e5;">${escapeHtml(target.role || 'AI 分身专家')}</div>`;
+
+      document.getElementById('clone-intro-card').innerHTML = `
+        <div class="intro-avatar-box" style="background: ${target.gradient};">
+          ${avatarContent}
+        </div>
+        <h2 class="intro-name">${escapeHtml(target.name)}</h2>
+        ${roleBadge}
+        <p class="intro-desc">${escapeHtml(target.desc || '专注于该专业领域的前沿探索与业务支持')}</p>
+        <div class="intro-prompts">
+          <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p1)}')">💡 ${escapeHtml(p1)}</div>
+          <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p2)}')">🎯 ${escapeHtml(p2)}</div>
+          <div class="prompt-chip" onclick="usePrompt('${escapeJsString(p3)}')">⚙️ ${escapeHtml(p3)}</div>
+        </div>
+      `;
+    }
+
+    function usePrompt(text) {
+      document.getElementById('chat-input').value = text;
+      handleSendFirstMessage();
+    }
+
+    function handleSendFirstMessage() {
+      const inputEl = document.getElementById('chat-input');
+      const text = inputEl.value.trim();
+      if (!text) {
+        Toast.show('请输入消息内容');
+        return;
+      }
+
+      // 根据提问生成唯一会话标题，避免覆盖旧 session
+      let baseTitle = text.length > 22 ? text.substring(0, 22) + '...' : text;
+      let sessionTitle = baseTitle;
+      let count = 1;
+      while (Store.getAgentChats("AI助手").includes(sessionTitle)) {
+        sessionTitle = `${baseTitle} (${count++})`;
+      }
+
+      let replyHtml = '';
+      if (!isClone && target) {
+        const opinion = getExpertOpinion(target, text);
+        replyHtml = `
+          <p>你好！我是<strong>${escapeHtml(target.name)}</strong>的 AI 分身。</p>
+          <p>很高兴与你交流！关于“${escapeHtml(text)}”，结合我的专业研究，我有以下见解：</p>
+          <div style="line-height:1.6;color:var(--text-primary);margin:8px 0;">${escapeHtml(opinion)}</div>
+          <p>随时提出更具体的问题，我们可以共同深入探讨！</p>
+        `;
+      } else if (isClone && target) {
+        replyHtml = getCloneOpinion(target, text);
+      }
+
+      // 创建历史会话并写入第一条用户消息与对应专家/分身回复
+      Store.createConversation(sessionTitle, {
+        type: isClone ? 'clone' : 'expert',
+        expertId: !isClone ? target.id : undefined,
+        cloneId: isClone ? target.id : undefined,
+        messages: [
+          { role: 'user', content: text },
+          {
+            role: 'assistant',
+            expertId: !isClone ? target.id : undefined,
+            cloneId: isClone ? target.id : undefined,
+            htmlContent: replyHtml
+          }
+        ]
+      }, target.name, isClone ? 'clone' : 'expert', target.id);
+
+      window.location.href = getPageUrl('chat-dialog.html', {
+        title: sessionTitle
+      });
+    }
+
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendFirstMessage();
+      }
+    });
+
+    initPage();
+  </script>
+</body>
+
+</html>

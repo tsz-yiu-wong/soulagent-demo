@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>构建AI分身 - SoulAgent</title>
+  <!-- 全局基础样式 -->
+  <link rel="stylesheet" href="../css/common.css">
+
+  <!-- 本页面专属 CSS (自包含) -->
+  <style>
+    .distill-view {
+      flex: 1;
+      padding: 24px 32px 60px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1040px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 顶部 Tab 导航栏 */
+    .plaza-tab-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 36px;
+      border-bottom: 1px solid var(--border-color, #e5e7eb);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 50;
+    }
+    .plaza-tabs {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    .plaza-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 2px 12px 2px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary, #64748b);
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .plaza-tab:hover { color: var(--text-primary); }
+    .plaza-tab.active { color: var(--primary-color, #8c171e); }
+    .plaza-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2.5px;
+      background: var(--primary-color, #8c171e);
+      border-radius: 2px;
+    }
+    .plaza-tab svg { width: 18px; height: 18px; }
+
+    .distill-nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .btn-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-back-link:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    /* 顶部置中模拟完成按钮 */
+    .distill-top-action-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .btn-simulate-complete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 30px;
+      background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%));
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(140, 23, 30, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-simulate-complete:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(140, 23, 30, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+    }
+
+    /* 步骤指示条 */
+    .distill-stepper-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 32px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .step-icon-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .stepper-step.completed .step-icon-circle {
+      background: #ecfdf5;
+      color: #059669;
+      border-color: #10b981;
+    }
+
+    .stepper-step.active .step-icon-circle {
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 4px rgba(140, 23, 30, 0.2);
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .step-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .stepper-step.active .step-num {
+      color: var(--primary-color, #8c171e);
+    }
+
+    .step-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: #e2e8f0;
+      margin: 0 16px;
+    }
+
+    .step-connector.completed {
+      background: #10b981;
+    }
+
+    .step-connector.active {
+      background: linear-gradient(90deg, #10b981, var(--primary-color, #8c171e));
+    }
+
+    /* 步骤容器 */
+    .step-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: stepFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .step-section.active {
+      display: flex;
+    }
+
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 向导卡片 */
+    .wizard-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px 40px;
+      box-shadow: var(--shadow-sm);
+      max-width: 820px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .wizard-card-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .wizard-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .wizard-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-label .sub-tip {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      background: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.15));
+    }
+
+    .tag-select-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tag-chip {
+      padding: 6px 14px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .tag-chip:hover {
+      background: #e2e8f0;
+      color: var(--text-primary);
+    }
+
+    .tag-chip.selected {
+      background: var(--primary-light, #fdf2f2);
+      border-color: rgba(140, 23, 30, 0.25);
+      color: var(--primary-color, #8c171e);
+      font-weight: 600;
+    }
+
+    .wizard-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+      margin-top: 10px;
+    }
+
+    .btn-step-next {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 30px;
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-step-next:hover {
+      background: var(--primary-hover, #721218);
+      transform: translateY(-1px);
+    }
+
+    .btn-step-prev {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-step-prev:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    /* Step 2 上传与绑定 */
+    .section-sub-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upload-dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 24px 20px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 14px;
+    }
+
+    .upload-dropzone:hover {
+      border-color: var(--primary-color, #8c171e);
+      background: var(--primary-light, #fdf2f2);
+    }
+
+    .upload-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px auto;
+      color: var(--primary-color, #8c171e);
+    }
+
+    .link-add-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn-add-link {
+      padding: 0 20px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-open-ds-modal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 13px 18px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+
+    .btn-open-ds-modal:hover {
+      background: #fdf4ff;
+      border-color: #a855f7;
+    }
+
+    .added-item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .added-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+
+    .added-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .badge-icon {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 5px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+    .badge-icon.pdf { background: #ef4444; }
+    .badge-icon.doc { background: #3b82f6; }
+    .badge-icon.json { background: #f59e0b; }
+    .badge-icon.web { background: #0284c7; }
+    .badge-icon.rss { background: #8b5cf6; }
+
+    .added-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .added-item-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .select-usage-pill {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      outline: none;
+    }
+    .select-usage-pill.train { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .select-usage-pill.retrieval { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+
+    .btn-remove-item {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .btn-remove-item:hover { color: #ef4444; }
+
+    /* Step 3 构建面板与终端 */
+    .distill-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 24px;
+    }
+
+    .distill-title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .distill-avatar-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .distill-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .distill-subtitle {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .distill-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #2563eb;
+    }
+
+    .distill-dot-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563eb;
+      animation: pulseDot 1.2s infinite ease-in-out;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    .distill-main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .distill-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .distill-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 10px;
+    }
+
+    .distill-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .badge-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .distill-file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .distill-file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .file-icon-box {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .file-icon-box.pdf { background: #ef4444; }
+    .file-icon-box.json { background: #f59e0b; }
+
+    .file-meta {
+      flex: 1;
+      margin: 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .file-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .file-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .file-check {
+      font-size: 13px;
+      font-weight: 700;
+      color: #10b981;
+    }
+
+    .terminal-card {
+      background: #0f172a;
+      border-color: #1e293b;
+      color: #f8fafc;
+    }
+    .terminal-card .distill-card-title { color: #f8fafc; }
+
+    .live-dot-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e293b;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .green-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .terminal-console {
+      flex: 1;
+      background: #020617;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      line-height: 1.7;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border: 1px solid #1e293b;
+    }
+
+    .log-line.text-muted { color: #64748b; }
+    .log-line.text-success { color: #34d399; }
+    .log-line.text-info { color: #38bdf8; }
+    .log-line.highlight { color: #fbbf24; font-weight: 600; }
+
+    .terminal-progress-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .terminal-progress-bar {
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .terminal-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 3px;
+    }
+
+    .terminal-progress-text {
+      font-size: 11.5px;
+      color: #94a3b8;
+      text-align: right;
+    }
+
+    /* 数据源弹窗 Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-panel {
+      background: #ffffff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .modal-title { font-size: 15.5px; font-weight: 700; color: var(--text-primary); }
+    .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }
+    .modal-body { padding: 18px 22px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid #f1f5f9; background: #f8fafc; }
+
+    /* Step 1 上传资料与接入方式 */
+    .upload-guidance-note {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .upload-guidance-note b { font-weight: 700; }
+
+    .upload-option-block {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #ffffff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .upload-option-block.expanded {
+      border-color: rgba(140, 23, 30, 0.25);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.08));
+    }
+
+    .option-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .option-chevron {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 20px;
+      line-height: 1;
+      transition: transform 0.2s ease;
+    }
+
+    .upload-option-block.expanded .option-chevron {
+      transform: rotate(90deg);
+    }
+
+    .option-body {
+      display: none;
+      margin-top: 14px;
+    }
+
+    .upload-option-block.expanded .option-body {
+      display: block;
+    }
+
+    .option-title-wrap { flex: 1; }
+
+    .option-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+    .option-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-top: 3px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-track {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-track:before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      top: 3px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-track { background: var(--primary-color, #8c171e); }
+    .toggle-switch input:checked + .toggle-track:before { transform: translateX(20px); }
+
+    .web-search-input-wrap { display: none; margin-top: 12px; }
+    .web-search-input-wrap.show { display: block; }
+
+    .pan-link-row { display: flex; gap: 10px; }
+    .pan-link-row .form-input { flex: 1; min-width: 0; }
+    .pan-link-row .form-input.pan-code { max-width: 120px; flex: 0 0 120px; }
+    .pan-link-row .btn-add-link { flex-shrink: 0; }
+
+    .subscription-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .subscription-item:last-child { margin-bottom: 0; }
+    .subscription-label { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); }
+    .subscription-item .btn-add-link { align-self: flex-start; padding: 9px 18px; }
+
+    /* Step 2 自动构建进度 */
+    .build-time-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .build-time-note .note-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .build-progress-list { display: flex; flex-direction: column; gap: 12px; }
+    .build-progress-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #ffffff;
+      transition: all 0.2s ease;
+    }
+    .build-progress-marker {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .build-progress-body { flex: 1; }
+    .build-progress-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .build-progress-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin-top: 3px; }
+    .build-progress-item.active {
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.12));
+    }
+    .build-progress-item.active .build-progress-marker { background: var(--primary-color, #8c171e); color: #ffffff; }
+    .build-progress-item.completed { border-color: #d1fae5; background: #f0fdf4; }
+    .build-progress-item.completed .build-progress-marker { background: #10b981; color: #ffffff; }
+    .build-progress-item.completed .build-progress-title { color: #047857; }
+
+    /* Step 3 体验分身 */
+    .success-card { text-align: center; }
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px auto;
+      box-shadow: 0 10px 28px rgba(16, 185, 129, 0.32);
+    }
+    .success-guide {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 26px;
+      text-align: left;
+    }
+    .success-guide-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+    .success-guide-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .success-guide-body { flex: 1; }
+    .success-guide-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .success-guide-desc { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+    .success-guide-item .btn-step-next {
+      flex-shrink: 0;
+      padding: 10px 20px;
+      font-size: 13px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 主内容区 -->
+  <main class="main-container" id="main-container">
+    <!-- 顶部 Tab 导航栏 -->
+    <div class="plaza-tab-header">
+      <div class="plaza-tabs">
+        <a class="plaza-tab" href="persona-plaza.html">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>分身广场</span>
+        </a>
+        <a class="plaza-tab active" href="persona-plaza.html?view=mine">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>我的分身</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="distill-view" id="distill-view">
+      <!-- 顶部返回栏 -->
+      <div class="distill-nav">
+        <a class="btn-back-link" href="javascript:void(0)" onclick="handleBack()">
+          <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>返回</span>
+        </a>
+      </div>
+
+      <!-- 顶部置中模拟完成构建按钮 -->
+      <div class="distill-top-action-bar">
+        <button type="button" class="btn-simulate-complete" id="btn-top-complete" onclick="handleFinishDistill()">
+          <span>⚡ 点击此处模拟完成构建 →</span>
+        </button>
+      </div>
+
+      <!-- 3-Step 进度指示条 -->
+      <div class="distill-stepper-card" id="distill-stepper">
+        <div class="stepper-step active" id="step-node-1" onclick="goToStep(1)">
+          <div class="step-icon-circle"><span class="num-text">1</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 1</div>
+            <div class="step-name">填写资料</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-1"></div>
+
+        <div class="stepper-step" id="step-node-2" onclick="goToStep(2)">
+          <div class="step-icon-circle"><span class="num-text">2</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 2</div>
+            <div class="step-name">自动构建</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-2"></div>
+
+        <div class="stepper-step" id="step-node-3" onclick="goToStep(3)">
+          <div class="step-icon-circle"><span class="num-text">3</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 3</div>
+            <div class="step-name">体验分身</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 0: 介绍引导 (Hero)                                      -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-0">
+        <div class="wizard-card" style="display: flex; flex-direction: column; gap: 28px;">
+          <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 24px rgba(140, 23, 30, 0.35); margin-bottom: 16px;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke-width: 2.2;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <h2 style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">创建你的专属AI分身</h2>
+            <p style="font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); max-width: 620px;">
+              AI分身将通过深度学习您的学术著作、工作文档、表达习惯与思维方式，构建高度契合您个人风格的数字孪生体。在您忙碌时，分身可以作为您的“数字替身”，全天候提供专业解答与对外协作。
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">🎭 思维与语言风格孪生</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">深度拟合用词偏好与论述逻辑，精准表达您的观点与思考方式。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">📚 私有知识长效记忆</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">沉淀挂载专业论文与文档，形成随身携带的长效私有大脑。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">⚡ 24/7 全天候协作代办</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">全天候承接日常专业咨询与问答初筛，极大释放个人时间与精力。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">🔄 持续进化与自成长</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">支持公众号/知乎等数据源持续同步，交互中沉淀记忆，越用越懂您。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="createAgreeCheck" checked>
+              <span>我已阅读并同意《数字分身构建协议》，授权平台基于资料构建专属分身</span>
+            </label>
+            <button type="button" class="btn-step-next" onclick="goToStep(1)" style="background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); padding: 12px 40px;">
+              <span>开始创建 AI 分身</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px; stroke: #fff;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 1: 填写资料 (名称 / 上传资料)                          -->
+      <!-- ============================================================ -->
+      <div class="step-section active" id="stage-step-1">
+        <div class="wizard-card">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">填写分身资料</h2>
+            <p class="wizard-desc">填写分身名称，并选择资料的接入方式</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="personaNameInput">
+              <span>分身名称</span>
+              <span class="sub-tip">（必填，将作为分身的展示名）</span>
+            </label>
+            <input type="text" class="form-input" id="personaNameInput" placeholder="为你的分身起个名字，例如：黄铁军" value="黄铁军">
+          </div>
+
+          <div class="section-sub-title" style="margin-top:4px;">上传资料</div>
+          <div class="upload-guidance-note">
+            为保障基础效果，建议上传至少 <b>40 分钟以上专业访谈</b>，或 <b>10 篇以上 PPT / 论文 / 文章 / 演讲稿</b>，或 <b>5–10 节课程视频 / 录音</b>。
+          </div>
+
+          <!-- 2.1 网络检索 -->
+          <div class="upload-option-block">
+            <div class="option-head" onclick="toggleUploadOption(this)">
+              <span class="option-chevron">›</span>
+              <div class="option-title-wrap">
+                <div class="option-title">网络检索</div>
+                <div class="option-desc">打开后输入机构、研究领域、姓名等基础信息，系统将自动检索网络公开资料</div>
+              </div>
+              <label class="toggle-switch" onclick="event.stopPropagation()">
+                <input type="checkbox" id="webSearchToggle" onchange="toggleWebSearch()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+            <div class="option-body">
+              <div class="web-search-input-wrap" id="webSearchInputWrap">
+                <input type="text" class="form-input" id="webSearchDescInput" placeholder="例如：北京大学 黄铁军 教授，人工智能 / 视觉信息处理">
+              </div>
+            </div>
+          </div>
+
+          <!-- 2.2 上传文件 -->
+          <div class="upload-option-block expanded">
+            <div class="option-head" onclick="toggleUploadOption(this)">
+              <span class="option-chevron">›</span>
+              <div class="option-title-wrap">
+                <div class="option-title">上传文件</div>
+                <div class="option-desc">支持拖拽上传，支持 PDF / Word / PPT / Excel / 视频 / 音频 / 文本，单文件最大 5GB</div>
+              </div>
+            </div>
+            <div class="option-body">
+              <div class="upload-dropzone" style="margin:0 0 10px 0;" onclick="document.getElementById('file-input').click()">
+                <div class="upload-icon-box">
+                  <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--primary-color, #8c171e);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div style="font-size:13.5px;font-weight:600;">点击或拖拽文件到此处</div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">支持 PDF / Word / PPT / Excel / 视频 / 音频 / 文本，单文件最大 5GB</div>
+              </div>
+              <div class="added-item-list" id="fileList"></div>
+              <input type="file" id="file-input" style="display:none;" multiple onchange="handleFileSelected(event)">
+            </div>
+          </div>
+
+          <!-- 2.3 网页/视频链接 -->
+          <div class="upload-option-block">
+            <div class="option-head" onclick="toggleUploadOption(this)">
+              <span class="option-chevron">›</span>
+              <div class="option-title-wrap">
+                <div class="option-title">网页 / 视频链接</div>
+                <div class="option-desc">支持填写 Bilibili、小红书、微信文章等网页链接，平台自动抓取内容</div>
+              </div>
+            </div>
+            <div class="option-body">
+              <div class="link-add-group" style="margin:0 0 10px 0;">
+                <input type="text" class="form-input" id="linkInput" placeholder="粘贴 Bilibili / 小红书 / 微信文章链接">
+                <button type="button" class="btn-add-link" onclick="handleAddLink()">添加</button>
+              </div>
+              <div class="added-item-list" id="linkList"></div>
+            </div>
+          </div>
+
+          <!-- 2.4 网盘链接 -->
+          <div class="upload-option-block">
+            <div class="option-head" onclick="toggleUploadOption(this)">
+              <span class="option-chevron">›</span>
+              <div class="option-title-wrap">
+                <div class="option-title">网盘链接</div>
+                <div class="option-desc">支持粘贴百度网盘地址，并输入提取码</div>
+              </div>
+            </div>
+            <div class="option-body">
+              <div class="pan-link-row">
+                <input type="text" class="form-input" id="panLinkInput" placeholder="粘贴百度网盘链接">
+                <input type="text" class="form-input pan-code" id="panCodeInput" placeholder="提取码">
+                <button type="button" class="btn-add-link" onclick="handleAddPanLink()">添加</button>
+              </div>
+              <div class="added-item-list" id="panList"></div>
+            </div>
+          </div>
+
+          <!-- 2.5 订阅源 -->
+          <div class="upload-option-block">
+            <div class="option-head" onclick="toggleUploadOption(this)">
+              <span class="option-chevron">›</span>
+              <div class="option-title-wrap">
+                <div class="option-title">订阅源</div>
+                <div class="option-desc">从微信公众号、Google Scholar、个人主页等地址定期抓取内容，持续更新</div>
+              </div>
+            </div>
+            <div class="option-body">
+              <div class="subscription-item">
+                <div class="subscription-label">微信公众号（需填写公众号名称和一条该公众号发布的文章链接）</div>
+                <input type="text" class="form-input" id="wechatNameInput" placeholder="公众号名称">
+                <input type="text" class="form-input" id="wechatArticleInput" placeholder="该公众号发布的一条文章链接">
+                <button type="button" class="btn-add-link" onclick="handleAddSubscription('wechat')">添加</button>
+              </div>
+              <div class="subscription-item">
+                <div class="subscription-label">Google Scholar / 个人主页（填写 URL 地址）</div>
+                <input type="text" class="form-input" id="scholarUrlInput" placeholder="URL 地址">
+                <button type="button" class="btn-add-link" onclick="handleAddSubscription('scholar')">添加</button>
+              </div>
+              <div class="added-item-list" id="subscriptionList"></div>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(0)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>上一步</span>
+            </button>
+            <button type="button" class="btn-step-next" onclick="goToStep(2)">
+              <span>下一步：自动构建</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 2: 自动构建                                            -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-2">
+        <div class="wizard-card">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">自动构建</h2>
+            <p class="wizard-desc">系统将自动检索、解析并学习资料，构建您的专属分身</p>
+          </div>
+
+          <div class="build-time-note">
+            <span class="note-icon">⏳</span>
+            <span>构建过程预计持续 20–40 分钟，期间可随时关闭页面；再次打开后会继续当前进度，不会丢失。</span>
+          </div>
+
+          <div class="build-progress-list" id="buildProgressList">
+            <div class="build-progress-item" data-step="1">
+              <div class="build-progress-marker">1</div>
+              <div class="build-progress-body">
+                <div class="build-progress-title">检索资料</div>
+                <div class="build-progress-desc">从公开网络中检索您相关的访谈、演讲、文章、课程、报道等</div>
+              </div>
+            </div>
+            <div class="build-progress-item" data-step="2">
+              <div class="build-progress-marker">2</div>
+              <div class="build-progress-body">
+                <div class="build-progress-title">解析语料</div>
+                <div class="build-progress-desc">解析上传与网络检索的文件，提取语料</div>
+              </div>
+            </div>
+            <div class="build-progress-item" data-step="3">
+              <div class="build-progress-marker">3</div>
+              <div class="build-progress-body">
+                <div class="build-progress-title">构建分身</div>
+                <div class="build-progress-desc">基于分身构建模型，学习您的思维模型、决策方法与表达方式等</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(1)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>上一步</span>
+            </button>
+            <button type="button" class="btn-step-next" id="btn-start-build" onclick="startBuild()">
+              <span>开始构建</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 3: 体验分身                                            -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-3">
+        <div class="wizard-card success-card">
+          <div class="success-icon">✓</div>
+          <h2 class="wizard-title" id="step3-title">分身创建成功</h2>
+          <p class="wizard-desc">您的 AI 分身已构建完成，可以开始体验与对话</p>
+
+          <div class="success-guide">
+            <div class="success-guide-item">
+              <div class="success-guide-num">1</div>
+              <div class="success-guide-body">
+                <div class="success-guide-title">查看分身主页</div>
+                <div class="success-guide-desc">体验与分身对话，并申请上架到分身广场</div>
+              </div>
+              <a class="btn-step-next" id="btn-view-home" href="#">查看分身主页</a>
+            </div>
+            <div class="success-guide-item">
+              <div class="success-guide-num">2</div>
+              <div class="success-guide-body">
+                <div class="success-guide-title">管理我的分身</div>
+                <div class="success-guide-desc">完善知识库和维护基础信息，让分身回答更准确</div>
+              </div>
+              <a class="btn-step-next" id="btn-manage-mine" href="#">管理我的分身</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入全局底座与组件 -->
+  <script src="../core.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/sidebar.js"></script>
+
+  <!-- 本页面专属 JS (自包含) -->
+  <script>
+    let currentStep = parseInt(getQueryParam('step') || '1');
+    const cloneId = getQueryParam('id');
+    let clone = null;
+    let completedCloneId = cloneId || null;
+    let buildingCloneId = null;
+    let buildStarted = false;
+
+    if (cloneId) {
+      clone = Store.getClone(cloneId);
+    }
+    if (clone) {
+      document.getElementById('personaNameInput').value = clone.name;
+    }
+
+    function handleBack() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = getPageUrl('persona-plaza.html');
+      }
+    }
+
+    function toggleWebSearch() {
+      const wrap = document.getElementById('webSearchInputWrap');
+      const toggle = document.getElementById('webSearchToggle');
+      if (wrap) wrap.classList.toggle('show', toggle && toggle.checked);
+      if (toggle && toggle.checked) {
+        const block = toggle.closest('.upload-option-block');
+        if (block) block.classList.add('expanded');
+      }
+    }
+
+    function toggleUploadOption(headEl) {
+      const block = headEl.closest('.upload-option-block');
+      if (block) block.classList.toggle('expanded');
+    }
+
+    function goToStep(step) {
+      if (step < 0 || step > 3) return;
+
+      if (currentStep === 1 && step > 1) {
+        const name = document.getElementById('personaNameInput').value.trim();
+        if (!name) {
+          Toast.show('请先填写分身名称');
+          return;
+        }
+      }
+
+      currentStep = step;
+
+      const s0 = document.getElementById('stage-step-0');
+      const s1 = document.getElementById('stage-step-1');
+      const s2 = document.getElementById('stage-step-2');
+      const s3 = document.getElementById('stage-step-3');
+
+      if (s0) s0.classList.toggle('active', currentStep === 0);
+      if (s1) s1.classList.toggle('active', currentStep === 1);
+      if (s2) s2.classList.toggle('active', currentStep === 2);
+      if (s3) s3.classList.toggle('active', currentStep === 3);
+
+      updateStepperUI(currentStep);
+
+      if (currentStep === 2 && clone && clone.status === 'building') {
+        renderPersistedBuildState();
+      }
+
+      if (currentStep === 3) {
+        const name = document.getElementById('personaNameInput').value.trim() || '专属分身';
+        const titleEl = document.getElementById('step3-title');
+        if (titleEl) titleEl.textContent = `「${name}」创建成功`;
+        updateSuccessLinks(completedCloneId || cloneId || 'clone-brand');
+      }
+    }
+
+    function updateStepperUI(step) {
+      const stepper = document.getElementById('distill-stepper');
+      if (step === 0) {
+        if (stepper) stepper.style.display = 'none';
+        return;
+      } else {
+        if (stepper) stepper.style.display = 'flex';
+      }
+
+      const s1 = document.getElementById('step-node-1');
+      const s2 = document.getElementById('step-node-2');
+      const s3 = document.getElementById('step-node-3');
+      const c1 = document.getElementById('connector-1');
+      const c2 = document.getElementById('connector-2');
+
+      [s1, s2, s3].forEach(s => s.className = 'stepper-step');
+      [c1, c2].forEach(c => c.className = 'step-connector');
+
+      if (step === 1) {
+        s1.classList.add('active');
+        s1.querySelector('.num-text').innerText = '1';
+        s2.querySelector('.num-text').innerText = '2';
+        s3.querySelector('.num-text').innerText = '3';
+      } else if (step === 2) {
+        s1.classList.add('completed');
+        s1.querySelector('.num-text').innerText = '✓';
+        c1.classList.add('completed');
+        s2.classList.add('active');
+        s2.querySelector('.num-text').innerText = '2';
+        s3.querySelector('.num-text').innerText = '3';
+      } else if (step === 3) {
+        s1.classList.add('completed');
+        s1.querySelector('.num-text').innerText = '✓';
+        c1.classList.add('completed');
+        s2.classList.add('completed');
+        s2.querySelector('.num-text').innerText = '✓';
+        c2.classList.add('active');
+        s3.classList.add('active');
+      }
+    }
+
+    function changeUsagePill(sel) {
+      if (sel.value === 'train') {
+        sel.className = 'select-usage-pill train';
+      } else {
+        sel.className = 'select-usage-pill retrieval';
+      }
+    }
+
+    function handleFileSelected(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      for (let f of files) {
+        const ext = f.name.split('.').pop().toUpperCase();
+        const html = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon doc">${escapeHtml(ext)}</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(f.name)}</div>
+                <div class="added-item-sub">${(f.size / (1024*1024)).toFixed(1)} MB · 自有资料</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select class="select-usage-pill train" onchange="changeUsagePill(this)">
+                <option value="train" selected>训练 + 检索</option>
+                <option value="retrieval">仅检索</option>
+              </select>
+              <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('fileList').insertAdjacentHTML('afterbegin', html);
+      }
+      Toast.show(`已成功添加 ${files.length} 个文件`);
+    }
+
+    function handleAddLink() {
+      const input = document.getElementById('linkInput');
+      const val = input.value.trim();
+      if (!val) return;
+      const html = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+              <span class="badge-icon web">WEB</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(val)}</div>
+                <div class="added-item-sub">网页 / 视频链接</div>
+              </div>
+            </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select class="select-usage-pill retrieval" onchange="changeUsagePill(this)">
+              <option value="train">训练 + 检索</option>
+              <option value="retrieval" selected>仅检索</option>
+            </select>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('linkList').insertAdjacentHTML('afterbegin', html);
+      input.value = '';
+      Toast.show('已添加网页 / 视频链接');
+    }
+
+    function handleAddPanLink() {
+      const linkInput = document.getElementById('panLinkInput');
+      const codeInput = document.getElementById('panCodeInput');
+      const link = linkInput.value.trim();
+      if (!link) { Toast.show('请输入百度网盘链接'); return; }
+      const code = codeInput.value.trim();
+
+      const html = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+            <span class="badge-icon web">网盘</span>
+            <div>
+              <div class="added-item-name">${escapeHtml(link)}</div>
+              <div class="added-item-sub">百度网盘${code ? ' · 提取码：' + escapeHtml(code) : ''}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+        </div>
+      `;
+      document.getElementById('panList').insertAdjacentHTML('afterbegin', html);
+      linkInput.value = '';
+      codeInput.value = '';
+      Toast.show('已添加网盘链接');
+    }
+
+    function handleAddSubscription(type) {
+      if (type === 'wechat') {
+        const nameInput = document.getElementById('wechatNameInput');
+        const articleInput = document.getElementById('wechatArticleInput');
+        const name = nameInput.value.trim();
+        const article = articleInput.value.trim();
+        if (!name || !article) { Toast.show('请填写公众号名称和文章链接'); return; }
+
+        const html = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon rss">公众号</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(name)}</div>
+                <div class="added-item-sub">微信公众号 · ${escapeHtml(article)}</div>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+          </div>
+        `;
+        document.getElementById('subscriptionList').insertAdjacentHTML('afterbegin', html);
+        nameInput.value = '';
+        articleInput.value = '';
+        Toast.show('已添加微信公众号订阅源');
+      } else {
+        const urlInput = document.getElementById('scholarUrlInput');
+        const url = urlInput.value.trim();
+        if (!url) { Toast.show('请输入 URL 地址'); return; }
+
+        const html = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon rss">订阅</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(url)}</div>
+                <div class="added-item-sub">Google Scholar / 个人主页 · 持续更新</div>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+          </div>
+        `;
+        document.getElementById('subscriptionList').insertAdjacentHTML('afterbegin', html);
+        urlInput.value = '';
+        Toast.show('已添加订阅源');
+      }
+    }
+
+    function updateSuccessLinks(agentId) {
+      if (!agentId) return;
+      const viewBtn = document.getElementById('btn-view-home');
+      const manageBtn = document.getElementById('btn-manage-mine');
+      if (viewBtn) viewBtn.href = getPageUrl('new-chat-persona.html', { id: agentId });
+      if (manageBtn) manageBtn.href = getPageUrl('persona-plaza.html', { id: agentId, view: 'mine' });
+    }
+
+    function renderSuccessStep(newClone) {
+      completedCloneId = newClone.id;
+      const titleEl = document.getElementById('step3-title');
+      if (titleEl) titleEl.textContent = `「${newClone.name}」创建成功`;
+      updateSuccessLinks(newClone.id);
+      goToStep(3);
+    }
+
+    let buildTimer = null;
+    function renderPersistedBuildState() {
+      const items = Array.from(document.querySelectorAll('#buildProgressList .build-progress-item'));
+      items.forEach((item, i) => {
+        item.classList.remove('active', 'completed');
+        const marker = item.querySelector('.build-progress-marker');
+        if (marker) marker.textContent = i + 1;
+      });
+      if (items.length >= 3) {
+        items[0].classList.add('completed');
+        items[0].querySelector('.build-progress-marker').textContent = '✓';
+        items[1].classList.add('completed');
+        items[1].querySelector('.build-progress-marker').textContent = '✓';
+        items[2].classList.add('active');
+      }
+      const btn = document.getElementById('btn-start-build');
+      if (btn) {
+        btn.disabled = true;
+        const span = btn.querySelector('span');
+        if (span) span.textContent = '构建中…';
+      }
+      buildStarted = true;
+    }
+
+    function startBuild() {
+      if (buildTimer || buildStarted) return;
+      const name = document.getElementById('personaNameInput').value.trim() || '黄铁军';
+      const desc = '北京大学教授、北京智源人工智能研究院理事长，长期从事视觉信息处理、类脑计算与通用人工智能研究。';
+      const buildingClone = Store.startAgentBuild(name, clone ? clone.id : null, { desc, tag: '专家分身' });
+      buildingCloneId = buildingClone.id;
+      Store.updateClone(buildingCloneId, { progress: 8 });
+
+      const items = Array.from(document.querySelectorAll('#buildProgressList .build-progress-item'));
+      items.forEach((item, i) => {
+        item.classList.remove('active', 'completed');
+        const marker = item.querySelector('.build-progress-marker');
+        if (marker) marker.textContent = i + 1;
+      });
+
+      const btn = document.getElementById('btn-start-build');
+      if (btn) {
+        btn.disabled = true;
+        const span = btn.querySelector('span');
+        if (span) span.textContent = '构建中…';
+      }
+
+      let idx = 0;
+      const advance = () => {
+        if (idx > 0) {
+          items[idx - 1].classList.remove('active');
+          items[idx - 1].classList.add('completed');
+          const prevMarker = items[idx - 1].querySelector('.build-progress-marker');
+          if (prevMarker) prevMarker.textContent = '✓';
+        }
+        if (idx < items.length) {
+          items[idx].classList.add('active');
+          const stageProgress = [15, 50, 65];
+          Store.updateClone(buildingCloneId, { progress: stageProgress[idx] || 65 });
+          idx += 1;
+          if (idx < items.length) {
+            buildTimer = setTimeout(advance, 900);
+          } else {
+            buildTimer = null;
+            buildStarted = true;
+          }
+        }
+      };
+      advance();
+    }
+
+    // 完成构建并进入体验分身页
+    function handleFinishDistill() {
+      const name = document.getElementById('personaNameInput').value.trim() || '黄铁军';
+      const desc = '北京大学教授、北京智源人工智能研究院理事长，长期从事视觉信息处理、类脑计算与通用人工智能研究。';
+      const tag = '专家分身';
+
+      const newClone = Store.completeAgentDistill(name, buildingCloneId || (clone ? clone.id : null), { desc, tag });
+      Toast.show(`🎉【${newClone.name}】模型提炼完成，已就绪！`);
+
+      renderSuccessStep(newClone);
+    }
+
+    // 页面初始化
+    goToStep(currentStep);
+  </script>
+</body>
+
+</html>

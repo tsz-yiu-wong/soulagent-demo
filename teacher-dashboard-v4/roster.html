@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师工作台 - 学生花名册</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 本地通用核心库 (全部预载，保证离线与快速切换零延迟) -->
+  <script src="js/libs/lucide.js"></script>
+  <script src="js/libs/xlsx.full.min.js"></script>
+  <script src="js/libs/html2canvas.min.js"></script>
+  <script src="js/libs/anime.min.js"></script>
+  <script src="js/libs/confetti.browser.min.js"></script>
+  <script src="js/libs/gsap.min.js"></script>
+  <style>
+    /* 竖版学生卡片网格 */
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .student-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 10px 14px 10px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .student-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-3px);
+    }
+
+    /* 圆形头像 */
+    .student-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .student-avatar.male {
+      background: var(--male-bg);
+      color: var(--male-color);
+    }
+
+    .student-avatar.female {
+      background: var(--female-bg);
+      color: var(--female-color);
+    }
+
+    .student-card .card-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .student-card .card-id {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* 名字旁的关照备注感叹号小徽章 */
+    .note-alert-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FEF3C7;
+      color: #D97706;
+      font-size: 11px;
+      cursor: pointer;
+      margin-left: 4px;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      vertical-align: middle;
+    }
+
+    .note-alert-badge:hover {
+      background: #FDE68A;
+      transform: scale(1.15);
+    }
+
+    /* 关照大卡片网格与样式 (仅看关照备注模式) */
+    .special-rich-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .special-rich-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .special-rich-card:hover {
+      border-color: #F59E0B;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .rich-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .rich-card-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rich-card-note-box {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #92400E;
+      line-height: 1.5;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    /* 分类标签栏 */
+    .category-tags-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .category-tag-btn {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      background: #F8FAFC;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .category-tag-btn:hover {
+      background: #FEF3C7;
+      color: #D97706;
+      border-color: #FDE68A;
+    }
+
+    .category-tag-btn.active {
+      background: #FEF3C7;
+      color: #B45309;
+      font-weight: 600;
+      border-color: #F59E0B;
+      box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15);
+    }
+
+    /* 快捷筛选胶囊按钮 */
+    .filter-group {
+      display: flex;
+      align-items: center;
+      background: #F1F5F9;
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .filter-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+
+    .filter-btn.active {
+      background: #FFFFFF;
+      color: var(--primary);
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .filter-btn:hover:not(.active) {
+      color: var(--text-main);
+    }
+
+    /* 弹窗中的快捷常用标签 */
+    .quick-tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .quick-tag-chip {
+      font-size: 11.5px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #F1F5F9;
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .quick-tag-chip:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary-border);
+      transform: translateY(-1px);
+    }
+
+    /* 上传区域样式 */
+    .upload-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      background: #F8FAFC;
+      transition: all 0.2s;
+    }
+
+    .upload-dropzone:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 页面头部与操作区 -->
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1><i data-lucide="users" style="color: var(--primary);"></i> 学生花名册</h1>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <button class="btn btn-primary" id="btn-open-import-modal">
+        <i data-lucide="file-up"></i> 批量导入
+      </button>
+      <button class="btn btn-primary" id="btn-open-add-modal">
+        <i data-lucide="user-plus"></i> 添加学生
+      </button>
+      <button class="btn btn-secondary" id="btn-export-excel">
+        <i data-lucide="download"></i> 导出
+      </button>
+      <button class="btn btn-secondary btn-icon btn-danger-hover" id="btn-clear-all" title="清空名册">
+        <i data-lucide="trash-2"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 统计指标小卡片 -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px;">
+    <div class="card" style="padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+        <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--text-sub);">班级总人数</div>
+        <div style="font-size: 20px; font-weight: 700; color: var(--text-main);" id="stat-total">0</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--male-bg); color: var(--male-color); display: flex; align-items: center; justify-content: center;">
+        <i data-lucide="mars" style="width: 22px; height: 22px;"></i>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--text-sub);">男生人数</div>
+        <div style="font-size: 20px; font-weight: 700; color: var(--text-main);" id="stat-male">0</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--female-bg); color: var(--female-color); display: flex; align-items: center; justify-content: center;">
+        <i data-lucide="venus" style="width: 22px; height: 22px;"></i>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--text-sub);">女生人数</div>
+        <div style="font-size: 20px; font-weight: 700; color: var(--text-main);" id="stat-female">0</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 16px 20px; display: flex; align-items: center; gap: 14px;">
+      <div style="width: 40px; height: 40px; border-radius: 10px; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center;">
+        <i data-lucide="shield-alert" style="width: 22px; height: 22px;"></i>
+      </div>
+      <div>
+        <div style="font-size: 12px; color: var(--text-sub);">关照备注</div>
+        <div style="font-size: 20px; font-weight: 700; color: #D97706;" id="stat-health">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 学生卡片网格容器 -->
+  <div class="card">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <!-- 搜索框置左 -->
+      <div style="position: relative; width: 280px;">
+        <input type="text" id="search-input" class="input-text" placeholder="搜索姓名、学号或关照备注..." style="width: 100%; padding-left: 34px;">
+        <i data-lucide="search" style="position: absolute; left: 10px; top: 9px; width: 16px; height: 16px; color: var(--text-muted);"></i>
+      </div>
+
+      <!-- 快速筛选器 -->
+      <div class="filter-group" id="filter-group">
+        <button type="button" class="filter-btn active" data-filter="all">
+          <i data-lucide="users" style="width: 13px; height: 13px;"></i> 全部
+        </button>
+        <button type="button" class="filter-btn" data-filter="special" style="color: #D97706;">
+          <i data-lucide="shield-alert" style="width: 13px; height: 13px;"></i> 仅看关照备注
+        </button>
+      </div>
+    </div>
+
+    <!-- 仅看关照备注时出现的分类标签栏 -->
+    <div id="category-tags-bar" class="category-tags-bar" style="display: none;"></div>
+
+    <!-- 卡片展示容器 (动态切换小卡片 / 大卡片) -->
+    <div id="student-cards-container">
+      <!-- 动态生成 -->
+    </div>
+
+    <div id="empty-hint" style="display: none; text-align: center; padding: 48px 0; color: var(--text-muted);">
+      <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 12px; color: #CBD5E1;"></i>
+      <p style="font-size: 14px;" id="empty-hint-text">暂无学生数据</p>
+    </div>
+  </div>
+
+  <!-- 添加/编辑学生 Modal -->
+  <div class="modal-backdrop" id="student-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title">添加新学生</div>
+        <button class="modal-close" id="btn-close-modal"><i data-lucide="x"></i></button>
+      </div>
+      <form id="student-form" style="display: flex; flex-direction: column; gap: 14px;">
+        <input type="hidden" id="edit-original-id">
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">学号 *</label>
+          <input type="text" id="input-id" class="input-text" placeholder="例如：202401" style="width: 100%;" required>
+        </div>
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">姓名 *</label>
+          <input type="text" id="input-name" class="input-text" placeholder="例如：张三" style="width: 100%;" required>
+        </div>
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">性别 *</label>
+          <select id="select-gender" class="select" style="width: 100%;">
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 13px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+            <span>关照备注 (选填)</span>
+            <span style="font-size: 11.5px; font-weight: normal; color: var(--text-muted);">点击下方快捷填入</span>
+          </label>
+          <input type="text" id="input-special" class="input-text" placeholder="如：花生过敏、近视/散光、轻度哮喘等..." style="width: 100%;">
+          <div class="quick-tags-container" id="quick-tags-box">
+            <span class="quick-tag-chip" data-tag="花生过敏">花生过敏</span>
+            <span class="quick-tag-chip" data-tag="海鲜过敏">海鲜过敏</span>
+            <span class="quick-tag-chip" data-tag="芒果过敏">芒果过敏</span>
+            <span class="quick-tag-chip" data-tag="牛奶过敏">牛奶过敏</span>
+            <span class="quick-tag-chip" data-tag="轻度哮喘">轻度哮喘</span>
+            <span class="quick-tag-chip" data-tag="近视/散光">近视/散光</span>
+            <span class="quick-tag-chip" data-tag="鼻炎">鼻炎</span>
+            <span class="quick-tag-chip" data-tag="慎剧烈运动">慎剧烈运动</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">紧急联系人 (选填)</label>
+            <input type="text" id="input-contact-name" class="input-text" placeholder="例如：李建国 (父亲)" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block;">联系电话 (选填)</label>
+            <input type="text" id="input-contact-phone" class="input-text" placeholder="例如：13800138000" style="width: 100%;">
+          </div>
+        </div>
+        <!-- 底部操作区：左侧删除按钮，右侧取消/保存 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+          <button type="button" class="btn btn-outline" id="btn-del-modal" style="color: var(--danger); border-color: #FECACA; background: #FEF2F2; display: none;">
+            <i data-lucide="trash-2"></i> 删除学生
+          </button>
+          <div style="display: flex; gap: 10px; margin-left: auto;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-modal">取消</button>
+            <button type="submit" class="btn btn-primary">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 批量导入 Excel 弹窗 -->
+  <div class="modal-backdrop" id="import-modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="modal-title">批量导入学生</div>
+          <button class="btn btn-primary btn-sm" id="btn-download-template" type="button" style="font-size: 12px; padding: 4px 10px; height: 28px;">
+            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i> 下载导入模板
+          </button>
+        </div>
+        <button class="modal-close" id="btn-close-import"><i data-lucide="x"></i></button>
+      </div>
+
+      <!-- 上传拖拽区域 -->
+      <div class="upload-dropzone" id="dropzone" style="margin-bottom: 16px;">
+        <i data-lucide="upload-cloud" style="width: 38px; height: 38px; color: var(--primary); margin-bottom: 8px;"></i>
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;" id="dropzone-text">点击或拖拽 Excel 文件到此处</div>
+        <div style="font-size: 12px; color: var(--text-muted);">支持 .xlsx, .xls, .csv 格式表格</div>
+        <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+      </div>
+
+      <!-- 导入模式选项 -->
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+          <input type="radio" name="import-mode" value="append" checked>
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">增量合并导入 (推荐)</div>
+            <div style="font-size: 11.5px; color: var(--text-muted);">保留原名单，学号相同则更新，学号不同则追加</div>
+          </div>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+          <input type="radio" name="import-mode" value="replace">
+          <div>
+            <div style="font-weight: 600; font-size: 13px; color: var(--danger);">覆盖导入</div>
+            <div style="font-size: 11.5px; color: var(--text-muted);">清空当前所有名册并完全替换为本次表格</div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-secondary" id="btn-cancel-import">取消</button>
+        <button class="btn btn-primary" id="btn-confirm-import" disabled>确认导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示容器 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- 引入数据层、弹窗组件与侧边栏 (侧边栏内含全局即时 Tooltip 引擎) -->
+  <script src="data/db.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/sidebar.js"></script>
+
+  <!-- 业务逻辑 -->
+  <script>
+    (function () {
+      function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <i data-lucide="${type === 'success' ? 'check-circle-2' : 'alert-circle'}" 
+           style="color: ${type === 'success' ? 'var(--primary)' : 'var(--danger)'};"></i>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.2s ease';
+        setTimeout(() => toast.remove(), 200);
+      }, 2400);
+    }
+    window.showToast = showToast;
+
+    let parsedExcelData = [];
+    let currentFilter = 'all'; // 'all' | 'special'
+    let selectedCategory = 'ALL'; // 关照备注二级分类: 'ALL' | 具体的分类名
+
+    // 快捷标签点击：标签文字与填入 100% 一致
+    document.querySelectorAll('.quick-tag-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const inputSpecial = document.getElementById('input-special');
+        const tag = chip.dataset.tag || chip.textContent.trim();
+        const currentVal = inputSpecial.value.trim();
+        if (!currentVal) {
+          inputSpecial.value = tag;
+        } else {
+          const parts = currentVal.split(/[;；\n]+/).map(t => t.trim()).filter(Boolean);
+          if (!parts.includes(tag)) {
+            inputSpecial.value = currentVal + '；' + tag;
+          }
+        }
+        inputSpecial.focus();
+      });
+    });
+
+    // 过滤按钮切换 (全部 vs 仅看关照备注)
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        selectedCategory = 'ALL'; // 重置二级分类
+        renderStudents();
+      });
+    });
+
+    // 从所有备注中按分号提取分类标签
+    function extractCategories(specialStudents) {
+      const catCountMap = new Map();
+      specialStudents.forEach(s => {
+        const text = s.specialNotes || '';
+        // 严格按分号与换行拆解独立关照项（保留一句话内部的正常逗号，如 "芒果过敏，避免分发芒果"）
+        const segments = text.split(/[;；\n]+/).map(t => t.trim()).filter(Boolean);
+        if (segments.length === 0 && text.trim()) {
+          segments.push(text.trim());
+        }
+        const seen = new Set();
+        segments.forEach(seg => {
+          if (!seen.has(seg)) {
+            seen.add(seg);
+            catCountMap.set(seg, (catCountMap.get(seg) || 0) + 1);
+          }
+        });
+      });
+      return Array.from(catCountMap.entries()).map(([name, count]) => ({ name, count }));
+    }
+
+    // 渲染学生卡片网格
+    function renderStudents() {
+      const allStudents = SchoolDB.getStudents();
+      const keyword = (document.getElementById('search-input').value || '').trim().toLowerCase();
+
+      // 特殊情况学生列表
+      const allSpecialStudents = allStudents.filter(s => !!s.specialNotes);
+      const specialCount = allSpecialStudents.length;
+
+      // 更新统计卡片
+      document.getElementById('stat-total').textContent = allStudents.length;
+      document.getElementById('stat-male').textContent = allStudents.filter(s => s.gender === '男').length;
+      document.getElementById('stat-female').textContent = allStudents.filter(s => s.gender === '女').length;
+      document.getElementById('stat-health').textContent = specialCount;
+
+      const container = document.getElementById('student-cards-container');
+      const categoryBar = document.getElementById('category-tags-bar');
+      const emptyHint = document.getElementById('empty-hint');
+      const emptyHintText = document.getElementById('empty-hint-text');
+
+      container.innerHTML = '';
+
+      // 1. 处理二级分类栏 (仅在 special 模式下展示)
+      if (currentFilter === 'special') {
+        categoryBar.style.display = 'flex';
+        categoryBar.innerHTML = '';
+
+        const categories = extractCategories(allSpecialStudents);
+        
+        // "全部关照" 按钮
+        const allBtn = document.createElement('button');
+        allBtn.className = `category-tag-btn ${selectedCategory === 'ALL' ? 'active' : ''}`;
+        allBtn.innerHTML = `<span>全部关照</span><span style="opacity: 0.8; font-size: 11px;">(${specialCount})</span>`;
+        allBtn.onclick = () => {
+          selectedCategory = 'ALL';
+          renderStudents();
+        };
+        categoryBar.appendChild(allBtn);
+
+        // 各具体分类标签按钮
+        categories.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.className = `category-tag-btn ${selectedCategory === cat.name ? 'active' : ''}`;
+          btn.innerHTML = `<span>${cat.name}</span><span style="opacity: 0.8; font-size: 11px;">(${cat.count})</span>`;
+          btn.onclick = () => {
+            selectedCategory = cat.name;
+            renderStudents();
+          };
+          categoryBar.appendChild(btn);
+        });
+      } else {
+        categoryBar.style.display = 'none';
+      }
+
+      // 2. 过滤数据
+      let filtered = allStudents.filter(s => {
+        const nameMatch = String(s.name || '').toLowerCase().includes(keyword);
+        const idMatch = String(s.id || '').toLowerCase().includes(keyword);
+        const specialMatch = String(s.specialNotes || '').toLowerCase().includes(keyword);
+        return nameMatch || idMatch || specialMatch;
+      });
+
+      if (currentFilter === 'special') {
+        filtered = filtered.filter(s => !!s.specialNotes);
+        if (selectedCategory !== 'ALL') {
+          filtered = filtered.filter(s => {
+            const segs = String(s.specialNotes || '').split(/[;；\n]+/).map(t => t.trim());
+            return segs.includes(selectedCategory) || String(s.specialNotes || '').includes(selectedCategory);
+          });
+        }
+      }
+
+      // 3. 渲染空状态
+      if (filtered.length === 0) {
+        emptyHint.style.display = 'block';
+        if (currentFilter === 'special') {
+          emptyHintText.textContent = selectedCategory === 'ALL' 
+            ? '当前班级暂无添加关照备注的学生' 
+            : `当前分类【${selectedCategory}】下暂无学生`;
+        } else {
+          emptyHintText.textContent = '暂无匹配的学生数据';
+        }
+        return;
+      }
+
+      emptyHint.style.display = 'none';
+
+      // 4. 根据模式分流渲染
+      if (currentFilter === 'all') {
+        // ========== 模式 A: 全部学生常规小卡片网格 ==========
+        const grid = document.createElement('div');
+        grid.className = 'student-grid';
+
+        filtered.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'student-card';
+          card.title = '点击查看/编辑学生档案';
+          const hasSpecial = !!s.specialNotes;
+
+          card.innerHTML = `
+            <div class="student-avatar ${s.gender === '男' ? 'male' : 'female'}">
+              <i data-lucide="${s.gender === '男' ? 'mars' : 'venus'}" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div class="card-name">
+              <span>${s.name}</span>
+              ${hasSpecial ? `<span class="note-alert-badge" data-tooltip="关照备注：${s.specialNotes}">⚠️</span>` : ''}
+            </div>
+            <div class="card-id">${s.id}</div>
+            <span class="badge ${s.gender === '男' ? 'badge-male' : 'badge-female'}" style="font-size: 10.5px; padding: 1px 6px;">
+              <i data-lucide="${s.gender === '男' ? 'mars' : 'venus'}" style="width: 10px; height: 10px;"></i>
+              ${s.gender}
+            </span>
+          `;
+          card.onclick = () => {
+            openEditModal(s.id, s.name, s.gender, s.specialNotes || '', s.contactName || '', s.contactPhone || '');
+          };
+          grid.appendChild(card);
+        });
+
+        container.appendChild(grid);
+      } else {
+        // ========== 模式 B: 仅看关照备注大卡片网格 (完整信息 + 专属卡槽) ==========
+        const richGrid = document.createElement('div');
+        richGrid.className = 'special-rich-grid';
+
+        filtered.forEach(s => {
+          const card = document.createElement('div');
+          card.className = 'special-rich-card';
+          card.title = '点击查看/编辑学生档案';
+
+          const hasContact = s.contactName || s.contactPhone;
+          const contactHtml = hasContact ? `
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-sub); margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <i data-lucide="phone" style="width: 12px; height: 12px; color: var(--text-muted);"></i>
+                <span>${s.contactName || '紧急联系人'}:</span>
+              </div>
+              <span style="font-weight: 600; color: var(--text-main); font-family: monospace;">${s.contactPhone || '未填电话'}</span>
+            </div>
+          ` : '';
+
+          card.innerHTML = `
+            <div class="rich-card-header">
+              <div class="rich-card-user">
+                <div class="student-avatar ${s.gender === '男' ? 'male' : 'female'}" style="width: 38px; height: 38px; margin-bottom: 0;">
+                  <i data-lucide="${s.gender === '男' ? 'mars' : 'venus'}" style="width: 18px; height: 18px;"></i>
+                </div>
+                <div>
+                  <div style="font-weight: 700; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                    <span>${s.name}</span>
+                    <span class="badge ${s.gender === '男' ? 'badge-male' : 'badge-female'}" style="font-size: 10px; padding: 1px 5px;">${s.gender}</span>
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted);">${s.id}</div>
+                </div>
+              </div>
+              <div style="color: var(--text-muted); font-size: 12px; display: flex; align-items: center; gap: 2px;">
+                <i data-lucide="edit-3" style="width: 14px; height: 14px; opacity: 0.7;"></i>
+              </div>
+            </div>
+            <div class="rich-card-note-box">
+              <i data-lucide="clipboard-pen" style="width: 15px; height: 15px; flex-shrink: 0; color: #D97706; margin-top: 1px;"></i>
+              <div style="font-size: 13px; color: #92400E; line-height: 1.45; word-break: break-all;">${s.specialNotes}</div>
+            </div>
+            ${contactHtml}
+          `;
+          card.onclick = () => {
+            openEditModal(s.id, s.name, s.gender, s.specialNotes || '', s.contactName || '', s.contactPhone || '');
+          };
+          richGrid.appendChild(card);
+        });
+
+        container.appendChild(richGrid);
+      }
+
+      lucide.createIcons();
+    }
+
+    // Modal 控制
+    const studentModal = document.getElementById('student-modal');
+    const studentForm = document.getElementById('student-form');
+    const btnDelModal = document.getElementById('btn-del-modal');
+
+    function openAddModal() {
+      document.getElementById('modal-title').textContent = '添加新学生';
+      document.getElementById('edit-original-id').value = '';
+      document.getElementById('input-id').value = '';
+      document.getElementById('input-name').value = '';
+      document.getElementById('select-gender').value = '男';
+      document.getElementById('input-special').value = '';
+      document.getElementById('input-contact-name').value = '';
+      document.getElementById('input-contact-phone').value = '';
+      btnDelModal.style.display = 'none';
+      studentModal.classList.add('show');
+      document.getElementById('input-id').focus();
+    }
+
+    function openEditModal(id, name, gender, special = '', contactName = '', contactPhone = '') {
+      document.getElementById('modal-title').textContent = '编辑学生档案';
+      document.getElementById('edit-original-id').value = id;
+      document.getElementById('input-id').value = id;
+      document.getElementById('input-name').value = name;
+      document.getElementById('select-gender').value = gender;
+      document.getElementById('input-special').value = special;
+      document.getElementById('input-contact-name').value = contactName;
+      document.getElementById('input-contact-phone').value = contactPhone;
+      btnDelModal.style.display = 'inline-flex';
+      studentModal.classList.add('show');
+      document.getElementById('input-name').focus();
+    }
+
+    function closeModal() {
+      studentModal.classList.remove('show');
+    }
+
+    document.getElementById('btn-open-add-modal').onclick = openAddModal;
+    document.getElementById('btn-close-modal').onclick = closeModal;
+    document.getElementById('btn-cancel-modal').onclick = closeModal;
+
+    // 弹窗内左侧删除按钮
+    btnDelModal.onclick = async () => {
+      const origId = document.getElementById('edit-original-id').value;
+      const name = document.getElementById('input-name').value.trim() || origId;
+      if (!origId) return;
+
+      const confirmed = await window.showConfirm({
+        title: '删除学生',
+        content: `确定要从花名册中删除学生【${name}】(${origId}) 吗？`,
+        type: 'danger',
+        confirmText: '确认删除'
+      });
+      if (confirmed) {
+        SchoolDB.deleteStudent(origId);
+        closeModal();
+        showToast(`已删除学生【${name}】`);
+        renderStudents();
+      }
+    };
+
+    studentForm.onsubmit = (e) => {
+      e.preventDefault();
+      const origId = document.getElementById('edit-original-id').value;
+      const id = document.getElementById('input-id').value.trim();
+      const name = document.getElementById('input-name').value.trim();
+      const gender = document.getElementById('select-gender').value;
+      const specialNotes = document.getElementById('input-special').value.trim();
+      const contactName = document.getElementById('input-contact-name').value.trim();
+      const contactPhone = document.getElementById('input-contact-phone').value.trim();
+
+      try {
+        if (origId) {
+          SchoolDB.updateStudent(origId, { id, name, gender, specialNotes, contactName, contactPhone });
+          showToast(`已更新学生【${name}】档案`);
+        } else {
+          SchoolDB.addStudent({ id, name, gender, specialNotes, contactName, contactPhone });
+          showToast(`成功添加学生【${name}】`);
+        }
+        closeModal();
+        renderStudents();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    };
+
+    // 搜索实时过滤
+    document.getElementById('search-input').addEventListener('input', renderStudents);
+
+    // 清空名册
+    document.getElementById('btn-clear-all').onclick = async () => {
+      const confirmed = await window.showConfirm({
+        title: '清空花名册',
+        content: '警告：确定要清空整班花名册吗？该操作不可逆，座位安排也将同步清空。',
+        type: 'danger',
+        confirmText: '确认清空'
+      });
+      if (confirmed) {
+        SchoolDB.saveStudents([]);
+        const seating = SchoolDB.getSeating();
+        seating.seats = new Array(seating.rows * seating.cols).fill('');
+        SchoolDB.saveSeating(seating);
+        showToast('花名册已清空');
+        renderStudents();
+      }
+    };
+
+    // ========== Excel 批量导入与导出 ==========
+    const fileInput = document.getElementById('excel-file-input');
+    const importModal = document.getElementById('import-modal');
+    const dropzone = document.getElementById('dropzone');
+    const dropzoneText = document.getElementById('dropzone-text');
+    const btnConfirmImport = document.getElementById('btn-confirm-import');
+
+    document.getElementById('btn-open-import-modal').onclick = () => {
+      parsedExcelData = [];
+      dropzoneText.textContent = '点击或拖拽 Excel 文件到此处';
+      btnConfirmImport.disabled = true;
+      importModal.classList.add('show');
+    };
+
+    document.getElementById('btn-close-import').onclick = () => importModal.classList.remove('show');
+    document.getElementById('btn-cancel-import').onclick = () => importModal.classList.remove('show');
+
+    dropzone.onclick = () => fileInput.click();
+
+    dropzone.ondragover = (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'var(--primary)';
+      dropzone.style.background = 'var(--primary-light)';
+    };
+
+    dropzone.ondragleave = () => {
+      dropzone.style.borderColor = 'var(--border-color)';
+      dropzone.style.background = '#F8FAFC';
+    };
+
+    dropzone.ondrop = (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'var(--border-color)';
+      dropzone.style.background = '#F8FAFC';
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processExcelFile(e.dataTransfer.files[0]);
+      }
+    };
+
+    fileInput.onchange = (e) => {
+      if (e.target.files && e.target.files[0]) {
+        processExcelFile(e.target.files[0]);
+      }
+      fileInput.value = '';
+    };
+
+    function processExcelFile(file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
+
+          if (!json || json.length === 0) {
+            parsedExcelData = [];
+            btnConfirmImport.disabled = true;
+            dropzoneText.innerHTML = '<span style="color: var(--danger); font-weight: 600;">Excel 表格中未识别到学生数据，请检查表格内容</span>';
+            showToast('Excel 表格中未识别到学生数据', 'error');
+            return;
+          }
+
+          // 校验数据格式（学号、姓名、性别必填且校验合法性）
+          const validated = SchoolDB.validateStudents(json);
+          parsedExcelData = validated;
+          dropzoneText.innerHTML = `已成功解析文件 <b style="color: var(--primary);">${file.name}</b>（共 ${validated.length} 位学生，格式校验通过）`;
+          btnConfirmImport.disabled = false;
+        } catch (err) {
+          parsedExcelData = [];
+          btnConfirmImport.disabled = true;
+          dropzoneText.innerHTML = `<span style="color: var(--danger); font-weight: 600;">❌ 解析失败：格式校验未通过</span><div style="font-size: 11.5px; color: var(--text-sub); margin-top: 4px;">请按提示修改 Excel 表格后重新上传</div>`;
+          if (window.showAlert) {
+            window.showAlert(err.message, '导入解析失败（格式不合规）', 'danger');
+          } else {
+            showToast(err.message, 'error');
+          }
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    document.getElementById('btn-confirm-import').onclick = () => {
+      if (!parsedExcelData || parsedExcelData.length === 0) return;
+      const mode = document.querySelector('input[name="import-mode"]:checked').value;
+      try {
+        const result = SchoolDB.importStudents(parsedExcelData, mode);
+        importModal.classList.remove('show');
+        showToast(`成功导入 ${result.length} 位学生！`);
+        renderStudents();
+      } catch (err) {
+        if (window.showAlert) {
+          window.showAlert(err.message, '导入失败', 'danger');
+        } else {
+          showToast('导入失败：' + err.message, 'error');
+        }
+      }
+    };
+
+    // 导出 Excel
+    document.getElementById('btn-export-excel').onclick = () => {
+      const students = SchoolDB.getStudents();
+      if (students.length === 0) {
+        showToast('名册为空，无法导出', 'error');
+        return;
+      }
+      const exportData = students.map((s, idx) => ({
+        '序号': idx + 1,
+        '学号': s.id,
+        '姓名': s.name,
+        '性别': s.gender,
+        '关照备注': s.specialNotes || '',
+        '紧急联系人': s.contactName || '',
+        '联系电话': s.contactPhone || ''
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '学生花名册');
+      XLSX.writeFile(wb, `班级花名册_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showToast('已导出 Excel 花名册');
+    };
+
+    // 下载导入模板
+    document.getElementById('btn-download-template').onclick = (e) => {
+      e.stopPropagation();
+      const sample = [
+        { '学号': '202401', '姓名': '陈子涵', '性别': '男', '关照备注（多个用分号分割）': '芒果过敏；近视/散光', '紧急联系人': '陈国强 (父亲)', '联系电话': '13800138001' },
+        { '学号': '202402', '姓名': '李欣怡', '性别': '女', '关照备注（多个用分号分割）': '', '紧急联系人': '李伟 (父亲)', '联系电话': '13800138002' },
+        { '学号': '202403', '姓名': '张宇航', '性别': '男', '关照备注（多个用分号分割）': '轻度哮喘；慎剧烈运动', '紧急联系人': '张建华 (父亲)', '联系电话': '13800138003' }
+      ];
+      const ws = XLSX.utils.json_to_sheet(sample);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '花名册导入模板');
+      XLSX.writeFile(wb, '花名册导入模板.xlsx');
+      showToast('已下载 Excel 导入模板');
+    };
+
+    // 监听数据库变更动态刷新
+    const unsubRoster = SchoolDB.onUpdate(() => {
+      renderStudents();
+    });
+
+    window.cleanupCurrentPage = () => {
+      if (unsubRoster) unsubRoster();
+    };
+
+    // 页面初始化
+    renderStudents();
+  })();
+  </script>
+</body>
+</html>
