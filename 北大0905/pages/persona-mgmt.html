@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的分身 - SoulAgent</title>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      params.set('view', 'mine');
+      window.location.replace('persona-plaza.html?' + params.toString());
+    })();
+  </script>
+</head>
+<body></body>
+</html>

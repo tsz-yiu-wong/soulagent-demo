@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听 - 链接解析与二次确认方案选型（含多链接支持）</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1e293b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px;
+    }
+
+    /* 顶部方案选择控制器 */
+    .header-bar {
+      margin-bottom: 22px;
+      text-align: center;
+    }
+    .header-bar h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    .tabs-nav {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 10px;
+      gap: 4px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: #ffffff;
+      color: #ea580c;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-weight: 600;
+    }
+
+    /* 测试辅助操作条 */
+    .demo-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    .action-chip {
+      border: 1px dashed #cbd5e1;
+      background: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .action-chip:hover {
+      border-color: #ff9800;
+      color: #ff9800;
+      background: #fffaf0;
+    }
+    .action-chip.highlight {
+      border-color: #f97316;
+      background: #fff7ed;
+      color: #ea580c;
+      font-weight: 600;
+      border-style: solid;
+    }
+    .action-chip.highlight:hover {
+      background: #ffedd5;
+    }
+    .action-chip.reset {
+      border-style: solid;
+      color: #94a3b8;
+    }
+    .action-chip.reset:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background: #fef2f2;
+    }
+
+    /* 舞台展示区 */
+    .stage-container {
+      width: 580px;
+      position: relative;
+    }
+    .scheme-panel {
+      display: none;
+    }
+    .scheme-panel.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .scheme-meta {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #64748b;
+    }
+    .scheme-meta strong {
+      color: #0f172a;
+      font-size: 14px;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #ffedd5;
+      color: #c2410c;
+      font-weight: 500;
+    }
+
+    /* 通用基础输入框样式 */
+    .base-box {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      padding: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .base-box:focus-within {
+      border-color: #ff9800;
+      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.16);
+    }
+    textarea.base-input {
+      width: 100%;
+      height: 64px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 14px;
+      color: #1e293b;
+      background: transparent;
+      line-height: 1.5;
+    }
+    textarea.base-input::placeholder {
+      color: #94a3b8;
+    }
+
+    /* 工具条 */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .btn-add {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: transparent;
+      color: #64748b;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-add:hover {
+      border-color: #94a3b8;
+      color: #334155;
+    }
+
+    /* 发送按钮各种态 */
+    .btn-send {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 6px;
+      background: #ff9800;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .btn-send svg { width: 14px; height: 14px; fill: currentColor; }
+    .btn-send:disabled {
+      background: #cbd5e1;
+      color: #f1f5f9;
+      cursor: not-allowed;
+    }
+    .btn-send.is-loading {
+      background: #ffb74d;
+      cursor: wait;
+    }
+    .btn-send.is-loading svg {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 平台徽章 */
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .platform-badge.xiaoyuzhou { background: #fef08a; color: #854d0e; }
+    .platform-badge.bilibili { background: #fce7f3; color: #be185d; }
+    .platform-badge.youtube { background: #fee2e2; color: #b91c1c; }
+
+    /* 通用多项条目样式 (在卡片与弹窗中通用) */
+    .multi-item {
+      display: flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      gap: 10px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+    .multi-item:last-child { margin-bottom: 0; }
+    .multi-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .multi-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .multi-item-sub {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .btn-del-item {
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      line-height: 1;
+    }
+    .btn-del-item:hover { color: #ef4444; }
+
+    /* ================= 方案 1：内嵌卡片化 (支持单/多条) ================= */
+    .s1-list-container {
+      max-height: 170px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+    .s1-batch-counter {
+      font-size: 12px;
+      color: #ea580c;
+      font-weight: 500;
+      background: #fff7ed;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* ================= 方案 2：下方悬浮气泡/浮层 ================= */
+    .s2-bubble {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #fed7aa;
+      box-shadow: 0 10px 25px -5px rgba(255, 152, 0, 0.14), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      padding: 14px;
+      animation: s2Pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+    @keyframes s2Pop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .s2-header-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .s2-header-line strong { color: #0f172a; }
+    .s2-list {
+      max-height: 140px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .s2-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .s2-btn-cancel {
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      color: #64748b;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .s2-btn-confirm {
+      border: none;
+      background: #ff9800;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* ================= 方案 3：状态机替换式卡片 ================= */
+    .s3-task-card {
+      background: #ffffff;
+      border: 1px solid #ffedd5;
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(255, 152, 0, 0.08);
+      padding: 16px;
+    }
+    .s3-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .s3-list {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .s3-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #fafaf9;
+      border: 1px solid #f5f5f4;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+    .s3-item-icon {
+      font-size: 20px;
+      width: 38px;
+      height: 38px;
+      background: #fff;
+      border: 1px solid #e7e5e4;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .s3-item-details { flex: 1; min-width: 0; }
+    .s3-item-details h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1c1917;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .s3-item-details p {
+      font-size: 11px;
+      color: #78716c;
+      margin-top: 2px;
+    }
+    .s3-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .s3-back-btn {
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .s3-back-btn:hover { color: #475569; text-decoration: underline; }
+    .s3-confirm-btn {
+      border: none;
+      background: #ff9800;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ================= 方案 4：居中轻模态弹窗 ================= */
+    .s4-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99;
+      animation: s4Fade 0.2s ease-out;
+    }
+    @keyframes s4Fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .s4-dialog {
+      width: 500px;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      padding: 22px;
+      animation: s4Pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes s4Pop {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .s4-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+    .s4-desc {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 14px;
+    }
+    .s4-list {
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .s4-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .s4-btn-sec {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #475569;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .s4-btn-pri {
+      border: none;
+      background: #ff9800;
+      color: #fff;
+      padding: 7px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* ================= 方案 5：手风琴折叠展开 ================= */
+    .s5-expand-box {
+      border-top: 1px dashed #fed7aa;
+      margin-top: 10px;
+      padding-top: 10px;
+      animation: s5Expand 0.25s ease-out;
+    }
+    @keyframes s5Expand {
+      from { opacity: 0; max-height: 0; transform: translateY(-4px); }
+      to { opacity: 1; max-height: 260px; transform: translateY(0); }
+    }
+    .s5-list {
+      max-height: 140px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .s5-confirm-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fffaf0;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    .s5-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #9a3412;
+    }
+    .s5-btn-start {
+      border: none;
+      background: #ea580c;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* 状态提示文案 */
+    .state-tip {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部方案切换器 -->
+  <div class="header-bar">
+    <h1>请挑选你喜欢的二次确认交互方案（支持多链接）</h1>
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchScheme(1)">方案一：内嵌卡片</button>
+      <button class="tab-btn" onclick="switchScheme(2)">方案二：下方气泡</button>
+      <button class="tab-btn" onclick="switchScheme(3)">方案三：状态机替换</button>
+      <button class="tab-btn" onclick="switchScheme(4)">方案四：居中模态弹窗</button>
+      <button class="tab-btn" onclick="switchScheme(5)">方案五：折叠展开</button>
+    </div>
+  </div>
+
+  <!-- 模拟测试快捷指令 -->
+  <div class="demo-actions">
+    <button class="action-chip highlight" onclick="simulatePaste('multi3')">
+      <span>✨</span> 模拟粘贴：同时粘贴 3 个链接 (播客+视频)
+    </button>
+    <button class="action-chip" onclick="simulatePaste('single')">
+      <span>🎙️</span> 模拟粘贴：单个小宇宙链接
+    </button>
+    <button class="action-chip reset" onclick="resetAll()">
+      <span>🔄</span> 重置状态
+    </button>
+  </div>
+
+  <!-- 舞台主体 -->
+  <div class="stage-container">
+
+    <!-- ================= 方案 1：内嵌卡片 ================= -->
+    <div class="scheme-panel active" id="scheme-1">
+      <div class="scheme-meta">
+        <strong>方案一：内嵌卡片化（Inline Morphing）</strong>
+        <span class="tag">极简 · 不打乱布局</span>
+      </div>
+      <div class="base-box" id="s1-box">
+        <!-- 解析出的卡片列表容器 -->
+        <div class="s1-list-container" id="s1-list" style="display: none;"></div>
+
+        <textarea class="base-input" id="s1-input" placeholder="支持粘贴单条或同时粘贴多条链接..."></textarea>
+        
+        <div class="toolbar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn-add" title="添加">+</button>
+            <span class="s1-batch-counter" id="s1-counter" style="display: none;">共 3 个音频就绪</span>
+          </div>
+          <button class="btn-send" id="s1-send-btn" title="发送" onclick="handleConfirm('方案一')">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 方案 2：下方悬浮气泡 ================= -->
+    <div class="scheme-panel" id="scheme-2">
+      <div class="scheme-meta">
+        <strong>方案二：下方悬浮面板（Floating Pill / Sheet）</strong>
+        <span class="tag">轻量 · 伴随感强</span>
+      </div>
+      <div class="base-box">
+        <textarea class="base-input" id="s2-input" placeholder="支持粘贴单条或同时粘贴多条链接..."></textarea>
+        <div class="toolbar">
+          <button class="btn-add" title="添加">+</button>
+          <button class="btn-send" id="s2-send-btn" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+
+        <!-- 悬浮吸附面板 -->
+        <div class="s2-bubble" id="s2-bubble" style="display: none;">
+          <div class="s2-header-line">
+            <span id="s2-counter">已解析识别 3 个音频资源</span>
+            <span style="font-size: 11px; color: #94a3b8;">可点击 × 移除不想要的项</span>
+          </div>
+          <div class="s2-list" id="s2-list"></div>
+          <div class="s2-footer">
+            <button class="s2-btn-cancel" onclick="resetScheme(2)">放弃并清空</button>
+            <button class="s2-btn-confirm" id="s2-confirm-btn" onclick="handleConfirm('方案二')">全部确认听取 (3)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 方案 3：状态机替换式 ================= -->
+    <div class="scheme-panel" id="scheme-3">
+      <div class="scheme-meta">
+        <strong>方案三：状态机替换（Card Replacement）</strong>
+        <span class="tag">排版整洁 · 任务清单感</span>
+      </div>
+      <!-- 初始输入态 -->
+      <div class="base-box" id="s3-input-box">
+        <textarea class="base-input" id="s3-input" placeholder="支持粘贴单条或同时粘贴多条链接..."></textarea>
+        <div class="toolbar">
+          <button class="btn-add" title="添加">+</button>
+          <button class="btn-send" id="s3-send-btn" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 解析后替换成的任务队列卡片 -->
+      <div class="s3-task-card" id="s3-task-card" style="display: none;">
+        <div class="s3-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="platform-badge xiaoyuzhou" id="s3-badge">批量导入</span>
+            <span style="font-size: 12px; color: #16a34a; font-weight: 500;" id="s3-status-txt">✓ 全部解析成功</span>
+          </div>
+          <span style="font-size: 12px; color: #64748b;" id="s3-header-counter">3 个待听任务</span>
+        </div>
+        <div class="s3-list" id="s3-list"></div>
+        <div class="s3-footer">
+          <button class="s3-back-btn" onclick="resetScheme(3)">← 清空重新输入</button>
+          <button class="s3-confirm-btn" id="s3-confirm-btn" onclick="handleConfirm('方案三')">
+            <span>开始全部帮我听 (3)</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42L16.86 11H5v2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 方案 4：居中轻模态弹窗 ================= -->
+    <div class="scheme-panel" id="scheme-4">
+      <div class="scheme-meta">
+        <strong>方案四：居中轻模态弹窗（Modal Dialog）</strong>
+        <span class="tag">高聚焦 · 批量管理</span>
+      </div>
+      <div class="base-box">
+        <textarea class="base-input" id="s4-input" placeholder="支持粘贴单条或同时粘贴多条链接..."></textarea>
+        <div class="toolbar">
+          <button class="btn-add" title="添加">+</button>
+          <button class="btn-send" id="s4-send-btn" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 弹窗蒙层 -->
+      <div class="s4-modal-overlay" id="s4-modal" style="display: none;">
+        <div class="s4-dialog">
+          <div class="s4-title">批量确认听取清单</div>
+          <div class="s4-desc" id="s4-desc">已成功检测到 3 个音视频资源，请核对：</div>
+          
+          <div class="s4-list" id="s4-list"></div>
+
+          <div class="s4-actions">
+            <button class="s4-btn-sec" onclick="closeModal()">取消</button>
+            <button class="s4-btn-pri" id="s4-confirm-btn" onclick="handleConfirm('方案四'); closeModal();">确认全部听取 (3)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 方案 5：手风琴折叠展开 ================= -->
+    <div class="scheme-panel" id="scheme-5">
+      <div class="scheme-meta">
+        <strong>方案五：折叠展开（Accordion Expand）</strong>
+        <span class="tag">原位延展 · 连贯自洽</span>
+      </div>
+      <div class="base-box">
+        <textarea class="base-input" id="s5-input" placeholder="支持粘贴单条或同时粘贴多条链接..."></textarea>
+        
+        <!-- 折叠展开区域 -->
+        <div class="s5-expand-box" id="s5-expand" style="display: none;">
+          <div class="s5-list" id="s5-list"></div>
+          <div class="s5-confirm-bar">
+            <div class="s5-title" id="s5-counter">已锁定 3 个音频资源</div>
+            <button class="s5-btn-start" id="s5-confirm-btn" onclick="handleConfirm('方案五')">全部开始帮我听 (3) →</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn-add" title="添加">+</button>
+          <button class="btn-send" id="s5-send-btn" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="state-tip" id="state-tip">
+    💡 提示：点击上方的「模拟粘贴：同时粘贴 3 个链接」，查看 3 条资源并行解析与二次确认效果。
+  </div>
+
+  <script>
+    let currentScheme = 1;
+    let currentItems = []; // 当前解析结果数组
+
+    // 预置单条与三条数据
+    const mockItemsData = [
+      {
+        id: 'item-1',
+        platform: '小宇宙播客',
+        badgeClass: 'xiaoyuzhou',
+        title: 'E108 与具身智能创业者聊聊落地瓶颈与春天',
+        icon: '🎙️',
+        sub: '时长 48 分钟 · 纯净音轨已就绪'
+      },
+      {
+        id: 'item-2',
+        platform: '哔哩哔哩',
+        badgeClass: 'bilibili',
+        title: '【智源大会】多模态与世界模型前沿探索专题论坛',
+        icon: '📺',
+        sub: '时长 32 分钟 · 音频轨道已分离'
+      },
+      {
+        id: 'item-3',
+        platform: 'YouTube',
+        badgeClass: 'youtube',
+        title: 'Andrej Karpathy: Intro to Large Language Models',
+        icon: '▶️',
+        sub: '时长 60 分钟 · 英文字幕与音轨'
+      }
+    ];
+
+    // 切换方案
+    function switchScheme(idx) {
+      currentScheme = idx;
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === idx - 1);
+      });
+      document.querySelectorAll('.scheme-panel').forEach((panel, i) => {
+        panel.classList.toggle('active', i === idx - 1);
+      });
+      resetAll();
+    }
+
+    // 监听输入框
+    [1, 2, 3, 4, 5].forEach(i => {
+      const input = document.getElementById(`s${i}-input`);
+      if (input) {
+        input.addEventListener('paste', () => {
+          setTimeout(() => triggerParse(i, 3), 100);
+        });
+      }
+    });
+
+    // 模拟粘贴
+    function simulatePaste(mode) {
+      const count = mode === 'multi3' ? 3 : 1;
+      const input = document.getElementById(`s${currentScheme}-input`);
+      if (input) {
+        if (count === 3) {
+          input.value = "https://www.xiaoyuzhoufm.com/episode/664123\nhttps://www.bilibili.com/video/BV1xx411c7mD\nhttps://www.youtube.com/watch?v=zjkBMFhNj_g";
+        } else {
+          input.value = "https://www.xiaoyuzhoufm.com/episode/664123";
+        }
+      }
+      triggerParse(currentScheme, count);
+    }
+
+    // 触发解析链路
+    function triggerParse(schemeId, count) {
+      currentItems = mockItemsData.slice(0, count);
+      const sendBtn = document.getElementById(`s${schemeId}-send-btn`);
+      const tip = document.getElementById('state-tip');
+
+      // 1. 发送按钮 Disabled + 加载状态
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.classList.add('is-loading');
+      }
+      tip.innerHTML = `⏳ <strong>正在并行解析 ${count} 个链接中...</strong> 发送按钮已置灰`;
+
+      // 2. 模拟耗时后解析成功
+      setTimeout(() => {
+        if (sendBtn) {
+          sendBtn.classList.remove('is-loading');
+          sendBtn.disabled = false;
+        }
+        tip.innerHTML = `✅ <strong>成功解析 ${count} 个资源！</strong> 请在当前方案中体验独立移除或批量二次确认`;
+        renderScheme(schemeId);
+      }, 700);
+    }
+
+    // 渲染各方案对应的列表与状态
+    function renderScheme(schemeId) {
+      if (schemeId === 1) renderScheme1();
+      else if (schemeId === 2) renderScheme2();
+      else if (schemeId === 3) renderScheme3();
+      else if (schemeId === 4) renderScheme4();
+      else if (schemeId === 5) renderScheme5();
+    }
+
+    // 方案一：内嵌渲染
+    function renderScheme1() {
+      const listEl = document.getElementById('s1-list');
+      const input = document.getElementById('s1-input');
+      const counter = document.getElementById('s1-counter');
+      input.style.display = 'none';
+      listEl.style.display = 'block';
+      counter.style.display = 'inline-block';
+      counter.innerText = `共 ${currentItems.length} 个音频就绪`;
+
+      listEl.innerHTML = currentItems.map(item => `
+        <div class="multi-item" id="s1-item-${item.id}">
+          <span class="platform-badge ${item.badgeClass}">${item.platform}</span>
+          <div class="multi-item-info">
+            <div class="multi-item-title">${item.title}</div>
+            <div class="multi-item-sub">${item.sub}</div>
+          </div>
+          <button class="btn-del-item" onclick="removeItem('${item.id}', 1)" title="移除此项">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 方案二：悬浮气泡
+    function renderScheme2() {
+      const bubble = document.getElementById('s2-bubble');
+      const listEl = document.getElementById('s2-list');
+      const counter = document.getElementById('s2-counter');
+      const confirmBtn = document.getElementById('s2-confirm-btn');
+      bubble.style.display = 'block';
+      counter.innerText = `已解析识别 ${currentItems.length} 个音频资源`;
+      confirmBtn.innerText = `全部确认听取 (${currentItems.length})`;
+
+      listEl.innerHTML = currentItems.map(item => `
+        <div class="multi-item" id="s2-item-${item.id}">
+          <span class="platform-badge ${item.badgeClass}">${item.platform}</span>
+          <div class="multi-item-info">
+            <div class="multi-item-title">${item.title}</div>
+          </div>
+          <button class="btn-del-item" onclick="removeItem('${item.id}', 2)">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 方案三：状态机替换
+    function renderScheme3() {
+      const inputBox = document.getElementById('s3-input-box');
+      const taskCard = document.getElementById('s3-task-card');
+      const listEl = document.getElementById('s3-list');
+      const headerCounter = document.getElementById('s3-header-counter');
+      const confirmBtn = document.getElementById('s3-confirm-btn');
+
+      inputBox.style.display = 'none';
+      taskCard.style.display = 'block';
+      headerCounter.innerText = `${currentItems.length} 个待听任务`;
+      confirmBtn.querySelector('span').innerText = `开始全部帮我听 (${currentItems.length})`;
+
+      listEl.innerHTML = currentItems.map(item => `
+        <div class="s3-item" id="s3-item-${item.id}">
+          <div class="s3-item-icon">${item.icon}</div>
+          <div class="s3-item-details">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+              <span class="platform-badge ${item.badgeClass}">${item.platform}</span>
+              <h4>${item.title}</h4>
+            </div>
+            <p>${item.sub}</p>
+          </div>
+          <button class="btn-del-item" onclick="removeItem('${item.id}', 3)">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 方案四：模态弹窗
+    function renderScheme4() {
+      const modal = document.getElementById('s4-modal');
+      const listEl = document.getElementById('s4-list');
+      const desc = document.getElementById('s4-desc');
+      const confirmBtn = document.getElementById('s4-confirm-btn');
+
+      modal.style.display = 'flex';
+      desc.innerText = `已成功检测到 ${currentItems.length} 个音视频资源，请核对：`;
+      confirmBtn.innerText = `确认全部听取 (${currentItems.length})`;
+
+      listEl.innerHTML = currentItems.map(item => `
+        <div class="multi-item" id="s4-item-${item.id}">
+          <span class="platform-badge ${item.badgeClass}">${item.platform}</span>
+          <div class="multi-item-info">
+            <div class="multi-item-title">${item.title}</div>
+            <div class="multi-item-sub">${item.sub}</div>
+          </div>
+          <button class="btn-del-item" onclick="removeItem('${item.id}', 4)">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 方案五：折叠展开
+    function renderScheme5() {
+      const expand = document.getElementById('s5-expand');
+      const listEl = document.getElementById('s5-list');
+      const counter = document.getElementById('s5-counter');
+      const confirmBtn = document.getElementById('s5-confirm-btn');
+      const sendBtn = document.getElementById('s5-send-btn');
+
+      expand.style.display = 'block';
+      sendBtn.style.display = 'none';
+      counter.innerText = `已锁定 ${currentItems.length} 个音频资源`;
+      confirmBtn.innerText = `全部开始帮我听 (${currentItems.length}) →`;
+
+      listEl.innerHTML = currentItems.map(item => `
+        <div class="multi-item" id="s5-item-${item.id}">
+          <span class="platform-badge ${item.badgeClass}">${item.platform}</span>
+          <div class="multi-item-info">
+            <div class="multi-item-title">${item.title}</div>
+          </div>
+          <button class="btn-del-item" onclick="removeItem('${item.id}', 5)">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 移除单个条目
+    function removeItem(itemId, schemeId) {
+      currentItems = currentItems.filter(i => i.id !== itemId);
+      if (currentItems.length === 0) {
+        resetScheme(schemeId);
+      } else {
+        renderScheme(schemeId);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('s4-modal').style.display = 'none';
+    }
+
+    // 重置逻辑
+    function resetScheme(id) {
+      const input = document.getElementById(`s${id}-input`);
+      if (input) {
+        input.value = '';
+        input.style.display = 'block';
+      }
+      const sendBtn = document.getElementById(`s${id}-send-btn`);
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('is-loading');
+        sendBtn.style.display = 'flex';
+      }
+
+      if (id === 1) {
+        document.getElementById('s1-list').style.display = 'none';
+        document.getElementById('s1-counter').style.display = 'none';
+      }
+      if (id === 2) document.getElementById('s2-bubble').style.display = 'none';
+      if (id === 3) {
+        document.getElementById('s3-input-box').style.display = 'block';
+        document.getElementById('s3-task-card').style.display = 'none';
+      }
+      if (id === 4) document.getElementById('s4-modal').style.display = 'none';
+      if (id === 5) document.getElementById('s5-expand').style.display = 'none';
+
+      document.getElementById('state-tip').innerHTML = '💡 提示：点击上方的「模拟粘贴：同时粘贴 3 个链接」，查看 3 条资源并行解析与二次确认效果。';
+    }
+
+    function resetAll() {
+      [1, 2, 3, 4, 5].forEach(resetScheme);
+    }
+
+    function handleConfirm(schemeName) {
+      alert(`🎉 [${schemeName}] 批量二次确认成功！\n已将这 ${currentItems.length} 个音视频加入后台「帮我听」并发处理管道。`);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,3451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>构建AI分身 - SoulAgent</title>
+  <!-- 全局基础样式 -->
+  <link rel="stylesheet" href="../css/common.css">
+
+  <style>
+    .distill-view {
+      flex: 1;
+      padding: 24px 32px 60px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1040px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 顶部 Tab 导航栏 */
+    .plaza-tab-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 36px;
+      border-bottom: 1px solid var(--border-color, #e5e7eb);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 50;
+    }
+
+    .plaza-tabs {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .plaza-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 2px 12px 2px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary, #64748b);
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .plaza-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .plaza-tab.active {
+      color: var(--primary-color, #8c171e);
+    }
+
+    .plaza-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2.5px;
+      background: var(--primary-color, #8c171e);
+      border-radius: 2px;
+    }
+
+    .plaza-tab svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .distill-nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .btn-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-back-link:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+
+    /* 5-Step 进度指示条 (Step 1~5 显示，Step 0 隐藏) */
+    .distill-stepper-card {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px 28px;
+      box-shadow: var(--shadow-sm);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: default;
+      user-select: none;
+    }
+
+    .step-icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .stepper-step.completed .step-icon-circle {
+      background: #ecfdf5;
+      color: #059669;
+      border-color: #10b981;
+    }
+
+    .stepper-step.active .step-icon-circle {
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px rgba(140, 23, 30, 0.18);
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .step-num {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .stepper-step.active .step-num {
+      color: var(--primary-color, #8c171e);
+    }
+
+    .step-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: #e2e8f0;
+      margin: 0 10px;
+      min-width: 14px;
+    }
+
+    .step-connector.completed {
+      background: #10b981;
+    }
+
+    .step-connector.active {
+      background: linear-gradient(90deg, #10b981, var(--primary-color, #8c171e));
+    }
+
+    /* 步骤容器 */
+    .step-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: stepFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .step-section.active {
+      display: flex;
+    }
+
+    @keyframes stepFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 向导卡片 */
+    .wizard-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 34px 40px;
+      box-shadow: var(--shadow-sm);
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .wizard-card-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .wizard-title {
+      font-size: 23px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .wizard-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    /* 表单控制 */
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-label .sub-tip {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus {
+      background: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.12));
+    }
+
+    #personaNameInput {
+      max-width: 320px;
+    }
+
+    .avatar-name-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .avatar-name-field {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .avatar-upload-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .avatar-upload-preview {
+      width: 66px;
+      height: 88px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      color: var(--primary-color, #8c171e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .avatar-upload-preview:hover {
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 4px 12px rgba(140, 23, 30, 0.12);
+    }
+
+    .avatar-upload-preview .avatar-char {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      letter-spacing: 2px;
+      line-height: 1.1;
+      font-size: 20px;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    .avatar-upload-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-upload-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .avatar-upload-btn-text {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--primary-color, #8c171e);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .avatar-upload-btn-text:hover {
+      text-decoration: underline;
+    }
+
+    .avatar-upload-specs {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .homepage-field-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .homepage-field-row .form-input {
+      flex: 1;
+    }
+
+    .homepage-required-mark {
+      font-size: 12px;
+      color: #dc2626;
+      font-weight: 700;
+      margin-left: 2px;
+    }
+
+    .btn-add-link {
+      padding: 0 20px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .btn-add-link:hover {
+      border-color: var(--primary-color, #8c171e);
+      color: var(--primary-color, #8c171e);
+    }
+
+    /* ======================================================== */
+    /* ======================================================== */
+    /* Step 2: 上部模式大卡片 (来源一 & 来源二)                     */
+    /* ======================================================== */
+    .mode-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .mode-card {
+      position: relative;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px 20px;
+      background: #ffffff;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    .mode-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    .mode-card.selected {
+      border-color: var(--primary-color, #8c171e);
+      background: linear-gradient(180deg, rgba(140, 23, 30, 0.02) 0%, rgba(140, 23, 30, 0.04) 100%);
+      box-shadow: 0 10px 28px rgba(140, 23, 30, 0.08), 0 0 0 1px var(--primary-color, #8c171e) inset;
+    }
+
+    .mode-channel-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.3px;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    .mode-channel-tag.tag-primary {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .mode-channel-tag.tag-optional {
+      background: #fdf2f2;
+      color: #8c171e;
+      border: 1px solid #fecaca;
+    }
+
+    .mode-card.disabled-card {
+      opacity: 0.52;
+      filter: grayscale(0.8);
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+
+    .mode-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mode-desc {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* 下部具体信息视窗容器 */
+    .ingest-stage-view {
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      background: #fafafa;
+      padding: 24px;
+      animation: stageFade 0.25s ease forwards;
+    }
+
+    @keyframes stageFade {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 来源一：全网智能采集详情区头部开关行 */
+    .auto-toggle-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .auto-toggle-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .auto-toggle-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .auto-toggle-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .auto-toggle-desc strong {
+      font-weight: 700;
+      color: inherit;
+    }
+
+    .auto-stage-content.disabled-view {
+      opacity: 0.42;
+      filter: grayscale(0.85);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* 来源一具体信息：线索与原地可修改表单 */
+    .auto-clue-banner {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .clue-edit-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .clue-edit-label {
+      width: 92px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      padding-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .clue-edit-input {
+      flex: 1;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      font-family: inherit;
+    }
+
+    .clue-edit-input:focus {
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 2px rgba(140, 23, 30, 0.08);
+    }
+
+    .channels-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .channel-item {
+      position: relative;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    .channel-item:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .channel-item.selected {
+      border-color: var(--primary-color, #8c171e);
+      background: #fffdfd;
+      box-shadow: 0 2px 8px rgba(140, 23, 30, 0.05);
+    }
+
+    .channel-checkbox {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      transition: all 0.15s ease;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .channel-item.selected .channel-checkbox {
+      background: var(--primary-color, #8c171e);
+      border-color: var(--primary-color, #8c171e);
+    }
+
+    .channel-item input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .channel-icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+
+    .channel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .channel-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* 来源二具体信息：上传工作台头部 */
+    .manual-workspace-header {
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* iOS 风格 Switch 开关 */
+    .switch-toggle {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 9999px;
+      transition: all 0.25s ease;
+    }
+
+    .switch-slider:before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      top: 3px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: all 0.25s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .switch-toggle input:checked+.switch-slider {
+      background: var(--primary-color, #8c171e);
+    }
+
+    .switch-toggle input:checked+.switch-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* 4 种自主上传大按钮 */
+    .source-action-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .source-action-card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .source-action-card:hover {
+      border-color: var(--primary-color, #8c171e);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(140, 23, 30, 0.08);
+      background: #ffffff;
+    }
+
+    .source-action-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .source-action-card:hover .source-action-icon {
+      background: #fdf2f2;
+      color: var(--primary-color, #8c171e);
+    }
+
+    .source-action-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+    }
+
+    .source-action-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+
+    .source-action-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .source-badge-counter {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .source-badge-counter.show {
+      display: flex;
+    }
+
+    .source-action-card.active {
+      border-color: var(--primary-color, #8c171e);
+      background: #ffffff;
+      box-shadow: 0 4px 14px rgba(140, 23, 30, 0.08);
+    }
+
+    .source-action-card.active .source-action-icon {
+      background: #fdf2f2;
+      color: var(--primary-color, #8c171e);
+    }
+
+    /* 内联固定高度输入面板（绝对防抖） */
+    .manual-input-panel {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      height: 136px;
+      min-height: 136px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .manual-subview {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .manual-inline-upload-zone {
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      box-sizing: border-box;
+    }
+
+    .manual-inline-upload-zone:hover {
+      border-color: var(--primary-color, #8c171e);
+      background: #fffdfd;
+    }
+
+    /* 工作台实时添加条目轻量流 */
+    .ingest-current-tray {
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+
+    .tray-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .tray-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .tray-count {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .tray-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tray-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .tray-chip-icon {
+      font-size: 12px;
+    }
+
+    .tray-chip-remove {
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1;
+      margin-left: 2px;
+    }
+
+    .tray-chip-remove:hover {
+      color: #dc2626;
+    }
+
+
+
+    /* 收集项列表 (主页列表) */
+    .added-item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .added-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+
+    .added-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .badge-icon {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 5px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .badge-icon.web {
+      background: #0284c7;
+    }
+
+    .added-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .added-item-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .btn-remove-item {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+      font-size: 13px;
+    }
+
+    .btn-remove-item:hover {
+      color: #ef4444;
+    }
+
+    /* 操作按钮 */
+    .wizard-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+      margin-top: 10px;
+    }
+
+    .btn-step-next {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 30px;
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-step-next:hover {
+      background: var(--primary-hover, #721218);
+      transform: translateY(-1px);
+    }
+
+    .btn-step-prev {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-step-prev:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    /* ============================================================ */
+    /* Step 3 正在构建分身全新样式                                    */
+    /* ============================================================ */
+    .build-sub-note {
+      font-size: 13px;
+      color: var(--text-muted, #64748b);
+      margin-top: 8px;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    /* 人物形象水位动态生成舞台 */
+    .avatar-synthesis-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 8px auto 20px auto;
+      position: relative;
+    }
+
+    .avatar-synthesis-box {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    /* 外圈能量旋转环 (构建中始终保持克制浅灰，完成时变为绿色) */
+    .avatar-halo-ring {
+      position: absolute;
+      inset: -9px;
+      border-radius: 50%;
+      border: 2px dashed #cbd5e1;
+      animation: ringRotate 18s linear infinite;
+      transition: all 0.5s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .avatar-synthesis-box.completed .avatar-halo-ring {
+      border: 2px solid #10b981;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.22);
+      animation: ringRotate 12s linear infinite;
+    }
+
+    @keyframes ringRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* 圆形玻璃培养舱容器 (构建中始终保持沉稳灰色，构建完成时切换为绿色) */
+    .liquid-avatar-vessel {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      background: #f8fafc;
+      border: 2.5px solid #e2e8f0;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.05);
+      transition: border-color 0.4s ease, box-shadow 0.4s ease;
+      z-index: 2;
+    }
+
+    .avatar-synthesis-box.completed .liquid-avatar-vessel {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), 0 8px 24px rgba(16, 185, 129, 0.12);
+    }
+
+    /* 头像图层公用属性 */
+    .avatar-layer {
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      font-weight: 700;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .avatar-layer img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 1. 底层：从0开始可见的半透明朦胧轮廓模 */
+    .avatar-dim-layer {
+      position: absolute;
+      inset: 0;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #94a3b8;
+      opacity: 0.3;
+      filter: grayscale(100%);
+      z-index: 1;
+    }
+
+    /* 2. 顶层显影容器：高度从 0% 增长至 100%，从下往上揭示清晰全彩形象 */
+    .avatar-clarity-wrapper {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      overflow: hidden;
+      transition: height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 2;
+    }
+
+    /* 贴底固定的清晰全彩层 (绝对对齐不位移) */
+    .avatar-clear-layer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      font-weight: 700;
+      background: var(--primary-gradient, linear-gradient(135deg, #8c171e, #b91c1c));
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(140, 23, 30, 0.25);
+      opacity: 1;
+      filter: none;
+    }
+
+    .avatar-layer .avatar-char {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      letter-spacing: 3px;
+      line-height: 1.1;
+      font-size: 34px;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    .avatar-clear-layer .avatar-char {
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    /* 渐变交界处的柔和微光边缘 */
+    .clarity-scan-edge {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 3px #ef4444;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* 完成时微光边缘隐去 */
+    .avatar-synthesis-box.completed .clarity-scan-edge {
+      display: none;
+    }
+
+    /* 形象下方名称文字 */
+
+    /* 形象下方状态文字 */
+    .avatar-synthesis-meta {
+      margin-top: 12px;
+      text-align: center;
+    }
+    .avatar-persona-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .avatar-persona-status {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      transition: color 0.3s ease;
+    }
+    .avatar-synthesis-box.completed ~ .avatar-synthesis-meta .avatar-persona-status {
+      color: #059669;
+      font-weight: 600;
+    }
+
+    /* 居中留白卡片流容器 (更窄更精致的居中宽度) */
+    .build-steps-flow {
+      max-width: 460px;
+      width: 100%;
+      margin: 14px auto 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .build-flow-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.25s ease;
+    }
+
+    .build-flow-card.waiting {
+      background: #fafafa;
+      opacity: 0.72;
+    }
+
+    .build-flow-card.processing {
+      border-color: rgba(140, 23, 30, 0.35);
+      background: #fffdfd;
+      box-shadow: 0 2px 10px rgba(140, 23, 30, 0.05);
+      opacity: 1;
+    }
+
+    .build-flow-card.completed {
+      border-color: #d1fae5;
+      background: #f0fdf4;
+      opacity: 1;
+    }
+
+    /* 步骤状态图标 */
+    .flow-card-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border: 1.5px solid #e2e8f0;
+      transition: all 0.25s ease;
+    }
+
+    .build-flow-card.processing .flow-card-icon {
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px rgba(140, 23, 30, 0.15);
+    }
+
+    .build-flow-card.completed .flow-card-icon {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+
+    .flow-card-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .flow-card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .flow-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .flow-card-state-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .build-flow-card.processing .flow-card-state-text {
+      color: var(--primary-color, #8c171e);
+    }
+
+    .build-flow-card.completed .flow-card-state-text {
+      color: #059669;
+    }
+
+    /* 步骤进度条槽 */
+    .flow-progress-track {
+      width: 100%;
+      height: 5px;
+      background: #edf2f7;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .flow-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transition: width 0.2s linear;
+    }
+
+    .build-flow-card.processing .flow-progress-fill {
+      background: linear-gradient(90deg, #b91c1c, #8c171e);
+    }
+
+    .build-flow-card.completed .flow-progress-fill {
+      background: #10b981;
+      width: 100% !important;
+    }
+
+    /* 模拟当前步骤完成按钮区域 */
+    .simulate-action-wrap {
+      max-width: 460px;
+      margin: 16px auto 0 auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-simulate-current-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 18px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--primary-color, #8c171e);
+      background: rgba(140, 23, 30, 0.05);
+      border: 1px dashed rgba(140, 23, 30, 0.3);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn-simulate-current-step:hover {
+      background: rgba(140, 23, 30, 0.1);
+      border-color: var(--primary-color, #8c171e);
+    }
+
+    .btn-simulate-current-step:active {
+      transform: scale(0.98);
+    }
+
+    /* 按钮置灰与说明文案 */
+    .btn-step-prev:disabled,
+    .btn-step-prev.disabled,
+    .btn-step-next:disabled,
+    .btn-step-next.disabled {
+      opacity: 0.45;
+      background: #e2e8f0 !important;
+      color: #94a3b8 !important;
+      border-color: #cbd5e1 !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+      pointer-events: none;
+    }
+
+    .btn-step-next:disabled svg,
+    .btn-step-next.disabled svg {
+      stroke: #94a3b8 !important;
+    }
+
+    .step-actions-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .step-disabled-tip {
+      font-size: 12.5px;
+      color: var(--text-muted, #64748b);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ====== 头像裁剪编辑弹窗 (Modal) ====== */
+    .avatar-crop-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .avatar-crop-modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .avatar-crop-modal-dialog {
+      width: 560px;
+      max-width: 95vw;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .avatar-crop-modal-overlay.open .avatar-crop-modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .avatar-crop-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .avatar-crop-modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary, #1e293b);
+    }
+
+    .avatar-crop-modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: none;
+      background: #f8fafc;
+      color: var(--text-secondary, #475569);
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .avatar-crop-modal-close:hover {
+      background: #f1f5f9;
+      color: var(--text-primary, #1e293b);
+    }
+
+    .avatar-crop-modal-body {
+      padding: 24px;
+      background: #fafafa;
+    }
+
+    .avatar-crop-layout {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .avatar-crop-left {
+      width: 140px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .avatar-crop-preview-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary, #64748b);
+      margin-bottom: 10px;
+    }
+
+    .avatar-crop-preview {
+      width: 108px;
+      height: 144px;
+      border-radius: 10px;
+      position: relative;
+      background: #f1f5f9;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .avatar-crop-preview img {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-crop-reselect-btn {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-color, #8c171e);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .avatar-crop-reselect-btn:hover {
+      background: #f8fafc;
+      border-color: var(--primary-color, #8c171e);
+    }
+
+    .avatar-crop-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .avatar-crop-wrapper-outer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .avatar-crop-wrapper {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      background-color: #ffffff;
+      background-image:
+        linear-gradient(45deg, #f8fafc 25%, transparent 25%),
+        linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f8fafc 75%),
+        linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      display: inline-block;
+      user-select: none;
+      -webkit-user-select: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .avatar-crop-wrapper canvas {
+      display: block;
+    }
+
+    .avatar-crop-overlay {
+      position: absolute;
+      box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.42);
+      border: 2px solid #ffffff;
+      cursor: move;
+      box-sizing: border-box;
+    }
+
+    .avatar-crop-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #ffffff;
+      border: 2px solid var(--primary-color, #8c171e);
+      border-radius: 50%;
+      z-index: 10;
+      box-sizing: border-box;
+    }
+
+    .avatar-crop-handle.tl { top: -6px; left: -6px; cursor: nwse-resize; }
+    .avatar-crop-handle.tr { top: -6px; right: -6px; cursor: nesw-resize; }
+    .avatar-crop-handle.bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .avatar-crop-handle.br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+    .avatar-crop-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-top: 1px solid #f1f5f9;
+      background: #ffffff;
+    }
+
+    .avatar-crop-hint {
+      font-size: 12px;
+      color: var(--text-muted, #94a3b8);
+    }
+
+    .avatar-crop-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .avatar-crop-btn {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    .avatar-crop-btn-cancel {
+      background: #f8fafc;
+      color: var(--text-secondary, #475569);
+      border: 1px solid #e2e8f0;
+    }
+
+    .avatar-crop-btn-cancel:hover {
+      background: #f1f5f9;
+    }
+
+    .avatar-crop-btn-confirm {
+      background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%));
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(140, 23, 30, 0.25);
+    }
+
+    .avatar-crop-btn-confirm:hover {
+      opacity: 0.92;
+      box-shadow: 0 4px 12px rgba(140, 23, 30, 0.35);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 主内容区 -->
+  <main class="main-container" id="main-container">
+    <!-- 顶部 Tab 导航栏 -->
+    <div class="plaza-tab-header">
+      <div class="plaza-tabs">
+        <a class="plaza-tab" href="persona-plaza.html">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          <span>老师分身广场</span>
+        </a>
+        <a class="plaza-tab active" href="persona-plaza.html?view=mine">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
+          <span>我的分身</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="distill-view" id="distill-view">
+      <!-- 4-Step 进度指示条 (Step 1~4 显示，Step 0 隐藏) -->
+      <div class="distill-stepper-card" id="distill-stepper">
+        <div class="stepper-step active" id="step-node-1">
+          <div class="step-icon-circle"><span class="num-text">1</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 1</div>
+            <div class="step-name">基本信息</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-1"></div>
+
+        <div class="stepper-step" id="step-node-2">
+          <div class="step-icon-circle"><span class="num-text">2</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 2</div>
+            <div class="step-name">分身知识</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-2"></div>
+
+        <div class="stepper-step" id="step-node-3">
+          <div class="step-icon-circle"><span class="num-text">3</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 3</div>
+            <div class="step-name">构建分身</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 0: 介绍引导                                             -->
+      <!-- ============================================================ -->
+      <div class="step-section active" id="stage-step-0">
+        <div class="wizard-card" style="display: flex; flex-direction: column; gap: 28px;">
+          <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div
+              style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 24px rgba(140, 23, 30, 0.35); margin-bottom: 16px;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke-width: 2.2;">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <h2 style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">创建你的专属 AI 分身
+            </h2>
+            <p style="font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); max-width: 620px;">
+              AI分身通过学习你的论文著作、演讲视频、访谈和表达习惯，形成一个懂你思维方式的数字替身。<br>在日常工作中，分身可以替你回答专业咨询，帮你处理对外交流。
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">🎭 贴近你的表达风格</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                学习你的常用语调与论述逻辑，用你的风格解答问题。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">📚 掌握你的学术成果</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                收录你的论文、专著与讲义，形成随身携带的专业知识库。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">⚡ 24 小时随时在线</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                帮你接听日常问答与学术初筛，省下宝贵时间专注于核心工作。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">🔄 越聊越懂你</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">
+                支持持续同步新文章，在交互中沉淀记忆，与你共同成长。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 8px;">
+            <label
+              style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="createAgreeCheck" checked>
+              <span>我已阅读并同意《数字分身构建协议》，授权基于公开及上传资料构建分身</span>
+            </label>
+            <button type="button" class="btn-step-next" onclick="goToStep(1)"
+              style="background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); padding: 12px 40px;">
+              <span>开始创建 AI 分身</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px; stroke: #fff;">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 1: 填写基本信息                                         -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-1">
+        <div class="wizard-card">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">填写基本信息</h2>
+            <p class="wizard-desc">告诉我们你的姓名和个人主页，方便系统为你搜集相关资料</p>
+          </div>
+
+          <!-- 姓名 -->
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" for="personaNameInput">
+              <span>姓名<span class="homepage-required-mark">*</span></span>
+            </label>
+            <input type="text" class="form-input" id="personaNameInput" placeholder="例如：张三" value="黄铁军"
+              oninput="syncNameFromStep1(this.value)">
+          </div>
+
+          <!-- 头像（独立标准表单项） -->
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" style="margin-bottom:8px;">
+              <span>头像</span>
+            </label>
+            <div class="avatar-upload-row">
+              <div class="avatar-upload-preview" id="distill-avatar-preview"
+                onclick="document.getElementById('avatarFileInput').click()" title="点击更换头像"></div>
+              <input type="file" id="avatarFileInput" accept="image/jpeg,image/png" style="display:none;"
+                onchange="handleDirectAvatarUpload(event)">
+              <div class="avatar-upload-meta">
+                <span class="avatar-upload-btn-text" onclick="document.getElementById('avatarFileInput').click()">
+                  <svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span>点击上传照片</span>
+                </span>
+                <span class="avatar-upload-specs">支持 JPG / PNG 格式，上传后可自由缩放与裁剪</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 补充资料 -->
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label" for="personaBioInput" style="margin-bottom:6px;">
+              <span>个人简介</span>
+            </label>
+            <textarea class="form-input" id="personaBioInput" rows="3"
+              style="resize:vertical;min-height:76px;line-height:1.5;font-size:13px;"
+              placeholder="例如：某重点高校信息学院教授，主要从事人工智能与人机交互研究，曾任某重点实验室学术带头人。"
+              oninput="distillDraft.bio = this.value; syncBioFromStep1(this.value)">北京大学计算机学院教授、智源研究院学术顾问；主要从事类脑计算与脉冲神经网络研究。</textarea>
+          </div>
+
+          <!-- 个人主页（选填） -->
+          <div class="homepage-field" style="margin-bottom:18px;">
+            <label class="form-label" style="margin-bottom:8px;">
+              <span>个人主页</span>
+              <span class="sub-tip">北大教师主页、学者主页或其他个人主页</span>
+            </label>
+            <div class="homepage-field-row">
+              <input type="text" class="form-input" id="homepageUrlInput"
+                placeholder="例如：https://cs.pku.edu.cn/info/1091/1234.htm">
+              <button type="button" class="btn-add-link" onclick="handleAddHomepage()">添加</button>
+            </div>
+            <div class="added-item-list" id="homepageList"></div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(0)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span>上一步</span>
+            </button>
+            <button type="button" class="btn-step-next" id="step1NextBtn" onclick="goToStep(2)">
+              <span>下一步：设置分身知识来源</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- ============================================================ -->
+      <!-- Step 2: 设置分身知识来源                                  -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-2">
+        <div class="wizard-card" style="max-width: 960px;">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">设置分身知识来源</h2>
+            <p class="wizard-desc" id="wizardStep2Desc">系统将整合全网公开报道与你自主上传的私有资料，共同构建分身专属知识库</p>
+          </div>
+
+          <!-- 上层：来源一与来源二卡片 -->
+          <div class="mode-select-grid">
+            <!-- 卡片 1：来源一 全网智能采集 -->
+            <div class="mode-card selected" id="mode-card-auto" onclick="switchIngestMode('auto')">
+              <div class="mode-title">
+                <span class="mode-channel-tag tag-primary">来源一</span>
+                <span> 智能采集</span>
+              </div>
+              <div class="mode-desc">无需自行上传文件，系统智能检索互联网上的公开信息</div>
+            </div>
+
+            <!-- 卡片 2：来源二 自主上传补充 -->
+            <div class="mode-card" id="mode-card-manual" onclick="switchIngestMode('manual')">
+              <div class="mode-title">
+                <span class="mode-channel-tag tag-optional">来源二</span>
+                <span> 自行上传</span>
+              </div>
+              <div class="mode-desc">自行上传内部课件、未公开的文档、音视频资料等。</div>
+            </div>
+          </div>
+
+          <!-- 下层：具体信息与工作台展示区 -->
+          <!-- 视图 A：全网智能采集详情 -->
+          <div class="ingest-stage-view" id="view-ingest-auto">
+            <!-- 智能联网检索开关区：主标题与开关同行，副标题居下 -->
+            <div class="auto-toggle-header">
+              <div class="auto-toggle-title-row">
+                <span class="auto-toggle-title">智能联网检索</span>
+                <label class="switch-toggle" title="开启或关闭智能联网检索">
+                  <input type="checkbox" id="step2WebSearchToggle" checked
+                    onchange="handleWebSearchToggleChange(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="auto-toggle-desc">基于您填写的身份与主页信息，智能检索互联网上<strong>公开</strong>的演讲、课程、访谈、报道、学术论文等相关信息</div>
+            </div>
+
+            <!-- 开关控制的内容区（关闭时整体置灰禁用） -->
+            <div class="auto-stage-content" id="autoStageContent">
+              <div class="auto-clue-banner">
+                <!-- 第一步填写信息的回显区 -->
+                <div
+                  style="display:flex; flex-direction:column; gap:8px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+                  <div style="display:flex; align-items:flex-start; gap:8px; font-size:13px;">
+                    <span style="font-weight:700; color:var(--text-secondary); width:72px; flex-shrink:0;">姓名：</span>
+                    <span id="step2EchoName" style="color:var(--text-primary); font-weight:600;">黄铁军</span>
+                  </div>
+                  <div style="display:flex; align-items:flex-start; gap:8px; font-size:13px;">
+                    <span style="font-weight:700; color:var(--text-secondary); width:72px; flex-shrink:0;">个人简介：</span>
+                    <span id="step2EchoBio"
+                      style="color:var(--text-secondary); line-height:1.45;">北京大学计算机学院教授、智源研究院学术顾问；主要从事类脑计算与脉冲神经网络研究。</span>
+                  </div>
+                  <div style="display:flex; align-items:flex-start; gap:8px; font-size:13px;" id="step2EchoHomeRow">
+                    <span style="font-weight:700; color:var(--text-secondary); width:72px; flex-shrink:0;">个人主页：</span>
+                    <span id="step2EchoHome"
+                      style="color:var(--text-secondary); word-break:break-all; line-height:1.45;">https://cs.pku.edu.cn/info/1091/1234.htm</span>
+                  </div>
+                </div>
+
+                <!-- 补充信息输入框 -->
+                <div style="margin-top:4px;">
+                  <label class="form-label" for="step2ExtraClueInput" style="margin-bottom:6px;">
+                    <span>补充信息</span>
+                  </label>
+                  <textarea class="form-input" id="step2ExtraClueInput" rows="2"
+                    style="resize:vertical;min-height:56px;line-height:1.45;font-size:12.5px;"
+                    placeholder="提供更多背景信息或专业领域信息，帮助系统更精准地检索信息。例如：兼任某重点实验室顾问；曾受邀在某某行业峰会作某某主题报告"
+                    oninput="distillDraft.extraClue = this.value"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 视图 B：自主上传补充工作台 -->
+          <div class="ingest-stage-view" id="view-ingest-manual" style="display:none;">
+            <div class="manual-workspace-header">
+              <div style="font-size:13.5px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">补充资料上传</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">
+                上传您想让分身学习的个人资料。所有文件均严格保密，仅用于专属分身构建
+              </div>
+            </div>
+
+            <!-- 4 个上传渠道卡片 -->
+            <div class="source-action-grid">
+              <!-- 上传文件 -->
+              <div class="source-action-card active" id="card-tab-file" onclick="switchManualTab('file')">
+                <div class="source-badge-counter" id="badge-file">0</div>
+                <div class="source-action-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <div class="source-action-title">文件</div>
+                <div class="source-action-desc">PDF / Word / PPT / 音视频附件</div>
+              </div>
+
+              <!-- 网页链接 -->
+              <div class="source-action-card" id="card-tab-link" onclick="switchManualTab('link')">
+                <div class="source-badge-counter" id="badge-link">0</div>
+                <div class="source-action-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                </div>
+                <div class="source-action-title">网址</div>
+                <div class="source-action-desc">网络文章 / 报道 / 视频链接</div>
+              </div>
+
+              <!-- 网盘链接 -->
+              <div class="source-action-card" id="card-tab-pan" onclick="switchManualTab('pan')">
+                <div class="source-badge-counter" id="badge-pan">0</div>
+                <div class="source-action-icon">
+                  <svg viewBox="0 0 24 24">
+                    <ellipse cx="12" cy="6" rx="9" ry="3" />
+                    <path d="M3 6v6c0 1.66 4.03 3 9 3s9-1.34 9-3V6" />
+                    <path d="M3 12v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6" />
+                  </svg>
+                </div>
+                <div class="source-action-title">网盘</div>
+                <div class="source-action-desc">网盘分享链接与提取码</div>
+              </div>
+
+              <!-- 动态专栏 -->
+              <div class="source-action-card" id="card-tab-sub" onclick="switchManualTab('sub')">
+                <div class="source-badge-counter" id="badge-sub">0</div>
+                <div class="source-action-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M4 11a9 9 0 0 1 9 9" />
+                    <path d="M4 4a16 16 0 0 1 16 16" />
+                    <circle cx="5" cy="19" r="1" />
+                  </svg>
+                </div>
+                <div class="source-action-title">动态专栏</div>
+                <div class="source-action-desc">公众号 / 学术主页 / 博客</div>
+              </div>
+            </div>
+
+            <!-- 下方固定高度内联输入区域（绝对防抖） -->
+            <div class="manual-input-panel">
+              <!-- 子面板 1: 上传文件 -->
+              <div class="manual-subview" id="manual-subview-file">
+                <div class="manual-inline-upload-zone"
+                  onclick="document.getElementById('manual-inline-file-input').click()">
+                  <input type="file" id="manual-inline-file-input" style="display:none;" multiple
+                    onchange="handleFileSelectedInline(event)">
+                  <svg viewBox="0 0 24 24"
+                    style="width:24px;height:24px;stroke:var(--primary-color,#8c171e);fill:none;stroke-width:2;margin-bottom:6px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <div style="font-size:13px;font-weight:600;color:var(--text-primary);">点击或拖拽文件到这里上传</div>
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-top:3px;">支持 PDF / Word / PPT / Excel / 文本
+                    / 视频 / 录音，单个最大 5GB</div>
+                </div>
+              </div>
+
+              <!-- 子面板 2: 网址 -->
+              <div class="manual-subview" id="manual-subview-link" style="display:none;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">粘贴公开网页文章或视频链接，系统将自动提取正文与讲稿</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" class="form-input" id="inlineLinkInput"
+                    placeholder="例：https://mp.weixin.qq.com/s/... 或视频网页链接" style="flex:1;"
+                    onkeydown="if(event.key==='Enter')handleAddLinkInline()">
+                  <button type="button" class="btn-add-link" onclick="handleAddLinkInline()">添加</button>
+                </div>
+              </div>
+
+              <!-- 子面板 3: 网盘 -->
+              <div class="manual-subview" id="manual-subview-pan" style="display:none;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入网盘分享链接和提取码，系统将自动读取文件夹内资料
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" class="form-input" id="inlinePanUrlInput"
+                    placeholder="例：https://pan.baidu.com/s/1a2b3c..." style="flex:1;">
+                  <input type="text" class="form-input" id="inlinePanCodeInput" placeholder="提取码（无则留空）" style="width:160px;"
+                    onkeydown="if(event.key==='Enter')handleAddPanInline()">
+                  <button type="button" class="btn-add-link" onclick="handleAddPanInline()">添加</button>
+                </div>
+              </div>
+
+              <!-- 子面板 4: 动态专栏 -->
+              <div class="manual-subview" id="manual-subview-sub" style="display:none;">
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">输入需要订阅的公众号、Google Scholar、个人博客等，系统将自动关联并持续同步最新内容</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" class="form-input" id="inlineSubInput"
+                    placeholder="例：微信公众号机器之心，或 https://scholar.google.com/..."
+                    style="flex:1;" onkeydown="if(event.key==='Enter')handleAddSubInline()">
+                  <button type="button" class="btn-add-link" onclick="handleAddSubInline()">添加</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 已添加私有资料托盘（极简标题 + 标签，无多余冗述） -->
+            <div class="ingest-current-tray">
+              <div class="tray-title" id="trayTitleText"
+                style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;">已添加 0 项资料</div>
+              <div class="tray-chips-wrap" id="trayChipsWrap"></div>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(1)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span>上一步</span>
+            </button>
+            <button type="button" class="btn-step-next" onclick="goToStep(3)">
+              <span>下一步：确认资料无误，开始构建分身</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 3: 正在构建分身                                         -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-3">
+        <div class="wizard-card">
+          <!-- 标题区 -->
+          <div class="wizard-card-header" style="text-align: center; margin-bottom: 20px;">
+            <h2 class="wizard-title" id="step3Title" style="margin-bottom: 6px;">分身构建中...</h2>
+            <p class="build-sub-note">基于数据量，通常需要几分钟到半小时。期间可以随时关闭页面，进度会自动保存。</p>
+          </div>
+
+          <!-- 人物形象水位动态生成舞台 -->
+          <div class="avatar-synthesis-stage">
+            <div class="avatar-synthesis-box" id="avatarSynthesisBox">
+              <!-- 外圈能量旋转环 -->
+              <div class="avatar-halo-ring"></div>
+
+              <!-- 培养舱容器 -->
+              <div class="liquid-avatar-vessel">
+                <!-- 1. 底层：从0开始可见的半透明朦胧轮廓模 -->
+                <div class="avatar-layer avatar-dim-layer" id="avatarDimLayer">
+                  <span class="avatar-char">铁军</span>
+                </div>
+
+                <!-- 2. 顶层：从下往上逐渐变清晰的显影层 (height: 0% -> 100%) -->
+                <div class="avatar-clarity-wrapper" id="avatarClarityWrapper" style="height: 0%;">
+                  <div class="avatar-layer avatar-clear-layer" id="avatarClearLayer">
+                    <span class="avatar-char">铁军</span>
+                  </div>
+                  <!-- 交界微光扫描边缘 -->
+                  <div class="clarity-scan-edge"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 形象下方姓名（仅保留名称，移除冗余状态文案） -->
+            <div class="avatar-synthesis-meta">
+              <div class="avatar-persona-name" id="avatarSynthesisName">黄铁军 · AI分身</div>
+            </div>
+          </div>
+
+          <!-- 底部4个进度条卡片（居中留白，自动流水线） -->
+          <div class="build-steps-flow" id="buildStepsFlow">
+            <!-- 步骤 1 -->
+            <div class="build-flow-card waiting" id="flowCard-1">
+              <div class="flow-card-icon" id="flowIcon-1">1</div>
+              <div class="flow-card-content">
+                <div class="flow-card-header-row">
+                  <div class="flow-card-title">检索与整理资料</div>
+                  <div class="flow-card-state-text" id="flowState-1">待处理</div>
+                </div>
+                <div class="flow-progress-track">
+                  <div class="flow-progress-fill" id="flowProgress-1"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 步骤 2 -->
+            <div class="build-flow-card waiting" id="flowCard-2">
+              <div class="flow-card-icon" id="flowIcon-2">2</div>
+              <div class="flow-card-content">
+                <div class="flow-card-header-row">
+                  <div class="flow-card-title">提取核心观点与知识</div>
+                  <div class="flow-card-state-text" id="flowState-2">待处理</div>
+                </div>
+                <div class="flow-progress-track">
+                  <div class="flow-progress-fill" id="flowProgress-2"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 步骤 3 -->
+            <div class="build-flow-card waiting" id="flowCard-3">
+              <div class="flow-card-icon" id="flowIcon-3">3</div>
+              <div class="flow-card-content">
+                <div class="flow-card-header-row">
+                  <div class="flow-card-title">学习思维风格</div>
+                  <div class="flow-card-state-text" id="flowState-3">待处理</div>
+                </div>
+                <div class="flow-progress-track">
+                  <div class="flow-progress-fill" id="flowProgress-3"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 步骤 4 -->
+            <div class="build-flow-card waiting" id="flowCard-4">
+              <div class="flow-card-icon" id="flowIcon-4">4</div>
+              <div class="flow-card-content">
+                <div class="flow-card-header-row">
+                  <div class="flow-card-title">学习语言习惯</div>
+                  <div class="flow-card-state-text" id="flowState-4">待处理</div>
+                </div>
+                <div class="flow-progress-track">
+                  <div class="flow-progress-fill" id="flowProgress-4"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 模拟当前步骤完成按钮 -->
+          <div class="simulate-action-wrap" id="simulateActionWrap">
+            <button type="button" class="btn-simulate-current-step" id="btnSimulateStep" onclick="simulateCurrentStep()">
+              <svg class="icon" viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>模拟当前步骤完成</span>
+            </button>
+          </div>
+
+          <!-- 底部操作栏 -->
+          <div class="wizard-actions" style="margin-top: 24px; justify-content: center;">
+            <button type="button" class="btn-step-next disabled" id="btn-finish-build" disabled onclick="handleFinishDistill()">
+              <span>构建完成，体验分身</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 头像裁剪编辑弹窗 (Modal) -->
+  <div class="avatar-crop-modal-overlay" id="avatarCropModalOverlay" onclick="handleCropModalOverlayClick(event)">
+    <div class="avatar-crop-modal-dialog" onclick="event.stopPropagation()">
+      <div class="avatar-crop-modal-header">
+        <div class="avatar-crop-modal-title">裁剪头像</div>
+        <button type="button" class="avatar-crop-modal-close" onclick="closeAvatarCropModal()" title="关闭">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="avatar-crop-modal-body">
+        <div class="avatar-crop-layout">
+          <!-- 实时效果预览 -->
+          <div class="avatar-crop-left">
+            <div class="avatar-crop-preview-label">效果预览</div>
+            <div class="avatar-crop-preview" id="avatarCropPreview">
+              <img id="avatarCropPreviewImg" src="" alt="预览">
+            </div>
+            <button type="button" class="avatar-crop-reselect-btn" onclick="document.getElementById('avatarFileInput').click()">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>更换照片</span>
+            </button>
+          </div>
+
+          <!-- 主裁剪区 -->
+          <div class="avatar-crop-right">
+            <div class="avatar-crop-wrapper-outer">
+              <div class="avatar-crop-wrapper" id="avatarCropWrapper">
+                <canvas id="avatarCropCanvas"></canvas>
+                <div class="avatar-crop-overlay" id="avatarCropOverlay">
+                  <div class="avatar-crop-handle tl" data-handle="tl"></div>
+                  <div class="avatar-crop-handle tr" data-handle="tr"></div>
+                  <div class="avatar-crop-handle bl" data-handle="bl"></div>
+                  <div class="avatar-crop-handle br" data-handle="br"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="avatar-crop-modal-footer">
+        <span class="avatar-crop-hint">固定 3:4 比例，可拖拽调整位置，拖动四角缩放</span>
+        <div class="avatar-crop-actions">
+          <button type="button" class="avatar-crop-btn avatar-crop-btn-cancel" onclick="closeAvatarCropModal()">取消</button>
+          <button type="button" class="avatar-crop-btn avatar-crop-btn-confirm" id="btnConfirmAvatarCrop" onclick="confirmAvatarCrop()">完成裁剪</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 引入全局底座与组件 -->
+  <script src="../core.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/sidebar.js"></script>
+
+  <!-- 核心逻辑 -->
+  <script>
+    // 默认从 Step 0 (介绍页) 进入
+    let currentStep = parseInt(getQueryParam('step') !== null ? getQueryParam('step') : '0');
+    const cloneId = getQueryParam('id');
+    let clone = null;
+    let completedCloneId = cloneId || null;
+    let buildingCloneId = null;
+    let buildStarted = false;
+    let currentIngestMode = 'auto'; // 'auto' | 'manual'
+    let currentManualTab = 'file';   // 'file' | 'link' | 'pan' | 'sub'
+
+    // 全局草稿数据状态 (Single Source of Truth)
+    const distillDraft = {
+      name: '黄铁军',
+      avatarImage: null,
+      bio: '北京大学计算机学院教授、智源研究院学术顾问；主要从事类脑计算与脉冲神经网络研究。',
+      homepages: ['https://cs.pku.edu.cn/info/1091/1234.htm'],
+      extraClue: '',
+      enableWebSearch: true,
+      searchChannels: {
+        resume: true,
+        speech: true,
+        news: true,
+        paper: true
+      },
+      // 收集的全部私有资料明细
+      files: [],
+      links: [],
+      pans: [],
+      subs: [],
+      // 预置的全网搜集样例 (可被逐条删除)
+      mockPublicSources: [
+        { id: 'src-1', channelKey: 'speech', type: 'auto', tag: '学术演讲', title: '智源大会特邀演讲：脉冲神经网络与类脑计算前沿', sub: '公开演讲记录 · 约 42 万字', removable: true },
+        { id: 'src-2', channelKey: 'news', type: 'auto', tag: '专访报道', title: '机器之心专访：类脑视觉传感器与人工智能新范式', sub: '深度专访 · 约 28 万字', removable: true },
+        { id: 'src-3', channelKey: 'paper', type: 'auto', tag: '学术论文', title: '数字视网膜芯片与神经形态视觉系统论文', sub: '核心论著全文 · 约 35 万字', removable: true }
+      ],
+      // Step 3 动态展示与核对清单
+      confirmedSources: []
+    };
+
+    if (cloneId) {
+      clone = Store.getClone(cloneId);
+    }
+    if (clone) {
+      distillDraft.name = clone.name;
+      distillDraft.avatarImage = clone.avatarImage || null;
+      if (clone.desc) distillDraft.bio = clone.desc;
+      document.getElementById('personaNameInput').value = clone.name;
+      const bioEl = document.getElementById('personaBioInput');
+      if (bioEl) bioEl.value = distillDraft.bio;
+    }
+
+    // 初始化渲染
+    renderDistillAvatarPreview();
+    renderHomepageList();
+    updateStep2UI();
+    rebuildConfirmedSources();
+    updateStep1NextBtn();
+
+    // 校验 Step 1 姓名非空并控制下一步按钮置灰
+    function updateStep1NextBtn() {
+      const nameInput = document.getElementById('personaNameInput');
+      const val = nameInput ? nameInput.value.trim() : '';
+      const nextBtn = document.getElementById('step1NextBtn');
+      if (nextBtn) {
+        nextBtn.disabled = !val;
+      }
+    }
+
+    // 姓名、简介与头像同步
+    function syncNameFromStep1(val) {
+      distillDraft.name = val.trim();
+      renderDistillAvatarPreview();
+      const echoName = document.getElementById('step2EchoName');
+      if (echoName) echoName.textContent = distillDraft.name || '未命名分身';
+      updateStep1NextBtn();
+    }
+
+    function syncBioFromStep1(val) {
+      distillDraft.bio = val;
+      const echoBio = document.getElementById('step2EchoBio');
+      if (echoBio) echoBio.textContent = distillDraft.bio || '暂未填写个人简介';
+    }
+
+    function getAvatarDefaultText(name) {
+      const s = (name || '').trim();
+      if (!s) return '分身';
+      return s.length <= 2 ? s : s.slice(-2);
+    }
+
+    function renderDistillAvatarPreview() {
+      const preview = document.getElementById('distill-avatar-preview');
+      if (!preview) return;
+      if (distillDraft.avatarImage) {
+        preview.innerHTML = `<img src="${distillDraft.avatarImage}">`;
+      } else {
+        const nameInput = document.getElementById('personaNameInput');
+        const name = (nameInput ? nameInput.value.trim() : '') || distillDraft.name || '';
+        const text = name ? getAvatarDefaultText(name) : '';
+        preview.innerHTML = text ? `<span class="avatar-char">${escapeHtml(text)}</span>` : '';
+      }
+    }
+
+    function handleBack() {
+      if (currentStep > 0) {
+        goToStep(currentStep - 1);
+      } else if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = getPageUrl('persona-plaza.html');
+      }
+    }
+
+    function updateEchoHome() {
+      const row = document.getElementById('step2EchoHomeRow');
+      const echo = document.getElementById('step2EchoHome');
+      if (!row || !echo) return;
+      if (distillDraft.homepages && distillDraft.homepages.length > 0) {
+        row.style.display = 'flex';
+        echo.textContent = distillDraft.homepages.join(' , ');
+      } else {
+        row.style.display = 'none';
+        echo.textContent = '';
+      }
+    }
+
+    // ====== 阶段 1：个人主页管理 ======
+    function handleAddHomepage() {
+      const input = document.getElementById('homepageUrlInput');
+      const url = input.value.trim();
+      if (!url) { Toast.show('请输入主页链接'); return; }
+      if (!distillDraft.homepages.includes(url)) {
+        distillDraft.homepages.push(url);
+        rebuildConfirmedSources();
+      }
+      input.value = '';
+      renderHomepageList();
+      updateEchoHome();
+      Toast.show('已添加主页链接');
+    }
+
+    function removeHomepage(idx) {
+      distillDraft.homepages.splice(idx, 1);
+      rebuildConfirmedSources();
+      renderHomepageList();
+      updateEchoHome();
+    }
+
+    function renderHomepageList() {
+      const el = document.getElementById('homepageList');
+      if (!el) return;
+      if (distillDraft.homepages.length === 0) {
+        el.innerHTML = '';
+        return;
+      }
+      el.innerHTML = distillDraft.homepages.map((url, i) => `
+        <div class="added-item-row" style="padding: 10px 14px;">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+            <span style="color:var(--text-muted);font-size:14px;">🔗</span>
+            <span class="added-item-name" style="font-size:13px;word-break:break-all;">${escapeHtml(url)}</span>
+          </div>
+          <button type="button" class="btn-remove-item" onclick="removeHomepage(${i})" title="删除此主页链接">✕</button>
+        </div>
+      `).join('');
+    }
+
+    // ====== 阶段 2：模式卡片切换与详情更新 ======
+    function switchIngestMode(mode) {
+      currentIngestMode = mode;
+      const cardAuto = document.getElementById('mode-card-auto');
+      const cardManual = document.getElementById('mode-card-manual');
+      const viewAuto = document.getElementById('view-ingest-auto');
+      const viewManual = document.getElementById('view-ingest-manual');
+
+      if (mode === 'auto') {
+        if (cardAuto) cardAuto.classList.add('selected');
+        if (cardManual) cardManual.classList.remove('selected');
+        if (viewAuto) viewAuto.style.display = 'block';
+        if (viewManual) viewManual.style.display = 'none';
+      } else {
+        if (cardManual) cardManual.classList.add('selected');
+        if (cardAuto) cardAuto.classList.remove('selected');
+        if (viewManual) viewManual.style.display = 'block';
+        if (viewAuto) viewAuto.style.display = 'none';
+      }
+    }
+
+    // 第二步：全网智能采集开关控制与置灰逻辑
+    function handleWebSearchToggleChange(checked) {
+      distillDraft.enableWebSearch = checked;
+
+      const cardAuto = document.getElementById('mode-card-auto');
+      const stageContent = document.getElementById('autoStageContent');
+      const wizardDesc = document.getElementById('wizardStep2Desc');
+
+      if (cardAuto) cardAuto.classList.toggle('disabled-card', !checked);
+      if (stageContent) stageContent.classList.toggle('disabled-view', !checked);
+
+      if (wizardDesc) {
+        wizardDesc.textContent = checked
+          ? '系统将整合全网公开报道与你自主上传的私有资料，共同构建分身专属知识库'
+          : '系统将基于你自主上传的私有资料，构建分身专属知识库';
+      }
+
+      rebuildConfirmedSources();
+      Toast.show(checked ? '已开启智能联网检索' : '已关闭智能联网检索');
+    }
+
+    // 渠道卡片勾选控制
+    function handleChannelToggle(channelKey, checked) {
+      if (!distillDraft.searchChannels) {
+        distillDraft.searchChannels = { resume: true, speech: true, news: true, paper: true };
+      }
+      distillDraft.searchChannels[channelKey] = checked;
+      const card = document.getElementById('channel-card-' + channelKey);
+      if (card) {
+        card.classList.toggle('selected', checked);
+      }
+      rebuildConfirmedSources();
+    }
+
+    function updateStep2UI() {
+      // 1. 同步回显信息与补充信息
+      const echoName = document.getElementById('step2EchoName');
+      const echoBio = document.getElementById('step2EchoBio');
+      const extraClueInput = document.getElementById('step2ExtraClueInput');
+
+      if (echoName) echoName.textContent = distillDraft.name || '张三';
+      if (echoBio) echoBio.textContent = distillDraft.bio || '暂未填写个人简介';
+      updateEchoHome();
+
+      if (extraClueInput) extraClueInput.value = distillDraft.extraClue || '';
+
+      // 2. 同步 Toggle 开关状态与置灰样式
+      const toggle = document.getElementById('step2WebSearchToggle');
+      if (toggle) toggle.checked = distillDraft.enableWebSearch;
+
+      const cardAuto = document.getElementById('mode-card-auto');
+      const stageContent = document.getElementById('autoStageContent');
+      const wizardDesc = document.getElementById('wizardStep2Desc');
+
+      if (cardAuto) cardAuto.classList.toggle('disabled-card', !distillDraft.enableWebSearch);
+      if (stageContent) stageContent.classList.toggle('disabled-view', !distillDraft.enableWebSearch);
+
+      if (wizardDesc) {
+        wizardDesc.textContent = distillDraft.enableWebSearch
+          ? '系统将整合全网公开报道与你自主上传的私有资料，共同构建分身专属知识库'
+          : '系统将基于你自主上传的私有资料，构建分身专属知识库';
+      }
+
+      // 3. 同步 4 个检索渠道卡片勾选状态
+      ['resume', 'speech', 'news', 'paper'].forEach(key => {
+        const isChecked = distillDraft.searchChannels ? distillDraft.searchChannels[key] !== false : true;
+        const chk = document.getElementById('chk-channel-' + key);
+        const card = document.getElementById('channel-card-' + key);
+        if (chk) chk.checked = isChecked;
+        if (card) card.classList.toggle('selected', isChecked);
+      });
+
+      switchManualTab(currentManualTab || 'file');
+      updateManualBadges();
+    }
+
+    // ====== 阶段 2：私有资料上传角标与盘 ======
+    function updateManualBadges() {
+      const counts = {
+        file: distillDraft.files.length,
+        link: distillDraft.links.length,
+        pan: distillDraft.pans.length,
+        sub: distillDraft.subs.length
+      };
+      ['file', 'link', 'pan', 'sub'].forEach(k => {
+        const badge = document.getElementById('badge-' + k);
+        if (badge) {
+          badge.textContent = counts[k];
+          badge.classList.toggle('show', counts[k] > 0);
+        }
+      });
+      const totalCount = counts.file + counts.link + counts.pan + counts.sub;
+      const manualPill = document.getElementById('manualCountPill');
+      if (manualPill) {
+        manualPill.textContent = totalCount > 0 ? `已补充 ${totalCount} 项` : '选填补充';
+      }
+      renderTrayChips();
+    }
+
+    function renderTrayChips() {
+      const trayWrap = document.getElementById('trayChipsWrap');
+      const titleText = document.getElementById('trayTitleText');
+      if (!trayWrap) return;
+
+      const allItems = [
+        ...distillDraft.files.map((f, i) => ({ type: 'file', icon: '📎', name: f.name, idx: i })),
+        ...distillDraft.links.map((l, i) => ({ type: 'link', icon: '🔗', name: l.url, idx: i })),
+        ...distillDraft.pans.map((p, i) => ({ type: 'pan', icon: '🗄️', name: p.url + (p.code ? ` (${p.code})` : ''), idx: i })),
+        ...distillDraft.subs.map((s, i) => ({ type: 'sub', icon: '📡', name: s.name, idx: i }))
+      ];
+
+      if (titleText) {
+        titleText.textContent = `已添加 ${allItems.length} 项资料`;
+      }
+
+      if (allItems.length === 0) {
+        trayWrap.innerHTML = '';
+        return;
+      }
+
+      trayWrap.innerHTML = allItems.map(item => `
+        <span class="tray-chip">
+          <span class="tray-chip-icon">${item.icon}</span>
+          <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+          <span class="tray-chip-remove" onclick="removeTrayItem('${item.type}', ${item.idx})">×</span>
+        </span>
+      `).join('');
+    }
+
+    function removeTrayItem(type, idx) {
+      if (type === 'file') distillDraft.files.splice(idx, 1);
+      else if (type === 'link') distillDraft.links.splice(idx, 1);
+      else if (type === 'pan') distillDraft.pans.splice(idx, 1);
+      else if (type === 'sub') distillDraft.subs.splice(idx, 1);
+      updateManualBadges();
+      rebuildConfirmedSources();
+    }
+
+    // ====== 汇总统整分身学习资料清单 ======
+    function rebuildConfirmedSources() {
+      const list = [];
+      // 1. 全网公开检索到的资料
+      if (distillDraft.enableWebSearch) {
+        if (!distillDraft.searchChannels || distillDraft.searchChannels.resume !== false) {
+          distillDraft.homepages.forEach((url, i) => {
+            list.push({
+              id: 'src-home-' + i,
+              type: 'home',
+              tag: '个人主页',
+              title: url,
+              sub: '官网个人主页 · 自动检索关联资料',
+              removable: true
+            });
+          });
+        }
+        distillDraft.mockPublicSources.forEach(item => {
+          if (!item.deleted) {
+            if (!item.channelKey || !distillDraft.searchChannels || distillDraft.searchChannels[item.channelKey] !== false) {
+              list.push(item);
+            }
+          }
+        });
+      }
+      // 2. 自主上传的私有资料
+      distillDraft.files.forEach(f => {
+        list.push({
+          id: 'src-file-' + f.name,
+          type: 'manual',
+          rawType: 'file',
+          tag: '上传文件',
+          title: f.name,
+          sub: f.size ? `${(f.size / (1024 * 1024)).toFixed(1)} MB · 本地文件` : '本地文件',
+          removable: true
+        });
+      });
+      distillDraft.links.forEach(l => {
+        list.push({
+          id: 'src-link-' + l.url,
+          type: 'manual',
+          rawType: 'link',
+          tag: '网页链接',
+          title: l.url,
+          sub: '网络文章 / 视频链接',
+          removable: true
+        });
+      });
+      distillDraft.pans.forEach(p => {
+        list.push({
+          id: 'src-pan-' + p.url,
+          type: 'manual',
+          rawType: 'pan',
+          tag: '网盘',
+          title: p.url,
+          sub: `网盘资料${p.code ? ' · 提取码: ' + p.code : ''}`,
+          removable: true
+        });
+      });
+      distillDraft.subs.forEach(s => {
+        list.push({
+          id: 'src-sub-' + (s.url || s.name),
+          type: 'manual',
+          rawType: 'sub',
+          tag: '动态专栏',
+          title: s.name || s.url,
+          sub: s.url || '持续同步最新内容',
+          removable: true
+        });
+      });
+      distillDraft.confirmedSources = list;
+    }
+
+    // ====== 阶段 2：自主上传内联面板切换与处理 ======
+    function switchManualTab(tabKey) {
+      currentManualTab = tabKey;
+      ['file', 'link', 'pan', 'sub'].forEach(k => {
+        const card = document.getElementById('card-tab-' + k);
+        const subview = document.getElementById('manual-subview-' + k);
+        if (card) card.classList.toggle('active', k === tabKey);
+        if (subview) {
+          subview.style.display = k === tabKey ? 'flex' : 'none';
+        }
+      });
+    }
+
+    function handleFileSelectedInline(e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      files.forEach(f => {
+        distillDraft.files.push({ name: f.name, size: f.size });
+      });
+      e.target.value = '';
+      updateManualBadges();
+      rebuildConfirmedSources();
+      Toast.show(`已添加 ${files.length} 个文件`);
+    }
+
+    function handleAddLinkInline() {
+      const input = document.getElementById('inlineLinkInput');
+      const url = input.value.trim();
+      if (!url) { Toast.show('请输入链接地址'); return; }
+      distillDraft.links.push({ url: url });
+      input.value = '';
+      updateManualBadges();
+      rebuildConfirmedSources();
+      Toast.show('已添加链接资料');
+    }
+
+    function handleAddPanInline() {
+      const urlEl = document.getElementById('inlinePanUrlInput');
+      const codeEl = document.getElementById('inlinePanCodeInput');
+      const url = urlEl.value.trim();
+      const code = codeEl.value.trim();
+      if (!url) { Toast.show('请输入网盘分享链接'); return; }
+      distillDraft.pans.push({ url: url, code: code });
+      urlEl.value = '';
+      codeEl.value = '';
+      updateManualBadges();
+      rebuildConfirmedSources();
+      Toast.show('已添加网盘资料');
+    }
+
+    function handleAddSubInline() {
+      const input = document.getElementById('inlineSubInput');
+      const name = input.value.trim();
+      if (!name) { Toast.show('请输入专栏名称或主页链接'); return; }
+      distillDraft.subs.push({ name: name });
+      input.value = '';
+      updateManualBadges();
+      rebuildConfirmedSources();
+      Toast.show('已添加动态专栏');
+    }
+
+    // ====== 头像裁剪编辑模块 (AvatarCropper) ======
+    const avatarCropper = {
+      image: null,
+      canvasW: 0,
+      canvasH: 0,
+      crop: { x: 0, y: 0, w: 100, h: 100 },
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      resizeHandle: null,
+      resizeStart: null,
+      maxCanvasSize: 320
+    };
+
+    function handleDirectAvatarUpload(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        Toast.show('仅支持 JPG / PNG 格式图片');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        Toast.show('图片大小不能超过 10MB');
+        e.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        openAvatarCropModal(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    function openAvatarCropModal(imgDataUrl) {
+      const img = new Image();
+      img.onload = function () {
+        avatarCropper.image = img;
+        const maxW = 320;
+        const maxH = 340;
+        const scale = Math.min(maxW / img.width, maxH / img.height);
+        avatarCropper.canvasW = Math.max(1, Math.round(img.width * scale));
+        avatarCropper.canvasH = Math.max(1, Math.round(img.height * scale));
+
+        const ratio = 3 / 4;
+        // 确保 3:4 选区完整包容在图片有效范围内
+        const maxPossibleW = Math.min(avatarCropper.canvasW, avatarCropper.canvasH * ratio);
+        const cropW = Math.max(24, Math.round(maxPossibleW * 0.9));
+        const cropH = Math.round(cropW / ratio);
+
+        avatarCropper.crop = {
+          w: cropW,
+          h: cropH,
+          x: Math.round((avatarCropper.canvasW - cropW) / 2),
+          y: Math.round((avatarCropper.canvasH - cropH) / 2)
+        };
+
+        const modal = document.getElementById('avatarCropModalOverlay');
+        if (modal) modal.classList.add('open');
+
+        drawAvatarCropCanvas();
+        positionAvatarCropOverlay();
+        updateAvatarCropPreview();
+        bindAvatarCropEvents();
+      };
+      img.src = imgDataUrl;
+    }
+
+    function drawAvatarCropCanvas() {
+      if (!avatarCropper.image) return;
+      const canvas = document.getElementById('avatarCropCanvas');
+      if (!canvas) return;
+      canvas.width = avatarCropper.canvasW;
+      canvas.height = avatarCropper.canvasH;
+      canvas.style.width = avatarCropper.canvasW + 'px';
+      canvas.style.height = avatarCropper.canvasH + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, avatarCropper.canvasW, avatarCropper.canvasH);
+      ctx.drawImage(avatarCropper.image, 0, 0, avatarCropper.canvasW, avatarCropper.canvasH);
+    }
+
+    function positionAvatarCropOverlay() {
+      const overlay = document.getElementById('avatarCropOverlay');
+      if (!overlay) return;
+      overlay.style.left = avatarCropper.crop.x + 'px';
+      overlay.style.top = avatarCropper.crop.y + 'px';
+      overlay.style.width = avatarCropper.crop.w + 'px';
+      overlay.style.height = avatarCropper.crop.h + 'px';
+    }
+
+    function updateAvatarCropPreview() {
+      if (!avatarCropper.image) return;
+      const canvas = document.getElementById('avatarCropCanvas');
+      if (!canvas) return;
+      const previewCanvas = document.createElement('canvas');
+      const pW = 108;
+      const pH = 144;
+      previewCanvas.width = pW;
+      previewCanvas.height = pH;
+      const pctx = previewCanvas.getContext('2d');
+      pctx.drawImage(
+        canvas,
+        avatarCropper.crop.x,
+        avatarCropper.crop.y,
+        avatarCropper.crop.w,
+        avatarCropper.crop.h,
+        0,
+        0,
+        pW,
+        pH
+      );
+      const previewImg = document.getElementById('avatarCropPreviewImg');
+      if (previewImg) {
+        previewImg.src = previewCanvas.toDataURL('image/png');
+      }
+    }
+
+    function bindAvatarCropEvents() {
+      const overlay = document.getElementById('avatarCropOverlay');
+      if (!overlay) return;
+
+      overlay.onmousedown = function (e) {
+        if (e.target.classList.contains('avatar-crop-handle')) return;
+        avatarCropper.isDragging = true;
+        avatarCropper.dragStartX = e.clientX - avatarCropper.crop.x;
+        avatarCropper.dragStartY = e.clientY - avatarCropper.crop.y;
+        e.preventDefault();
+      };
+
+      overlay.querySelectorAll('.avatar-crop-handle').forEach(function (handleEl) {
+        handleEl.onmousedown = function (e) {
+          avatarCropper.resizeHandle = handleEl.dataset.handle;
+          avatarCropper.resizeStart = {
+            x: e.clientX,
+            y: e.clientY,
+            cx: avatarCropper.crop.x,
+            cy: avatarCropper.crop.y,
+            cw: avatarCropper.crop.w,
+            ch: avatarCropper.crop.h
+          };
+          e.preventDefault();
+          e.stopPropagation();
+        };
+      });
+
+      document.onmousemove = function (e) {
+        if (avatarCropper.isDragging) {
+          let nx = e.clientX - avatarCropper.dragStartX;
+          let ny = e.clientY - avatarCropper.dragStartY;
+          nx = Math.max(0, Math.min(avatarCropper.canvasW - avatarCropper.crop.w, nx));
+          ny = Math.max(0, Math.min(avatarCropper.canvasH - avatarCropper.crop.h, ny));
+          avatarCropper.crop.x = nx;
+          avatarCropper.crop.y = ny;
+          positionAvatarCropOverlay();
+          updateAvatarCropPreview();
+        } else if (avatarCropper.resizeHandle && avatarCropper.resizeStart) {
+          const r = avatarCropper.resizeStart;
+          const dx = e.clientX - r.x;
+          const dy = e.clientY - r.y;
+          const ratio = 3 / 4;
+
+          let deltaW = dx;
+          if (avatarCropper.resizeHandle === 'tl' || avatarCropper.resizeHandle === 'bl') {
+            deltaW = -dx;
+          }
+
+          let newW = r.cw + deltaW;
+          const maxAllowedW = Math.min(avatarCropper.canvasW, avatarCropper.canvasH * ratio);
+          const minAllowedW = Math.min(24, maxAllowedW);
+          newW = Math.max(minAllowedW, Math.min(maxAllowedW, newW));
+          let newH = newW / ratio;
+
+          let nx = r.cx;
+          let ny = r.cy;
+          if (avatarCropper.resizeHandle === 'tl') {
+            nx = r.cx + (r.cw - newW);
+            ny = r.cy + (r.ch - newH);
+          } else if (avatarCropper.resizeHandle === 'tr') {
+            ny = r.cy + (r.ch - newH);
+          } else if (avatarCropper.resizeHandle === 'bl') {
+            nx = r.cx + (r.cw - newW);
+          }
+
+          if (nx < 0) nx = 0;
+          if (ny < 0) ny = 0;
+          if (nx + newW > avatarCropper.canvasW) nx = avatarCropper.canvasW - newW;
+          if (ny + newH > avatarCropper.canvasH) ny = avatarCropper.canvasH - newH;
+
+          avatarCropper.crop.x = Math.round(nx);
+          avatarCropper.crop.y = Math.round(ny);
+          avatarCropper.crop.w = Math.round(newW);
+          avatarCropper.crop.h = Math.round(newH);
+          positionAvatarCropOverlay();
+          updateAvatarCropPreview();
+        }
+      };
+
+      document.onmouseup = function () {
+        avatarCropper.isDragging = false;
+        avatarCropper.resizeHandle = null;
+        avatarCropper.resizeStart = null;
+      };
+    }
+
+    function confirmAvatarCrop() {
+      if (!avatarCropper.image) return;
+      const canvas = document.getElementById('avatarCropCanvas');
+      if (!canvas) return;
+
+      const out = document.createElement('canvas');
+      const outW = 300;
+      const outH = 400;
+      out.width = outW;
+      out.height = outH;
+      const octx = out.getContext('2d');
+      octx.drawImage(
+        canvas,
+        avatarCropper.crop.x,
+        avatarCropper.crop.y,
+        avatarCropper.crop.w,
+        avatarCropper.crop.h,
+        0,
+        0,
+        outW,
+        outH
+      );
+
+      const croppedDataUrl = out.toDataURL('image/png');
+      distillDraft.avatarImage = croppedDataUrl;
+      renderDistillAvatarPreview();
+
+      if (buildingCloneId) {
+        Store.updateClone(buildingCloneId, { avatarImage: distillDraft.avatarImage });
+      }
+
+      closeAvatarCropModal();
+      Toast.show('头像已更新');
+    }
+
+    function closeAvatarCropModal() {
+      const modal = document.getElementById('avatarCropModalOverlay');
+      if (modal) modal.classList.remove('open');
+      avatarCropper.image = null;
+      document.onmousemove = null;
+      document.onmouseup = null;
+    }
+
+    function handleCropModalOverlayClick(e) {
+      if (e.target.id === 'avatarCropModalOverlay') {
+        closeAvatarCropModal();
+      }
+    }
+
+    // ====== 4-Step 步骤流转核心控制 ======
+    function goToStep(step) {
+      if (step < 0 || step > 4) return;
+
+      // 阶段 1 校验
+      if (currentStep === 1 && step > 1) {
+        const nameInput = document.getElementById('personaNameInput');
+        const name = (nameInput && nameInput.value.trim()) || '';
+        if (!name) {
+          Toast.show('请填写你的姓名');
+          return;
+        }
+        distillDraft.name = name;
+
+        const bioInput = document.getElementById('personaBioInput');
+        if (bioInput) {
+          distillDraft.bio = bioInput.value.trim();
+        }
+      }
+
+      currentStep = step;
+
+      // 切换视图区块 (0: 引导, 1: 基本信息, 2: 分身知识, 3: 构建分身)
+      for (let i = 0; i <= 3; i++) {
+        const el = document.getElementById(`stage-step-${i}`);
+        if (el) el.classList.toggle('active', currentStep === i);
+      }
+
+      updateStepperUI(currentStep);
+
+      // 进入阶段 1 时同步更新下一步按钮状态与头像预览
+      if (currentStep === 1) {
+        updateStep1NextBtn();
+        renderDistillAvatarPreview();
+      }
+
+      // 进入阶段 2 时同步模式状态与详情
+      if (currentStep === 2) {
+        switchIngestMode(currentIngestMode || 'auto');
+        updateStep2UI();
+      }
+
+      // 进入阶段 3（自动构建）时同步计算全部学习资料并直接开始自动构建
+      if (currentStep === 3) {
+        rebuildConfirmedSources();
+        startDistillPipeline();
+      }
+    }
+
+    function updateStepperUI(step) {
+      const stepper = document.getElementById('distill-stepper');
+      if (step === 0) {
+        if (stepper) stepper.style.display = 'none';
+        return;
+      } else {
+        if (stepper) stepper.style.display = 'flex';
+      }
+
+      for (let i = 1; i <= 3; i++) {
+        const node = document.getElementById(`step-node-${i}`);
+        const connector = document.getElementById(`connector-${i}`);
+        if (!node) continue;
+
+        node.className = 'stepper-step';
+        const numSpan = node.querySelector('.num-text');
+
+        if (i < step) {
+          node.classList.add('completed');
+          if (numSpan) numSpan.innerText = '✓';
+          if (connector) connector.className = 'step-connector completed';
+        } else if (i === step) {
+          node.classList.add('active');
+          if (numSpan) numSpan.innerText = String(i);
+          if (connector) connector.className = 'step-connector active';
+        } else {
+          if (numSpan) numSpan.innerText = String(i);
+          if (connector) connector.className = 'step-connector';
+        }
+      }
+    }
+
+    // ====== Step 3：分身构建全自动流水线与状态管理 ======
+    let distillTimer = null;
+    let distillCurrentStep = 1;
+    let distillCompleted = false;
+
+    const distillStepsState = {
+      1: { name: '检索与整理资料', progress: 0, status: 'waiting' },
+      2: { name: '提取核心观点与知识', progress: 0, status: 'waiting' },
+      3: { name: '学习思维风格', progress: 0, status: 'waiting' },
+      4: { name: '学习语言习惯', progress: 0, status: 'waiting' }
+    };
+
+    // 同步人物形象：底层为半透明朦胧轮廓，顶层清晰全彩形象从下到上逐步显影揭示（0% -> 100%）
+    function updateAvatarSynthesisUI(overallPercent) {
+      const box = document.getElementById('avatarSynthesisBox');
+      const clarityWrapper = document.getElementById('avatarClarityWrapper');
+      const dimLayer = document.getElementById('avatarDimLayer');
+      const clearLayer = document.getElementById('avatarClearLayer');
+      const nameEl = document.getElementById('avatarSynthesisName');
+      if (!box || !clarityWrapper) return;
+
+      const personaName = distillDraft.name || '黄铁军';
+      if (nameEl) nameEl.textContent = `${personaName} · AI分身`;
+
+      // 同步头像内容（照片或名字后两个字）至底层朦胧模与顶层清晰模
+      const char = getAvatarDefaultText(personaName);
+      if (distillDraft.avatarImage) {
+        if (dimLayer && !dimLayer.querySelector('img')) {
+          dimLayer.innerHTML = `<img src="${distillDraft.avatarImage}" alt="${escapeHtml(personaName)}">`;
+        }
+        if (clearLayer && !clearLayer.querySelector('img')) {
+          clearLayer.innerHTML = `<img src="${distillDraft.avatarImage}" alt="${escapeHtml(personaName)}">`;
+        }
+      } else {
+        if (dimLayer) {
+          const c = dimLayer.querySelector('.avatar-char');
+          if (!c) dimLayer.innerHTML = `<span class="avatar-char">${escapeHtml(char)}</span>`;
+          else c.textContent = char;
+        }
+        if (clearLayer) {
+          const c = clearLayer.querySelector('.avatar-char');
+          if (!c) clearLayer.innerHTML = `<span class="avatar-char">${escapeHtml(char)}</span>`;
+          else c.textContent = char;
+        }
+      }
+
+      // 控制清晰显影层的高度：从 0% 递增至 100%（从下往上逐渐变清晰）
+      const pct = Math.max(0, Math.min(100, Math.round(overallPercent)));
+      clarityWrapper.style.height = `${pct}%`;
+
+      if (pct < 100) {
+        box.classList.remove('completed');
+      } else {
+        box.classList.add('completed');
+      }
+    }
+
+    const distillStepMetrics = {
+      1: { max: 18, unit: '篇资料', verb: '已整理' },
+      2: { max: 36, unit: '条知识', verb: '已提取' },
+      3: { max: 12, unit: '条思维风格', verb: '已学习' },
+      4: { max: 24, unit: '组语言习惯', verb: '已学习' }
+    };
+
+    // 更新单个步骤卡片的 UI 状态与进度
+    function renderDistillStepCard(stepNum) {
+      const card = document.getElementById(`flowCard-${stepNum}`);
+      const icon = document.getElementById(`flowIcon-${stepNum}`);
+      const stateText = document.getElementById(`flowState-${stepNum}`);
+      const progressFill = document.getElementById(`flowProgress-${stepNum}`);
+      if (!card) return;
+
+      const state = distillStepsState[stepNum];
+      const metric = distillStepMetrics[stepNum] || { max: 20, unit: '项内容', verb: '已处理' };
+      card.classList.remove('waiting', 'processing', 'completed');
+      card.classList.add(state.status);
+
+      if (state.status === 'waiting') {
+        if (icon) icon.textContent = String(stepNum);
+        if (stateText) stateText.textContent = '待处理';
+        if (progressFill) progressFill.style.width = '0%';
+      } else if (state.status === 'processing') {
+        if (icon) icon.textContent = String(stepNum);
+        // 不再显示冰冷的百分比，实时从 1 一路累加至最大指标
+        const currentCount = Math.max(1, Math.min(metric.max, Math.round((state.progress / 100) * metric.max)));
+        if (stateText) stateText.textContent = `${metric.verb} ${currentCount} ${metric.unit}`;
+        if (progressFill) progressFill.style.width = `${Math.min(100, Math.round(state.progress))}%`;
+      } else if (state.status === 'completed') {
+        if (icon) icon.textContent = '✓';
+        if (stateText) stateText.textContent = `${metric.verb} ${metric.max} ${metric.unit}`;
+        if (progressFill) progressFill.style.width = '100%';
+      }
+    }
+
+    // 综合计算全局进度并同步
+    function syncDistillOverallProgress() {
+      const p1 = distillStepsState[1].progress;
+      const p2 = distillStepsState[2].progress;
+      const p3 = distillStepsState[3].progress;
+      const p4 = distillStepsState[4].progress;
+      const total = Math.round((p1 + p2 + p3 + p4) / 4);
+
+      updateAvatarSynthesisUI(total);
+      if (buildingCloneId) {
+        Store.updateClone(buildingCloneId, {
+          progress: Math.min(100, total),
+          distillStepsState: distillStepsState,
+          distillCurrentStep: distillCurrentStep
+        });
+      }
+
+      if (p1 >= 100 && p2 >= 100 && p3 >= 100 && p4 >= 100) {
+        finishDistillPipeline();
+      }
+    }
+
+    // 标记完成构建并解锁下一步按钮，锁定上一步并展示提示
+    function finishDistillPipeline() {
+      if (distillCompleted) return;
+      distillCompleted = true;
+      if (distillTimer) {
+        clearInterval(distillTimer);
+        distillTimer = null;
+      }
+      for (let s = 1; s <= 4; s++) {
+        distillStepsState[s].progress = 100;
+        distillStepsState[s].status = 'completed';
+        renderDistillStepCard(s);
+      }
+      updateAvatarSynthesisUI(100);
+
+      if (buildingCloneId) {
+        Store.updateClone(buildingCloneId, {
+          progress: 100,
+          distillStepsState: distillStepsState,
+          distillCurrentStep: 4
+        });
+      }
+
+      // 隐藏模拟步骤按钮
+      const simWrap = document.getElementById('simulateActionWrap');
+      if (simWrap) simWrap.style.display = 'none';
+
+      // 激活下一步体验分身按钮
+      const finishBtn = document.getElementById('btn-finish-build');
+      if (finishBtn) {
+        finishBtn.disabled = false;
+        finishBtn.classList.remove('disabled');
+      }
+
+      // 标题切换为构建完成
+      const titleEl = document.getElementById('step3Title');
+      if (titleEl) titleEl.textContent = '分身构建完成';
+    }
+
+    // 启动自动构建流水线（在 Step 2 点击后自动调用）
+    function startDistillPipeline() {
+      let name = distillDraft.name || '黄铁军';
+      const desc = distillDraft.bio || '北京大学教授、北京智源人工智能研究院理事长，长期从事视觉信息处理、类脑计算与通用人工智能研究。';
+
+      const titleEl = document.getElementById('step3Title');
+      if (titleEl && !distillCompleted) {
+        titleEl.textContent = '分身构建中...';
+      }
+
+      if (!buildingCloneId) {
+        let existingBuilding = (clone && clone.status === 'building') ? clone : (Store.myClones || []).find(c => c.status === 'building');
+        if (existingBuilding) {
+          buildingCloneId = existingBuilding.id;
+          name = existingBuilding.name || name;
+          distillDraft.name = name;
+          if (existingBuilding.avatarImage) distillDraft.avatarImage = existingBuilding.avatarImage;
+          if (existingBuilding.desc) distillDraft.bio = existingBuilding.desc;
+
+          // 恢复已保存的各步骤状态或按已保存进度推导还原
+          if (existingBuilding.distillStepsState) {
+            Object.assign(distillStepsState, existingBuilding.distillStepsState);
+          } else if (typeof existingBuilding.progress === 'number' && existingBuilding.progress > 0) {
+            const p = existingBuilding.progress;
+            for (let s = 1; s <= 4; s++) {
+              const startP = (s - 1) * 25;
+              const endP = s * 25;
+              if (p >= endP) {
+                distillStepsState[s].status = 'completed';
+                distillStepsState[s].progress = 100;
+              } else if (p > startP) {
+                distillStepsState[s].status = 'processing';
+                distillStepsState[s].progress = Math.round(((p - startP) / 25) * 100);
+                distillCurrentStep = s;
+              } else {
+                distillStepsState[s].status = 'waiting';
+                distillStepsState[s].progress = 0;
+              }
+            }
+          }
+          if (existingBuilding.distillCurrentStep) {
+            distillCurrentStep = existingBuilding.distillCurrentStep;
+          }
+          if (existingBuilding.progress >= 100) {
+            distillCompleted = true;
+          }
+        } else {
+          const buildingClone = Store.startAgentBuild(name, clone ? clone.id : null, {
+            desc,
+            tag: '专家分身',
+            homepages: distillDraft.homepages,
+            enableWebSearch: distillDraft.enableWebSearch,
+            sources: distillDraft.confirmedSources
+          });
+          buildingCloneId = buildingClone.id;
+        }
+      }
+      if (distillDraft.avatarImage && buildingCloneId) {
+        Store.updateClone(buildingCloneId, { avatarImage: distillDraft.avatarImage });
+      }
+
+      if (distillCompleted) {
+        finishDistillPipeline();
+        return;
+      }
+
+      // 如果当前步骤尚未开启，设置为 processing
+      if (distillCurrentStep <= 4 && distillStepsState[distillCurrentStep].status === 'waiting') {
+        distillStepsState[distillCurrentStep].status = 'processing';
+      }
+
+      for (let s = 1; s <= 4; s++) {
+        renderDistillStepCard(s);
+      }
+      syncDistillOverallProgress();
+
+      if (distillTimer) clearInterval(distillTimer);
+
+      // 自动模拟推进：每步 10 秒（10000ms），每 100ms 增加 1%
+      distillTimer = setInterval(() => {
+        if (distillCompleted) {
+          clearInterval(distillTimer);
+          distillTimer = null;
+          return;
+        }
+
+        const step = distillCurrentStep;
+        if (step > 4) {
+          finishDistillPipeline();
+          return;
+        }
+
+        distillStepsState[step].status = 'processing';
+        distillStepsState[step].progress = Math.min(100, distillStepsState[step].progress + 1);
+        renderDistillStepCard(step);
+        syncDistillOverallProgress();
+
+        if (distillStepsState[step].progress >= 100) {
+          distillStepsState[step].status = 'completed';
+          renderDistillStepCard(step);
+          distillCurrentStep = step + 1;
+          if (distillCurrentStep <= 4) {
+            distillStepsState[distillCurrentStep].status = 'processing';
+            renderDistillStepCard(distillCurrentStep);
+          } else {
+            finishDistillPipeline();
+          }
+        }
+      }, 100);
+    }
+
+    // 快捷按钮：模拟当前步骤完成
+    function simulateCurrentStep() {
+      if (distillCompleted) return;
+
+      const step = distillCurrentStep;
+      if (step <= 4) {
+        distillStepsState[step].progress = 100;
+        distillStepsState[step].status = 'completed';
+        renderDistillStepCard(step);
+
+        distillCurrentStep = step + 1;
+        if (distillCurrentStep <= 4) {
+          distillStepsState[distillCurrentStep].status = 'processing';
+          renderDistillStepCard(distillCurrentStep);
+        } else {
+          finishDistillPipeline();
+        }
+        syncDistillOverallProgress();
+      }
+    }
+
+    // 完成构建并直接进入体验分身页
+    function handleFinishDistill() {
+      const name = distillDraft.name || '黄铁军';
+      const desc = distillDraft.bio || '北京大学教授、北京智源人工智能研究院理事长，长期从事视觉信息处理、类脑计算与通用人工智能研究。';
+      const tag = '专家分身';
+
+      const newClone = Store.completeAgentDistill(name, buildingCloneId || (clone ? clone.id : null), {
+        desc,
+        tag,
+        homepages: distillDraft.homepages,
+        enableWebSearch: distillDraft.enableWebSearch,
+        sources: distillDraft.confirmedSources
+      });
+      if (distillDraft.avatarImage) {
+        newClone.avatarImage = distillDraft.avatarImage;
+        Store.updateClone(newClone.id, { avatarImage: distillDraft.avatarImage });
+      } else {
+        const defaultAvatar = getAvatarDefaultText(name);
+        newClone.avatar = defaultAvatar;
+        Store.updateClone(newClone.id, { avatar: defaultAvatar });
+      }
+      Toast.show(`🎉【${newClone.name}】分身已就绪，正在前往体验...`);
+
+      setTimeout(() => {
+        window.location.href = getPageUrl('new-chat-persona.html', { id: newClone.id, guide: 'tour' });
+      }, 400);
+    }
+
+    // 初始化页面步骤
+    goToStep(currentStep);
+  </script>
+</body>
+
+</html>

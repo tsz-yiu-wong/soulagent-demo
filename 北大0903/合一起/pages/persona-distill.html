@@ -1,0 +1,2989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>构建AI分身 - SoulAgent</title>
+  <!-- 全局基础样式 -->
+  <link rel="stylesheet" href="../css/common.css">
+
+  <!-- 本页面专属 CSS (自包含) -->
+  <style>
+    .distill-view {
+      flex: 1;
+      padding: 24px 32px 60px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1040px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 顶部 Tab 导航栏 */
+    .plaza-tab-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 36px;
+      border-bottom: 1px solid var(--border-color, #e5e7eb);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 50;
+    }
+    .plaza-tabs {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+    .plaza-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 2px 12px 2px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary, #64748b);
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .plaza-tab:hover { color: var(--text-primary); }
+    .plaza-tab.active { color: var(--primary-color, #8c171e); }
+    .plaza-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2.5px;
+      background: var(--primary-color, #8c171e);
+      border-radius: 2px;
+    }
+    .plaza-tab svg { width: 18px; height: 18px; }
+
+    .distill-nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .btn-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all 0.15s ease;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-back-link:hover {
+      background: #f1f5f9;
+      color: var(--text-primary);
+    }
+
+    /* 顶部置中模拟完成按钮 */
+    .distill-top-action-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .btn-simulate-complete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 30px;
+      background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%));
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(140, 23, 30, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-simulate-complete:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 24px rgba(140, 23, 30, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+    }
+
+    /* 步骤指示条 */
+    .distill-stepper-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 32px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .step-icon-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .stepper-step.completed .step-icon-circle {
+      background: #ecfdf5;
+      color: #059669;
+      border-color: #10b981;
+    }
+
+    .stepper-step.active .step-icon-circle {
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 4px rgba(140, 23, 30, 0.2);
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .step-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .stepper-step.active .step-num {
+      color: var(--primary-color, #8c171e);
+    }
+
+    .step-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: #e2e8f0;
+      margin: 0 16px;
+    }
+
+    .step-connector.completed {
+      background: #10b981;
+    }
+
+    .step-connector.active {
+      background: linear-gradient(90deg, #10b981, var(--primary-color, #8c171e));
+    }
+
+    /* 步骤容器 */
+    .step-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: stepFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .step-section.active {
+      display: flex;
+    }
+
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 向导卡片 */
+    .wizard-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 36px 40px;
+      box-shadow: var(--shadow-sm);
+      max-width: 820px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .wizard-card-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .wizard-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .wizard-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-label .sub-tip {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      background: #ffffff;
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.15));
+    }
+
+    .avatar-name-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+    .avatar-name-field {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .avatar-upload-compact {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      padding-top: 0;
+    }
+    .avatar-upload-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .avatar-upload-preview {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%));
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      overflow: visible;
+      flex-shrink: 0;
+      border: 2px solid var(--border-color);
+      position: relative;
+      cursor: pointer;
+    }
+    .avatar-upload-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 14px;
+    }
+    .btn-upload-avatar {
+      padding: 8px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-upload-avatar:hover {
+      border-color: var(--primary-color, #8c171e);
+      color: var(--primary-color, #8c171e);
+    }
+    .avatar-upload-tip {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .tag-select-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .tag-chip {
+      padding: 6px 14px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .tag-chip:hover {
+      background: #e2e8f0;
+      color: var(--text-primary);
+    }
+
+    .tag-chip.selected {
+      background: var(--primary-light, #fdf2f2);
+      border-color: rgba(140, 23, 30, 0.25);
+      color: var(--primary-color, #8c171e);
+      font-weight: 600;
+    }
+
+    .wizard-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+      margin-top: 10px;
+    }
+
+    .btn-step-next {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 30px;
+      background: var(--primary-color, #8c171e);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-step-next:hover {
+      background: var(--primary-hover, #721218);
+      transform: translateY(-1px);
+    }
+
+    .btn-step-prev {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 22px;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-step-prev:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    /* Step 2 上传与绑定 */
+    .section-sub-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upload-dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 24px 20px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 14px;
+    }
+
+    .upload-dropzone:hover {
+      border-color: var(--primary-color, #8c171e);
+      background: var(--primary-light, #fdf2f2);
+    }
+
+    .upload-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px auto;
+      color: var(--primary-color, #8c171e);
+    }
+
+    .link-add-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn-add-link {
+      padding: 0 20px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-open-ds-modal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 13px 18px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+
+    .btn-open-ds-modal:hover {
+      background: #fdf4ff;
+      border-color: #a855f7;
+    }
+
+    .added-item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .added-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+
+    .added-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .badge-icon {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 5px;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+    .badge-icon.pdf { background: #ef4444; }
+    .badge-icon.doc { background: #3b82f6; }
+    .badge-icon.json { background: #f59e0b; }
+    .badge-icon.web { background: #0284c7; }
+    .badge-icon.rss { background: #8b5cf6; }
+
+    .added-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .added-item-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .btn-remove-item {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .btn-remove-item:hover { color: #ef4444; }
+
+    /* Step 3 构建面板与终端 */
+    .distill-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px 24px;
+    }
+
+    .distill-title-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .distill-avatar-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .distill-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .distill-subtitle {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .distill-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #2563eb;
+    }
+
+    .distill-dot-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563eb;
+      animation: pulseDot 1.2s infinite ease-in-out;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    .distill-main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .distill-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .distill-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 10px;
+    }
+
+    .distill-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .badge-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .distill-file-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .distill-file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    .file-icon-box {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .file-icon-box.pdf { background: #ef4444; }
+    .file-icon-box.json { background: #f59e0b; }
+
+    .file-meta {
+      flex: 1;
+      margin: 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .file-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .file-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .file-check {
+      font-size: 13px;
+      font-weight: 700;
+      color: #10b981;
+    }
+
+    .terminal-card {
+      background: #0f172a;
+      border-color: #1e293b;
+      color: #f8fafc;
+    }
+    .terminal-card .distill-card-title { color: #f8fafc; }
+
+    .live-dot-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e293b;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .green-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .terminal-console {
+      flex: 1;
+      background: #020617;
+      border-radius: 10px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      line-height: 1.7;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border: 1px solid #1e293b;
+    }
+
+    .log-line.text-muted { color: #64748b; }
+    .log-line.text-success { color: #34d399; }
+    .log-line.text-info { color: #38bdf8; }
+    .log-line.highlight { color: #fbbf24; font-weight: 600; }
+
+    .terminal-progress-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .terminal-progress-bar {
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .terminal-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 3px;
+    }
+
+    .terminal-progress-text {
+      font-size: 11.5px;
+      color: #94a3b8;
+      text-align: right;
+    }
+
+    /* 数据源弹窗 Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-panel {
+      background: #ffffff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .modal-title { font-size: 15.5px; font-weight: 700; color: var(--text-primary); }
+    .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }
+    .modal-body { padding: 18px 22px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid #f1f5f9; background: #f8fafc; }
+
+    /* Step 1 上传资料与接入方式 */
+    .upload-guidance-note {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .upload-guidance-note b { font-weight: 700; }
+
+    .upload-guidance-extra {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin: -6px 0 16px;
+    }
+    .upload-guidance-extra b { font-weight: 700; color: var(--text-secondary); }
+
+    .upload-option-block {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #ffffff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .upload-option-block.expanded {
+      border-color: rgba(140, 23, 30, 0.25);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.08));
+    }
+
+    /* ====== 通用抽屉 ====== */
+    .drawer-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 1000;
+    }
+    .drawer-overlay.open { opacity: 1; visibility: visible; }
+    .drawer-panel {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 600px; max-width: 90vw;
+      background: #fff;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1001;
+      display: flex; flex-direction: column;
+    }
+    .drawer-overlay.open .drawer-panel { transform: translateX(0); }
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid #f1f5f9;
+      flex-shrink: 0;
+    }
+    .drawer-title { font-size: 16px; font-weight: 700; color: var(--text-primary, #1e293b); }
+    .drawer-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border: none; background: #f8fafc;
+      transition: background 0.2s ease;
+    }
+    .drawer-close:hover { background: #f1f5f9; }
+    .drawer-close svg { width: 18px; height: 18px; stroke: var(--text-secondary, #475569); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .drawer-body {
+      flex: 1; overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .drawer-footer {
+      display: flex; gap: 10px; justify-content: flex-end;
+      padding: 16px 24px;
+      border-top: 1px solid #f1f5f9;
+      flex-shrink: 0;
+    }
+    .drawer-btn {
+      padding: 10px 24px; border-radius: 10px;
+      font-size: 13.5px; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: all 0.2s ease;
+    }
+    .drawer-btn-cancel { background: #f8fafc; color: var(--text-secondary, #475569); border: 1px solid #e2e8f0; }
+    .drawer-btn-cancel:hover { background: #f1f5f9; }
+    .drawer-btn-confirm { background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); color: #fff; }
+    .drawer-btn-confirm:hover { opacity: 0.9; }
+    .avatar-upload-zone {
+      border: 2px dashed #e2e8f0; border-radius: 12px;
+      padding: 32px 20px; text-align: center;
+      cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .avatar-upload-zone:hover { border-color: var(--primary-color, #8c171e); background: rgba(140,23,30,0.02); }
+    .avatar-upload-zone svg { width: 32px; height: 32px; stroke: var(--text-muted, #94a3b8); stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 8px; }
+    .avatar-upload-zone-title { font-size: 14px; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 4px; }
+    .avatar-upload-zone-desc { font-size: 12px; color: var(--text-muted, #94a3b8); }
+    .avatar-crop-area {
+      position: relative; width: 100%; max-width: 300px;
+      margin: 0 auto; border-radius: 12px; overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    .avatar-crop-area canvas { display: block; width: 100%; }
+    .avatar-crop-preview-label { font-size: 12px; color: var(--text-muted); margin: 16px 0 8px; text-align: center; }
+    .avatar-crop-preview {
+      width: 80px; height: 80px; border-radius: 50%;
+      overflow: hidden; margin: 0 auto;
+      border: 2px solid #e2e8f0;
+    }
+    .avatar-crop-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-format-tip {
+      font-size: 12px; color: var(--text-muted, #94a3b8);
+      text-align: center; margin-top: 12px;
+    }
+    .drawer-form-group { margin-bottom: 16px; }
+    .drawer-form-label { font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b); margin-bottom: 6px; display: block; }
+    .drawer-form-hint { font-size: 12px; color: var(--text-muted, #94a3b8); margin-bottom: 8px; }
+    .drawer-added-list { margin-top: 12px; }
+    .drawer-added-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; background: #f8fafc;
+      border-radius: 8px; margin-bottom: 6px;
+      font-size: 12.5px; color: var(--text-secondary, #475569);
+    }
+    .drawer-added-item .remove-btn {
+      margin-left: auto; cursor: pointer; color: #dc2626;
+      font-size: 14px; font-weight: 600; border: none; background: none;
+    }
+    .source-card { cursor: pointer; }
+    .source-card-badge {
+      position: absolute; top: 8px; right: 10px;
+      min-width: 20px; height: 20px; padding: 0 6px;
+      border-radius: 10px;
+      background: var(--primary-color, #8c171e);
+      color: #fff; font-size: 11px; font-weight: 700;
+      display: none; align-items: center; justify-content: center;
+      z-index: 5;
+    }
+    .source-card-badge.show { display: flex; }
+    .added-list-section {
+      margin-top: 16px;
+    }
+    .added-list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .added-list-title {
+      font-size: 13px; font-weight: 600; color: var(--text-primary, #1e293b);
+    }
+    .added-list-count {
+      font-size: 12px; color: var(--text-muted, #94a3b8);
+    }
+    .added-list-empty {
+      text-align: center; padding: 24px 0;
+      font-size: 13px; color: var(--text-muted, #94a3b8);
+    }
+    .added-list-group {
+      margin-bottom: 12px;
+    }
+    .added-list-group-label {
+      font-size: 11.5px; font-weight: 600;
+      color: var(--primary-color, #8c171e);
+      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .added-list-group-label::before {
+      content: ''; width: 3px; height: 12px; border-radius: 2px;
+      background: var(--primary-color, #8c171e);
+    }
+    .added-list-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; background: #f8fafc;
+      border: 1px solid #f1f5f9; border-radius: 8px; margin-bottom: 5px;
+      font-size: 12.5px; color: var(--text-secondary, #475569);
+      transition: border-color 0.2s ease;
+    }
+    .added-list-item:hover { border-color: #e2e8f0; }
+    .added-list-item-icon { flex-shrink: 0; color: var(--text-muted, #94a3b8); }
+    .added-list-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .added-list-item-remove {
+      cursor: pointer; color: #dc2626; font-size: 14px;
+      border: none; background: none; flex-shrink: 0;
+      opacity: 0.6; transition: opacity 0.2s ease;
+    }
+    .added-list-item-remove:hover { opacity: 1; }
+    .source-card { position: relative; }
+    /* 抽屉内表单优化 */
+    .drawer-body .link-add-group { display: flex; gap: 8px; }
+    .drawer-body .link-add-group .form-input { flex: 1; }
+    .drawer-body .pan-link-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .drawer-body .pan-link-row .form-input:not(.pan-code) { flex: 1; min-width: 120px; }
+    .drawer-body .pan-link-row .pan-code { width: 100px; }
+    .drawer-body .subscription-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+    .drawer-body .subscription-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .drawer-body .subscription-label { font-size: 12px; color: var(--text-secondary, #475569); margin-bottom: 8px; }
+    /* 裁剪区域 */
+    .avatar-crop-wrapper-outer { text-align: center; }
+    .avatar-crop-wrapper {
+      position: relative; margin: 0 auto; border-radius: 12px; overflow: hidden;
+      border: 1px solid #e2e8f0; background: #1a1a1a;
+      display: inline-block;
+    }
+    .avatar-crop-wrapper canvas { display: block; position: relative; }
+    .avatar-crop-overlay {
+      position: absolute; border: 2px solid #fff;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+      cursor: move;
+    }
+    .avatar-crop-handle {
+      position: absolute; width: 12px; height: 12px;
+      background: #fff; border: 2px solid var(--primary-color, #8c171e);
+      border-radius: 50%;
+      z-index: 10;
+    }
+    .avatar-crop-handle.tl { top: -7px; left: -7px; cursor: nwse-resize; }
+    .avatar-crop-handle.tr { top: -7px; right: -7px; cursor: nesw-resize; }
+    .avatar-crop-handle.bl { bottom: -7px; left: -7px; cursor: nesw-resize; }
+    .avatar-crop-handle.br { bottom: -7px; right: -7px; cursor: nwse-resize; }
+
+    .avatar-crop-layout {
+      display: flex; gap: 24px; align-items: flex-start;
+    }
+    .avatar-crop-left {
+      width: 140px; flex-shrink: 0; text-align: center;
+    }
+    .avatar-crop-left .avatar-crop-preview-label {
+      font-size: 12px; color: var(--text-muted, #94a3b8);
+      margin-bottom: 8px;
+    }
+    .avatar-crop-left .avatar-crop-preview {
+      width: 140px; height: 140px; margin: 0 auto;
+      position: relative;
+      overflow: visible !important;
+      border: none;
+    }
+    .avatar-crop-left .avatar-crop-preview img {
+      width: 140px; height: 140px; border-radius: 8px;
+      display: block;
+    }
+    .avatar-crop-round-label {
+      font-size: 11px; color: var(--text-muted, #94a3b8);
+      margin-top: 6px;
+    }
+    .avatar-crop-reselect-icon {
+      position: absolute;
+      right: -6px; bottom: -6px;
+      width: 36px; height: 36px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--primary-color, #8c171e);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+    .avatar-crop-reselect-icon:hover {
+      transform: scale(1.12);
+      box-shadow: 0 4px 14px rgba(140, 23, 30, 0.4);
+    }
+    .avatar-crop-reselect-icon svg {
+      width: 17px; height: 17px;
+      stroke: #fff; fill: none; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .avatar-crop-right { flex: 1; min-width: 0; }
+    .source-card .source-card-chevron { display: none; }
+
+    .build-mode-header {
+      display: none;
+    }
+
+    /* ===== 两个板块通用容器 ===== */
+    .build-section-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 18px 20px 20px;
+      margin-bottom: 16px;
+    }
+
+    /* ===== 智能采集板块 ===== */
+    .build-section-card.build-section-quick {
+      background: #fff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .build-section-card.build-section-quick:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .build-section-card.build-section-quick.is-off {
+      padding-bottom: 18px;
+    }
+    .build-mode-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .build-mode-toggle-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+    }
+    .build-mode-toggle-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(140, 23, 30, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .build-mode-toggle-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--primary-color, #8c171e);
+      fill: var(--primary-color, #8c171e);
+      stroke-width: 1.5;
+    }
+    .build-mode-toggle-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .build-mode-toggle-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary, #1e293b);
+      margin-bottom: 4px;
+    }
+    .build-mode-toggle-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary-color, #8c171e);
+      padding: 2px 8px;
+      border-radius: 8px;
+      letter-spacing: 0.3px;
+    }
+    .build-mode-toggle-desc {
+      font-size: 12.5px;
+      color: var(--text-muted, #94a3b8);
+      line-height: 1.55;
+    }
+
+    /* 智能采集内联状态提示 */
+    .quick-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed #e2e8f0;
+      font-size: 12.5px;
+      color: var(--text-secondary, #475569);
+      line-height: 1.5;
+    }
+    .quick-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary-color, #8c171e);
+      flex-shrink: 0;
+      animation: quickDotPulse 2s ease-in-out infinite;
+    }
+    @keyframes quickDotPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .quick-status b {
+      color: var(--primary-color, #8c171e);
+      font-weight: 600;
+    }
+    #build-mode-quick.is-off {
+      display: none;
+    }
+
+    /* ===== 手动补充板块 ===== */
+    .build-section-card.build-section-manual {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+    .manual-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary, #1e293b);
+      margin-bottom: 4px;
+    }
+    .manual-section-title svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--primary-color, #8c171e);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .manual-section-sub {
+      font-size: 12.5px;
+      font-weight: 400;
+      color: var(--text-muted, #94a3b8);
+    }
+    .manual-tip-bar {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      font-size: 12.5px;
+      color: #1e3a5f;
+      line-height: 1.5;
+      margin: 14px 0 16px;
+    }
+    .manual-tip-bar svg {
+      width: 16px;
+      height: 16px;
+      stroke: #2563eb;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .manual-tip-bar b {
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    .build-mode-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .build-mode-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 22px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-muted, #94a3b8);
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 10px;
+    }
+    .build-mode-tab:hover {
+      color: var(--text-secondary, #475569);
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+    .build-mode-tab.active {
+      color: #fff;
+      background: var(--primary-color, #8c171e);
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 3px 12px rgba(140, 23, 30, 0.25);
+    }
+    .build-mode-tab.active svg {
+      stroke: #fff;
+    }
+    .build-mode-tab.active .tab-badge {
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+    }
+    .build-mode-tab svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2;
+      stroke: var(--text-muted, #94a3b8);
+      transition: stroke 0.25s ease;
+    }
+    .build-mode-tab:hover svg {
+      stroke: var(--text-secondary, #475569);
+    }
+    .tab-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #ffffff;
+      background: var(--primary-color, #8c171e);
+      padding: 1px 7px;
+      border-radius: 8px;
+      letter-spacing: 0.3px;
+    }
+    .build-mode-panel {
+      display: none;
+      animation: tabFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .build-mode-panel.active {
+      display: block;
+    }
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .build-mode-hint {
+      font-size: 12.5px;
+      color: var(--text-muted, #94a3b8);
+      line-height: 1.6;
+      margin: -8px 0 16px 0;
+      padding-left: 2px;
+    }
+
+    .source-card {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      overflow: hidden;
+    }
+    .source-card:hover { border-color: #cbd5e1; }
+    .source-card.expanded { border-color: rgba(140, 23, 30, 0.25); box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.08)); }
+    .source-card-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 16px; cursor: pointer; user-select: none;
+    }
+    .source-card-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      background: #f1f5f9; flex-shrink: 0;
+    }
+    .source-card-icon svg { width: 17px; height: 17px; stroke: var(--text-secondary, #475569); }
+    .source-card.expanded .source-card-icon { background: rgba(140, 23, 30, 0.08); }
+    .source-card.expanded .source-card-icon svg { stroke: var(--primary-color, #8c171e); }
+    .source-card-title-wrap { flex: 1; }
+    .source-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary, #1e293b); }
+    .source-card-desc { font-size: 11.5px; color: var(--text-muted, #94a3b8); margin-top: 1px; }
+    .source-card-chevron { font-size: 16px; color: #cbd5e1; transition: transform 0.2s ease; }
+    .source-card.expanded .source-card-chevron { transform: rotate(90deg); color: var(--primary-color, #8c171e); }
+    .source-card-body {
+      display: none; padding: 0 16px 14px 16px;
+    }
+    .source-card.expanded .source-card-body { display: block; animation: tabFadeIn 0.25s ease; }
+    .homepage-field-row {
+      display: flex; gap: 10px; margin-bottom: 0;
+    }
+    .homepage-field-row .form-input { flex: 1; }
+    .avatar-upload-preview::after {
+      content: '';
+      position: absolute;
+      right: -6px; bottom: -6px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--primary-color, #8c171e) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E") center/13px no-repeat;
+      border: 2.5px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .avatar-upload-preview:hover::after {
+      transform: scale(1.18);
+      box-shadow: 0 4px 14px rgba(140, 23, 30, 0.35);
+    }
+        .homepage-required-mark {
+      font-size: 11px; color: #dc2626; font-weight: 600;
+      margin-left: 2px;
+    }
+    .quick-build-hint {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px;
+      background: rgba(140, 23, 30, 0.05);
+      border: 1px solid rgba(140, 23, 30, 0.12);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text-secondary, #475569);
+      line-height: 1.5;
+    }
+    .quick-build-check {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--primary-color, #8c171e);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .quick-build-check svg {
+      width: 12px; height: 12px;
+      stroke: #fff; fill: none; stroke-width: 3;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .quick-build-hint b {
+      color: var(--primary-color, #8c171e);
+      font-weight: 600;
+    }
+    .quick-build-hint svg {
+      width: 16px; height: 16px; flex-shrink: 0;
+      stroke: var(--primary-color, #8c171e);
+      fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .source-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .source-grid .source-card { margin-bottom: 0; }
+    .source-grid .source-card.expanded { grid-column: 1 / -1; }
+    .manual-hint-bar {
+      font-size: 12px;
+      color: var(--text-muted, #94a3b8);
+      line-height: 1.5;
+      margin: 0 0 14px 0;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+    .manual-hint-bar b { color: var(--text-secondary, #475569); }
+
+    .option-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .option-chevron {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 20px;
+      line-height: 1;
+      transition: transform 0.2s ease;
+    }
+
+    .upload-option-block.expanded .option-chevron {
+      transform: rotate(90deg);
+    }
+
+    .option-body {
+      display: none;
+      margin-top: 14px;
+    }
+
+    .upload-option-block.expanded .option-body {
+      display: block;
+    }
+
+    .option-title-wrap { flex: 1; }
+
+    .option-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+    .option-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-top: 3px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-track {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-track:before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      top: 3px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-track { background: var(--primary-color, #8c171e); }
+    .toggle-switch input:checked + .toggle-track:before { transform: translateX(20px); }
+
+    .web-search-input-wrap { display: none; margin-top: 12px; }
+    .web-search-input-wrap.show { display: block; }
+
+    .pan-link-row { display: flex; gap: 10px; }
+    .pan-link-row .form-input { flex: 1; min-width: 0; }
+    .pan-link-row .form-input.pan-code { max-width: 120px; flex: 0 0 120px; }
+    .pan-link-row .btn-add-link { flex-shrink: 0; }
+
+    .subscription-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .subscription-item:last-child { margin-bottom: 0; }
+    .subscription-label { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); }
+    .subscription-item .btn-add-link { align-self: flex-start; padding: 9px 18px; }
+
+    /* Step 2 自动构建进度 */
+    .build-time-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .build-time-note .note-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .build-progress-list { display: flex; flex-direction: column; gap: 12px; }
+    .build-progress-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #ffffff;
+      transition: all 0.2s ease;
+    }
+    .build-progress-marker {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .build-progress-body { flex: 1; }
+    .build-progress-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .build-progress-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin-top: 3px; }
+    .build-progress-item.active {
+      border-color: var(--primary-color, #8c171e);
+      box-shadow: 0 0 0 3px var(--primary-ring, rgba(140, 23, 30, 0.12));
+    }
+    .build-progress-item.active .build-progress-marker { background: var(--primary-color, #8c171e); color: #ffffff; }
+    .build-progress-item.completed { border-color: #d1fae5; background: #f0fdf4; }
+    .build-progress-item.completed .build-progress-marker { background: #10b981; color: #ffffff; }
+    .build-progress-item.completed .build-progress-title { color: #047857; }
+
+    /* Step 3 体验分身 */
+    .success-card { text-align: center; }
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px auto;
+      box-shadow: 0 10px 28px rgba(16, 185, 129, 0.32);
+    }
+    .success-guide {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 26px;
+      text-align: left;
+    }
+    .success-guide-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+    .success-guide-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .success-guide-body { flex: 1; }
+    .success-guide-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .success-guide-desc { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+    .success-guide-item .btn-step-next {
+      flex-shrink: 0;
+      padding: 10px 20px;
+      font-size: 13px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 侧边栏挂载点 -->
+  <div id="sidebar-container"></div>
+
+  <!-- 主内容区 -->
+  <main class="main-container" id="main-container">
+    <!-- 顶部 Tab 导航栏 -->
+    <div class="plaza-tab-header">
+      <div class="plaza-tabs">
+        <a class="plaza-tab" href="persona-plaza.html">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>老师分身广场</span>
+        </a>
+        <a class="plaza-tab active" href="persona-plaza.html?view=mine">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>我的分身</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="distill-view" id="distill-view">
+      <!-- 顶部返回栏 -->
+      <div class="distill-nav">
+        <a class="btn-back-link" href="javascript:void(0)" onclick="handleBack()">
+          <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>返回</span>
+        </a>
+      </div>
+
+      <!-- 顶部置中模拟完成构建按钮 -->
+      <div class="distill-top-action-bar">
+        <button type="button" class="btn-simulate-complete" id="btn-top-complete" onclick="handleFinishDistill()">
+          <span>⚡ 点击此处模拟完成构建 →</span>
+        </button>
+      </div>
+
+      <!-- 3-Step 进度指示条 -->
+      <div class="distill-stepper-card" id="distill-stepper">
+        <div class="stepper-step active" id="step-node-1" onclick="goToStep(1)">
+          <div class="step-icon-circle"><span class="num-text">1</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 1</div>
+            <div class="step-name">填写资料</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-1"></div>
+
+        <div class="stepper-step" id="step-node-2" onclick="goToStep(2)">
+          <div class="step-icon-circle"><span class="num-text">2</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 2</div>
+            <div class="step-name">自动构建</div>
+          </div>
+        </div>
+        <div class="step-connector" id="connector-2"></div>
+
+        <div class="stepper-step" id="step-node-3" onclick="goToStep(3)">
+          <div class="step-icon-circle"><span class="num-text">3</span></div>
+          <div class="step-info">
+            <div class="step-num">Step 3</div>
+            <div class="step-name">体验分身</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 0: 介绍引导 (Hero)                                      -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-0">
+        <div class="wizard-card" style="display: flex; flex-direction: column; gap: 28px;">
+          <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 24px rgba(140, 23, 30, 0.35); margin-bottom: 16px;">
+              <svg class="icon" viewBox="0 0 24 24" style="width: 32px; height: 32px; stroke-width: 2.2;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <h2 style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px;">创建你的专属AI分身</h2>
+            <p style="font-size: 13.5px; line-height: 1.65; color: var(--text-secondary); max-width: 620px;">
+              AI分身将通过深度学习您的学术著作、工作文档、表达习惯与思维方式，构建高度契合您个人风格的数字孪生体。在您忙碌时，分身可以作为您的“数字替身”，全天候提供专业解答与对外协作。
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">🎭 思维与语言风格孪生</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">深度拟合用词偏好与论述逻辑，精准表达您的观点与思考方式。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">📚 私有知识长效记忆</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">沉淀挂载专业论文与文档，形成随身携带的长效私有大脑。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">⚡ 24/7 全天候协作代办</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">全天候承接日常专业咨询与问答初筛，极大释放个人时间与精力。</p>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 13.5px; font-weight: 700; margin-bottom: 4px;">🔄 持续进化与自成长</div>
+              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0;">支持公众号/知乎等数据源持续同步，交互中沉淀记忆，越用越懂您。</p>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 8px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="createAgreeCheck" checked>
+              <span>我已阅读并同意《数字分身构建协议》，授权平台基于资料构建专属分身</span>
+            </label>
+            <button type="button" class="btn-step-next" onclick="goToStep(1)" style="background: var(--primary-gradient, linear-gradient(135deg, #8c171e 0%, #b91c1c 100%)); padding: 12px 40px;">
+              <span>开始创建 AI 分身</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width: 15px; height: 15px; stroke: #fff;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 1: 填写资料 (名称 / 上传资料)                          -->
+      <!-- ============================================================ -->
+      <div class="step-section active" id="stage-step-1">
+        <div class="wizard-card">
+          <div class="avatar-name-row">
+            <div class="avatar-upload-compact" style="flex-direction:column;align-items:center;gap:0;">
+              <div class="avatar-upload-preview" id="distill-avatar-preview" onclick="openAvatarDrawer()">黄</div>
+              <input type="file" id="distill-avatar-file" accept="image/*" style="display:none;" onchange="handleDistillAvatarFileSelected(event)">
+            </div>
+
+            <div class="form-group avatar-name-field" style="flex:1;">
+              <label class="form-label" for="personaNameInput">
+                <span>分身名称</span>
+                <span class="sub-tip">需要填写真实姓名</span>
+              </label>
+              <input type="text" class="form-input" id="personaNameInput" placeholder="为你的分身起个名字，例如：黄铁军" value="黄铁军">
+            </div>
+          </div>
+
+          <!-- 个人主页（必填，Tab 上方） -->
+          <div class="homepage-field" style="margin-bottom:16px;">
+            <label class="form-label" style="margin-bottom:8px;">
+              <span>个人主页<span class="homepage-required-mark">*</span></span>
+              <span class="sub-tip">平台将自动抓取个人主页信息</span>
+            </label>
+            <div class="homepage-field-row">
+              <input type="text" class="form-input" id="homepageUrlInput" placeholder="填写您的北京大学官网个人主页链接">
+              <button type="button" class="btn-add-link" onclick="handleAddHomepage()">添加</button>
+            </div>
+            <div class="added-item-list" id="homepageList"></div>
+          </div>
+
+          <!-- ===== 智能采集板块 ===== -->
+          <div class="build-section-card build-section-quick" id="quick-collect-card">
+            <div class="build-mode-toggle-row">
+              <div class="build-mode-toggle-left">
+                <div class="build-mode-toggle-icon">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                <div class="build-mode-toggle-info">
+                  <div class="build-mode-toggle-title">智能采集<span class="build-mode-toggle-badge">推荐</span></div>
+                  <div class="build-mode-toggle-desc">根据个人主页信息，自动从网络检索公开资料并构建分身</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="quickCollectToggle" checked onchange="toggleQuickCollect()">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+          </div>
+
+          <!-- ===== 手动补充板块 ===== -->
+          <div class="build-section-card build-section-manual">
+            <div class="manual-section-title">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>手动补充</span>
+              <span class="manual-section-sub">可选，与智能采集搭配效果更佳</span>
+            </div>
+            <div id="build-mode-manual">
+              <div class="manual-tip-bar">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>建议上传至少 <b>40 分钟以上专业访谈</b>，或 <b>10 篇以上 PPT / 论文 / 文章</b>，或 <b>5–10 节课程视频 / 录音</b></span>
+              </div>
+
+              <div class="source-grid">
+              <!-- 上传文件（卡片，默认收起） -->
+              <div class="source-card" onclick="openFileDrawer()">
+                <div class="source-card-badge" id="badge-file">0</div>
+                <div class="source-card-head">
+                  <div class="source-card-icon">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="source-card-title-wrap">
+                    <div class="source-card-title">上传文件</div>
+                    <div class="source-card-desc">PDF / Word / PPT / 视频 / 音频，单文件最大 5GB</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 网页/视频链接（卡片） -->
+              <div class="source-card" onclick="openLinkDrawer()">
+                <div class="source-card-badge" id="badge-link">0</div>
+                <div class="source-card-head">
+                  <div class="source-card-icon">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  </div>
+                  <div class="source-card-title-wrap">
+                    <div class="source-card-title">网页 / 视频链接</div>
+                    <div class="source-card-desc">Bilibili、小红书、微信文章等</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 网盘链接（卡片） -->
+              <div class="source-card" onclick="openPanDrawer()">
+                <div class="source-card-badge" id="badge-pan">0</div>
+                <div class="source-card-head">
+                  <div class="source-card-icon">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="9" ry="3"/><path d="M3 6v6c0 1.66 4.03 3 9 3s9-1.34 9-3V6"/><path d="M3 12v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>
+                  </div>
+                  <div class="source-card-title-wrap">
+                    <div class="source-card-title">网盘链接</div>
+                    <div class="source-card-desc">百度网盘地址 + 提取码</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 订阅源（卡片） -->
+              <div class="source-card" onclick="openSubDrawer()">
+                <div class="source-card-badge" id="badge-sub">0</div>
+                <div class="source-card-head">
+                  <div class="source-card-icon">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+                  </div>
+                  <div class="source-card-title-wrap">
+                    <div class="source-card-title">订阅源</div>
+                    <div class="source-card-desc">微信公众号、Google Scholar 等</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 已添加资料列表 -->
+            <div class="added-list-section" id="added-list-section" style="display:none;">
+              <div class="added-list-header">
+                <div class="added-list-title">已添加资料</div>
+                <div class="added-list-count" id="added-list-count">共 0 项</div>
+              </div>
+              <div id="added-list-content"></div>
+            </div>
+          </div>
+ </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(0)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>上一步</span>
+            </button>
+            <button type="button" class="btn-step-next" onclick="goToStep(2)">
+              <span>下一步：自动构建</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 2: 自动构建                                            -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-2">
+        <div class="wizard-card">
+          <div class="wizard-card-header">
+            <h2 class="wizard-title">自动构建</h2>
+            <p class="wizard-desc">系统将自动检索、解析并学习资料，构建您的专属分身</p>
+          </div>
+
+          <div class="build-time-note">
+            <span class="note-icon">⏳</span>
+            <span>构建时长取决于资料数量与内容体量，通常需要数十分钟到数小时；期间可随时关闭页面，再次打开后会继续当前进度，不会丢失。</span>
+          </div>
+
+          <div class="build-progress-list" id="buildProgressList">
+            <div class="build-progress-item" data-step="1">
+              <div class="build-progress-marker">1</div>
+              <div class="build-progress-body">
+                <div class="build-progress-title">检索资料</div>
+                <div class="build-progress-desc">从公开网络中检索您相关的访谈、演讲、文章、课程、报道等</div>
+              </div>
+            </div>
+            <div class="build-progress-item" data-step="2">
+              <div class="build-progress-marker">2</div>
+              <div class="build-progress-body">
+                <div class="build-progress-title">解析语料</div>
+                <div class="build-progress-desc">解析上传与网络检索的文件，提取语料</div>
+              </div>
+            </div>
+            <div class="build-progress-item" data-step="3">
+              <div class="build-progress-marker">3</div>
+              <div class="build-progress-body">
+                <div class="build-progress-title">构建分身</div>
+                <div class="build-progress-desc">基于分身构建模型，学习您的思维模型、决策方法与表达方式等</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn-step-prev" onclick="goToStep(1)">
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><polyline points="15 18 9 12 15 6"/></svg>
+              <span>上一步</span>
+            </button>
+            <button type="button" class="btn-step-next" id="btn-start-build" onclick="startBuild()">
+              <span>开始构建</span>
+              <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#fff;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- Step 3: 体验分身                                            -->
+      <!-- ============================================================ -->
+      <div class="step-section" id="stage-step-3">
+        <div class="wizard-card success-card">
+          <div class="success-icon">✓</div>
+          <h2 class="wizard-title" id="step3-title">分身创建成功</h2>
+          <p class="wizard-desc">您的 AI 分身已构建完成，可以开始体验与对话</p>
+
+          <div class="success-guide">
+            <div class="success-guide-item">
+              <div class="success-guide-num">1</div>
+              <div class="success-guide-body">
+                <div class="success-guide-title">查看分身主页</div>
+                <div class="success-guide-desc">体验与分身对话，并申请上架到分身广场</div>
+              </div>
+              <a class="btn-step-next" id="btn-view-home" href="#">查看分身主页</a>
+            </div>
+            <div class="success-guide-item">
+              <div class="success-guide-num">2</div>
+              <div class="success-guide-body">
+                <div class="success-guide-title">管理我的分身</div>
+                <div class="success-guide-desc">完善知识库和维护基础信息，让分身回答更准确</div>
+              </div>
+              <a class="btn-step-next" id="btn-manage-mine" href="#">管理我的分身</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 引入全局底座与组件 -->
+  <script src="../core.js"></script>
+  <script src="../components/toast.js"></script>
+  <script src="../components/sidebar.js"></script>
+
+  <!-- 本页面专属 JS (自包含) -->
+  <script>
+    let currentStep = parseInt(getQueryParam('step') || '1');
+    const cloneId = getQueryParam('id');
+    let clone = null;
+    let completedCloneId = cloneId || null;
+    let buildingCloneId = null;
+    let buildStarted = false;
+    let pendingAvatarImage = null;
+
+    if (cloneId) {
+      clone = Store.getClone(cloneId);
+    }
+    if (clone) {
+      document.getElementById('personaNameInput').value = clone.name;
+      pendingAvatarImage = clone.avatarImage || null;
+    }
+    renderDistillAvatarPreview();
+
+    function handleDistillAvatarFileSelected(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function () {
+        pendingAvatarImage = reader.result;
+        renderDistillAvatarPreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderDistillAvatarPreview() {
+      const preview = document.getElementById('distill-avatar-preview');
+      if (!preview) return;
+      if (pendingAvatarImage) {
+        preview.innerHTML = `<img src="${pendingAvatarImage}" style="width:100%;height:100%;object-fit:cover;">`;
+      } else {
+        const name = document.getElementById('personaNameInput').value.trim();
+        preview.textContent = (name || '分').charAt(0);
+      }
+    }
+
+    function handleBack() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = getPageUrl('persona-plaza.html');
+      }
+    }
+
+    function toggleWebSearch() {
+      const wrap = document.getElementById('webSearchInputWrap');
+      const toggle = document.getElementById('webSearchToggle');
+      if (wrap) wrap.classList.toggle('show', toggle && toggle.checked);
+      if (toggle && toggle.checked) {
+        const block = toggle.closest('.upload-option-block');
+        if (block) block.classList.add('expanded');
+      }
+    }
+
+    function toggleUploadOption(headEl) {
+      const block = headEl.closest('.upload-option-block');
+      if (block) block.classList.toggle('expanded');
+    }
+
+    // 智能采集开关：控制卡片紧凑状态
+    function toggleQuickCollect() {
+      const toggle = document.getElementById('quickCollectToggle');
+      const card = document.getElementById('quick-collect-card');
+      if (!toggle) return;
+      if (card) card.classList.toggle('is-off', !toggle.checked);
+    }
+
+    // 手动上传 Tab 里的 source-card 展开/收起
+    // ====== 通用抽屉 ======
+    function openDrawer(title, bodyHTML, footerHTML) {
+      document.getElementById('drawer-title').textContent = title;
+      document.getElementById('drawer-body').innerHTML = bodyHTML;
+      const footer = document.getElementById('drawer-footer');
+      if (footerHTML) { footer.innerHTML = footerHTML; footer.style.display = 'flex'; }
+      else { footer.style.display = 'none'; }
+      document.getElementById('drawer-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer(ev) {
+      if (ev && ev.target !== document.getElementById('drawer-overlay')) return;
+      document.getElementById('drawer-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    let avatarImgEl = null;
+    let avatarCanvasW = 0;
+    let avatarCanvasH = 0;
+    let avatarCrop = { x: 0, y: 0, w: 0, h: 0 };
+    let avatarDragging = false;
+    let avatarDragStartX = 0;
+    let avatarDragStartY = 0;
+    let avatarResizeHandle = null;
+    let avatarResizeStart = null;
+    const AVATAR_MAX_SIZE = 280;
+
+    function openAvatarDrawer() {
+      const body = `
+        <div class="avatar-upload-zone" id="avatar-zone" onclick="document.getElementById('avatar-file-input').click()">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <div class="avatar-upload-zone-title">点击上传图片</div>
+          <div class="avatar-upload-zone-desc">支持 JPG / PNG 格式，建议 1:1 正方形</div>
+        </div>
+        <input type="file" id="avatar-file-input" accept="image/jpeg,image/png" style="display:none;" onchange="handleAvatarFileInDrawer(event)">
+        <div id="avatar-crop-section" style="display:none;">
+          <div class="avatar-crop-layout">
+            <div class="avatar-crop-left">
+              <div class="avatar-crop-preview-label">预览</div>
+              <div class="avatar-crop-preview" id="avatar-crop-preview">
+                <div class="avatar-crop-reselect-icon" onclick="resetAvatarUpload()" title="重新选择图片">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+              </div>
+              <div class="avatar-crop-round-label">头像效果</div>
+            </div>
+            <div class="avatar-crop-right">
+              <div class="avatar-crop-wrapper-outer">
+                <div class="avatar-crop-wrapper" id="avatar-crop-wrapper">
+                  <canvas id="avatar-crop-canvas"></canvas>
+                  <div class="avatar-crop-overlay" id="avatar-crop-overlay">
+                    <div class="avatar-crop-handle tl" data-handle="tl"></div>
+                    <div class="avatar-crop-handle tr" data-handle="tr"></div>
+                    <div class="avatar-crop-handle bl" data-handle="bl"></div>
+                    <div class="avatar-crop-handle br" data-handle="br"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="avatar-format-tip">拖拽选区调整位置，拖拽四角调整大小</div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">取消</button>
+        <button type="button" class="drawer-btn drawer-btn-confirm" id="avatar-confirm-btn" onclick="confirmAvatar()" disabled style="opacity:0.5;cursor:not-allowed;">确认</button>
+      `;
+      openDrawer('上传头像', body, footer);
+    }
+
+    function handleAvatarFileInDrawer(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!['image/jpeg','image/png'].includes(file.type)) {
+        showToast('仅支持 JPG / PNG 格式'); return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        avatarImgEl = new Image();
+        avatarImgEl.onload = function() {
+          const scale = Math.min(AVATAR_MAX_SIZE / avatarImgEl.width, AVATAR_MAX_SIZE / avatarImgEl.height);
+          avatarCanvasW = Math.round(avatarImgEl.width * scale);
+          avatarCanvasH = Math.round(avatarImgEl.height * scale);
+          var sqSize = Math.min(avatarCanvasW, avatarCanvasH);
+          avatarCrop.w = Math.round(sqSize * 0.8);
+          avatarCrop.h = avatarCrop.w;
+          avatarCrop.x = Math.round((avatarCanvasW - avatarCrop.w) / 2);
+          avatarCrop.y = Math.round((avatarCanvasH - avatarCrop.h) / 2);
+
+          document.getElementById('avatar-crop-section').style.display = 'block';
+          document.getElementById('avatar-zone').style.display = 'none';
+          drawAvatarCrop();
+          positionAvatarOverlay();
+          updateAvatarPreview();
+          const btn = document.getElementById('avatar-confirm-btn');
+          btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+          bindAvatarCropEvents();
+        };
+        avatarImgEl.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function drawAvatarCrop() {
+      if (!avatarImgEl) return;
+      const canvas = document.getElementById('avatar-crop-canvas');
+      if (!canvas) return;
+      canvas.width = avatarCanvasW;
+      canvas.height = avatarCanvasH;
+      canvas.style.width = avatarCanvasW + 'px';
+      canvas.style.height = avatarCanvasH + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, avatarCanvasW, avatarCanvasH);
+      ctx.drawImage(avatarImgEl, 0, 0, avatarCanvasW, avatarCanvasH);
+    }
+
+    function positionAvatarOverlay() {
+      const overlay = document.getElementById('avatar-crop-overlay');
+      if (!overlay) return;
+      overlay.style.left = avatarCrop.x + 'px';
+      overlay.style.top = avatarCrop.y + 'px';
+      overlay.style.width = avatarCrop.w + 'px';
+      overlay.style.height = avatarCrop.h + 'px';
+    }
+
+    function updateAvatarPreview() {
+      if (!avatarImgEl) return;
+      const canvas = document.getElementById('avatar-crop-canvas');
+      if (!canvas) return;
+      const previewCanvas = document.createElement('canvas');
+      const pSize = 80;
+      previewCanvas.width = pSize; previewCanvas.height = pSize;
+      const pctx = previewCanvas.getContext('2d');
+      pctx.drawImage(canvas, avatarCrop.x, avatarCrop.y, avatarCrop.w, avatarCrop.h, 0, 0, pSize, pSize);
+      const preview = document.getElementById('avatar-crop-preview');
+      if (preview) {
+        var oldImg = preview.querySelector('img');
+        if (oldImg) oldImg.remove();
+        var newImg = document.createElement('img');
+        newImg.src = previewCanvas.toDataURL();
+        var reselectIcon = preview.querySelector('.avatar-crop-reselect-icon');
+        if (reselectIcon) preview.insertBefore(newImg, reselectIcon);
+        else preview.appendChild(newImg);
+      }
+    }
+
+    function bindAvatarCropEvents() {
+      const overlay = document.getElementById('avatar-crop-overlay');
+      if (!overlay) return;
+      overlay.onmousedown = function(e) {
+        if (e.target.classList.contains('avatar-crop-handle')) return;
+        avatarDragging = true;
+        avatarDragStartX = e.clientX - avatarCrop.x;
+        avatarDragStartY = e.clientY - avatarCrop.y;
+        e.preventDefault();
+      };
+      overlay.querySelectorAll('.avatar-crop-handle').forEach(function(h) {
+        h.onmousedown = function(e) {
+          avatarResizeHandle = h.dataset.handle;
+          avatarResizeStart = { x: e.clientX, y: e.clientY, cx: avatarCrop.x, cy: avatarCrop.y, cw: avatarCrop.w, ch: avatarCrop.h };
+          e.preventDefault();
+          e.stopPropagation();
+        };
+      });
+      document.onmousemove = function(e) {
+        if (avatarDragging) {
+          let nx = e.clientX - avatarDragStartX;
+          let ny = e.clientY - avatarDragStartY;
+          nx = Math.max(0, Math.min(avatarCanvasW - avatarCrop.w, nx));
+          ny = Math.max(0, Math.min(avatarCanvasH - avatarCrop.h, ny));
+          avatarCrop.x = nx; avatarCrop.y = ny;
+          positionAvatarOverlay();
+          updateAvatarPreview();
+        } else if (avatarResizeHandle && avatarResizeStart) {
+          var d = e.clientX - avatarResizeStart.x;
+          var d2 = e.clientY - avatarResizeStart.y;
+          var delta = Math.abs(d) > Math.abs(d2) ? d : d2;
+          var sq = avatarResizeStart.cw + delta;
+          if (sq < 50) sq = 50;
+          var nx, ny;
+          if (avatarResizeHandle === 'br') {
+            nx = avatarResizeStart.cx; ny = avatarResizeStart.cy;
+          } else if (avatarResizeHandle === 'tl') {
+            nx = avatarResizeStart.cx + (avatarResizeStart.cw - sq);
+            ny = avatarResizeStart.cy + (avatarResizeStart.ch - sq);
+          } else if (avatarResizeHandle === 'tr') {
+            nx = avatarResizeStart.cx;
+            ny = avatarResizeStart.cy + (avatarResizeStart.ch - sq);
+          } else if (avatarResizeHandle === 'bl') {
+            nx = avatarResizeStart.cx + (avatarResizeStart.cw - sq);
+            ny = avatarResizeStart.cy;
+          }
+          if (nx < 0 || ny < 0 || nx + sq > avatarCanvasW || ny + sq > avatarCanvasH) return;
+          avatarCrop.x = nx; avatarCrop.y = ny; avatarCrop.w = sq; avatarCrop.h = sq;
+          positionAvatarOverlay();
+          updateAvatarPreview();
+        }
+      };
+      document.onmouseup = function() {
+        avatarDragging = false;
+        avatarResizeHandle = null;
+        avatarResizeStart = null;
+      };
+    }
+
+    function resetAvatarUpload() {
+      avatarImgEl = null;
+      document.getElementById('avatar-crop-section').style.display = 'none';
+      document.getElementById('avatar-zone').style.display = 'block';
+      document.onmousemove = null;
+      document.onmouseup = null;
+      const btn = document.getElementById('avatar-confirm-btn');
+      btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
+    }
+
+    function confirmAvatar() {
+      if (!avatarImgEl) return;
+      const canvas = document.getElementById('avatar-crop-canvas');
+      const out = document.createElement('canvas');
+      out.width = 200; out.height = 200;
+      const octx = out.getContext('2d');
+      octx.drawImage(canvas, avatarCrop.x, avatarCrop.y, avatarCrop.w, avatarCrop.h, 0, 0, 200, 200);
+      const dataURL = out.toDataURL();
+      const preview = document.getElementById('distill-avatar-preview');
+      preview.innerHTML = '<img src="' + dataURL + '">';
+      document.onmousemove = null;
+      document.onmouseup = null;
+      closeDrawer();
+    }
+    // 全局数据
+    let addedFiles = [], addedLinks = [], addedPans = [], addedSubs = [];
+    function updateBadgesAndList() {
+      const counts = { file: addedFiles.length, link: addedLinks.length, pan: addedPans.length, sub: addedSubs.length };
+      ['file','link','pan','sub'].forEach(k => {
+        const badge = document.getElementById('badge-' + k);
+        if (badge) {
+          badge.textContent = counts[k];
+          badge.classList.toggle('show', counts[k] > 0);
+        }
+      });
+      const total = counts.file + counts.link + counts.pan + counts.sub;
+      const section = document.getElementById('added-list-section');
+      const countEl = document.getElementById('added-list-count');
+      const content = document.getElementById('added-list-content');
+      if (total === 0) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = 'block';
+      countEl.textContent = '共 ' + total + ' 项';
+      let html = '';
+      if (addedFiles.length) {
+        html += '<div class="added-list-group"><div class="added-list-group-label">上传文件</div>';
+        addedFiles.forEach((item, i) => {
+          html += '<div class="added-list-item"><span class="added-list-item-icon">📎</span><span class="added-list-item-name">' + item.name + '</span><button class="added-list-item-remove" onclick="removeAddedItem(\'file\',' + i + ')">×</button></div>';
+        });
+        html += '</div>';
+      }
+      if (addedLinks.length) {
+        html += '<div class="added-list-group"><div class="added-list-group-label">网页 / 视频链接</div>';
+        addedLinks.forEach((item, i) => {
+          html += '<div class="added-list-item"><span class="added-list-item-icon">🔗</span><span class="added-list-item-name">' + item.url + '</span><button class="added-list-item-remove" onclick="removeAddedItem(\'link\',' + i + ')">×</button></div>';
+        });
+        html += '</div>';
+      }
+      if (addedPans.length) {
+        html += '<div class="added-list-group"><div class="added-list-group-label">网盘链接</div>';
+        addedPans.forEach((item, i) => {
+          html += '<div class="added-list-item"><span class="added-list-item-icon">🗄️</span><span class="added-list-item-name">' + item.url + ' (提取码: ' + item.code + ')</span><button class="added-list-item-remove" onclick="removeAddedItem(\'pan\',' + i + ')">×</button></div>';
+        });
+        html += '</div>';
+      }
+      if (addedSubs.length) {
+        html += '<div class="added-list-group"><div class="added-list-group-label">订阅源</div>';
+        addedSubs.forEach((item, i) => {
+          html += '<div class="added-list-item"><span class="added-list-item-icon">📡</span><span class="added-list-item-name">' + item.name + ': ' + item.url + '</span><button class="added-list-item-remove" onclick="removeAddedItem(\'sub\',' + i + ')">×</button></div>';
+        });
+        html += '</div>';
+      }
+      content.innerHTML = html;
+    }
+    function removeAddedItem(type, idx) {
+      if (type === 'file') addedFiles.splice(idx, 1);
+      else if (type === 'link') addedLinks.splice(idx, 1);
+      else if (type === 'pan') addedPans.splice(idx, 1);
+      else if (type === 'sub') addedSubs.splice(idx, 1);
+      updateBadgesAndList();
+    }
+
+    function openFileDrawer() {
+      const body = `
+        <div class="avatar-upload-zone" onclick="document.getElementById('file-input').click()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="avatar-upload-zone-title">点击或拖拽文件到此处</div>
+          <div class="avatar-upload-zone-desc">支持 PDF / Word / PPT / Excel / 视频 / 音频 / 文本，单文件最大 5GB</div>
+        </div>
+        <input type="file" id="file-input" style="display:none;" multiple onchange="handleFileSelectedInDrawer(event)">
+        <div class="drawer-added-list" id="fileList"></div>
+      `;
+      openDrawer('上传文件', body);
+      renderFileListInDrawer();
+    }
+    function handleFileSelectedInDrawer(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(f => addedFiles.push({ name: f.name }));
+      updateBadgesAndList();
+      renderFileListInDrawer();
+    }
+    function renderFileListInDrawer() {
+      const el = document.getElementById('fileList');
+      if (!el) return;
+      if (addedFiles.length === 0) { el.innerHTML = ''; return; }
+      el.innerHTML = addedFiles.map((item, i) =>
+        '<div class="drawer-added-item"><span>📎 ' + item.name + '</span><button class="remove-btn" onclick="removeFileInDrawer(' + i + ')">×</button></div>'
+      ).join('');
+    }
+    function removeFileInDrawer(idx) {
+      addedFiles.splice(idx, 1);
+      updateBadgesAndList();
+      renderFileListInDrawer();
+    }
+    function _oldOpenFileDrawer() {
+      const body = `
+        <div class="avatar-upload-zone" onclick="document.getElementById('file-input').click()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="avatar-upload-zone-title">点击或拖拽文件到此处</div>
+          <div class="avatar-upload-zone-desc">支持 PDF / Word / PPT / Excel / 视频 / 音频 / 文本，单文件最大 5GB</div>
+        </div>
+        <input type="file" id="file-input" style="display:none;" multiple onchange="handleFileSelected(event)">
+        <div class="drawer-added-list" id="fileList"></div>
+      `;
+      openDrawer('上传文件', body);
+    }
+    function openLinkDrawer() {
+      const body = `
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">网页 / 视频链接</label>
+          <div class="drawer-form-hint">支持 Bilibili、小红书、微信文章等链接，平台自动抓取内容</div>
+          <div class="link-add-group" style="margin:0 0 10px 0;">
+            <input type="text" class="form-input" id="linkInput" placeholder="粘贴链接地址">
+            <button type="button" class="btn-add-link" onclick="handleAddLinkInDrawer()">添加</button>
+          </div>
+          <div class="drawer-added-list" id="linkList"></div>
+        </div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">关闭</button>
+      `;
+      openDrawer('网页 / 视频链接', body, footer);
+      renderLinkListInDrawer();
+    }
+    function handleAddLinkInDrawer() {
+      const input = document.getElementById('linkInput');
+      const url = input.value.trim();
+      if (!url) return;
+      addedLinks.push({ url: url });
+      input.value = '';
+      updateBadgesAndList();
+      renderLinkListInDrawer();
+    }
+    function renderLinkListInDrawer() {
+      const el = document.getElementById('linkList');
+      if (!el) return;
+      if (addedLinks.length === 0) { el.innerHTML = ''; return; }
+      el.innerHTML = addedLinks.map((item, i) =>
+        '<div class="drawer-added-item"><span>🔗 ' + item.url + '</span><button class="remove-btn" onclick="removeLinkInDrawer(' + i + ')">×</button></div>'
+      ).join('');
+    }
+    function removeLinkInDrawer(idx) {
+      addedLinks.splice(idx, 1);
+      updateBadgesAndList();
+      renderLinkListInDrawer();
+    }
+    function _oldOpenLinkDrawer() {
+      const body = `
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">网页 / 视频链接</label>
+          <div class="drawer-form-hint">支持 Bilibili、小红书、微信文章等链接，平台自动抓取内容</div>
+          <div class="link-add-group" style="margin:0 0 10px 0;">
+            <input type="text" class="form-input" id="linkInput" placeholder="粘贴链接地址">
+            <button type="button" class="btn-add-link" onclick="handleAddLink()">添加</button>
+          </div>
+          <div class="drawer-added-list" id="linkList"></div>
+        </div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">关闭</button>
+      `;
+      openDrawer('网页 / 视频链接', body, footer);
+    }
+    function openPanDrawer() {
+      const body = `
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">网盘链接</label>
+          <div class="drawer-form-hint">支持粘贴百度网盘地址，并输入提取码</div>
+          <div class="pan-link-row">
+            <input type="text" class="form-input" id="panLinkInput" placeholder="粘贴百度网盘链接">
+            <input type="text" class="form-input pan-code" id="panCodeInput" placeholder="提取码">
+            <button type="button" class="btn-add-link" onclick="handleAddPanInDrawer()">添加</button>
+          </div>
+          <div class="drawer-added-list" id="panList"></div>
+        </div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">关闭</button>
+      `;
+      openDrawer('网盘链接', body, footer);
+      renderPanListInDrawer();
+    }
+    function handleAddPanInDrawer() {
+      const urlEl = document.getElementById('panLinkInput');
+      const codeEl = document.getElementById('panCodeInput');
+      const url = urlEl.value.trim();
+      const code = codeEl.value.trim();
+      if (!url) return;
+      addedPans.push({ url: url, code: code });
+      urlEl.value = ''; codeEl.value = '';
+      updateBadgesAndList();
+      renderPanListInDrawer();
+    }
+    function renderPanListInDrawer() {
+      const el = document.getElementById('panList');
+      if (!el) return;
+      if (addedPans.length === 0) { el.innerHTML = ''; return; }
+      el.innerHTML = addedPans.map((item, i) =>
+        '<div class="drawer-added-item"><span>🗄️ ' + item.url + ' (提取码: ' + item.code + ')</span><button class="remove-btn" onclick="removePanInDrawer(' + i + ')">×</button></div>'
+      ).join('');
+    }
+    function removePanInDrawer(idx) {
+      addedPans.splice(idx, 1);
+      updateBadgesAndList();
+      renderPanListInDrawer();
+    }
+    function _oldOpenPanDrawer() {
+      const body = `
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">网盘链接</label>
+          <div class="drawer-form-hint">支持粘贴百度网盘地址，并输入提取码</div>
+          <div class="pan-link-row">
+            <input type="text" class="form-input" id="panLinkInput" placeholder="粘贴百度网盘链接">
+            <input type="text" class="form-input pan-code" id="panCodeInput" placeholder="提取码">
+            <button type="button" class="btn-add-link" onclick="handleAddPanLink()">添加</button>
+          </div>
+          <div class="drawer-added-list" id="panList"></div>
+        </div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">关闭</button>
+      `;
+      openDrawer('网盘链接', body, footer);
+    }
+    function openSubDrawer() {
+      const body = `
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">微信公众号</label>
+          <div class="drawer-form-hint">需填写公众号名称和一条该公众号发布的文章链接</div>
+          <input type="text" class="form-input" id="wechatNameInput" placeholder="公众号名称" style="margin-bottom:8px;">
+          <input type="text" class="form-input" id="wechatArticleInput" placeholder="该公众号发布的一条文章链接">
+          <button type="button" class="btn-add-link" onclick="handleAddSubInDrawer('wechat')" style="margin-top:8px;">添加</button>
+        </div>
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">Google Scholar</label>
+          <div class="drawer-form-hint">填写 URL 地址</div>
+          <input type="text" class="form-input" id="scholarUrlInput" placeholder="URL 地址">
+          <button type="button" class="btn-add-link" onclick="handleAddSubInDrawer('scholar')" style="margin-top:8px;">添加</button>
+        </div>
+        <div class="drawer-added-list" id="subscriptionList"></div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">关闭</button>
+      `;
+      openDrawer('订阅源', body, footer);
+      renderSubListInDrawer();
+    }
+    function handleAddSubInDrawer(type) {
+      if (type === 'wechat') {
+        const nameEl = document.getElementById('wechatNameInput');
+        const artEl = document.getElementById('wechatArticleInput');
+        const name = nameEl.value.trim();
+        const url = artEl.value.trim();
+        if (!name || !url) return;
+        addedSubs.push({ name: '微信公众号: ' + name, url: url });
+        nameEl.value = ''; artEl.value = '';
+      } else {
+        const urlEl = document.getElementById('scholarUrlInput');
+        const url = urlEl.value.trim();
+        if (!url) return;
+        addedSubs.push({ name: 'Google Scholar', url: url });
+        urlEl.value = '';
+      }
+      updateBadgesAndList();
+      renderSubListInDrawer();
+    }
+    function renderSubListInDrawer() {
+      const el = document.getElementById('subscriptionList');
+      if (!el) return;
+      if (addedSubs.length === 0) { el.innerHTML = ''; return; }
+      el.innerHTML = addedSubs.map((item, i) =>
+        '<div class="drawer-added-item"><span>📡 ' + item.name + ': ' + item.url + '</span><button class="remove-btn" onclick="removeSubInDrawer(' + i + ')">×</button></div>'
+      ).join('');
+    }
+    function removeSubInDrawer(idx) {
+      addedSubs.splice(idx, 1);
+      updateBadgesAndList();
+      renderSubListInDrawer();
+    }
+    function _oldOpenSubDrawer() {
+      const body = `
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">微信公众号</label>
+          <div class="drawer-form-hint">需填写公众号名称和一条该公众号发布的文章链接</div>
+          <input type="text" class="form-input" id="wechatNameInput" placeholder="公众号名称" style="margin-bottom:8px;">
+          <input type="text" class="form-input" id="wechatArticleInput" placeholder="该公众号发布的一条文章链接">
+          <button type="button" class="btn-add-link" onclick="handleAddSubscription('wechat')" style="margin-top:8px;">添加</button>
+        </div>
+        <div class="drawer-form-group">
+          <label class="drawer-form-label">Google Scholar</label>
+          <div class="drawer-form-hint">填写 URL 地址</div>
+          <input type="text" class="form-input" id="scholarUrlInput" placeholder="URL 地址">
+          <button type="button" class="btn-add-link" onclick="handleAddSubscription('scholar')" style="margin-top:8px;">添加</button>
+        </div>
+        <div class="drawer-added-list" id="subscriptionList"></div>
+      `;
+      const footer = `
+        <button type="button" class="drawer-btn drawer-btn-cancel" onclick="closeDrawer()">关闭</button>
+      `;
+      openDrawer('订阅源', body, footer);
+    }
+
+    function toggleSourceCard(card, ev) {
+      // 如果点击的是输入框、按钮、label 等交互元素，不触发折叠
+      const tag = ev.target.tagName;
+      if (['INPUT', 'BUTTON', 'LABEL', 'TEXTAREA', 'SELECT'].includes(tag) || ev.target.closest('button') || ev.target.closest('.added-item-list')) return;
+      card.classList.toggle('expanded');
+    }
+
+    function goToStep(step) {
+      if (step < 0 || step > 3) return;
+
+      if (currentStep === 1 && step > 1) {
+        const name = document.getElementById('personaNameInput').value.trim();
+        if (!name) {
+          Toast.show('请先填写分身名称');
+          return;
+        }
+      }
+
+      currentStep = step;
+
+      const s0 = document.getElementById('stage-step-0');
+      const s1 = document.getElementById('stage-step-1');
+      const s2 = document.getElementById('stage-step-2');
+      const s3 = document.getElementById('stage-step-3');
+
+      if (s0) s0.classList.toggle('active', currentStep === 0);
+      if (s1) s1.classList.toggle('active', currentStep === 1);
+      if (s2) s2.classList.toggle('active', currentStep === 2);
+      if (s3) s3.classList.toggle('active', currentStep === 3);
+
+      updateStepperUI(currentStep);
+
+      if (currentStep === 2 && clone && clone.status === 'building') {
+        renderPersistedBuildState();
+      }
+
+      if (currentStep === 3) {
+        const name = document.getElementById('personaNameInput').value.trim() || '专属分身';
+        const titleEl = document.getElementById('step3-title');
+        if (titleEl) titleEl.textContent = `「${name}」创建成功`;
+        updateSuccessLinks(completedCloneId || cloneId || 'clone-brand');
+      }
+    }
+
+    function updateStepperUI(step) {
+      const stepper = document.getElementById('distill-stepper');
+      if (step === 0) {
+        if (stepper) stepper.style.display = 'none';
+        return;
+      } else {
+        if (stepper) stepper.style.display = 'flex';
+      }
+
+      const s1 = document.getElementById('step-node-1');
+      const s2 = document.getElementById('step-node-2');
+      const s3 = document.getElementById('step-node-3');
+      const c1 = document.getElementById('connector-1');
+      const c2 = document.getElementById('connector-2');
+
+      [s1, s2, s3].forEach(s => s.className = 'stepper-step');
+      [c1, c2].forEach(c => c.className = 'step-connector');
+
+      if (step === 1) {
+        s1.classList.add('active');
+        s1.querySelector('.num-text').innerText = '1';
+        s2.querySelector('.num-text').innerText = '2';
+        s3.querySelector('.num-text').innerText = '3';
+      } else if (step === 2) {
+        s1.classList.add('completed');
+        s1.querySelector('.num-text').innerText = '✓';
+        c1.classList.add('completed');
+        s2.classList.add('active');
+        s2.querySelector('.num-text').innerText = '2';
+        s3.querySelector('.num-text').innerText = '3';
+      } else if (step === 3) {
+        s1.classList.add('completed');
+        s1.querySelector('.num-text').innerText = '✓';
+        c1.classList.add('completed');
+        s2.classList.add('completed');
+        s2.querySelector('.num-text').innerText = '✓';
+        c2.classList.add('active');
+        s3.classList.add('active');
+      }
+    }
+
+    function handleFileSelected(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      for (let f of files) {
+        const ext = f.name.split('.').pop().toUpperCase();
+        const html = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon doc">${escapeHtml(ext)}</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(f.name)}</div>
+                <div class="added-item-sub">${(f.size / (1024*1024)).toFixed(1)} MB · 自有资料</div>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+          </div>
+        `;
+        document.getElementById('fileList').insertAdjacentHTML('afterbegin', html);
+      }
+      Toast.show(`已成功添加 ${files.length} 个文件`);
+    }
+
+    function handleAddLink() {
+      const input = document.getElementById('linkInput');
+      const val = input.value.trim();
+      if (!val) return;
+      const html = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+              <span class="badge-icon web">WEB</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(val)}</div>
+                <div class="added-item-sub">网页 / 视频链接</div>
+              </div>
+            </div>
+          <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+        </div>
+      `;
+      document.getElementById('linkList').insertAdjacentHTML('afterbegin', html);
+      input.value = '';
+      Toast.show('已添加网页 / 视频链接');
+    }
+
+    function handleAddPanLink() {
+      const linkInput = document.getElementById('panLinkInput');
+      const codeInput = document.getElementById('panCodeInput');
+      const link = linkInput.value.trim();
+      if (!link) { Toast.show('请输入百度网盘链接'); return; }
+      const code = codeInput.value.trim();
+
+      const html = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+            <span class="badge-icon web">网盘</span>
+            <div>
+              <div class="added-item-name">${escapeHtml(link)}</div>
+              <div class="added-item-sub">百度网盘${code ? ' · 提取码：' + escapeHtml(code) : ''}</div>
+            </div>
+          </div>
+          <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+        </div>
+      `;
+      document.getElementById('panList').insertAdjacentHTML('afterbegin', html);
+      linkInput.value = '';
+      codeInput.value = '';
+      Toast.show('已添加网盘链接');
+    }
+
+    function handleAddSubscription(type) {
+      if (type === 'wechat') {
+        const nameInput = document.getElementById('wechatNameInput');
+        const articleInput = document.getElementById('wechatArticleInput');
+        const name = nameInput.value.trim();
+        const article = articleInput.value.trim();
+        if (!name || !article) { Toast.show('请填写公众号名称和文章链接'); return; }
+
+        const html = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon rss">公众号</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(name)}</div>
+                <div class="added-item-sub">微信公众号 · ${escapeHtml(article)}</div>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+          </div>
+        `;
+        document.getElementById('subscriptionList').insertAdjacentHTML('afterbegin', html);
+        nameInput.value = '';
+        articleInput.value = '';
+        Toast.show('已添加微信公众号订阅源');
+      } else {
+        const urlInput = document.getElementById('scholarUrlInput');
+        const url = urlInput.value.trim();
+        if (!url) { Toast.show('请输入 URL 地址'); return; }
+
+        const html = `
+          <div class="added-item-row">
+            <div class="added-item-left">
+              <span class="badge-icon rss">Scholar</span>
+              <div>
+                <div class="added-item-name">${escapeHtml(url)}</div>
+                <div class="added-item-sub">Google Scholar · 持续更新</div>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+          </div>
+        `;
+        document.getElementById('subscriptionList').insertAdjacentHTML('afterbegin', html);
+        urlInput.value = '';
+        Toast.show('已添加订阅源');
+      }
+    }
+
+    function handleAddHomepage() {
+      const input = document.getElementById('homepageUrlInput');
+      const url = input.value.trim();
+      if (!url) { Toast.show('请输入个人主页 URL'); return; }
+      const html = `
+        <div class="added-item-row">
+          <div class="added-item-left">
+            <span class="badge-icon web">主页</span>
+            <div>
+              <div class="added-item-name">${escapeHtml(url)}</div>
+              <div class="added-item-sub">个人主页 · 平台自动抓取</div>
+            </div>
+          </div>
+          <button type="button" class="btn-remove-item" onclick="this.closest('.added-item-row').remove()">✕</button>
+        </div>
+      `;
+      document.getElementById('homepageList').insertAdjacentHTML('afterbegin', html);
+      input.value = '';
+      Toast.show('已添加个人主页');
+    }
+
+    function updateSuccessLinks(agentId) {
+      if (!agentId) return;
+      const viewBtn = document.getElementById('btn-view-home');
+      const manageBtn = document.getElementById('btn-manage-mine');
+      if (viewBtn) viewBtn.href = getPageUrl('new-chat-persona.html', { id: agentId });
+      if (manageBtn) manageBtn.href = getPageUrl('persona-plaza.html', { id: agentId, view: 'mine' });
+    }
+
+    function renderSuccessStep(newClone) {
+      completedCloneId = newClone.id;
+      const titleEl = document.getElementById('step3-title');
+      if (titleEl) titleEl.textContent = `「${newClone.name}」创建成功`;
+      updateSuccessLinks(newClone.id);
+      goToStep(3);
+    }
+
+    let buildTimer = null;
+    function renderPersistedBuildState() {
+      const items = Array.from(document.querySelectorAll('#buildProgressList .build-progress-item'));
+      items.forEach((item, i) => {
+        item.classList.remove('active', 'completed');
+        const marker = item.querySelector('.build-progress-marker');
+        if (marker) marker.textContent = i + 1;
+      });
+      if (items.length >= 3) {
+        items[0].classList.add('completed');
+        items[0].querySelector('.build-progress-marker').textContent = '✓';
+        items[1].classList.add('completed');
+        items[1].querySelector('.build-progress-marker').textContent = '✓';
+        items[2].classList.add('active');
+      }
+      const btn = document.getElementById('btn-start-build');
+      if (btn) {
+        btn.disabled = true;
+        const span = btn.querySelector('span');
+        if (span) span.textContent = '构建中…';
+      }
+      buildStarted = true;
+    }
+
+    function startBuild() {
+      if (buildTimer || buildStarted) return;
+      const name = document.getElementById('personaNameInput').value.trim() || '黄铁军';
+      const desc = '北京大学教授、北京智源人工智能研究院理事长，长期从事视觉信息处理、类脑计算与通用人工智能研究。';
+      const buildingClone = Store.startAgentBuild(name, clone ? clone.id : null, { desc, tag: '专家分身' });
+      buildingCloneId = buildingClone.id;
+      Store.updateClone(buildingCloneId, { progress: 8 });
+      if (pendingAvatarImage) Store.updateClone(buildingCloneId, { avatarImage: pendingAvatarImage });
+
+      const items = Array.from(document.querySelectorAll('#buildProgressList .build-progress-item'));
+      items.forEach((item, i) => {
+        item.classList.remove('active', 'completed');
+        const marker = item.querySelector('.build-progress-marker');
+        if (marker) marker.textContent = i + 1;
+      });
+
+      const btn = document.getElementById('btn-start-build');
+      if (btn) {
+        btn.disabled = true;
+        const span = btn.querySelector('span');
+        if (span) span.textContent = '构建中…';
+      }
+
+      let idx = 0;
+      const advance = () => {
+        if (idx > 0) {
+          items[idx - 1].classList.remove('active');
+          items[idx - 1].classList.add('completed');
+          const prevMarker = items[idx - 1].querySelector('.build-progress-marker');
+          if (prevMarker) prevMarker.textContent = '✓';
+        }
+        if (idx < items.length) {
+          items[idx].classList.add('active');
+          const stageProgress = [15, 50, 65];
+          Store.updateClone(buildingCloneId, { progress: stageProgress[idx] || 65 });
+          idx += 1;
+          if (idx < items.length) {
+            buildTimer = setTimeout(advance, 900);
+          } else {
+            buildTimer = null;
+            buildStarted = true;
+          }
+        }
+      };
+      advance();
+    }
+
+    // 完成构建并进入体验分身页
+    function handleFinishDistill() {
+      const name = document.getElementById('personaNameInput').value.trim() || '黄铁军';
+      const desc = '北京大学教授、北京智源人工智能研究院理事长，长期从事视觉信息处理、类脑计算与通用人工智能研究。';
+      const tag = '专家分身';
+
+      const newClone = Store.completeAgentDistill(name, buildingCloneId || (clone ? clone.id : null), { desc, tag });
+      if (pendingAvatarImage) {
+        newClone.avatarImage = pendingAvatarImage;
+        Store.updateClone(newClone.id, { avatarImage: pendingAvatarImage });
+      }
+      Toast.show(`🎉【${newClone.name}】模型提炼完成，已就绪！`);
+
+      renderSuccessStep(newClone);
+    }
+
+    // 页面初始化
+    goToStep(currentStep);
+  </script>
+
+    <!-- ====== 通用抽屉 ====== -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer(event)">
+      <div class="drawer-panel" id="drawer-panel" onclick="event.stopPropagation()">
+        <div class="drawer-header">
+          <div class="drawer-title" id="drawer-title">标题</div>
+          <button type="button" class="drawer-close" onclick="closeDrawer()">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body" id="drawer-body"></div>
+        <div class="drawer-footer" id="drawer-footer" style="display:none;"></div>
+      </div>
+    </div>
+
+</body>
+
+</html>

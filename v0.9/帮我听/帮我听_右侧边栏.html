@@ -1,0 +1,3461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听会 - 详情页 Demo · SoulAgent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      display: flex;
+      height: 100vh;
+      background: #f8fafc;
+      color: #111827;
+      overflow: hidden;
+    }
+
+    /* =========================================================================
+       左半边：控制面板 (60% 宽度)
+       ========================================================================= */
+    .left-panel {
+      width: 60%;
+      height: 100vh;
+      border-right: 1px solid #e5e7eb;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px;
+      gap: 24px;
+      overflow-y: auto;
+    }
+    .meeting-switch-box {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .control-group-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 分段选择器 */
+    .segmented-control {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 10px;
+      gap: 2px;
+    }
+    .seg-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .seg-btn:hover { color: #1e293b; }
+    .seg-btn.active {
+      background: #fff;
+      color: #2563eb;
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .dot-upcoming { background: #94a3b8; }
+    .dot-live { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.6); }
+    .dot-ended { background: #10b981; }
+
+    /* 会议选择卡片 */
+    .meeting-card-wrapper {
+      background: #fff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      transition: all .2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,.03);
+      cursor: pointer;
+      user-select: none;
+    }
+    .meeting-card-wrapper:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 6px 18px rgba(37,99,235,.06);
+    }
+    .meeting-card-wrapper.active {
+      border-color: #2563eb;
+      background: #f8fbff;
+      box-shadow: 0 6px 20px rgba(37,99,235,.1);
+    }
+
+    .meeting-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .meeting-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .meeting-btn-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      color: #475569;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .meeting-card-wrapper.active .meeting-btn-icon {
+      background: #2563eb;
+      color: #fff;
+    }
+    .meeting-btn-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .meeting-card-wrapper.active .meeting-btn-title {
+      color: #1d4ed8;
+    }
+    .meeting-btn-indicator {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .meeting-card-wrapper.active .meeting-btn-indicator {
+      border-color: #2563eb;
+      background: #2563eb;
+    }
+    .meeting-card-wrapper.active .meeting-btn-indicator::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    /* =========================================================================
+       右半边：详情页面板 (40% 宽度)
+       ========================================================================= */
+    .detail-panel {
+      width: 40%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .detail-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: #fff;
+      z-index: 20;
+    }
+    .detail-header-pos {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 顶部标题区 & 标签 */
+    .header-title-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .conf-tag-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .detail-title-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background .15s;
+      min-width: 0;
+    }
+    .detail-title-btn:hover { background: #f3f4f6; }
+    .detail-title-btn.disabled {
+      cursor: default;
+      pointer-events: none;
+      padding-left: 0;
+    }
+    .detail-title-btn.disabled:hover { background: transparent; }
+    .detail-title-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chevron {
+      color: #6b7280;
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .detail-title-btn.open .chevron {
+      transform: rotate(180deg);
+      color: #2563eb;
+    }
+    
+    .episode-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      z-index: 300;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.12);
+      min-width: 240px;
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .episode-menu.show { display: flex !important; }
+    .episode-item {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background .15s;
+    }
+    .episode-item:hover { background: #f3f4f6; }
+    .episode-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+    
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      border: none;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .icon-btn:hover { background: #eff6ff; color: #2563eb; }
+    .icon-btn.close:hover { background: #fee2e2; color: #dc2626; }
+    .detail-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+    /* =========================================================================
+       多媒体播放器区域 (高度固定 200px)
+       ========================================================================= */
+    .video-section {
+      padding: 16px 24px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .video-player {
+      background: #0f172a;
+      border-radius: 12px;
+      overflow: hidden;
+      width: 100%;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      border: 1px solid #1e293b;
+      position: relative;
+    }
+
+    .video-screen {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .play-btn-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(37,99,235,.95);
+      box-shadow: 0 4px 18px rgba(0,0,0,.35), 0 0 0 3px rgba(255,255,255,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .2s, background .2s;
+      z-index: 10;
+    }
+    .play-btn-center:hover { transform: translate(-50%, -50%) scale(1.08); background: #2563eb; }
+
+    .video-controls {
+      height: 38px;
+      background: rgba(15,23,42,.95);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      color: #fff;
+      font-size: 12px;
+      border-top: 1px solid rgba(255,255,255,.1);
+      flex-shrink: 0;
+      z-index: 2;
+    }
+    .ctrl-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .15s;
+    }
+    .ctrl-btn:hover { opacity: 0.8; }
+    
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,.2);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: #3b82f6;
+      position: relative;
+      transition: width .1s linear;
+    }
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(59,130,246,.8);
+    }
+    .time-label { font-size: 11px; color: rgba(255,255,255,.7); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    .live-indicator-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(239,68,68,.18);
+      border: 1px solid rgba(239,68,68,.4);
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: livePulse 1.5s infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* 播放器状态视觉与预热条 */
+    .video-section.is-upcoming {
+      padding: 12px 24px;
+      background: #f8fafc;
+    }
+    .upcoming-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    }
+    .upcoming-banner svg {
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .upcoming-screen, .no-source-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      color: #cbd5e1;
+      text-align: center;
+      padding: 20px;
+    }
+    .upcoming-icon-wrap, .no-source-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+    }
+    .upcoming-title, .no-source-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .audio-screen {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle at center, #1e1b4b 0%, #0a1128 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      width: 100%;
+    }
+    .audio-waveform-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 70px;
+      width: 85%;
+      max-width: 380px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .audio-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+      border-radius: 3px;
+      min-height: 6px;
+      opacity: 0.75;
+      transition: opacity .2s ease;
+    }
+    .audio-bar:nth-child(1) { height: 22%; }
+    .audio-bar:nth-child(2) { height: 42%; }
+    .audio-bar:nth-child(3) { height: 75%; }
+    .audio-bar:nth-child(4) { height: 50%; }
+    .audio-bar:nth-child(5) { height: 85%; }
+    .audio-bar:nth-child(6) { height: 60%; }
+    .audio-bar:nth-child(7) { height: 95%; }
+    .audio-bar:nth-child(8) { height: 100%; }
+    .audio-bar:nth-child(9) { height: 65%; }
+    .audio-bar:nth-child(10) { height: 88%; }
+    .audio-bar:nth-child(11) { height: 82%; }
+    .audio-bar:nth-child(12) { height: 55%; }
+    .audio-bar:nth-child(13) { height: 85%; }
+    .audio-bar:nth-child(14) { height: 70%; }
+    .audio-bar:nth-child(15) { height: 92%; }
+    .audio-bar:nth-child(16) { height: 45%; }
+    .audio-bar:nth-child(17) { height: 68%; }
+    .audio-bar:nth-child(18) { height: 35%; }
+    .audio-bar:nth-child(19) { height: 50%; }
+    .audio-bar:nth-child(20) { height: 25%; }
+
+    .audio-waveform-container.playing .audio-bar {
+      opacity: 1;
+      animation: soundWave 1.1s infinite ease-in-out alternate;
+    }
+    .audio-waveform-container.playing .audio-bar:nth-child(1) { animation-delay: 0.1s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(2) { animation-delay: 0.35s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(3) { animation-delay: 0.15s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(4) { animation-delay: 0.5s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(5) { animation-delay: 0.25s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(6) { animation-delay: 0.6s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(7) { animation-delay: 0.2s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(8) { animation-delay: 0.4s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(9) { animation-delay: 0.1s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(10) { animation-delay: 0.55s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(11) { animation-delay: 0.3s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(12) { animation-delay: 0.45s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(13) { animation-delay: 0.2s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(14) { animation-delay: 0.65s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(15) { animation-delay: 0.35s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(16) { animation-delay: 0.15s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(17) { animation-delay: 0.5s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(18) { animation-delay: 0.25s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(19) { animation-delay: 0.4s; }
+    .audio-waveform-container.playing .audio-bar:nth-child(20) { animation-delay: 0.2s; }
+
+    @keyframes soundWave {
+      0% { height: 15%; transform: scaleY(0.25); }
+      50% { height: 95%; transform: scaleY(1); }
+      100% { height: 30%; transform: scaleY(0.35); }
+    }
+
+    .video-visual-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 60% 40%, rgba(37,99,235,.25) 0%, transparent 60%),
+                  radial-gradient(circle at 20% 70%, rgba(139,92,246,.2) 0%, transparent 50%),
+                  linear-gradient(135deg, #090d16 0%, #1e1b4b 60%, #0f172a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* =========================================================================
+       章节卡片列表 (仅智源大会有)
+       ========================================================================= */
+    .chapter-section {
+      padding: 14px 24px 4px;
+      display: block;
+    }
+    .chapter-cards-track {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 4px 2px 10px;
+      scroll-behavior: smooth;
+    }
+    .chapter-cards-track::-webkit-scrollbar { height: 4px; }
+    .chapter-cards-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .chapter-card {
+      flex: 0 0 220px;
+      min-width: 220px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all .2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.03);
+      user-select: none;
+    }
+    .chapter-card:hover { border-color: #93c5fd; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.08); }
+    .chapter-card.active { border-color: #2563eb; background: #eff6ff; box-shadow: 0 4px 12px rgba(37,99,235,.15); }
+
+    .card-title-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .chapter-card.active .card-title-name { color: #1d4ed8; font-weight: 700; }
+
+    .card-ts-muted {
+      font-size: 11.5px;
+      color: #94a3b8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 500;
+    }
+    .chapter-card.active .card-ts-muted {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+
+    /* 进行中 - 章节加载中卡片 (现支持点击切换) */
+    .chapter-card.loading-card {
+      background: #f8fafc;
+      border: 1.5px dashed #cbd5e1;
+      cursor: pointer;
+      justify-content: center;
+      align-items: center;
+      min-height: 74px;
+      gap: 6px;
+    }
+    .chapter-card.loading-card:hover {
+      border-color: #93c5fd;
+      background: #f0f7ff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37,99,235,.08);
+    }
+    .chapter-card.loading-card.active {
+      border: 1.5px solid #2563eb;
+      background: #eff6ff;
+      box-shadow: 0 4px 12px rgba(37,99,235,.15);
+    }
+    .chapter-card.loading-card.active .loading-card-inner {
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+    .chapter-card.loading-card.active .pulse-spinner {
+      border-color: #bfdbfe;
+      border-top-color: #2563eb;
+    }
+    .chapter-card.loading-card.active .card-ts-muted {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+    .loading-card-inner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .pulse-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #cbd5e1;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+
+
+    /* =========================================================================
+       内容区与选项卡 (AI总结, AI素材包, AI摘要, AI速记)
+       ========================================================================= */
+    .detail-content { padding: 8px 24px 24px; flex: 1; display: flex; flex-direction: column; }
+    .drawer-tab-nav { display: flex; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px; }
+    .dtab {
+      padding: 10px 16px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #6b7280;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all .15s;
+      margin-bottom: -1px;
+    }
+    .dtab:hover { color: #111827; }
+    .dtab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+    .tab-pane { display: none; flex-direction: column; }
+    .tab-pane.active { display: flex; }
+
+    /* 工具栏 */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+    .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
+    .style-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .style-btn:hover { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .toolbar-btn:hover { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+    .toolbar-btn.active { color: #2563eb; background: #eff6ff; border-color: #2563eb; }
+
+    /* 风格与切换下拉 */
+    .style-drop-wrap { position: relative; display: inline-block; }
+    .style-drop-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 500;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.15);
+      min-width: 130px;
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .style-drop-menu.open { display: flex !important; }
+    .style-opt {
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #334155;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background .15s;
+    }
+    .style-opt:hover { background: #f1f5f9; }
+    .style-opt.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+
+    /* 空状态容器 (无desc时紧凑居中) */
+    .empty-state-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 48px 24px;
+      background: #f8fafc;
+      border: 1.5px dashed #e2e8f0;
+      border-radius: 14px;
+      margin: 8px 0 16px;
+    }
+    .empty-icon-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #eff6ff;
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      border: 1px solid #dbeafe;
+    }
+    .empty-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+    }
+    .empty-desc {
+      font-size: 12.5px;
+      color: #64748b;
+      max-width: 320px;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+
+    /* 1. AI 总结 -> Markdown 报告样式 (MD Document Style) */
+    .md-article {
+      position: relative;
+      background: #ffffff;
+      padding: 4px 6px 20px 6px;
+      color: #334155;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+    .md-header {
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+    .md-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+    .md-meta-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12.5px;
+      color: #475569;
+      background: #f8fafc;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid #edf2f7;
+    }
+    .md-meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.5;
+    }
+    .md-meta-item strong {
+      color: #334155;
+      font-weight: 600;
+    }
+    .md-meta-item svg {
+      color: #64748b;
+      flex-shrink: 0;
+    }
+    
+    /* 导读 / 引用块 Callout */
+    .md-callout {
+      position: relative;
+      background: #f8fafc;
+      border-left: 3.5px solid #2563eb;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      margin: 14px 0 18px 0;
+      font-size: 13.5px;
+      color: #475569;
+      line-height: 1.7;
+    }
+    .md-callout:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .md-callout-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    /* 章节块 (带悬浮操作) */
+    .md-section-block {
+      position: relative;
+      padding: 6px 8px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      transition: background .15s;
+    }
+    .md-section-block:hover {
+      background: #fcfdfd;
+    }
+    .md-section-block:hover .block-hover-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* 标题层级 */
+    .md-h2 {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 20px 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .md-h2::before {
+      content: "";
+      width: 4px;
+      height: 15px;
+      border-radius: 2px;
+      background: #2563eb;
+      display: inline-block;
+    }
+    .md-h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 14px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .md-h3::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #3b82f6;
+      display: inline-block;
+    }
+
+    /* 列表 Bullet Points */
+    .md-list {
+      margin: 8px 0 14px 0;
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .md-list-item {
+      position: relative;
+      padding-left: 18px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #334155;
+    }
+    .md-list-item::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      top: -1px;
+      color: #2563eb;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .md-list-item strong {
+      color: #0f172a;
+    }
+
+    /* 表格 Markdown Table */
+    .md-table-wrap {
+      position: relative;
+      overflow-x: auto;
+      margin: 14px 0 18px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      background: #ffffff;
+    }
+    .md-table-wrap:hover .block-hover-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .md-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      text-align: left;
+    }
+    .md-table th {
+      background: #f8fafc;
+      color: #1e293b;
+      font-weight: 700;
+      padding: 9px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .md-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .md-table tr:last-child td {
+      border-bottom: none;
+    }
+    .md-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* 插图 / 架构图 Visual Figure Card */
+    .md-figure {
+      position: relative;
+      margin: 16px 0 20px 0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .md-figure:hover .block-hover-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .md-figure-canvas {
+      padding: 16px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f8fafc 0%, #f0f7ff 100%);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .md-figcaption {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* 2. AI 素材包 (Media) */
+    .media-section { margin-bottom: 14px; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; background: #fff; }
+    .media-section-header {
+      padding: 10px 16px;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: #1f2937;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #e5e7eb;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s;
+    }
+    .media-section-header:hover { background: #f1f5f9; }
+    .media-chevron { transition: transform 0.2s; color: #64748b; margin-left: 4px; display: inline-flex; align-items: center; }
+    .media-section.collapsed .media-chevron { transform: rotate(-90deg); }
+    .media-section.collapsed .media-section-header { border-bottom: none; }
+    .media-section.collapsed .media-grid { display: none; }
+    .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; padding: 14px; }
+    .media-card {
+      position: relative;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all .2s;
+    }
+    .media-card:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,.08); }
+    .media-card:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .media-thumb {
+      height: 80px;
+      background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .mock-doc {
+      width: 36px;
+      height: 46px;
+      background: #fff;
+      border-radius: 3px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border: 1px solid #f1f5f9;
+    }
+    .mock-line { height: 3px; background: #e2e8f0; border-radius: 2px; }
+    .mock-line.title { height: 4px; width: 70%; background: #94a3b8; margin-bottom: 2px; }
+    .mock-line.short { width: 55%; }
+    .mock-quote-thumb {
+      width: 50px;
+      height: 36px;
+      background: linear-gradient(135deg, #fbcfe8, #f472b6);
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .mock-quote-thumb-line { width: 80%; height: 3px; background: rgba(255,255,255,.9); border-radius: 2px; }
+    .mock-video {
+      width: 56px;
+      height: 38px;
+      background: #1e293b;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .mock-video-play {
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 8px solid rgba(255,255,255,.9);
+      margin-left: 3px;
+    }
+    .mock-video-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: #ef4444; width: 45%; }
+    .media-card-body { padding: 10px 12px; }
+    .media-card-title { font-size: 12.5px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-download-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      color: #475569;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-left: auto;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .media-download-btn:hover { color: #2563eb; border-color: #93c5fd; background: #eff6ff; }
+
+    /* 3. AI 摘要 -> 思维导图树状大纲 (Mindmap Tree Outline) */
+    .mindmap-tree-wrap {
+      position: relative;
+      padding: 6px 4px 18px 4px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mindmap-chapter-item {
+      position: relative;
+      padding-left: 28px;
+      padding-bottom: 22px;
+    }
+    
+    /* 章节主干竖线 | */
+    .mindmap-chapter-item::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 22px;
+      bottom: 0;
+      width: 2px;
+      background: #e2e8f0;
+    }
+    
+    .mindmap-chapter-item:last-child::before {
+      display: none;
+    }
+
+    /* 章节节点头部：时间 + 标题 */
+    .mindmap-chapter-header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #0f172a;
+      padding: 3px 6px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    
+    .mindmap-chapter-header:hover .block-hover-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* 章节多色主题体系 (Theme 0~5) */
+    .mindmap-chapter-item.theme-blue {
+      --node-color: #2563eb;
+      --node-glow: rgba(37,99,235,0.18);
+      --leaf-bg: #f5f9ff;
+      --leaf-border: #e2edfd;
+      --leaf-hover-border: #93c5fd;
+      --leaf-hover-shadow: rgba(37,99,235,0.08);
+      --bullet-color: #3b82f6;
+    }
+    .mindmap-chapter-item.theme-purple {
+      --node-color: #7c3aed;
+      --node-glow: rgba(124,58,237,0.18);
+      --leaf-bg: #f9f6ff;
+      --leaf-border: #ede5fd;
+      --leaf-hover-border: #c4b5fd;
+      --leaf-hover-shadow: rgba(124,58,237,0.08);
+      --bullet-color: #8b5cf6;
+    }
+    .mindmap-chapter-item.theme-emerald {
+      --node-color: #059669;
+      --node-glow: rgba(5,150,105,0.18);
+      --leaf-bg: #f2fcf6;
+      --leaf-border: #dcfce7;
+      --leaf-hover-border: #86efac;
+      --leaf-hover-shadow: rgba(5,150,105,0.08);
+      --bullet-color: #10b981;
+    }
+    .mindmap-chapter-item.theme-amber {
+      --node-color: #d97706;
+      --node-glow: rgba(217,119,6,0.18);
+      --leaf-bg: #fdfbf2;
+      --leaf-border: #fef3c7;
+      --leaf-hover-border: #fcd34d;
+      --leaf-hover-shadow: rgba(217,119,6,0.08);
+      --bullet-color: #f59e0b;
+    }
+    .mindmap-chapter-item.theme-rose {
+      --node-color: #e11d48;
+      --node-glow: rgba(225,29,72,0.18);
+      --leaf-bg: #fff5f6;
+      --leaf-border: #ffe4e6;
+      --leaf-hover-border: #fda4af;
+      --leaf-hover-shadow: rgba(225,29,72,0.08);
+      --bullet-color: #f43f5e;
+    }
+    .mindmap-chapter-item.theme-teal {
+      --node-color: #0d9488;
+      --node-glow: rgba(13,148,136,0.18);
+      --leaf-bg: #f2fbf9;
+      --leaf-border: #ccfbf1;
+      --leaf-hover-border: #5eead4;
+      --leaf-hover-shadow: rgba(13,148,136,0.08);
+      --bullet-color: #14b8a6;
+    }
+
+    /* 主节点标记圆点 */
+    .mindmap-chapter-dot {
+      position: absolute;
+      left: -28px;
+      top: 6px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--node-color, #2563eb);
+      box-shadow: 0 0 0 2px var(--node-glow, rgba(37,99,235,0.15));
+      z-index: 2;
+      transition: all .2s;
+    }
+
+    .mindmap-chapter-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    /* 要点分支容器 */
+    .mindmap-branches {
+      position: relative;
+      margin-left: 2px;
+      padding-left: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* 分支引导竖线 */
+    .mindmap-branches::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: -4px;
+      bottom: 16px;
+      width: 1.5px;
+      background: #cbd5e1;
+    }
+
+    /* 单个要点分支项 |- */
+    .mindmap-leaf {
+      position: relative;
+      padding: 10px 14px;
+      background: var(--leaf-bg, #f8fafc);
+      border: 1px solid var(--leaf-border, #eef2f6);
+      border-radius: 10px;
+      transition: all .2s ease;
+      cursor: default;
+    }
+
+    /* 水平横折拐角分支线 |- */
+    .mindmap-leaf::before {
+      content: "";
+      position: absolute;
+      left: -22px;
+      top: 18px;
+      width: 18px;
+      height: 1.5px;
+      background: #cbd5e1;
+    }
+
+    /* 分支连接小圆点 */
+    .mindmap-leaf::after {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 16px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #94a3b8;
+      transition: all .2s;
+    }
+
+    .mindmap-leaf:hover {
+      background: #ffffff;
+      border-color: var(--leaf-hover-border, #bfdbfe);
+      box-shadow: 0 4px 14px var(--leaf-hover-shadow, rgba(37,99,235,0.06));
+    }
+
+    .mindmap-leaf:hover::after {
+      background: var(--node-color, #2563eb);
+      transform: scale(1.2);
+    }
+
+    .mindmap-leaf:hover .block-hover-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .mindmap-leaf-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .mindmap-leaf-bullet {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 2px;
+      background: var(--bullet-color, #3b82f6);
+      flex-shrink: 0;
+    }
+
+    .mindmap-leaf-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .mindmap-leaf-desc {
+      font-size: 13px;
+      line-height: 1.65;
+      color: #475569;
+    }
+
+    /* 思维导图流式生成节点 */
+    .mindmap-loading-item {
+      position: relative;
+      padding-left: 28px;
+      padding-top: 4px;
+    }
+    .mindmap-loading-dot {
+      position: absolute;
+      left: -28px;
+      top: 10px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #eff6ff;
+      border: 2px dashed #3b82f6;
+      animation: spin-cw 4s linear infinite;
+      z-index: 2;
+    }
+    @keyframes spin-cw {
+      100% { transform: rotate(360deg); }
+    }
+    .mindmap-loading-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      font-size: 12.5px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .mindmap-loading-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #3b82f6;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(0.85); opacity: 0.5; }
+      50% { transform: scale(1.25); opacity: 1; }
+    }
+
+    /* 4. AI 速记 / 实时转写 (Transcript) */
+    .transcript-list { display: flex; flex-direction: column; gap: 4px; }
+    .tr-row {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: background .15s, border-color .15s;
+    }
+    .tr-row:hover { background: #f8fafc; border-color: #e2e8f0; }
+    .tr-row:hover .block-hover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .tr-speaker { display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; }
+    .tr-speaker span:first-child { font-size: 13px; font-weight: 700; color: #0f172a; line-height: 1.4; }
+    .tr-text { font-size: 14px; line-height: 1.7; color: #374151; text-align: left; width: 100%; }
+    .tr-loading-more {
+      padding: 6px 14px;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+    .tr-loading-dots {
+      display: inline-block;
+      animation: dots-pulse 1.4s infinite ease-in-out;
+    }
+    @keyframes dots-pulse {
+      0%, 100% { opacity: 0.35; transform: scale(0.96); }
+      50% { opacity: 0.95; transform: scale(1.04); }
+    }
+
+    /* 通用时间戳标签 */
+    .ts-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #eff6ff;
+      color: #2563eb;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #bfdbfe;
+      transition: all .15s;
+    }
+    .ts-tag:hover { background: #2563eb; color: #fff; }
+
+    /* 无音视频源时的弱样式时间戳 + 右上角箭头 */
+    .ts-tag.ts-external {
+      background: #f8fafc;
+      color: #64748b;
+      border-color: #cbd5e1;
+      gap: 3px;
+    }
+    .ts-tag.ts-external svg {
+      color: #94a3b8;
+      transition: transform .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .ts-tag.ts-external:hover {
+      background: #eff6ff;
+      color: #2563eb;
+      border-color: #bfdbfe;
+    }
+    .ts-tag.ts-external:hover svg {
+      color: #2563eb;
+      transform: translate(1px, -1px);
+    }
+
+    /* 卡片悬停操作栏 */
+    .block-hover-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px 4px;
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      transform: translateY(-4px);
+    }
+    .bha-btn {
+      background: none;
+      border: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+    }
+    .bha-btn:hover { background: #eff6ff; color: #2563eb; }
+    .bha-divider { width: 1px; height: 12px; background: #cbd5e1; margin: 0 1px; }
+
+    /* 底部声明 */
+    .ai-footer {
+      margin-top: 16px;
+      padding: 10px 0;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: #9ca3af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .fb-link {
+      color: #9ca3af;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 600;
+      transition: color .15s;
+    }
+    .fb-link:hover { color: #4b5563; }
+
+    /* Toast 气泡 */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(17,24,39,.92);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,.2);
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all .25s cubic-bezier(.16,1,.3,1);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================================
+       左半边：控制面板 (60% 宽度)
+       ========================================================================= -->
+  <div class="left-panel">
+    <div class="meeting-switch-box">
+
+      <!-- 1. 数据源切换 -->
+      <div class="control-group">
+        <div class="control-group-title">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          数据源切换
+        </div>
+        <div class="segmented-control" id="sourceControl">
+          <button class="seg-btn active" data-source="video" onclick="setDataSource('video')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <span>视频</span>
+          </button>
+          <button class="seg-btn" data-source="audio" onclick="setDataSource('audio')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            <span>音频</span>
+          </button>
+          <button class="seg-btn" data-source="none" onclick="setDataSource('none')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06a4 4 0 1 1-5.56-5.56"/></svg>
+            <span>都没有</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. 会议状态切换 -->
+      <div class="control-group">
+        <div class="control-group-title">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          会议状态
+        </div>
+        <div class="segmented-control" id="statusControl">
+          <button class="seg-btn" data-status="upcoming" onclick="setMeetingStatus('upcoming')">
+            <span class="status-dot dot-upcoming"></span>
+            <span>未开始</span>
+          </button>
+          <button class="seg-btn" data-status="live" onclick="setMeetingStatus('live')">
+            <span class="status-dot dot-live"></span>
+            <span>进行中</span>
+          </button>
+          <button class="seg-btn active" data-status="ended" onclick="setMeetingStatus('ended')">
+            <span class="status-dot dot-ended"></span>
+            <span>已结束</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. 会议选择卡片 -->
+      <div class="control-group">
+        <div class="control-group-title">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          会议选择
+        </div>
+
+        <!-- 智源大会 卡片 -->
+        <div class="meeting-card-wrapper active" id="card-zhiyuan" onclick="switchMeeting('zhiyuan')">
+          <div class="meeting-header-row">
+            <div class="meeting-info">
+              <div class="meeting-btn-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              </div>
+              <div class="meeting-btn-title" id="leftTitleZhiyuan">智源大会 - 开幕式与主论坛</div>
+            </div>
+            <div class="meeting-btn-indicator"></div>
+          </div>
+        </div>
+
+        <!-- 苹果发布会 卡片 -->
+        <div class="meeting-card-wrapper" id="card-apple" onclick="switchMeeting('apple')">
+          <div class="meeting-header-row">
+            <div class="meeting-info">
+              <div class="meeting-btn-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.64 1.35-.57.65-1.07 1.7-0.94 2.72 1.01.08 2.04-.47 2.66-1.22z"/></svg>
+              </div>
+              <div class="meeting-btn-title">2026苹果秋季新品发布会</div>
+            </div>
+            <div class="meeting-btn-indicator"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       右半边：详情页面板 (40% 宽度)
+       ========================================================================= -->
+  <div class="detail-panel">
+    <!-- 顶部标题区 -->
+    <div class="detail-header">
+      <div class="detail-header-pos">
+        <div class="header-title-container" id="headerTitleContainer">
+          <!-- 动态注入：标签与标题按钮 -->
+        </div>
+        <div class="episode-menu" id="episodeMenu">
+          <!-- 动态注入论坛选项 -->
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" title="全屏" onclick="showToast('已进入全屏模式')">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </button>
+        <button class="icon-btn close" title="关闭" onclick="showToast('已关闭侧边栏')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <!-- 播放器区域 -->
+      <div class="video-section" id="videoSection">
+        <div class="video-player" id="mediaPlayer">
+          <!-- 动态注入播放器内容 -->
+        </div>
+        <div class="upcoming-banner" id="upcomingBanner" style="display:none;">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>尚未开始</span>
+        </div>
+      </div>
+
+      <!-- 章节卡片列表 (仅智源大会有，未开始时不显示) -->
+      <div class="chapter-section" id="chapterSection">
+        <div class="chapter-cards-track" id="chapterCardsTrack">
+          <!-- 动态注入章节卡片 -->
+        </div>
+      </div>
+
+      <!-- 内容区 -->
+      <div class="detail-content">
+
+        <!-- 标签栏：AI总结, AI素材包, AI摘要, AI速记 -->
+        <div class="drawer-tab-nav">
+          <button class="dtab active" data-tab="summary">AI总结</button>
+          <button class="dtab" data-tab="media">AI素材包</button>
+          <button class="dtab" data-tab="chapterSummary">AI摘要</button>
+          <button class="dtab" data-tab="transcript">AI速记</button>
+        </div>
+
+        <!-- 1. AI总结 -->
+        <div class="tab-pane active" id="pane-summary">
+          <div class="toolbar" id="summaryToolbar">
+            <div class="toolbar-left">
+              <div class="style-drop-wrap">
+                <button class="style-btn" id="styleBtnSummary">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span id="styleLblSummary">风格：默认通用</span>
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="style-drop-menu" id="styleDropSummary">
+                  <div class="style-opt active" data-style="默认通用">默认通用 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <div class="style-opt" data-style="党政公文">党政公文</div>
+                  <div class="style-opt" data-style="科技前沿">科技前沿</div>
+                  <div class="style-opt" data-style="媒体新闻">媒体新闻</div>
+                </div>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button class="toolbar-btn" title="复制全部" onclick="showToast('已复制总结全文')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button class="toolbar-btn" title="下载文档" onclick="showToast('总结文档已下载')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            </div>
+          </div>
+          <div id="summaryContentArea">
+            <!-- 动态注入总结或空状态 -->
+          </div>
+        </div>
+
+        <!-- 2. AI素材包 -->
+        <div class="tab-pane" id="pane-media">
+          <div id="mediaContentArea">
+            <!-- 动态注入素材包或空状态 -->
+          </div>
+        </div>
+
+        <!-- 3. AI摘要 (章节摘要) -->
+        <div class="tab-pane" id="pane-chapterSummary">
+          <div class="toolbar" id="overviewToolbar">
+            <div class="toolbar-left">
+              <div class="style-drop-wrap">
+                <button class="style-btn" id="styleBtnOverview">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span id="styleLblOverview">风格：默认通用</span>
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div class="style-drop-menu" id="styleDropOverview">
+                  <div class="style-opt active" data-style="默认通用">默认通用 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <div class="style-opt" data-style="党政公文">党政公文</div>
+                  <div class="style-opt" data-style="科技前沿">科技前沿</div>
+                  <div class="style-opt" data-style="媒体新闻">媒体新闻</div>
+                </div>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <button class="toolbar-btn" title="复制全部" onclick="showToast('已复制全部章节摘要')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button class="toolbar-btn" title="导出文档" onclick="showToast('章节摘要已导出')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            </div>
+          </div>
+          <div id="overviewContentArea">
+            <!-- 动态注入章节摘要或空状态 -->
+          </div>
+        </div>
+
+        <!-- 4. AI速记 -->
+        <div class="tab-pane" id="pane-transcript">
+          <div class="toolbar">
+            <div class="toolbar-left" id="transcriptToolbarLeft">
+              <!-- 动态注入下拉菜单或进行中提示 -->
+            </div>
+            <div class="toolbar-right">
+              <div class="style-drop-wrap" id="transcriptSpeakerWrap">
+                <button class="toolbar-btn" id="transcriptSpeakerBtn" title="筛选说话人">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                </button>
+                <div class="style-drop-menu" id="transcriptSpeakerMenu" style="right: 0; left: auto; min-width: 140px;"></div>
+              </div>
+              <button class="toolbar-btn" title="复制全部" onclick="showToast('已复制速记内容')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button class="toolbar-btn" title="下载文档" onclick="showToast('速记文档已下载')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            </div>
+          </div>
+          <div id="transcriptContentArea">
+            <!-- 动态注入实时转写或AI速记优化内容 -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示框 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- =========================================================================
+       交互逻辑驱动脚本
+       ========================================================================= -->
+  <script>
+    // ===== 全局运行状态 =====
+    let currentDataSource = 'video';       // 'video' | 'audio' | 'none'
+    let currentMeetingStatus = 'ended';    // 'upcoming' | 'live' | 'ended'
+    let currentMeeting = 'zhiyuan';        // 'zhiyuan' | 'apple'
+    let currentZhiyuanForumIdx = 0;        // 0: 开幕式与主论坛, 1: 具身智能论坛, 2: 大模型与前沿架构, 3: AI Agent 智能体论坛
+    let currentChapterIdx = 0;             // 当前选中章节索引
+    let currentTranscriptMode = 'ai';      // 'ai' (AI速记) | 'raw' (实时转写)
+    let currentSpeakerFilter = 'all';      // 'all' | 说话人姓名
+
+    // 播放器参数
+    const TOTAL = 14400; // 4h (秒)
+    let cur = 0, playing = false, timer = null;
+
+    function hms(s) {
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = Math.floor(s % 60);
+      return [h, m, ss].map(n => String(n).padStart(2, '0')).join(':');
+    }
+
+    const iconPlayLg = `<svg width="20" height="20" fill="#fff" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+    const iconPauseLg = `<svg width="18" height="18" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+    const iconPlaySm = `<svg width="15" height="15" fill="#fff" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+    const iconPauseSm = `<svg width="15" height="15" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+
+    function getWaveformBarsHtml() {
+      return Array.from({length: 20}).map(() => `<div class="audio-bar"></div>`).join('');
+    }
+
+    // 获取当前会议章节数据列表
+    function getCurrentMeetingChapters() {
+      if (currentMeeting === 'apple') {
+        return APP_DATA.appleMeeting.chapters;
+      }
+      const forum = APP_DATA.zhiyuanMeeting.forums[currentZhiyuanForumIdx];
+      return forum ? forum.chapters : APP_DATA.zhiyuanMeeting.forums[0].chapters;
+    }
+
+    // ===== 1. 顶部标题与论坛下拉渲染 =====
+    function renderHeaderTitle() {
+      const container = document.getElementById('headerTitleContainer');
+      const menu = document.getElementById('episodeMenu');
+      if (!container || !menu) return;
+
+      if (currentMeeting === 'zhiyuan') {
+        const currentForum = APP_DATA.zhiyuanMeeting.forums[currentZhiyuanForumIdx];
+        container.innerHTML = `
+          <span class="conf-tag-badge">${APP_DATA.zhiyuanMeeting.tag}</span>
+          <button class="detail-title-btn" id="episodeBtn">
+            <span class="detail-title-text" id="episodeTitle">${currentForum.name}</span>
+            <svg class="chevron" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        `;
+
+        // 智源大会下拉菜单
+        menu.innerHTML = APP_DATA.zhiyuanMeeting.forums.map((f, idx) => `
+          <div class="episode-item ${idx === currentZhiyuanForumIdx ? 'active' : ''}" data-index="${idx}">
+            <span>${f.name}</span>
+            ${idx === currentZhiyuanForumIdx ? '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          </div>
+        `).join('');
+
+        // 绑定下拉按钮
+        const episodeBtn = document.getElementById('episodeBtn');
+        episodeBtn.onclick = (e) => {
+          e.stopPropagation();
+          episodeBtn.classList.toggle('open');
+          menu.classList.toggle('show');
+        };
+
+        // 绑定选项点击
+        menu.querySelectorAll('.episode-item').forEach(item => {
+          item.onclick = (e) => {
+            e.stopPropagation();
+            const idx = +item.dataset.index;
+            currentZhiyuanForumIdx = idx;
+            currentChapterIdx = 0;
+            currentSpeakerFilter = 'all';
+            
+            // 更新左侧卡片标题以保持一致
+            const leftTitle = document.getElementById('leftTitleZhiyuan');
+            if (leftTitle) {
+              leftTitle.textContent = `智源大会 - ${APP_DATA.zhiyuanMeeting.forums[idx].name}`;
+            }
+
+            renderHeaderTitle();
+            renderChapterCards();
+            renderActiveTabContent();
+            menu.classList.remove('show');
+            showToast(`已切换至：${APP_DATA.zhiyuanMeeting.forums[idx].name}`);
+          };
+        });
+      } else {
+        // 苹果发布会：无标签，无下拉箭头，标题与左侧卡片一致
+        container.innerHTML = `
+          <button class="detail-title-btn disabled" id="episodeBtn">
+            <span class="detail-title-text" id="episodeTitle">${APP_DATA.appleMeeting.title}</span>
+          </button>
+        `;
+        menu.innerHTML = '';
+        menu.classList.remove('show');
+      }
+    }
+
+    // ===== 2. 章节卡片列表渲染 (仅智源大会有，未开始时不显示) =====
+    function renderChapterCards() {
+      const section = document.getElementById('chapterSection');
+      const track = document.getElementById('chapterCardsTrack');
+      if (!section || !track) return;
+
+      // 仅智源大会有章节卡片，苹果发布会或未开始状态时完全隐藏
+      if (currentMeeting === 'apple' || currentMeetingStatus === 'upcoming') {
+        section.style.display = 'none';
+        track.innerHTML = '';
+        return;
+      }
+
+      section.style.display = 'block';
+      const chapters = getCurrentMeetingChapters();
+
+      // 如果是进行中状态：给已结束的第一章卡片，以及进行中卡片(可点击)
+      if (currentMeetingStatus === 'live') {
+        const firstCh = chapters[0] || { title: "01. 智源大会开幕式与致辞", time: "00:00:00", secs: 0 };
+        const secondCh = chapters[1] || { title: "02. AGI与具身智能前沿趋势", time: "00:40:00", secs: 2400 };
+        track.innerHTML = `
+          <div class="chapter-card ${currentChapterIdx === 0 ? 'active' : ''}" data-chapter="0">
+            <div class="card-title-name">${firstCh.title}</div>
+            <div class="card-ts-muted">${firstCh.time}</div>
+          </div>
+          <div class="chapter-card loading-card ${currentChapterIdx === 1 ? 'active' : ''}" data-chapter="1">
+            <div class="loading-card-inner">
+              <div class="pulse-spinner"></div>
+              <span>章节进行中...</span>
+            </div>
+          </div>
+        `;
+        bindChapterCardEvents();
+        return;
+      }
+
+      // 已结束状态：展示全部章节
+      track.innerHTML = chapters.map((ch, idx) => `
+        <div class="chapter-card ${idx === currentChapterIdx ? 'active' : ''}" data-chapter="${idx}">
+          <div class="card-title-name">${ch.title}</div>
+          <div class="card-ts-muted">${ch.time}</div>
+        </div>
+      `).join('');
+
+      bindChapterCardEvents();
+    }
+
+    function bindChapterCardEvents() {
+      const track = document.getElementById('chapterCardsTrack');
+      if (!track) return;
+      const chapters = getCurrentMeetingChapters();
+
+      track.querySelectorAll('.chapter-card[data-chapter]').forEach((card) => {
+        card.onclick = () => {
+          const idx = +card.dataset.chapter;
+          track.querySelectorAll('.chapter-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          currentChapterIdx = idx;
+          currentSpeakerFilter = 'all';
+
+          // 进行中会议状态下：点击第0章(已结束)切为AI速记，点击进行中章节切为实时转写
+          if (currentMeetingStatus === 'live') {
+            if (idx === 0) {
+              currentTranscriptMode = 'ai';
+            } else {
+              currentTranscriptMode = 'raw';
+            }
+          }
+
+          renderActiveTabContent();
+          if (idx === 1 && currentMeetingStatus === 'live') {
+            showToast('已切换至：章节进行中（实时转写）');
+          } else if (chapters[idx]) {
+            showToast(`已切换至：${chapters[idx].title}`);
+          }
+        };
+      });
+    }
+
+    // ===== 3. 多媒体播放器主体渲染 =====
+    function renderMediaPlayer() {
+      const section = document.getElementById('videoSection');
+      const container = document.getElementById('mediaPlayer');
+      const banner = document.getElementById('upcomingBanner');
+      if (!container || !section) return;
+
+      if (timer) { clearInterval(timer); timer = null; }
+      playing = false;
+
+      // 1. 未开始 (Upcoming)：展示轻量预热条，文案为“尚未开始”
+      if (currentMeetingStatus === 'upcoming') {
+        section.style.display = 'block';
+        section.classList.add('is-upcoming');
+        container.style.display = 'none';
+        if (banner) banner.style.display = 'flex';
+        return;
+      }
+
+      // 非未开始状态：隐藏预热条
+      section.classList.remove('is-upcoming');
+      if (banner) banner.style.display = 'none';
+
+      // 2. 都没有数据源 (None)：不展示视频区域
+      if (currentDataSource === 'none') {
+        section.style.display = 'none';
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+
+      // 3. 有数据源状态：展示播放器
+      section.style.display = 'block';
+      container.style.display = 'flex';
+
+      // 音频数据源 (Audio)
+      if (currentDataSource === 'audio') {
+        if (currentMeetingStatus === 'live') {
+          container.innerHTML = `
+            <div class="audio-screen">
+              <div class="audio-waveform-container" id="audioWaveform">
+                ${getWaveformBarsHtml()}
+              </div>
+              <div class="play-btn-center" id="playBtn" title="播放/暂停">
+                ${iconPlayLg}
+              </div>
+            </div>
+            <div class="video-controls">
+              <button class="ctrl-btn" id="ctrlPlay" title="播放/暂停">
+                ${iconPlaySm}
+              </button>
+              <div class="live-indicator-pill">
+                <span class="live-dot"></span>
+                <span>直播中</span>
+              </div>
+              <div style="flex:1;"></div>
+              <button class="ctrl-btn" title="音量">
+                <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              </button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="audio-screen">
+              <div class="audio-waveform-container" id="audioWaveform">
+                ${getWaveformBarsHtml()}
+              </div>
+              <div class="play-btn-center" id="playBtn" title="播放/暂停">
+                ${iconPlayLg}
+              </div>
+            </div>
+            <div class="video-controls">
+              <button class="ctrl-btn" id="ctrlPlay" title="播放/暂停">
+                ${iconPlaySm}
+              </button>
+              <div class="time-label" id="timeLabel">00:00:00 / 04:00:00</div>
+              <div class="progress-track" id="progressTrack">
+                <div class="progress-fill" id="progressFill" style="width:0%"></div>
+              </div>
+              <button class="ctrl-btn" title="音量">
+                <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              </button>
+            </div>
+          `;
+        }
+      } 
+      // 视频数据源 (Video)
+      else if (currentDataSource === 'video') {
+        if (currentMeetingStatus === 'live') {
+          container.innerHTML = `
+            <div class="video-screen">
+              <div class="video-visual-bg">
+                <div class="video-grid-pattern"></div>
+              </div>
+              <div class="play-btn-center" id="playBtn" title="播放/暂停">
+                ${iconPlayLg}
+              </div>
+            </div>
+            <div class="video-controls">
+              <button class="ctrl-btn" id="ctrlPlay" title="播放/暂停">
+                ${iconPlaySm}
+              </button>
+              <div class="live-indicator-pill">
+                <span class="live-dot"></span>
+                <span>直播中</span>
+              </div>
+              <div style="flex:1;"></div>
+              <button class="ctrl-btn" title="音量">
+                <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              </button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="video-screen">
+              <div class="video-visual-bg">
+                <div class="video-grid-pattern"></div>
+              </div>
+              <div class="play-btn-center" id="playBtn" title="播放/暂停">
+                ${iconPlayLg}
+              </div>
+            </div>
+            <div class="video-controls">
+              <button class="ctrl-btn" id="ctrlPlay" title="播放/暂停">
+                ${iconPlaySm}
+              </button>
+              <div class="time-label" id="timeLabel">00:00:00 / 04:00:00</div>
+              <div class="progress-track" id="progressTrack">
+                <div class="progress-fill" id="progressFill" style="width:0%"></div>
+              </div>
+              <button class="ctrl-btn" title="音量">
+                <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      bindPlayerEvents();
+      updatePlaybackUI();
+    }
+
+    function bindPlayerEvents() {
+      const playBtn = document.getElementById('playBtn');
+      const ctrlPlay = document.getElementById('ctrlPlay');
+      const progressTrack = document.getElementById('progressTrack');
+
+      if (playBtn) playBtn.onclick = togglePlay;
+      if (ctrlPlay) ctrlPlay.onclick = togglePlay;
+
+      if (progressTrack) {
+        progressTrack.onclick = function(e) {
+          const r = this.getBoundingClientRect();
+          seekTo(Math.round(((e.clientX - r.left) / r.width) * TOTAL));
+        };
+      }
+    }
+
+    function updatePlaybackUI() {
+      const fill = document.getElementById('progressFill');
+      const label = document.getElementById('timeLabel');
+      if (fill) {
+        const pct = (cur / TOTAL) * 100;
+        fill.style.width = pct + '%';
+      }
+      if (label) {
+        label.textContent = hms(cur) + ' / ' + hms(TOTAL);
+      }
+    }
+
+    function seekTo(s) {
+      cur = Math.min(Math.max(s, 0), TOTAL);
+      updatePlaybackUI();
+    }
+
+    function togglePlay() {
+      playing = !playing;
+      const ctrlPlay = document.getElementById('ctrlPlay');
+      const playBtn = document.getElementById('playBtn');
+      const waveform = document.getElementById('audioWaveform');
+
+      if (ctrlPlay) ctrlPlay.innerHTML = playing ? iconPauseSm : iconPlaySm;
+      if (playBtn) playBtn.innerHTML = playing ? iconPauseLg : iconPlayLg;
+      if (waveform) waveform.classList.toggle('playing', playing);
+
+      if (playing) {
+        timer = setInterval(() => {
+          if (currentMeetingStatus === 'live') return;
+          if (cur >= TOTAL) {
+            playing = false;
+            clearInterval(timer);
+            if (ctrlPlay) ctrlPlay.innerHTML = iconPlaySm;
+            if (playBtn) playBtn.innerHTML = iconPlayLg;
+            if (waveform) waveform.classList.remove('playing');
+            return;
+          }
+          cur += 8;
+          updatePlaybackUI();
+        }, 400);
+      } else {
+        if (timer) { clearInterval(timer); timer = null; }
+      }
+    }
+
+    // ===== 4. 内容区渲染 =====
+    function renderActiveTabContent() {
+      renderSummaryPane();
+      renderMediaPane();
+      renderChapterSummaryPane();
+      renderTranscriptPane();
+      bindAllTimestampClicks();
+    }
+
+    // 生成通用空态组件 (一句讲完只要title不要desc)
+    function generateEmptyStateHtml(title, desc) {
+      return `
+        <div class="empty-state-wrap">
+          <div class="empty-icon-circle">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <div class="empty-title">${title}</div>
+          ${desc ? `<div class="empty-desc">${desc}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // 格式化时间戳标签 (未接入数据源时生成带右上角箭头的弱样式)
+    function formatTimestampTag(secs, timeLabel) {
+      if (currentDataSource === 'none') {
+        return `<span class="ts-tag ts-external" data-secs="${secs}">${timeLabel} <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>`;
+      }
+      return `<span class="ts-tag" data-secs="${secs}">${timeLabel}</span>`;
+    }
+
+    // 4.1 渲染 AI 总结 (统一 Markdown 风格深度总结报告)
+    function renderSummaryPane() {
+      const area = document.getElementById('summaryContentArea');
+      const toolbar = document.getElementById('summaryToolbar');
+      if (!area) return;
+
+      // 未开始或进行中：统一空态文案
+      if (currentMeetingStatus === 'upcoming' || currentMeetingStatus === 'live') {
+        if (toolbar) toolbar.style.display = 'none';
+        area.innerHTML = generateEmptyStateHtml(APP_TEXTS.emptyEndedAutoGenerate.title);
+        return;
+      }
+
+      if (toolbar) toolbar.style.display = 'flex';
+
+      if (currentMeeting === 'zhiyuan') {
+        area.innerHTML = `
+          <div class="md-article">
+            <div class="md-header">
+              <div class="md-title">2026 智源大会全景技术总结报告</div>
+              <div class="md-meta-bar">
+                <div class="md-meta-item"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <strong>时间：</strong>2026年9月1日 09:00 - 18:00</div>
+                <div class="md-meta-item"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <strong>地点：</strong>北京 · 中关村国家自主创新示范区展示中心</div>
+                <div class="md-meta-item"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> <strong>参会人：</strong>黄铁军、张宏江、Yann LeCun 等顶尖学者与产业嘉宾</div>
+              </div>
+            </div>
+
+            <div class="md-callout">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制导读')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <div class="md-callout-title">
+                <svg width="14" height="14" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                核心导读与速览
+              </div>
+              <div>本届智源大会以“开源协同 · 智领未来”为主题，全面展示了大模型从单模态语言生成，向<strong>原生多模态、System 2 慢思考推理与具身物理实体</strong>演进的最新技术范式。大会重磅发布 <strong>FlagOpen 2.0 全栈开源体系</strong>，并联合全球顶级学术界发起 AGI 安全治理倡议。</div>
+            </div>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制章节')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">一、核心发布与技术演进概览</h2>
+              <ul class="md-list">
+                <li class="md-list-item"><strong>原生多模态与自主 Agent 跨越</strong>：大模型突破传统文本概率预测局限，全面融合 3D 点云空间几何感知、长期记忆调度与工具链自主调用。</li>
+                <li class="md-list-item"><strong>具身智能端到端 VLA 闭环</strong>：视觉-语言-动作统一模型架构实现高频底层电机控制指令直出，重规划时延缩短至 15ms 以内。</li>
+                <li class="md-list-item"><strong>FlagOpen 2.0 全栈开源矩阵</strong>：涵盖千卡异构分布式训练框架 FlagScale、长文本推理加速引擎 FlagInference 与多智能体评测基准 FlagEval Agent。</li>
+              </ul>
+            </div>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制表格')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">二、核心开源项目与技术指标对比</h2>
+              <div class="md-table-wrap">
+                <table class="md-table">
+                  <thead>
+                    <tr>
+                      <th>开源项目</th>
+                      <th>技术层级</th>
+                      <th>核心创新特性</th>
+                      <th>性能指标提升</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>FlagScale 2.0</strong></td>
+                      <td>分布式训练</td>
+                      <td>千卡异构算力混训、通信算子深度融合</td>
+                      <td>跨芯片混训加速比提升 35%</td>
+                    </tr>
+                    <tr>
+                      <td><strong>FlagInference</strong></td>
+                      <td>推理加速引擎</td>
+                      <td>动态显存调度、推测解码、KV Cache 压缩</td>
+                      <td>百万 Token 延迟降低 50%</td>
+                    </tr>
+                    <tr>
+                      <td><strong>FlagEval Agent</strong></td>
+                      <td>智能体评测</td>
+                      <td>业界首个工业级多智能体协同度量衡</td>
+                      <td>覆盖 12 类真实行业复杂任务</td>
+                    </tr>
+                    <tr>
+                      <td><strong>VLA-WorldModel</strong></td>
+                      <td>具身世界模型</td>
+                      <td>3D 几何空间感知、端到端电机控制闭环</td>
+                      <td>伺服重规划时延 &lt; 15ms</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <figure class="md-figure">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制架构图')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <div class="md-figure-canvas">
+                <svg width="100%" height="150" viewBox="0 0 540 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="15" y="10" width="510" height="34" rx="7" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+                  <text x="270" y="32" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1d4ed8">应用层：具身实体机器人 · 柔性工业装配 · 多智能体协同流水线</text>
+                  
+                  <path d="M270 45 L270 54" stroke="#60a5fa" stroke-width="2" stroke-dasharray="3 3"/>
+                  <polyline points="266,51 270,55 274,51" fill="none" stroke="#60a5fa" stroke-width="2"/>
+
+                  <rect x="15" y="56" width="248" height="38" rx="7" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5"/>
+                  <text x="139" y="80" text-anchor="middle" font-size="12" font-weight="700" fill="#6d28d9">原生多模态 & System 2 慢思考</text>
+
+                  <rect x="277" y="56" width="248" height="38" rx="7" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+                  <text x="401" y="80" text-anchor="middle" font-size="12" font-weight="700" fill="#15803d">具身世界模型 & VLA 伺服控制</text>
+
+                  <path d="M270 95 L270 104" stroke="#94a3b8" stroke-width="2" stroke-dasharray="3 3"/>
+                  <polyline points="266,101 270,105 274,101" fill="none" stroke="#94a3b8" stroke-width="2"/>
+
+                  <rect x="15" y="106" width="510" height="34" rx="7" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+                  <text x="270" y="128" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">基座算力：FlagScale (千卡异构训练) + FlagInference (长文本推理引擎)</text>
+                </svg>
+              </div>
+              <figcaption class="md-figcaption">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                图 1：2026 智源大会全栈开源与具身智能架构技术全景
+              </figcaption>
+            </figure>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制章节')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">三、重点分论坛议题与深度学术结论</h2>
+              <h3 class="md-h3">1. 具身智能与物理交互闭环</h3>
+              <ul class="md-list">
+                <li class="md-list-item"><strong>空间点云与世界模型构建</strong>：结合物理仿真合成千万级交互边界样本，使机器人具备空间推理与常识判断能力。</li>
+                <li class="md-list-item"><strong>毫米级力反馈伺服控制</strong>：实现高精度抗干扰抓取，解决真实物理环境不确定性难题。</li>
+              </ul>
+
+              <h3 class="md-h3">2. 大模型基础架构创新</h3>
+              <ul class="md-list">
+                <li class="md-list-item"><strong>状态空间混合模型 (SSM/Mamba)</strong>：在超长百万级 Token 场景下展现线性计算复杂度优势，大幅降低显存开销。</li>
+                <li class="md-list-item"><strong>System 2 慢思考与反思纠错</strong>：通过暂存区 (Scratchpad) 多步推理与分支搜索，显著提升数学与代码逻辑准确率。</li>
+              </ul>
+
+              <h3 class="md-h3">3. AI 原生应用落地与商业化 ROI</h3>
+              <ul class="md-list">
+                <li class="md-list-item"><strong>业务流程端到端重构</strong>：倡导以自主 Agent 为核心重组业务链条，在智能装配与医疗辅助等行业验证了确定性商业价值。</li>
+              </ul>
+            </div>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制倡议')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">四、全球治理倡议与创新基金</h2>
+              <p>大会闭幕式联合全球顶尖学术力量正式签署《2026 通用人工智能安全与发展倡议》，并宣布设立<strong>一亿元全球开源创新基金</strong>，重点支持青年科学家在前沿基础模型与开源工具链领域的创新探索，共同守护负责任的 AGI 未来。</p>
+            </div>
+
+            <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link" onclick="showToast('已收到您的错误反馈，感谢！')">错误反馈</span></div>
+          </div>
+        `;
+      } else {
+        area.innerHTML = `
+          <div class="md-article">
+            <div class="md-header">
+              <div class="md-title">2026 Apple 秋季新品特别活动全景总结</div>
+              <div class="md-meta-bar">
+                <div class="md-meta-item"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <strong>时间：</strong>2026年9月10日 01:00 - 02:40 (CST)</div>
+                <div class="md-meta-item"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <strong>地点：</strong>Apple Park · 史蒂夫·乔布斯剧院 (Steve Jobs Theater)</div>
+                <div class="md-meta-item"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> <strong>参会人：</strong>Tim Cook、Craig Federighi、John Ternus 等 Apple 管理层与全球开发者</div>
+              </div>
+            </div>
+
+            <div class="md-callout">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制导读')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <div class="md-callout-title">
+                <svg width="14" height="14" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                核心导读与速览
+              </div>
+              <div>Apple 2026 特别活动正式揭晓深度融合系统底层的 <strong>Apple Intelligence 2.0</strong>，并推出首发全球首款 2 纳米 A20 Pro 芯片的 iPhone 18 Pro 系列旗舰，以及搭载双频卫星通信与 72 小时续航的 Apple Watch Ultra 3。</div>
+            </div>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制表格')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">一、核心新品矩阵与升级参数对比</h2>
+              <div class="md-table-wrap">
+                <table class="md-table">
+                  <thead>
+                    <tr>
+                      <th>产品 / 技术</th>
+                      <th>核心硬件配置</th>
+                      <th>主要创新亮点</th>
+                      <th>发售信息</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Apple Intelligence 2.0</strong></td>
+                      <td>系统级端侧大模型</td>
+                      <td>私有云计算、跨 App 意图感知、Siri 2.0</td>
+                      <td>随 iOS/macOS 免费推送</td>
+                    </tr>
+                    <tr>
+                      <td><strong>iPhone 18 Pro / Max</strong></td>
+                      <td>2nm A20 Pro 芯片</td>
+                      <td>超透光潜望长焦、4K 120fps ProRes 空间视频</td>
+                      <td>7999 元起 / 9月20日发售</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Apple Watch Ultra 3</strong></td>
+                      <td>S10 超低功耗芯片</td>
+                      <td>缎面深黑钛金属、双频卫星呼叫、72h 续航</td>
+                      <td>6499 元起 / 即刻预购</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <figure class="md-figure">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制架构图')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <div class="md-figure-canvas">
+                <svg width="100%" height="150" viewBox="0 0 540 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="20" y="25" width="140" height="95" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+                  <text x="90" y="58" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4ed8">终端设备</text>
+                  <text x="90" y="80" text-anchor="middle" font-size="11" fill="#3b82f6">2nm A20 Pro / S10</text>
+                  <text x="90" y="100" text-anchor="middle" font-size="10.5" fill="#64748b">端侧实时小模型</text>
+
+                  <line x1="165" y1="72" x2="205" y2="72" stroke="#059669" stroke-width="2" stroke-dasharray="4 2"/>
+                  <polyline points="172,68 166,72 172,76" fill="none" stroke="#059669" stroke-width="2"/>
+                  <polyline points="198,68 204,72 198,76" fill="none" stroke="#059669" stroke-width="2"/>
+
+                  <rect x="210" y="25" width="120" height="95" rx="8" fill="#f0fdf4" stroke="#10b981" stroke-width="1.5"/>
+                  <text x="270" y="58" text-anchor="middle" font-size="13" font-weight="700" fill="#047857">安全隔离区</text>
+                  <text x="270" y="80" text-anchor="middle" font-size="11" fill="#059669">端到端加密通道</text>
+                  <text x="270" y="100" text-anchor="middle" font-size="10.5" fill="#64748b">零数据留存审计</text>
+
+                  <line x1="335" y1="72" x2="375" y2="72" stroke="#059669" stroke-width="2" stroke-dasharray="4 2"/>
+                  <polyline points="342,68 336,72 342,76" fill="none" stroke="#059669" stroke-width="2"/>
+                  <polyline points="368,68 374,72 368,76" fill="none" stroke="#059669" stroke-width="2"/>
+
+                  <rect x="380" y="25" width="140" height="95" rx="8" fill="#fdf4ff" stroke="#c084fc" stroke-width="1.5"/>
+                  <text x="450" y="58" text-anchor="middle" font-size="13" font-weight="700" fill="#7e22ce">私有云集群</text>
+                  <text x="450" y="80" text-anchor="middle" font-size="11" fill="#9333ea">Apple Silicon 算力</text>
+                  <text x="450" y="100" text-anchor="middle" font-size="10.5" fill="#64748b">复杂大模型推理</text>
+                </svg>
+              </div>
+              <figcaption class="md-figcaption">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                图 1：Apple Intelligence 2.0 端侧与私有云计算安全协同架构图
+              </figcaption>
+            </figure>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制章节')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">二、系统级个人智能体验全面进化</h2>
+              <ul class="md-list">
+                <li class="md-list-item"><strong>屏幕感知与多步骤调度</strong>：Siri 具备跨应用语义理解能力，可自主跨越照片、日历与邮件完成自动化复杂任务链。</li>
+                <li class="md-list-item"><strong>私有云计算安全白皮书</strong>：发布权威第三方代码审计，验证用户个人数据端侧不留存、云端无状态计算机制。</li>
+              </ul>
+            </div>
+
+            <div class="md-section-block">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制章节')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <h2 class="md-h2">三、硬件制程与影像极致突破</h2>
+              <ul class="md-list">
+                <li class="md-list-item"><strong>全球首款 2 纳米 A20 Pro 芯片</strong>：采用台积电 2nm GAA 晶体管架构，能效提升 25%，光追算力跃升 50%。</li>
+                <li class="md-list-item"><strong>全焦段潜望式影像系统</strong>：全面支持 4K 120fps ProRes 空间视频录制与石墨烯复合均热板散热。</li>
+              </ul>
+            </div>
+
+            <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link" onclick="showToast('已收到您的错误反馈，感谢！')">错误反馈</span></div>
+          </div>
+        `;
+      }
+    }
+
+    // 4.2 渲染 AI 素材包 (音频时无视频切片)
+    function renderMediaPane() {
+      const area = document.getElementById('mediaContentArea');
+      if (!area) return;
+
+      // 未开始或本章节进行中：统一空态文案
+      if (currentMeetingStatus === 'upcoming' || (currentMeetingStatus === 'live' && currentChapterIdx === 1)) {
+        area.innerHTML = generateEmptyStateHtml(
+          currentMeetingStatus === 'upcoming' ? APP_TEXTS.emptyEndedAutoGenerate.title : '本章节进行中，素材将在本章节结束后自动生成'
+        );
+        return;
+      }
+
+      const chapters = getCurrentMeetingChapters();
+      const currentCh = chapters[currentChapterIdx] || chapters[0];
+      if (!currentCh || !currentCh.media) {
+        area.innerHTML = generateEmptyStateHtml('暂无素材');
+        return;
+      }
+
+      const showVideoSlice = (currentDataSource === 'video');
+
+      area.innerHTML = `
+        <!-- 新闻稿 -->
+        <div class="media-section">
+          <div class="media-section-header">
+            <span>📄 新闻稿 (${currentCh.media.news.length})</span>
+            <button class="media-download-btn" title="下载全部" onclick="event.stopPropagation(); showToast('全部新闻稿已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </div>
+          <div class="media-grid">
+            ${currentCh.media.news.map(title => `
+              <div class="media-card">
+                <div class="block-hover-actions">
+                  <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <div class="bha-divider"></div>
+                  <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+                  <div class="bha-divider"></div>
+                  <button class="bha-btn" title="下载" onclick="showToast('新闻稿已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                </div>
+                <div class="media-thumb"><div class="mock-doc"><div class="mock-line title"></div><div class="mock-line"></div><div class="mock-line"></div><div class="mock-line short"></div></div></div>
+                <div class="media-card-body"><div class="media-card-title">${title}</div></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 金句图卡 -->
+        <div class="media-section">
+          <div class="media-section-header">
+            <span>✨ 金句图卡 (${currentCh.media.quotes.length})</span>
+            <button class="media-download-btn" title="下载全部" onclick="event.stopPropagation(); showToast('全部图卡已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </div>
+          <div class="media-grid">
+            ${currentCh.media.quotes.map(title => `
+              <div class="media-card">
+                <div class="block-hover-actions">
+                  <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <div class="bha-divider"></div>
+                  <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+                  <div class="bha-divider"></div>
+                  <button class="bha-btn" title="下载" onclick="showToast('图卡已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                </div>
+                <div class="media-thumb"><div class="mock-quote-thumb"><div class="mock-quote-thumb-line"></div><div class="mock-quote-thumb-line" style="width:60%"></div></div></div>
+                <div class="media-card-body"><div class="media-card-title">${title}</div></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        ${showVideoSlice ? `
+        <!-- 视频切片 (仅视频数据源时显示) -->
+        <div class="media-section">
+          <div class="media-section-header">
+            <span>🎬 视频切片 (${currentCh.media.videos.length})</span>
+            <button class="media-download-btn" title="下载全部" onclick="event.stopPropagation(); showToast('全部视频切片已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+            <span class="media-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </div>
+          <div class="media-grid">
+            ${currentCh.media.videos.map(title => `
+              <div class="media-card">
+                <div class="block-hover-actions">
+                  <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <div class="bha-divider"></div>
+                  <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+                  <div class="bha-divider"></div>
+                  <button class="bha-btn" title="下载" onclick="showToast('视频切片已下载')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                </div>
+                <div class="media-thumb"><div class="mock-video"><div class="mock-video-play"></div><div class="mock-video-bar"></div></div></div>
+                <div class="media-card-body"><div class="media-card-title">${title}</div></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="ai-footer"><span>内容由 AI 生成，请核实重要信息。</span><span class="fb-link" onclick="showToast('已收到您的错误反馈，感谢！')">错误反馈</span></div>
+      `;
+
+      // 绑定折叠
+      area.querySelectorAll('.media-section-header').forEach(h => {
+        h.onclick = (e) => {
+          if (e.target.closest('.media-download-btn')) return;
+          const s = h.closest('.media-section');
+          if (s) s.classList.toggle('collapsed');
+        };
+      });
+    }
+
+    // 4.3 渲染 AI 摘要 -> 思维导图树状大纲 (多色主题支持)
+    function renderChapterSummaryPane() {
+      const area = document.getElementById('overviewContentArea');
+      const toolbar = document.getElementById('overviewToolbar');
+      if (!area) return;
+
+      // 未开始状态：隐藏工具栏，展示空态
+      if (currentMeetingStatus === 'upcoming') {
+        if (toolbar) toolbar.style.display = 'none';
+        area.innerHTML = generateEmptyStateHtml(APP_TEXTS.emptyOverviewUpcoming.title);
+        return;
+      }
+
+      if (toolbar) toolbar.style.display = 'flex';
+      const allChapters = getCurrentMeetingChapters();
+      const chapterThemes = ['theme-blue', 'theme-purple', 'theme-emerald', 'theme-amber', 'theme-rose', 'theme-teal'];
+
+      // 进行中状态：展示第一段已生成的章节摘要，并追加后续章节生成中节点
+      const isLive = (currentMeetingStatus === 'live');
+      const isChapterOngoing = (currentMeetingStatus === 'live' && currentChapterIdx === 1);
+      const chapters = isLive ? allChapters.slice(0, 1) : allChapters;
+
+      area.innerHTML = `
+        <div class="mindmap-tree-wrap">
+          ${chapters.map((ch, idx) => {
+            const points = (ch.summary && ch.summary.length > 0) ? ch.summary : [
+              { h: '核心要点', p: ch.chapterSummaryText, tags: [{ secs: ch.secs, label: ch.time }] }
+            ];
+            const currentTheme = chapterThemes[idx % chapterThemes.length];
+            return `
+              <div class="mindmap-chapter-item ${currentTheme}">
+                <div class="mindmap-chapter-dot"></div>
+                <div class="mindmap-chapter-header">
+                  <div class="block-hover-actions">
+                    <button class="bha-btn" title="复制" onclick="showToast('已复制章节标题')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <div class="bha-divider"></div>
+                    <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+                  </div>
+                  ${formatTimestampTag(ch.secs, ch.time)}
+                  <span class="mindmap-chapter-title">${ch.title}</span>
+                </div>
+                <div class="mindmap-branches">
+                  ${points.map((pt, pIdx) => `
+                    <div class="mindmap-leaf">
+                      <div class="block-hover-actions">
+                        <button class="bha-btn" title="复制" onclick="showToast('已复制要点')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                        <div class="bha-divider"></div>
+                        <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+                      </div>
+                      <div class="mindmap-leaf-header">
+                        <span class="mindmap-leaf-bullet"></span>
+                        <span class="mindmap-leaf-title">${pt.h.replace(/^[一二三四五六七八九十]、/, '')}</span>
+                      </div>
+                      <div class="mindmap-leaf-desc">
+                        ${pt.p}
+                        ${pt.tags ? pt.tags.map(t => formatTimestampTag(t.secs, t.label)).join(' ') : ''}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
+          ${isLive ? `
+            <div class="mindmap-loading-item ${isChapterOngoing ? 'active' : ''}">
+              <div class="mindmap-loading-dot"></div>
+              <div class="mindmap-loading-box">
+                <div class="mindmap-loading-pulse"></div>
+                <span>生成中...</span>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="ai-footer">
+          <span>内容由 AI 生成，请核实重要信息。</span>
+          <span class="fb-link" onclick="showToast('已收到您的错误反馈，感谢！')">错误反馈</span>
+        </div>
+      `;
+
+      bindAllTimestampClicks();
+    }
+
+    // 4.4 渲染 AI 速记
+    function renderTranscriptPane() {
+      const area = document.getElementById('transcriptContentArea');
+      const toolbar = document.querySelector('#pane-transcript .toolbar');
+      const toolbarLeft = document.getElementById('transcriptToolbarLeft');
+      const speakerWrap = document.getElementById('transcriptSpeakerWrap');
+      if (!area || !toolbarLeft) return;
+
+      // 会议未开始状态：隐藏工具栏(不显示复制和下载按钮)
+      if (currentMeetingStatus === 'upcoming') {
+        if (toolbar) toolbar.style.display = 'none';
+        toolbarLeft.innerHTML = '';
+        if (speakerWrap) speakerWrap.style.display = 'none';
+        area.innerHTML = generateEmptyStateHtml(APP_TEXTS.emptyTranscriptUpcoming.title);
+        return;
+      }
+
+      if (toolbar) toolbar.style.display = 'flex';
+
+      // 进行中与已结束状态：均提供下拉切换 (AI速记 / 实时转写)
+      toolbarLeft.innerHTML = `
+        <div class="style-drop-wrap">
+          <button class="style-btn" id="transcriptDropBtn">
+            <span id="transcriptDropLbl">${currentTranscriptMode === 'ai' ? 'AI速记' : '实时转写'}</span>
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="style-drop-menu" id="transcriptDropMenu">
+            <div class="style-opt ${currentTranscriptMode === 'ai' ? 'active' : ''}" data-mode="ai">
+              AI速记 ${currentTranscriptMode === 'ai' ? '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>
+            <div class="style-opt ${currentTranscriptMode === 'raw' ? 'active' : ''}" data-mode="raw">
+              实时转写 ${currentTranscriptMode === 'raw' ? '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+
+      // 绑定模式下拉事件
+      const btn = document.getElementById('transcriptDropBtn');
+      const menu = document.getElementById('transcriptDropMenu');
+      if (btn && menu) {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.style-drop-menu').forEach(d => { if (d !== menu) d.classList.remove('open'); });
+          menu.classList.toggle('open');
+        };
+        menu.querySelectorAll('.style-opt').forEach(opt => {
+          opt.onclick = (e) => {
+            e.stopPropagation();
+            currentTranscriptMode = opt.dataset.mode;
+            currentSpeakerFilter = 'all'; // 切换模式重置说话人筛选
+            menu.classList.remove('open');
+            renderTranscriptPane();
+            bindAllTimestampClicks();
+            showToast(`已切换至：${currentTranscriptMode === 'ai' ? 'AI速记' : '实时转写'}`);
+          };
+        });
+      }
+
+      // 判断当前所选章节是否处于“进行中”
+      const isChapterOngoing = (currentMeetingStatus === 'live' && currentChapterIdx === 1);
+
+      // 如果当前是 进行中章节 且切到了 AI速记：提示本章节结束后自动生成
+      if (isChapterOngoing && currentTranscriptMode === 'ai') {
+        if (speakerWrap) speakerWrap.style.display = 'none';
+        area.innerHTML = generateEmptyStateHtml('本章节结束后将基于实时转写智能优化生成AI速记');
+        return;
+      }
+
+      // 获取当前章节数据列表
+      const chapters = getCurrentMeetingChapters();
+      const currentCh = chapters[currentChapterIdx] || chapters[0];
+      let rawList = [];
+
+      if (isChapterOngoing) {
+        // 进行中章节：只展示实时转写内容
+        rawList = (currentCh && currentCh.media && currentCh.media.transcripts) ? currentCh.media.transcripts : [];
+      } else {
+        // 已结束章节（包括直播状态下已结束的开幕式第0章）：正常展示AI速记或转写
+        if (currentTranscriptMode === 'ai') {
+          if (currentCh && currentCh.media && currentCh.media.aiSpeedNotes) {
+            rawList = currentCh.media.aiSpeedNotes;
+          } else {
+            if (speakerWrap) speakerWrap.style.display = 'none';
+            area.innerHTML = generateEmptyStateHtml(APP_TEXTS.emptyAiTranscript.title);
+            return;
+          }
+        } else {
+          rawList = (currentCh && currentCh.media && currentCh.media.transcripts) ? currentCh.media.transcripts : [];
+        }
+      }
+
+      if (!rawList || rawList.length === 0) {
+        if (speakerWrap) speakerWrap.style.display = 'none';
+        area.innerHTML = generateEmptyStateHtml(isChapterOngoing ? '正在接入实时转写...' : '暂无转写记录');
+        return;
+      }
+
+      // 提取所有说话人及频次
+      if (speakerWrap) speakerWrap.style.display = 'inline-block';
+      const speakerCounts = {};
+      rawList.forEach(tr => {
+        if (tr.name) speakerCounts[tr.name] = (speakerCounts[tr.name] || 0) + 1;
+      });
+      const speakers = Object.keys(speakerCounts);
+
+      // 若当前筛选的说话人不在列表中则重置
+      if (currentSpeakerFilter !== 'all' && !speakers.includes(currentSpeakerFilter)) {
+        currentSpeakerFilter = 'all';
+      }
+
+      // 渲染说话人筛选下拉菜单
+      const speakerMenu = document.getElementById('transcriptSpeakerMenu');
+      const speakerBtn = document.getElementById('transcriptSpeakerBtn');
+      if (speakerMenu && speakerBtn) {
+        if (currentSpeakerFilter !== 'all') {
+          speakerBtn.classList.add('active');
+        } else {
+          speakerBtn.classList.remove('active');
+        }
+
+        speakerMenu.innerHTML = `
+          <div class="style-opt ${currentSpeakerFilter === 'all' ? 'active' : ''}" data-speaker="all">
+            <span>全部说话人 (${rawList.length})</span>
+            ${currentSpeakerFilter === 'all' ? '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          </div>
+          ${speakers.map(spk => `
+            <div class="style-opt ${currentSpeakerFilter === spk ? 'active' : ''}" data-speaker="${spk}">
+              <span>${spk} (${speakerCounts[spk]})</span>
+              ${currentSpeakerFilter === spk ? '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>
+          `).join('')}
+        `;
+
+        speakerBtn.onclick = (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.style-drop-menu').forEach(d => { if (d !== speakerMenu) d.classList.remove('open'); });
+          speakerMenu.classList.toggle('open');
+        };
+
+        speakerMenu.querySelectorAll('.style-opt').forEach(opt => {
+          opt.onclick = (e) => {
+            e.stopPropagation();
+            currentSpeakerFilter = opt.dataset.speaker;
+            speakerMenu.classList.remove('open');
+            renderTranscriptPane();
+            bindAllTimestampClicks();
+            if (currentSpeakerFilter === 'all') {
+              showToast('已显示全部说话人');
+            } else {
+              showToast(`已筛选说话人：${currentSpeakerFilter}`);
+            }
+          };
+        });
+      }
+
+      // 根据筛选器过滤展示列表
+      const displayList = currentSpeakerFilter === 'all' ? rawList : rawList.filter(tr => tr.name === currentSpeakerFilter);
+
+      if (displayList.length === 0) {
+        area.innerHTML = generateEmptyStateHtml('该说话人暂无发言记录');
+        return;
+      }
+
+      area.innerHTML = `
+        <div class="transcript-list">
+          ${displayList.map(tr => `
+            <div class="tr-row">
+              <div class="block-hover-actions">
+                <button class="bha-btn" title="复制" onclick="showToast('已复制')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                <div class="bha-divider"></div>
+                <button class="bha-btn" title="引用" onclick="showToast('已引用至输入框')"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M10 11H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/><path d="M19 11h-4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 2.667-1.333 4.333-4 5"/></svg></button>
+              </div>
+              <div class="tr-speaker">
+                ${formatTimestampTag(tr.secs || currentCh.secs, tr.time)}
+                <span>${tr.name}</span>
+              </div>
+              <div class="tr-text">${tr.text}</div>
+            </div>
+          `).join('')}
+          ${isChapterOngoing ? `
+            <div class="tr-loading-more">
+              <span class="tr-loading-dots">...</span>
+            </div>
+          ` : ''}
+        </div>
+        <div class="ai-footer">
+          <span>内容由 AI 生成，请核实重要信息。</span>
+          <span class="fb-link" onclick="showToast('已收到您的错误反馈，感谢！')">错误反馈</span>
+        </div>
+      `;
+    }
+
+    // 绑定全部时间戳点击
+    function bindAllTimestampClicks() {
+      document.querySelectorAll('.ts-tag').forEach(tag => {
+        tag.onclick = (e) => {
+          e.stopPropagation();
+          const secs = +tag.dataset.secs;
+          if (currentDataSource === 'none') {
+            showToast(`已在新标签页中打开对应时间点 (${hms(secs)})`);
+            return;
+          }
+          if (currentMeetingStatus === 'upcoming') {
+            showToast('当前状态暂不支持跳转播放');
+            return;
+          }
+          seekTo(secs);
+          showToast(`已跳转至 ${hms(secs)}`);
+        };
+      });
+    }
+
+    // ===== 5. 控制面板操作响应 =====
+    function setDataSource(source) {
+      currentDataSource = source;
+      document.querySelectorAll('#sourceControl .seg-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.source === source);
+      });
+      renderMediaPlayer();
+      renderActiveTabContent();
+      const names = { video: '视频', audio: '音频', none: '无数据源' };
+      showToast(`数据源已切换为：${names[source]}`);
+    }
+
+    function setMeetingStatus(status) {
+      currentMeetingStatus = status;
+      document.querySelectorAll('#statusControl .seg-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+      });
+
+      // 切换状态时重置速记模式与章节索引
+      if (status === 'ended') {
+        currentTranscriptMode = (currentMeeting === 'zhiyuan' ? 'ai' : 'raw');
+        currentChapterIdx = 0;
+      } else if (status === 'live') {
+        currentTranscriptMode = 'raw';
+        currentChapterIdx = 1; // 进行中状态默认聚焦进行中的章节
+      } else {
+        currentChapterIdx = 0;
+      }
+      currentSpeakerFilter = 'all';
+
+      renderMediaPlayer();
+      renderChapterCards();
+      renderActiveTabContent();
+      const statusNames = { upcoming: '未开始', live: '进行中', ended: '已结束' };
+      showToast(`会议状态已设置为：${statusNames[status]}`);
+    }
+
+    function switchMeeting(type) {
+      if (currentMeeting === type) return;
+      currentMeeting = type;
+      currentChapterIdx = (currentMeetingStatus === 'live' ? 1 : 0);
+      currentSpeakerFilter = 'all';
+
+      // 智源大会默认AI速记，苹果发布会默认实时转写
+      currentTranscriptMode = (type === 'zhiyuan' ? (currentMeetingStatus === 'live' && currentChapterIdx === 1 ? 'raw' : 'ai') : 'raw');
+
+      document.getElementById('card-zhiyuan').classList.toggle('active', type === 'zhiyuan');
+      document.getElementById('card-apple').classList.toggle('active', type === 'apple');
+
+      renderHeaderTitle();
+      renderChapterCards();
+      renderActiveTabContent();
+      renderMediaPlayer();
+
+      if (type === 'zhiyuan') {
+        showToast('已切换至：智源大会');
+      } else {
+        showToast('已切换至：苹果发布会');
+      }
+    }
+
+    // ===== 6. Tabs 切换 =====
+    document.querySelectorAll('.dtab').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const pane = document.getElementById('pane-' + btn.dataset.tab);
+      if (pane) pane.classList.add('active');
+
+      // 切换到 AI速记 Tab 时，根据章节与会议设定默认选中
+      if (btn.dataset.tab === 'transcript') {
+        if (currentMeetingStatus === 'ended' || (currentMeetingStatus === 'live' && currentChapterIdx === 0)) {
+          currentTranscriptMode = (currentMeeting === 'zhiyuan' ? 'ai' : 'raw');
+        } else if (currentMeetingStatus === 'live' && currentChapterIdx === 1) {
+          currentTranscriptMode = 'raw';
+        }
+      }
+
+      renderActiveTabContent();
+    }));
+
+    // ===== 7. 风格下拉组件初始化 =====
+    function initDrop(btnId, dropId, lblId) {
+      const btn = document.getElementById(btnId), drop = document.getElementById(dropId);
+      if (!btn || !drop) return;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.style-drop-menu').forEach(d => { if (d !== drop) d.classList.remove('open'); });
+        drop.classList.toggle('open');
+      });
+      drop.querySelectorAll('.style-opt').forEach(opt => opt.addEventListener('click', e => {
+        e.stopPropagation();
+        drop.querySelectorAll('.style-opt').forEach(o => {
+          o.classList.remove('active');
+          const sv = o.querySelector('svg');
+          if (sv) sv.remove();
+        });
+        opt.classList.add('active');
+        opt.insertAdjacentHTML('beforeend', ' <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>');
+        if (lblId) document.getElementById(lblId).textContent = '风格：' + opt.dataset.style;
+        drop.classList.remove('open');
+        showToast('风格已切换为：' + opt.dataset.style);
+      }));
+    }
+    initDrop('styleBtnSummary', 'styleDropSummary', 'styleLblSummary');
+    initDrop('styleBtnOverview', 'styleDropOverview', 'styleLblOverview');
+
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.style-drop-menu').forEach(d => d.classList.remove('open'));
+      const menu = document.getElementById('episodeMenu');
+      const episodeBtn = document.getElementById('episodeBtn');
+      if (menu) menu.classList.remove('show');
+      if (episodeBtn) episodeBtn.classList.remove('open');
+    });
+
+    // ===== 8. Toast 提示 =====
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ===== 初始化入口 =====
+    window.addEventListener('DOMContentLoaded', () => {
+      renderHeaderTitle();
+      renderChapterCards();
+      renderActiveTabContent();
+      renderMediaPlayer();
+    });
+  </script>
+
+  <!-- =========================================================================
+       文案与数据集中管理区域 (COPYWRITING & DATA DICTIONARY)
+       ========================================================================= -->
+  <script id="copywriting-data">
+    const APP_TEXTS = {
+      // 总结、素材包空态文案 (简洁只有title)
+      emptyEndedAutoGenerate: {
+        title: "结束后将自动生成"
+      },
+      // AI摘要未开始空态 (只要title不要desc)
+      emptyOverviewUpcoming: {
+        title: "开始后将实时生成"
+      },
+      // AI速记未开始空态 (只要title不要desc)
+      emptyTranscriptUpcoming: {
+        title: "开始后将实时转写"
+      },
+      // 进行中AI速记空态 (只要title不要desc)
+      emptyAiTranscriptLive: {
+        title: "结束后将基于实时转写智能优化"
+      },
+      // 已结束但未生成AI速记空态 (只要title不要desc)
+      emptyAiTranscript: {
+        title: "正在基于实时转写智能优化..."
+      }
+    };
+
+    const APP_DATA = {
+      // 智源大会数据
+      zhiyuanMeeting: {
+        tag: "2026智源大会",
+        forums: [
+          {
+            name: "开幕式与主论坛",
+            chapters: [
+              {
+                title: "01. 智源大会开幕式与致辞",
+                time: "00:00:00",
+                secs: 0,
+                chapterSummaryText: "2026智源大会在北京盛大开幕。智源研究院理事长代表主办方发表开幕致辞，回顾过去一年大模型从单模态向原生多模态演进的里程碑，明确提出深化全球开源协同、构建开放包容国际学术交流机制的五年技术愿景。",
+                summary: [
+                  { h: "一、开幕致辞核心要点", p: "智源研究院理事长发表开幕致辞，强调<strong>开源开放与学术交流</strong>在 AGI 时代的关键作用。大模型研发已全面从单模态向原生多模态与多智能体协同演进。", tags: [{secs: 180, label: "00:03:00"}] },
+                  { h: "二、通用人工智能基础设施展望", p: "未来算力与评测基础设施将是 AGI 发展的两大支柱。智源将持续迭代开源评测标准，打造业界公认的算法与模型能力度量衡。", tags: [{secs: 480, label: "00:08:00"}] },
+                  { h: "三、五年全球开源协同愿景", p: "明确提出深化全球开源协同、构建开放包容国际学术交流机制，设立一亿元全球开源创新基金扶持青年科学家。", tags: [{secs: 720, label: "00:12:00"}] }
+                ],
+                media: {
+                  news: ["2026智源大会北京盛大开幕新闻稿", "开源生态与 AGI 发展愿景通稿"],
+                  quotes: ["“开源生态是推动 AGI 普惠的最强引擎”", "“构建开放包容的国际 AI 交流机制”"],
+                  videos: ["01. 智源大会开幕致辞精华", "02. 主办方致辞与开源愿景"],
+                  // 实时转写 (Verbatim)
+                  transcripts: [
+                    { time: "00:01:15", secs: 75, name: "大会主持人", text: "呃，尊敬的各位来宾、线上所有的开发者朋友们，大家上午好！欢迎来到 2026 智源大会开幕式现场。" },
+                    { time: "00:03:20", secs: 200, name: "大会主持人", text: "今天汇聚了来自全球三十多个国家和地区的学者专家。下面，让我们有请智源研究院理事长登台致辞，大家掌声欢迎！" },
+                    { time: "00:05:30", secs: 330, name: "智源研究院代表", text: "就是说，过去一年，通用人工智能的发展速度超乎想象。开源生态不仅加速了技术的普及，更为全球科研人员提供了平等的创新舞台。" },
+                    { time: "00:08:45", secs: 525, name: "智源研究院代表", text: "大家可以看到，大模型研发已全面从单模态向原生多模态、多智能体协同演进。未来的核心竞争力，在于算力集群协同与全栈评测基准。" },
+                    { time: "00:12:10", secs: 730, name: "智源技术委员会主席", text: "嗯，针对全球青年学者的开源创新基金，今年我们首期注资一亿元人民币，主要支持跨模态对齐和具身智能的开源基础研究。" },
+                    { time: "00:16:30", secs: 990, name: "特邀科学家代表", text: "非常认同智源的开源理念。只有坚持开放和协同，才能让整个 AI 社区打破壁垒，共同攻克物理世界模型与因果推理的科学难题。" },
+                    { time: "00:20:00", secs: 1200, name: "大会主持人", text: "感谢各位嘉宾的精彩致辞与发布！接下来，让我们正式进入今天的主论坛主旨演讲环节。" }
+                  ],
+                  // AI 速记 (AI 智能纠错与标点规整)
+                  aiSpeedNotes: [
+                    { time: "00:01:15", secs: 75, name: "大会主持人", text: "尊敬的各位来宾、线上所有的开发者朋友们，大家上午好！欢迎来到 2026 智源大会开幕式现场。" },
+                    { time: "00:03:20", secs: 200, name: "大会主持人", text: "今天汇聚了来自全球三十多个国家和地区的学者专家。下面，让我们有请智源研究院理事长登台致辞，大家掌声欢迎！" },
+                    { time: "00:05:30", secs: 330, name: "智源研究院代表", text: "过去一年，通用人工智能的发展速度超乎想象。开源生态不仅加速了技术的普及，更为全球科研人员提供了平等的创新舞台。" },
+                    { time: "00:08:45", secs: 525, name: "智源研究院代表", text: "大模型研发已全面从单模态向原生多模态、多智能体协同演进。未来的核心竞争力，在于算力集群协同与全栈评测基准。" },
+                    { time: "00:12:10", secs: 730, name: "智源技术委员会主席", text: "针对全球青年学者的开源创新基金，今年首期注资一亿元人民币，重点支持跨模态对齐和具身智能的开源基础研究。" },
+                    { time: "00:16:30", secs: 990, name: "特邀科学家代表", text: "非常认同智源的开源理念。只有坚持开放和协同，才能让整个 AI 社区打破壁垒，共同攻克物理世界模型与因果推理的科学难题。" },
+                    { time: "00:20:00", secs: 1200, name: "大会主持人", text: "感谢各位嘉宾的精彩致辞与发布！接下来，让我们正式进入今天的主论坛主旨演讲环节。" }
+                  ]
+                }
+              },
+              {
+                title: "02. AGI与具身智能前沿趋势",
+                time: "00:40:00",
+                secs: 2400,
+                chapterSummaryText: "重点探讨大模型向物理实体演进的具身智能新范式。深入解析了三维空间几何感知、视觉-语言-动作 (VLA) 统一模型架构，以及毫米级力反馈伺服控制在实体机器人中的最新技术突破与落地实践。",
+                summary: [
+                  { h: "一、空间物理感知新范式", p: "具身智能必须引入三维点云与深度空间感知，构建对物理实体世界的精确几何认知，突破传统 2D 像素理解局限。", tags: [{secs: 2520, label: "00:42:00"}] },
+                  { h: "二、视觉-语言-动作 (VLA) 闭环", p: "剖析了 End-to-End 架构如何实现高频底层电机控制指令生成，突破传统分段式规划的时延瓶颈。", tags: [{secs: 3180, label: "00:53:00"}] },
+                  { h: "三、毫米级力反馈伺服控制", p: "展示了机械臂高精度动态力控与抗干扰抓取，重规划响应时间缩短至 15 毫秒以内。", tags: [{secs: 3420, label: "00:57:00"}] }
+                ],
+                media: {
+                  news: ["具身智能技术突破最新进展通稿", "VLA 模型空间交互应用专题"],
+                  quotes: ["“具身智能是通往物理世界 AGI 的关键钥匙”", "“高频低时延伺服闭环的工程实践”"],
+                  videos: ["03. 具身智能主题报告", "04. 机械臂毫米级力控实测演示"],
+                  transcripts: [
+                    { time: "00:40:15", secs: 2415, name: "具身智能专家", text: "机器人在物理世界中的操作，呃，远比在虚拟空间生成文本复杂。我们需要解决真实世界不确定性带来的泛化难题。" },
+                    { time: "00:45:30", secs: 2730, name: "机器人实验室负责人", text: "传统做法是分段规划，先识别再建图再动作，时延动辄几百毫秒。而端到端 VLA 能够直接将视觉点云映射到关节力矩。" },
+                    { time: "00:52:00", secs: 3120, name: "机器人实验室负责人", text: "通过端到端 VLA 架构，机器人对突发障碍物的重规划时间缩短至 15 毫秒以内。" },
+                    { time: "00:58:10", secs: 3490, name: "具身硬件总架构师", text: "在硬件伺服层面，呃，我们研发了高灵敏度触觉感知电子皮肤与微型力控减速器，力反馈控制精度达到了 0.1 牛顿级别。" },
+                    { time: "01:05:40", secs: 3940, name: "具身智能专家", text: "这就是具身智能的魅力所在——它不再只是被动的数字大脑，而是真正走向物理世界、能与真实环境交互的智能实体。" },
+                    { time: "01:12:20", secs: 4340, name: "具身硬件总架构师", text: "下一步我们将开源百万级双臂协同真机操作数据集，帮助全球开发者低成本训练具身大模型。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "00:40:15", secs: 2415, name: "具身智能专家", text: "机器人在物理世界中的操作，远比在虚拟空间生成文本复杂。我们需要解决真实世界不确定性带来的泛化难题。" },
+                    { time: "00:45:30", secs: 2730, name: "机器人实验室负责人", text: "传统做法是分段规划，先识别再建图再动作，时延动辄几百毫秒。而端到端 VLA 架构能够直接将视觉点云映射到关节力矩。" },
+                    { time: "00:52:00", secs: 3120, name: "机器人实验室负责人", text: "通过端到端 VLA 架构，机器人对突发障碍物的重规划时间缩短至 15 毫秒以内。" },
+                    { time: "00:58:10", secs: 3490, name: "具身硬件总架构师", text: "在硬件伺服层面，研发了高灵敏度触觉感知电子皮肤与微型力控减速器，力反馈控制精度达到了 0.1 牛顿级别。" },
+                    { time: "01:05:40", secs: 3940, name: "具身智能专家", text: "这就是具身智能的魅力所在——它不再只是被动的数字大脑，而是真正走向物理世界、能与真实环境交互的智能实体。" },
+                    { time: "01:12:20", secs: 4340, name: "具身硬件总架构师", text: "下一步将开源百万级双臂协同真机操作数据集，帮助全球开发者低成本训练具身大模型。" }
+                  ]
+                }
+              },
+              {
+                title: "03. 大模型范式与架构创新",
+                time: "01:20:00",
+                secs: 4800,
+                chapterSummaryText: "大模型正从静态文本概率预测器向具备环境感知、长期记忆与工具调用的自主 Agent 演进。领袖圆桌围绕长上下文注意力机制改进、KV Cache 压缩以及 System 2 慢思考规划展开深度思想碰撞。",
+                summary: [
+                  { h: "一、Transformer 到 Agent 的本质跨越", p: "接入环境感知、长短期记忆与外部工具池，模型完成了从语言生成器向具备自主决策能力的智能体进化。", tags: [{secs: 4860, label: "01:21:00"}] },
+                  { h: "二、记忆与规划机制深度解析", p: "介绍了上下文工作记忆、暂存区 (Scratchpad) 以及向量数据库 RAG 长期记忆在多步骤复杂工作流中的调度策略。", tags: [{secs: 5580, label: "01:33:00"}] },
+                  { h: "三、System 2 慢思考与逻辑纠错", p: "引入多步推理自我修正与分支树搜索，大幅提升复杂逻辑推理与代码任务的准确率。", tags: [{secs: 6120, label: "01:42:00"}] }
+                ],
+                media: {
+                  news: ["AGI 时代大模型范式转移新闻稿", "智能体 Agent 架构解析研讨"],
+                  quotes: ["“从语言预测到环境感知与决策”", "“长上下文是对推理能力的深层考验”"],
+                  videos: ["05. 大模型范式演进演讲", "06. 领袖圆桌：架构创新讨论"],
+                  transcripts: [
+                    { time: "01:20:45", secs: 4845, name: "圆桌主持人", text: "欢迎进入领袖圆桌环节。请问在座各位，Transformer 架构是否能直接带我们走向 AGI？" },
+                    { time: "01:25:20", secs: 5120, name: "基础模型科学家", text: "呃，当前的自回归 Transformer 本质上是在做局部统计拟合。要解决幻觉与长程推理，必须引入类似人脑的慢思考双系统。" },
+                    { time: "01:29:10", secs: 5350, name: "架构专家", text: "我们需要在注意力机制之外寻找更有弹性的状态表达方式，Memory 和 System 2 慢思考机制至关重要。" },
+                    { time: "01:34:40", secs: 5680, name: "智能体研发负责人", text: "没错，从模型到 Agent 的关键就是工具与外脑机制。引入树状规划与自我反思（Reflection）之后，复杂任务成功率提升了近三倍。" },
+                    { time: "01:39:15", secs: 5955, name: "架构专家", text: "未来的前沿架构很可能是稀疏专家网络（MoE）配合动态激活记忆，大幅削减 KV Cache 开销并实现百万级上下文原生推理。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "01:20:45", secs: 4845, name: "圆桌主持人", text: "欢迎进入领袖圆桌环节。请问在座各位，Transformer 架构是否能直接带我们走向 AGI？" },
+                    { time: "01:25:20", secs: 5120, name: "基础模型科学家", text: "当前的自回归 Transformer 本质上是在做局部统计拟合。要解决幻觉与长程推理，必须引入类似人脑的慢思考双系统。" },
+                    { time: "01:29:10", secs: 5350, name: "架构专家", text: "我们需要在注意力机制之外寻找更有弹性的状态表达方式，Memory 和 System 2 慢思考机制至关重要。" },
+                    { time: "01:34:40", secs: 5680, name: "智能体研发负责人", text: "从模型到 Agent 的关键在于工具与外脑机制。引入树状规划与自我反思（Reflection）后，复杂任务成功率提升了近三倍。" },
+                    { time: "01:39:15", secs: 5955, name: "架构专家", text: "未来的前沿架构很可能是稀疏专家网络（MoE）配合动态激活记忆，大幅削减 KV Cache 开销并实现百万级上下文原生推理。" }
+                  ]
+                }
+              },
+              {
+                title: "04. 开源生态与 FlagOpen 2.0 发布",
+                time: "02:00:00",
+                secs: 7200,
+                chapterSummaryText: "智源重磅发布 FlagOpen 2.0 全栈开源体系。涵盖千卡异构分布式训练框架 FlagScale、长文本推理加速引擎 FlagInference，以及业界首个多智能体协同评测基准 FlagEval Agent，全面赋能开发者与实体产业。",
+                summary: [
+                  { h: "一、FlagOpen 2.0 技术矩阵解读", p: "详细介绍了分布式计算、异构加速、混合精度训练以及端到端多智能体评测体系的完整技术栈。", tags: [{secs: 7320, label: "02:02:00"}] },
+                  { h: "二、算力集群效能与异构混训", p: "智源通过通信算子深度优化与动态显存调度，解决了多厂商算力芯片混训的通信瓶颈。", tags: [{secs: 8100, label: "02:15:00"}] },
+                  { h: "三、多智能体协同评测生态", p: "提供业界首个标准化 Agent 交互评测基准，全面赋能开发者与实体工业场景。", tags: [{secs: 8640, label: "02:24:00"}] }
+                ],
+                media: {
+                  news: ["FlagOpen 2.0 全栈开源体系重磅发布", "智源加速大模型异构算力生态落地"],
+                  quotes: ["“全栈开源，降低开发者与产业创新门槛”", "“异构芯片混训加速比达到国际领先水平”"],
+                  videos: ["07. FlagOpen 2.0 发布会直击", "08. FlagScale 异构集群演示"],
+                  transcripts: [
+                    { time: "02:00:30", secs: 7230, name: "开源项目负责人", text: "今天我们非常自豪地向全球开源社区发布 FlagOpen 2.0，这是我们在软硬件协同领域交出的一份答卷。" },
+                    { time: "02:14:00", secs: 8040, name: "系统架构师", text: "通过算子融合与推测解码技术，我们在单卡和集群两个维度均实现了显著的吞吐量跃升。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "02:00:30", secs: 7230, name: "开源项目负责人", text: "今天我们非常自豪地向全球开源社区发布 FlagOpen 2.0，这是我们在软硬件协同领域交出的一份答卷。" },
+                    { time: "02:14:00", secs: 8040, name: "系统架构师", text: "通过算子融合与推测解码技术，我们在单卡和集群两个维度均实现了显著的吞吐量跃升。" }
+                  ]
+                }
+              },
+              {
+                title: "05. 专家圆桌：AI 原生应用落地",
+                time: "02:40:00",
+                secs: 9600,
+                chapterSummaryText: "产学研各界领袖深入探讨 AI 原生应用落地与商业化 ROI。覆盖智能制造柔性装配线、个人具身助理机器人、多智能体医疗复杂诊断等行业标杆案例，提出重构业务流程而非单纯打补丁的核心理念。",
+                summary: [
+                  { h: "一、AI 原生应用重构行业工作流", p: "从单点自动化向端到端自主业务流程调度跃迁。专家分享了在金融与制造业落地多 Agent 协作的实践经验。", tags: [{secs: 9780, label: "02:43:00"}] },
+                  { h: "二、具身智能商业化路线图", p: "分析了封闭场景（仓储物流）、半开放场景（商用清洁）至开放家庭场景的分阶段落地策略。", tags: [{secs: 10500, label: "02:55:00"}] },
+                  { h: "三、企业级高可用 Agent 落地指南", p: "构建多层防护架构抑制幻觉，保障高并发生产环境下的确定性与可靠性。", tags: [{secs: 11040, label: "03:04:00"}] }
+                ],
+                media: {
+                  news: ["AI 原生应用产业高峰圆桌实录", "具身智能多场景商业化落地白皮书"],
+                  quotes: ["“以 Agent 为核心重构业务流程”", "“仓储物流将是具身智能最快规模化落地的试验场”"],
+                  videos: ["09. 专家圆桌高峰对话实录", "10. 产业落地案例精彩混剪"],
+                  transcripts: [
+                    { time: "02:41:10", secs: 9670, name: "圆桌主持人", text: "请各位嘉宾畅所欲言，未来一年内，最先迎来商业化爆发的具身智能细分场景会是哪里？" },
+                    { time: "02:54:30", secs: 10470, name: "工业机器人投资人", text: "仓储物流和精密装配具备明确的 ROI 指标，是当下确定性最高的落地方向。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "02:41:10", secs: 9670, name: "圆桌主持人", text: "请各位嘉宾畅所欲言，未来一年内，最先迎来商业化爆发的具身智能细分场景会是哪里？" },
+                    { time: "02:54:30", secs: 10470, name: "工业机器人投资人", text: "仓储物流和精密装配具备明确的 ROI 指标，是当下确定性最高的落地方向。" }
+                  ]
+                }
+              },
+              {
+                title: "06. 闭幕致辞与人工智能愿景",
+                time: "03:20:00",
+                secs: 12000,
+                chapterSummaryText: "大会闭幕致辞系统复盘了两天以前沿成果，正式联合发布《2026 通用人工智能安全与发展倡议》，设立一亿元全球开源创新基金扶持顶尖青年科学家，呼吁全球携手开创负责任的 AGI 未来。",
+                summary: [
+                  { h: "一、大会成果全面复盘", p: "本届智源大会在 AGI 前沿、具身智能、开源矩阵 FlagOpen 2.0 及 AI 原生应用等四大主线取得了丰硕学术成果。", tags: [{secs: 12120, label: "03:22:00"}] },
+                  { h: "二、安全与可持续发展倡议", p: "大会闭幕式上公布了安全伦理规范，强调全行业应携手应对数据安全、算法偏见与对齐挑战。", tags: [{secs: 12720, label: "03:32:00"}] },
+                  { h: "三、全球开源创新基金启动", p: "设立一亿元专项基金，重点资助青年学者与开源社区基础软件创新。", tags: [{secs: 13140, label: "03:39:00"}] }
+                ],
+                media: {
+                  news: ["2026智源大会闭幕成果全景报道", "全球 AI 安全与发展倡议书通稿"],
+                  quotes: ["“科技的终极意义在于增进人类福祉”", "“期待明年再次见证 AGI 爆发”"],
+                  videos: ["11. 智源大会闭幕致辞", "12. 大会精彩集锦与未来展望"],
+                  transcripts: [
+                    { time: "03:20:20", secs: 12020, name: "闭幕式主持人", text: "经过两天充实而热烈的讨论，2026 智源大会即将落下帷幕。" },
+                    { time: "03:31:00", secs: 12660, name: "大会主席", text: "感谢每一位远道而来的专家与线上朋友！让我们共同携手，开创通用人工智能的美好未来！" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "03:20:20", secs: 12020, name: "闭幕式主持人", text: "经过两天充实而热烈的讨论，2026 智源大会即将落下帷幕。" },
+                    { time: "03:31:00", secs: 12660, name: "大会主席", text: "感谢每一位远道而来的专家与线上朋友！让我们共同携手，开创通用人工智能的美好未来！" }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            name: "具身智能论坛",
+            chapters: [
+              {
+                title: "01. 具身多模态世界模型构建",
+                time: "00:00:00",
+                secs: 0,
+                chapterSummaryText: "具身智能论坛聚焦真实物理交互。专家分享了如何通过物理仿真引擎合成千万级交互数据，训练具备 3D 深度感知与自监督环境建模的世界模型，实现机械臂复杂抓取规划。",
+                summary: [
+                  { h: "一、物理世界模型与仿真合成", p: "通过 GPU 加速仿真引擎生成极端物理边界样本，大幅降低真实实体训练损耗。", tags: [{secs: 300, label: "00:05:00"}] },
+                  { h: "二、自监督环境交互建模", p: "利用未标注的海量动作视频训练环境预测模型，使机器人具备预估动作后果的直觉常识。", tags: [{secs: 660, label: "00:11:00"}] }
+                ],
+                media: {
+                  news: ["具身世界模型技术专题研讨通稿"],
+                  quotes: ["“世界模型是机器人物理常识的底座”"],
+                  videos: ["01. 世界模型技术演讲"],
+                  transcripts: [
+                    { time: "00:02:10", secs: 130, name: "具身论坛主席", text: "欢迎各位来到具身智能分论坛，今天我们将深入机器人大脑核心。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "00:02:10", secs: 130, name: "具身论坛主席", text: "具身智能分论坛开场，聚焦物理世界模型构建与机械臂控制。" }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            name: "大模型与前沿架构",
+            chapters: [
+              {
+                title: "01. 超长上下文与状态空间模型",
+                time: "00:00:00",
+                secs: 0,
+                chapterSummaryText: "探讨 Transformer 以外的下一代基础架构，重点展示 Mamba 与 SSM 混合模型在百万级 Token 上下文中的线性计算复杂度与高吞吐优势。",
+                summary: [
+                  { h: "一、线性复杂度架构突破", p: "混合 SSM 架构显著减少长文本显存开销，为超长工作流提供强劲支持。", tags: [{secs: 360, label: "00:06:00"}] },
+                  { h: "二、百万级 Token 吞吐实测", p: "在保持语义检索精度的前提下，推理显存占用降低 60%，生成延迟大幅缩短。", tags: [{secs: 780, label: "00:13:00"}] }
+                ],
+                media: {
+                  news: ["下一代大模型基础架构峰会报告"],
+                  quotes: ["“线性复杂度是大模型走向超长记忆的关键”"],
+                  videos: ["01. 架构演进前沿演讲"],
+                  transcripts: [
+                    { time: "00:03:00", secs: 180, name: "架构学者", text: "我们要寻找比二次复杂度注意力更高效的数学结构。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "00:03:00", secs: 180, name: "架构学者", text: "混合 SSM 与线性注意力模型将成为解决长上下文计算瓶颈的核心路径。" }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            name: "AI Agent 智能体论坛",
+            chapters: [
+              {
+                title: "01. 多智能体协作协议与演化",
+                time: "00:00:00",
+                secs: 0,
+                chapterSummaryText: "讨论智能体通信标准化协议 (Agent Protocol) 与群体智能涌现，展示多智能体自动编写、测试与部署大型软件系统的最新工业案例。",
+                summary: [
+                  { h: "一、智能体群体协作标准", p: "标准化的角色定义与通信格式，使跨厂商 Agent 能够无缝协同作业。", tags: [{secs: 420, label: "00:07:00"}] },
+                  { h: "二、工业级多智能体软件工厂", p: "展示了从需求分析、架构设计、自动化写码到部署上线的全闭环多 Agent 协同流水线。", tags: [{secs: 900, label: "00:15:00"}] }
+                ],
+                media: {
+                  news: ["智能体生态标准与协议白皮书"],
+                  quotes: ["“多智能体协同正在重塑软件研发流程”"],
+                  videos: ["01. Agent 协同案例现场演示"],
+                  transcripts: [
+                    { time: "00:04:20", secs: 260, name: "Agent 架构师", text: "单个 Agent 能力有上限，群体协作才是解决复杂工程问题之道。" }
+                  ],
+                  aiSpeedNotes: [
+                    { time: "00:04:20", secs: 260, name: "Agent 架构师", text: "标准化 Agent 协议可实现复杂工业级软件系统的自动化开发与运维。" }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+
+      // 苹果发布会数据 (无 aiSpeedNotes，切换到 AI速记 时显示空态)
+      appleMeeting: {
+        title: "2026苹果秋季新品发布会",
+        chapters: [
+          {
+            title: "01. 开场与 Apple Intelligence 全新体验",
+            time: "00:00:00",
+            secs: 0,
+            chapterSummaryText: "Apple 2026 秋季新品特别活动在 Apple Park 启幕。Tim Cook 首先介绍了深度整合至 iOS、iPadOS 与 macOS 底层的全新系统级 Apple Intelligence 2.0，带来端侧私有云加密计算与跨 App 意图感知体验。",
+            summary: [
+              { h: "一、个性化智能助理全面升级", p: "Siri 接入端侧大模型后具备了深度上下文联想与屏幕感知操作能力，响应速度提升 2 倍。", tags: [{secs: 180, label: "00:03:00"}] },
+              { h: "二、私有云计算架构公布", p: "Apple 发布了第三方安全审计白皮书，验证了端侧数据绝不留存与加密计算机制。", tags: [{secs: 480, label: "00:08:00"}] },
+              { h: "三、跨 App 意图感知与自动化工作流", p: "系统级支持跨应用语义解析与自动化多步骤操作，重塑生产力协同体验。", tags: [{secs: 840, label: "00:14:00"}] }
+            ],
+            media: {
+              news: ["Apple 特别活动正式启幕新闻稿", "Apple Intelligence 2.0 技术解析通稿"],
+              quotes: ["“重新定义端侧智能与隐私安全”", "“深入系统底层的个人智能体系”"],
+              videos: ["01. 发布会开场视频", "02. Apple Intelligence 演示集锦"],
+              transcripts: [
+                { time: "00:01:00", secs: 60, name: "Tim Cook", text: "Good morning! Welcome to Apple Park. Today, we are thrilled to announce a new era of personal intelligence." },
+                { time: "00:06:20", secs: 380, name: "Craig Federighi", text: "Apple Intelligence understands your personal context while keeping your data entirely private and secure." }
+              ]
+            }
+          },
+          {
+            title: "02. Apple Watch Ultra 3 重磅登场",
+            time: "00:25:00",
+            secs: 1500,
+            chapterSummaryText: "专为极端探险与专业运动设计的 Apple Watch Ultra 3 正式发布。搭载 S10 超低功耗芯片、双频卫星直连通信与长达 72 小时极限续航，并新增缎面深黑钛金属版本与潜水深度计升级。",
+            summary: [
+              { h: "一、钛金属工艺与屏幕升级", p: "3000 尼特峰值亮度蓝宝石玻璃屏幕，搭配全新定制深黑缎面防刮涂层与卫星紧急呼叫。", tags: [{secs: 1620, label: "00:27:00"}] },
+              { h: "二、S10 芯片与 72 小时极限续航", p: "搭载超低功耗架构芯片，支持双频卫星通信与 40 米潜水深度计传感器升级。", tags: [{secs: 1980, label: "00:33:00"}] },
+              { h: "三、专业户外探险健康监测算法", p: "提供全天候高精度心率变异度、血氧监测与极端温度适应能力。", tags: [{secs: 2280, label: "00:38:00"}] }
+            ],
+            media: {
+              news: ["Apple Watch Ultra 3 震撼发布通稿"],
+              quotes: ["“为极端环境而生的终极装备”"],
+              videos: ["03. Apple Watch Ultra 3 极限实测短片"],
+              transcripts: [
+                { time: "00:25:30", secs: 1530, name: "Jeff Williams", text: "This is our most rugged and capable watch ever built for extreme adventures." }
+              ]
+            }
+          },
+          {
+            title: "03. iPhone 18 Pro 钛金旗舰发布",
+            time: "00:55:00",
+            secs: 3300,
+            chapterSummaryText: "全新 iPhone 18 Pro 与 18 Pro Max 正式亮相。搭载全球首款 2 纳米 A20 Pro 芯片，配备超透光潜望式长焦镜头群，全面支持 4K 120fps ProRes 空间视频录制与全天候电池续航。",
+            summary: [
+              { h: "一、芯片制程与能效跃迁", p: "A20 Pro 芯片采用台积电 2nm GAA 晶体管架构，同功耗下性能提升 25%，光线追踪能力提升 50%。", tags: [{secs: 3480, label: "00:58:00"}] },
+              { h: "二、超透光潜望式长焦镜头群", p: "全新潜望光学结构支持全焦段夜景人像与 4K 120fps ProRes 空间视频录制。", tags: [{secs: 3840, label: "01:04:00"}] },
+              { h: "三、全天候电池续航与石墨烯散热革新", p: "升级石墨烯复合均热板，大幅提升高负载游戏与本地 AI 运算稳定性。", tags: [{secs: 4200, label: "01:10:00"}] }
+            ],
+            media: {
+              news: ["iPhone 18 Pro 系列重磅发布新闻稿"],
+              quotes: ["“性能与能效的全新巅峰”"],
+              videos: ["04. iPhone 18 Pro 官方设计短片"],
+              transcripts: [
+                { time: "00:55:40", secs: 3340, name: "Greg Joswiak", text: "iPhone 18 Pro represents the absolute pinnacle of Apple design and engineering." }
+              ]
+            }
+          }
+        ]
+      }
+    };
+  </script>
+</body>
+</html>

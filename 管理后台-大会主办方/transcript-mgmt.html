@@ -1,22 +1,46 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大会后台 - AI速记管理</title>
   <script src="sidebar.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #1f2937; background: #f8fafc; }
-    
-    .container { width: 100%; max-width: 1040px; margin: 0 auto; position: relative; padding-bottom: 40px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1f2937;
+      background: #f8fafc;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1040px;
+      margin: 0 auto;
+      position: relative;
+      padding-bottom: 40px;
+    }
 
     /* 顶部返回导航与当前论坛路径胶囊 */
     .back-nav {
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .back-nav-left {
+      display: flex;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      min-width: 0;
     }
 
     .back-btn {
@@ -33,6 +57,7 @@
       border: 1px solid #e5e7eb;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
+      white-space: nowrap;
     }
 
     .back-btn:hover {
@@ -46,6 +71,7 @@
       width: 1px;
       height: 16px;
       background: #e5e7eb;
+      flex-shrink: 0;
     }
 
     .event-tag {
@@ -58,6 +84,9 @@
       border-radius: 20px;
       font-size: 13px;
       color: #475569;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .event-tag .tag-name {
@@ -65,7 +94,72 @@
       font-weight: 600;
     }
 
-    /* 主区域：无卡片包装的纯净分栏布局 */
+    /* 顶部调试卡片栏 (置右，短短三个，一行) */
+    .status-debug-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .status-debug-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .status-debug-card:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .status-debug-card.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+      box-shadow: 0 0 0 1.5px rgba(37, 99, 235, 0.15);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.not-started {
+      background: #94a3b8;
+    }
+
+    .status-dot.in-progress {
+      background: #22c55e;
+      box-shadow: 0 0 0 2.5px rgba(34, 197, 94, 0.2);
+    }
+
+    .status-dot.ended {
+      background: #64748b;
+    }
+
+    .status-card-title {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #475569;
+      white-space: nowrap;
+    }
+
+    .status-debug-card.active .status-card-title {
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    /* 主区域：分栏布局 */
     .transcript-split-container {
       display: flex;
       background: #ffffff;
@@ -85,53 +179,13 @@
       display: flex;
       flex-direction: column;
       background: #ffffff;
+      height: calc(100vh - 140px);
+      max-height: calc(100vh - 140px);
+      overflow: hidden;
+      box-sizing: border-box;
     }
 
-    /* 顶部 Tab 切换（文字+下划线） */
-    .catalog-tabs {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      height: 44px;
-      border-bottom: 1px solid #f1f5f9;
-      margin-bottom: 18px;
-    }
-
-    .catalog-tab-item {
-      font-size: 15px;
-      font-weight: 500;
-      color: #64748b;
-      cursor: pointer;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      border-bottom: 2.5px solid transparent;
-      margin-bottom: -1px;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .catalog-tab-item:hover {
-      color: #1e293b;
-    }
-
-    .catalog-tab-item.active {
-      color: #2563eb;
-      font-weight: 600;
-      border-bottom-color: #2563eb;
-    }
-
-    .tab-content {
-      display: none;
-      flex: 1;
-      flex-direction: column;
-    }
-
-    .tab-content.active {
-      display: flex;
-    }
-
-    /* 章节 Tab - 视频占位窗口 */
+    /* 视频占位窗口 (位于 Tab 上方) */
     .video-window-box {
       width: 100%;
       height: 180px;
@@ -144,15 +198,98 @@
       justify-content: space-between;
       padding: 12px;
       color: #ffffff;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
       margin-bottom: 18px;
+    }
+
+    .video-placeholder-state {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #94a3b8;
+    }
+
+    .video-not-started-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #cbd5e1;
+      margin-bottom: 2px;
+    }
+
+    .video-not-started-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    .video-live-tag-top {
+      display: flex;
+      justify-content: flex-start;
+      z-index: 2;
+    }
+
+    .video-live-pill {
+      background: rgba(220, 38, 38, 0.9);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.5px;
+    }
+
+    .video-live-pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.85);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .video-ended-pill {
+      background: rgba(71, 85, 105, 0.85);
+      color: #e2e8f0;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
     }
 
     .video-watermark {
       position: absolute;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -60%);
+      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -172,33 +309,13 @@
       color: #ffffff;
       cursor: pointer;
       transition: transform 0.2s, background 0.2s;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       pointer-events: auto;
     }
 
     .video-play-btn:hover {
       transform: scale(1.08);
       background: #2563eb;
-    }
-
-    .video-top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 2;
-    }
-
-    .video-live-tag {
-      background: rgba(239, 68, 68, 0.9);
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
     }
 
     .video-controls {
@@ -237,7 +354,7 @@
       height: 10px;
       border-radius: 50%;
       background: #ffffff;
-      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
     }
 
     .video-time-row {
@@ -248,46 +365,125 @@
       font-family: monospace;
     }
 
-    /* 章节列表 */
-    .chapter-section-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #475569;
-      margin-bottom: 10px;
+    /* 顶部 Tab 栏与右侧新增议程按钮 */
+    .catalog-tabs-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      height: 40px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 16px;
     }
 
+    .catalog-tabs {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      height: 100%;
+    }
+
+    .catalog-tab-item {
+      font-size: 15px;
+      font-weight: 500;
+      color: #64748b;
+      cursor: pointer;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .catalog-tab-item:hover {
+      color: #1e293b;
+    }
+
+    .catalog-tab-item.active {
+      color: #2563eb;
+      font-weight: 600;
+      border-bottom-color: #2563eb;
+    }
+
+    .btn-add-agenda-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+
+    .btn-add-agenda-header:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      transform: translateY(-1px);
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* 议程列表 */
     .chapter-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
       overflow-y: auto;
+      flex: 1;
+      min-height: 0;
       max-height: calc(100vh - 430px);
-      padding-right: 2px;
+      padding-right: 4px;
     }
 
     .chapter-item {
-      padding: 11px 13px;
+      position: relative;
+      padding: 10px 12px;
       border-radius: 10px;
       background: #f8fafc;
-      border: 1px solid #f1f5f9;
+      border: 1px solid #e2e8f0;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
+      min-height: 60px;
+      height: auto;
+      overflow: visible;
     }
 
     .chapter-item:hover {
       background: #f1f5f9;
-      border-color: #e2e8f0;
+      border-color: #cbd5e1;
     }
 
     .chapter-item.active {
       background: #eff6ff;
-      border-color: #bfdbfe;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 1px #93c5fd;
+    }
+
+    .chapter-item-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
     }
 
     .chapter-item-title {
@@ -295,105 +491,556 @@
       font-weight: 600;
       color: #1e293b;
       line-height: 1.4;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .chapter-item.active .chapter-item-title {
       color: #1d4ed8;
     }
 
-    .chapter-item-meta {
+    .chapter-item-bottom-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 6px;
       font-size: 12px;
       color: #64748b;
     }
 
-    /* 参会人 Tab */
-    .participant-top-btn-wrapper {
-      margin-bottom: 14px;
+    .chapter-item-time {
+      color: #64748b;
+      font-family: monospace;
+      font-size: 11.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .btn-global-hotwords {
-      width: 100%;
-      height: 38px;
-      background: #f0fdf4;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
+    .chapter-item.active .chapter-item-time {
+      color: #2563eb;
+      font-weight: 500;
+    }
+
+    .chapter-item-divider {
+      color: #cbd5e1;
+      font-size: 11px;
+    }
+
+    .chapter-item.active .chapter-item-divider {
+      color: #93c5fd;
+    }
+
+    .chapter-item-speaker {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chapter-item.active .chapter-item-speaker {
+      color: #2563eb;
+      font-weight: 500;
+    }
+
+    /* 议程卡片 Hover 右上角浮层编辑按钮 */
+    .chapter-item-hover-mask {
+      position: absolute;
+      top: 8px;
+      right: 8px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 10;
+    }
+
+    .chapter-item:hover .chapter-item-hover-mask {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .btn-edit-agenda-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(37, 99, 235, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    .btn-edit-agenda-pill:hover {
+      background: #1d4ed8;
+      transform: scale(1.04);
+    }
+
+    .agenda-status-pill {
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .agenda-status-pill.not_started {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+
+    .agenda-status-pill.in_progress {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      font-weight: 600;
+    }
+
+    .agenda-status-pill.ended {
+      background: #f8fafc;
+      color: #94a3b8;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* 编辑议题弹窗样式 */
+    .form-group {
+      display: flex;
+      flex-direction: column;
       gap: 6px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: #1e293b;
+      outline: none;
       transition: all 0.2s ease;
+      background: #ffffff;
+      font-family: inherit;
     }
 
-    .btn-global-hotwords:hover {
-      background: #dcfce7;
-      border-color: #86efac;
-      transform: translateY(-1px);
+    .form-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .speaker-tags-preview-container {
+      margin-top: 4px;
+      min-height: 28px;
+    }
+
+    .speaker-tags-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .speaker-preview-chip {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* 跨议程时间冲突提示 */
+    .agenda-card-conflict-alert {
+      margin-top: 8px;
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: fadeIn 0.15s ease;
+      cursor: default;
+      position: relative;
+      z-index: 2;
+    }
+
+    .agenda-conflict-msg {
+      font-size: 12px;
+      color: #dc2626;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .btn-quick-sync-inline {
+      align-self: flex-start;
+      background: #ffffff;
+      border: 1px solid #f87171;
+      color: #b91c1c;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(220, 38, 38, 0.1);
+    }
+
+    .btn-quick-sync-inline:hover {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+      transform: translateY(-0.5px);
+    }
+
+    /* 参会人 Tab */
     .participant-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       overflow-y: auto;
-      max-height: calc(100vh - 280px);
-      padding-right: 2px;
+      flex: 1;
+      min-height: 0;
+      max-height: calc(100vh - 430px);
+      padding-right: 4px;
     }
 
     .participant-card {
-      height: 54px;
-      min-height: 54px;
-      padding: 0 12px;
+      position: relative;
+      padding: 9px 12px;
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 8px;
       transition: all 0.2s ease;
+      cursor: default;
     }
 
     .participant-card:hover {
       border-color: #cbd5e1;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      background: #f8fafc;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     }
 
-    .participant-info {
+    .participant-left-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
+      min-width: 80px;
+      flex-shrink: 0;
     }
 
-    .participant-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #e2e8f0;
+    .participant-name-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .participant-name {
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 600;
       color: #1e293b;
+      white-space: nowrap;
+    }
+
+    /* 参会人卡片 Hover 右上角浮层编辑按钮 (与议程卡片一致) */
+    .participant-card-hover-mask {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 10;
+    }
+
+    .participant-card:hover .participant-card-hover-mask {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .participant-status-tag {
+      font-size: 9px;
+      padding: 0 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      width: fit-content;
+      line-height: 1.3;
+    }
+
+    .participant-status-tag.manual {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+    }
+
+    .participant-status-tag.auto {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1px dashed #86efac;
+    }
+
+    /* 参会人卡片说话人下拉选择器（紧跟在名字后面，不置右） */
+    .participant-speaker-select-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-left: 6px;
+      min-width: 0;
+    }
+
+    .participant-speaker-select-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 7px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 11.5px;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      max-width: 100%;
+      user-select: none;
+    }
+
+    .participant-speaker-select-trigger:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .participant-speaker-select-trigger.is-empty {
+      color: #94a3b8;
+      border-style: dashed;
+      background: #fdfdfd;
+      padding: 3px 8px;
+    }
+
+    .participant-speaker-select-trigger.is-empty:hover {
+      color: #2563eb;
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .selected-speakers-chips {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: nowrap;
+    }
+
+    .selected-speaker-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 1px 6px;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .dropdown-arrow-icon {
+      color: #94a3b8;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .participant-speaker-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      width: 195px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      z-index: 70;
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .p-dropdown-header {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      padding: 2px 4px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .p-dropdown-list {
+      max-height: 210px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .p-dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      gap: 8px;
+    }
+
+    .p-dropdown-item:hover:not(.is-disabled) {
+      background: #f1f5f9;
+    }
+
+    .p-dropdown-item.selected {
+      background: #eff6ff;
+    }
+
+    .p-dropdown-item.is-disabled {
+      background: #f8fafc;
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .p-dropdown-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .p-dropdown-checkbox {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      accent-color: #2563eb;
+    }
+
+    .p-dropdown-speaker-name {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .p-dropdown-item.is-disabled .p-dropdown-speaker-name {
+      color: #94a3b8;
+    }
+
+    .p-dropdown-score {
+      font-size: 11px;
+      font-family: monospace;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .p-dropdown-bound-tag {
+      font-size: 10.5px;
+      color: #94a3b8;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .p-dropdown-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 6px;
+      margin-top: 2px;
+    }
+
+    .btn-clear-selection {
+      font-size: 11.5px;
+      color: #64748b;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .btn-clear-selection:hover {
+      color: #ef4444;
+      background: #fee2e2;
+    }
+
+    .btn-dropdown-done {
+      font-size: 11.5px;
+      color: #ffffff;
+      background: #2563eb;
+      border: none;
+      border-radius: 4px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-dropdown-done:hover {
+      background: #1d4ed8;
     }
 
     .btn-view-hotwords {
       background: #eff6ff;
       color: #2563eb;
       border: 1px solid #bfdbfe;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
+      flex-shrink: 0;
     }
 
     .btn-view-hotwords:hover {
@@ -401,69 +1048,74 @@
       border-color: #93c5fd;
     }
 
-    /* 添加参会人虚拟框按钮 (与正常卡片同高) */
-    .participant-card-add {
-      height: 54px;
-      min-height: 54px;
-      border: 1.5px dashed #cbd5e1;
-      background: #f8fafc;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: #64748b;
-      font-size: 13.5px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .participant-card-add:hover {
-      background: #eff6ff;
-      border-color: #93c5fd;
-      color: #2563eb;
-    }
-
     /* 右侧速记主区域 */
     .right-pane {
       flex: 1;
-      padding: 20px 30px;
+      padding: 18px 24px 20px;
       display: flex;
       flex-direction: column;
       background: #ffffff;
       position: relative;
     }
 
-    .right-pane-header {
+    /* 右侧顶部工具栏（查看热词、添加屏蔽词与搜索框置于最上方） */
+    .right-pane-top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      height: 44px;
-      margin-bottom: 18px;
-      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 12px;
     }
 
-    .right-pane-title-group {
+    .right-pane-top-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
-      height: 100%;
+      gap: 8px;
     }
 
-    .right-pane-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .right-pane-count {
-      background: #f1f5f9;
-      color: #64748b;
+    .btn-header-global-hotwords {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header-global-hotwords:hover {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #15803d;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(22, 101, 52, 0.08);
+    }
+
+    .btn-header-blocked-words {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header-blocked-words:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(185, 28, 28, 0.08);
     }
 
     .search-filter-input {
@@ -481,20 +1133,139 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
-    /* 说话速记内容列表 - 倒序序流 */
+    /* 右侧 Tab 栏（仅作为分类展示，不可点击切换） */
+    .right-pane-tabs-bar {
+      display: flex;
+      align-items: center;
+      height: 38px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 14px;
+    }
+
+    .right-pane-tabs {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      height: 100%;
+    }
+
+    .right-pane-tab-item {
+      font-size: 14px;
+      font-weight: 500;
+      color: #94a3b8;
+      cursor: default;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1px;
+      user-select: none;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .right-pane-tab-item.active {
+      color: #2563eb;
+      font-weight: 600;
+      border-bottom-color: #2563eb;
+    }
+
+    /* 说话速记内容列表 - 时间正序流（最新内容从底部弹出） */
     .transcript-stream {
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 16px;
       overflow-y: auto;
-      max-height: calc(100vh - 230px);
+      max-height: calc(100vh - 240px);
       padding-right: 8px;
+      scroll-behavior: smooth;
+    }
+
+    /* 实时转写底部居中“⬇️ 回到最新”悬浮按钮 */
+    .btn-scroll-bottom {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #ffffff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.16), 0 1px 3px rgba(0, 0, 0, 0.05);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease, box-shadow 0.15s ease;
+      z-index: 20;
+      user-select: none;
+    }
+
+    .btn-scroll-bottom.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .btn-scroll-bottom:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+      transform: translateX(-50%) translateY(-2px);
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22), 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+
+    .btn-scroll-bottom:active {
+      transform: translateX(-50%) translateY(0);
     }
 
     .transcript-item {
       display: flex;
       flex-direction: column;
       gap: 6px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+      animation: transcriptSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid transparent;
+    }
+
+    @keyframes transcriptSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 议程跳转高亮动画 */
+    .transcript-item.transcript-item-highlight {
+      background-color: #eff6ff;
+      border-color: #bfdbfe;
+      animation: highlightFlash 2.2s ease-out;
+    }
+
+    @keyframes highlightFlash {
+      0% {
+        background-color: #dbeafe;
+        border-color: #93c5fd;
+      }
+      70% {
+        background-color: #eff6ff;
+        border-color: #bfdbfe;
+      }
+      100% {
+        background-color: transparent;
+        border-color: transparent;
+      }
     }
 
     /* 头像 说话人 时间 所在行 */
@@ -505,73 +1276,85 @@
       position: relative;
     }
 
-    .speaker-avatar-img {
-      width: 32px;
-      height: 32px;
+    /* 人名最后一个字圆形彩色头像 */
+    .speaker-avatar-circle {
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      object-fit: cover;
-      background: #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
       flex-shrink: 0;
+      user-select: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
     }
 
-    /* 说话人名字包装框：支持 Hover 半透明遮罩覆盖 */
+    /* 说话人名字包装框：Hover 时名字后显示编辑 icon，整体带背景和边框 */
     .speaker-name-wrapper {
       position: relative;
       display: inline-flex;
       align-items: center;
-      padding: 2px 6px;
+      gap: 5px;
+      padding: 3px 8px;
       border-radius: 6px;
       cursor: pointer;
-      transition: background 0.15s;
+      border: 1px solid transparent;
+      background: transparent;
+      transition: all 0.15s ease;
+      user-select: none;
     }
 
-    .speaker-name-wrapper:hover {
-      background: #f1f5f9;
+    .speaker-name-wrapper:hover,
+    .speaker-name-wrapper.popover-active {
+      background: #eff6ff;
+      border-color: #bfdbfe;
     }
 
     .speaker-name-text {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       color: #1e293b;
+      transition: color 0.15s ease;
+      line-height: 1.2;
     }
 
-    /* Hover 状态下的带透明度遮罩与编辑 Icon (覆盖在说话人之上) */
-    .speaker-hover-mask {
-      position: absolute;
-      inset: 0;
-      background: rgba(37, 99, 235, 0.88);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: 500;
+    .speaker-name-wrapper:hover .speaker-name-text,
+    .speaker-name-wrapper.popover-active .speaker-name-text {
+      color: #2563eb;
+    }
+
+    .speaker-edit-icon {
+      width: 12px;
+      height: 12px;
+      color: #3b82f6;
       opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s ease;
-      backdrop-filter: blur(1px);
-      box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+      transform: scale(0.85);
+      transition: all 0.15s ease;
+      flex-shrink: 0;
     }
 
-    .speaker-name-wrapper:hover .speaker-hover-mask {
+    .speaker-name-wrapper:hover .speaker-edit-icon,
+    .speaker-name-wrapper.popover-active .speaker-edit-icon {
       opacity: 1;
-      pointer-events: auto;
+      transform: scale(1);
     }
 
     .speaker-time-stamp {
       font-size: 12px;
       color: #94a3b8;
       font-weight: 400;
+      font-family: monospace;
     }
 
-    /* 文本内容平铺展示 (无卡片，与头像左对齐，无缩进) */
+    /* 文本内容平铺展示 */
     .transcript-text-content {
       font-size: 14.5px;
       line-height: 1.6;
       color: #334155;
-      padding: 4px 6px;
+      padding: 2px 4px;
       border-radius: 6px;
       cursor: pointer;
       transition: background 0.15s ease;
@@ -582,7 +1365,7 @@
       background: #f8fafc;
     }
 
-    /* 双击编辑文本的多行输入框样式 */
+    /* 双击编辑文本的多行输入框 */
     .transcript-edit-box {
       display: flex;
       flex-direction: column;
@@ -592,7 +1375,7 @@
 
     .transcript-textarea {
       width: 100%;
-      padding: 4px 6px;
+      padding: 6px 8px;
       border: 1.5px solid #3b82f6;
       border-radius: 6px;
       font-size: 14.5px;
@@ -646,44 +1429,297 @@
       background: #1d4ed8;
     }
 
-    /* 说话人下拉选项框 Popover */
+    .btn-edit-delete-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 29px;
+      height: 29px;
+      padding: 0;
+      background: #f8fafc;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+
+    .btn-edit-delete-icon:hover {
+      color: #dc2626;
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+
+    .btn-delete-confirm-action {
+      padding: 5px 14px;
+      background: #dc2626;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-delete-confirm-action:hover {
+      background: #b91c1c;
+    }
+
+    /* 说话人下拉搜索与操作 Popover */
     .speaker-dropdown-popover {
       position: absolute;
       top: 100%;
       left: 0;
       margin-top: 6px;
-      width: 240px;
+      width: 290px;
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-      z-index: 50;
-      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      z-index: 60;
+      padding: 12px;
       display: flex;
       flex-direction: column;
+      gap: 10px;
+      animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popoverFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .popover-search-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #f8fafc;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      padding: 6px 10px;
+      transition: all 0.15s ease;
+    }
+
+    .popover-search-row:focus-within {
+      background: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2.5px rgba(37, 99, 235, 0.12);
+    }
+
+    .popover-search-icon {
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .popover-search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      color: #1e293b;
+    }
+
+    .popover-search-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .btn-clear-search {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    .btn-clear-search:hover {
+      color: #475569;
+    }
+
+    .popover-options-list {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-right: 2px;
+    }
+
+    .popover-option-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+
+    .popover-option-item:hover:not(.is-disabled) {
+      background: #f1f5f9;
+    }
+
+    .popover-option-item.selected {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+
+    .popover-option-item.is-disabled {
+      background: #f8fafc;
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .popover-option-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .popover-option-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .popover-option-item.selected .popover-option-name {
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    .popover-option-item.is-disabled .popover-option-name {
+      color: #94a3b8;
+    }
+
+    .popover-option-radio-indicator {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 1.5px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .popover-option-item.selected .popover-option-radio-indicator {
+      border-color: #2563eb;
+      background: #2563eb;
+    }
+
+    .popover-option-item.selected .popover-option-radio-indicator::after {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #ffffff;
+    }
+
+    /* 底部添加自定义人名项 */
+    .popover-add-custom-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      cursor: pointer;
+      margin-top: 4px;
+      color: #2563eb;
+      transition: all 0.15s;
+    }
+
+    .popover-add-custom-option:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .popover-add-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #dbeafe;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .popover-add-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .popover-add-text b {
+      color: #2563eb;
+    }
+
+    /* 底部操作栏：左侧批量勾选，右侧保存 */
+    .popover-footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px solid #f1f5f9;
+      margin-top: 2px;
       gap: 8px;
     }
 
-    .dropdown-input-row {
-      display: flex;
+    .popover-batch-checkbox-label {
+      display: inline-flex;
+      align-items: center;
       gap: 6px;
-    }
-
-    .dropdown-speaker-input {
+      cursor: pointer;
+      user-select: none;
+      font-size: 11.5px;
+      color: #475569;
       flex: 1;
-      padding: 6px 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 12.5px;
-      outline: none;
+      overflow: hidden;
     }
 
-    .dropdown-speaker-input:focus {
-      border-color: #2563eb;
+    .popover-batch-checkbox-label input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: #2563eb;
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      flex-shrink: 0;
     }
 
-    .btn-save-new-speaker {
-      padding: 6px 10px;
+    .batch-checkbox-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .batch-checkbox-text b {
+      color: #2563eb;
+    }
+
+    .btn-popover-save {
+      padding: 5px 14px;
       background: #2563eb;
       color: #ffffff;
       border: none;
@@ -691,56 +1727,58 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .btn-save-new-speaker:hover {
+    .btn-popover-save:hover {
+      background: #1d4ed8;
+      transform: translateY(-0.5px);
+    }
+
+    .btn-popover-save:disabled,
+    .btn-popover-save.disabled {
+      background: #e2e8f0 !important;
+      color: #94a3b8 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+      box-shadow: none !important;
+      pointer-events: none !important;
+    }
+
+    .btn-scope-confirm:hover {
       background: #1d4ed8;
     }
 
-    .dropdown-divider {
-      height: 1px;
-      background: #f1f5f9;
-      border: none;
-      margin: 2px 0;
-    }
-
-    .dropdown-options-list {
-      max-height: 160px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .dropdown-option-item {
+    /* Toast 提示 */
+    .toast-notice {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.15s;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .dropdown-option-item:hover {
-      background: #f1f5f9;
+    .toast-notice.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
-    .dropdown-option-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .dropdown-option-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: #334155;
-    }
-
-    /* 热词通用 Modal */
+    /* 通用 Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -810,11 +1848,11 @@
 
     .hotwords-textarea {
       width: 100%;
-      height: 110px;
+      height: 80px;
       padding: 10px 12px;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
-      font-size: 13.5px;
+      font-size: 13px;
       line-height: 1.5;
       color: #1e293b;
       outline: none;
@@ -827,22 +1865,93 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
-    .hotwords-tags-preview {
+    /* 全局与参会人热词弹窗内分区 */
+    .hotwords-section-box {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      max-height: 80px;
-      overflow-y: auto;
+      flex-direction: column;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
     }
 
-    .hotword-tag-pill {
-      background: #eff6ff;
-      color: #2563eb;
-      border: 1px solid #dbeafe;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
+    .hotwords-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hotwords-section-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hotwords-modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 68vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .participant-hotwords-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .participant-hotword-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+    }
+
+    .participant-hotword-label {
+      display: flex;
+      align-items: center;
+      padding-top: 6px;
+      min-width: 60px;
+      flex-shrink: 0;
+    }
+
+    .participant-hotword-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .participant-hotword-textarea {
+      flex: 1;
+      height: 52px;
+      min-height: 48px;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #1e293b;
+      outline: none;
+      resize: vertical;
+      transition: all 0.15s ease;
+      background: #ffffff;
+      font-family: inherit;
+    }
+
+    .participant-hotword-textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }
 
     .modal-actions {
@@ -872,626 +1981,2873 @@
       border-color: #86efac;
     }
 
+    .form-textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #1e293b;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+
+    .form-textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-textarea:disabled,
+    .hotwords-textarea:disabled,
+    .participant-hotword-textarea:disabled {
+      background-color: #f1f5f9 !important;
+      color: #94a3b8 !important;
+      cursor: not-allowed !important;
+      border-color: #e2e8f0 !important;
+    }
+
+    .btn-crawl-hotwords.is-crawling,
+    .btn-crawl-hotwords:disabled {
+      background: #f1f5f9 !important;
+      color: #94a3b8 !important;
+      border-color: #e2e8f0 !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+
+    /* 增量/覆盖更新策略选择卡片 */
+    .crawl-mode-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      background: #ffffff;
+      user-select: none;
+    }
+
+    .crawl-mode-card:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+
+    .crawl-mode-card.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .crawl-mode-card input[type="radio"] {
+      margin-top: 3px;
+      cursor: pointer;
+      accent-color: #2563eb;
+      width: 15px;
+      height: 15px;
+    }
+
+    .crawl-mode-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+    }
+
+    .crawl-mode-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .crawl-recommend-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #16a34a;
+      background: #dcfce7;
+      border: 1px solid #bbf7d0;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .crawl-mode-desc {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.45;
+    }
+
     .modal-right-btns {
       display: flex;
       gap: 10px;
     }
   </style>
 </head>
+
 <body>
 
-<div class="container">
-  <!-- 1. 顶部返回导航与路径胶囊 (不含页面标题) -->
-  <div class="back-nav">
-    <a href="forum-mgmt.html" id="backLink" class="back-btn">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"></line>
-        <polyline points="12 19 5 12 12 5"></polyline>
-      </svg>
-      返回论坛列表
-    </a>
-    <div class="nav-divider"></div>
-    <span class="event-tag">
-      当前论坛: <strong class="tag-name" id="pathForumTag">2026全球数字经济大会 - 具身智能与大模型前沿论坛</strong>
-    </span>
-  </div>
-
-  <!-- 2. 主区域：左右分栏容器 -->
-  <div class="transcript-split-container">
-    
-    <!-- 2.1 左侧目录区域 -->
-    <div class="left-pane">
-      <!-- 顶部 Tab 切换（文字+下划线） -->
-      <div class="catalog-tabs">
-        <div class="catalog-tab-item active" onclick="switchCatalogTab('chapter')">章节</div>
-        <div class="catalog-tab-item" onclick="switchCatalogTab('participant')">参会人</div>
+  <div class="container">
+    <!-- 1. 顶部返回导航与路径胶囊 + 右侧置顶调试状态卡片 -->
+    <div class="back-nav">
+      <div class="back-nav-left">
+        <a href="forum-mgmt.html" id="backLink" class="back-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          返回论坛列表
+        </a>
+        <div class="nav-divider"></div>
+        <span class="event-tag">
+          当前论坛: <strong class="tag-name" id="pathForumTag">2026全球数字经济大会 - 具身智能与大模型前沿论坛</strong>
+        </span>
       </div>
 
-      <!-- Tab 1: 章节内容 -->
-      <div id="tabChapter" class="tab-content active">
-        <!-- 视频窗口 (占位 + 进度条) -->
-        <div class="video-window-box">
-          <div class="video-top-bar">
-            <span class="video-live-tag">
-              <span style="width: 5px; height: 5px; border-radius: 50%; background: #ffffff;"></span>
-              LIVE RECORD
-            </span>
-            <span style="font-size: 11px; opacity: 0.8;">1080P HD</span>
-          </div>
-
-          <div class="video-watermark">
-            <div class="video-play-btn" onclick="togglePlayVideo()">
-              <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-              </svg>
-            </div>
-            <span style="font-size: 12px; margin-top: 4px; font-weight: 500;">论坛现场实时音轨录制</span>
-          </div>
-
-          <div class="video-controls">
-            <div class="video-progress-bar" onclick="seekVideo(event)">
-              <div class="video-progress-fill" id="videoProgressFill">
-                <div class="video-progress-handle"></div>
-              </div>
-            </div>
-            <div class="video-time-row">
-              <span id="videoCurrentTime">00:18:24</span>
-              <span>01:45:00</span>
-            </div>
-          </div>
+      <!-- 顶部调试状态卡片 (置右，短短三个，一行) -->
+      <div class="status-debug-bar">
+        <div class="status-debug-card active" data-status="not_started" onclick="setDebugStatus('not_started')">
+          <div class="status-dot not-started"></div>
+          <span class="status-card-title">未开始</span>
         </div>
-
-        <!-- 章节列表 -->
-        <div class="chapter-section-title">
-          <span>论坛议题章节</span>
-          <span style="font-weight: 400; font-size: 12px; color: #94a3b8;">共 5 个章节</span>
+        <div class="status-debug-card" data-status="in_progress" onclick="setDebugStatus('in_progress')">
+          <div class="status-dot in-progress"></div>
+          <span class="status-card-title">进行中</span>
         </div>
-        <div class="chapter-list" id="chapterList">
-          <!-- 动态渲染章节数据 -->
+        <div class="status-debug-card" data-status="ended" onclick="setDebugStatus('ended')">
+          <div class="status-dot ended"></div>
+          <span class="status-card-title">已结束</span>
         </div>
       </div>
+    </div>
 
-      <!-- Tab 2: 参会人内容 -->
-      <div id="tabParticipant" class="tab-content">
-        <!-- 置顶扁扁的“查看全局热词”按钮 -->
-        <div class="participant-top-btn-wrapper">
-          <button class="btn-global-hotwords" onclick="openHotwordsModal('global')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+    <!-- 2. 主区域：左右分栏容器 -->
+    <div class="transcript-split-container">
+
+      <!-- 2.1 左侧目录区域 -->
+      <div class="left-pane">
+        <!-- 视频窗口 (占位 + 进度条) 移至 Tab 上方 -->
+        <div class="video-window-box" id="videoWindowBox">
+          <!-- 动态由 updateVideoBox() 渲染 -->
+        </div>
+
+        <!-- 顶部 Tab 切换（文字+下划线） + 右侧“新增议程/参会人”按钮 -->
+        <div class="catalog-tabs-bar">
+          <div class="catalog-tabs">
+            <div class="catalog-tab-item active" onclick="switchCatalogTab('chapter')">议程</div>
+            <div class="catalog-tab-item" onclick="switchCatalogTab('participant')">参会人</div>
+          </div>
+          <button class="btn-add-agenda-header" id="catalogHeaderBtn" onclick="handleCatalogHeaderAction()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            查看全局热词
+            <span id="catalogHeaderBtnText">新增议程</span>
           </button>
         </div>
 
-        <!-- 参会人列表 (含同高虚拟框“添加参会人”按钮) -->
-        <div class="participant-list" id="participantList">
-          <!-- 动态渲染参会人 -->
+        <!-- Tab 1: 议程内容 -->
+        <div id="tabChapter" class="tab-content active">
+          <div class="chapter-list" id="chapterList">
+            <!-- 动态渲染议程数据 -->
+          </div>
+        </div>
+
+        <!-- Tab 2: 参会人内容 -->
+        <div id="tabParticipant" class="tab-content">
+          <div class="participant-list" id="participantList">
+            <!-- 动态渲染参会人 -->
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 2.2 右侧速记主区域 -->
-    <div class="right-pane">
-      <div class="right-pane-header">
-        <div class="right-pane-title-group">
-          <span class="right-pane-title">转写文本</span>
+      <!-- 2.2 右侧速记主区域 -->
+      <div class="right-pane">
+        <!-- 顶部操作栏：查看热词、添加屏蔽词 移至实时转写上方 -->
+        <div class="right-pane-top-bar">
+          <div class="right-pane-top-actions">
+            <button class="btn-header-global-hotwords" onclick="openHotwordsModal('global')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                </polygon>
+              </svg>
+              查看热词
+            </button>
+            <button class="btn-header-blocked-words" onclick="openBlockedWordsModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+              添加屏蔽词
+            </button>
+          </div>
+          <input type="text" class="search-filter-input" placeholder="搜索说话人或文本..."
+            oninput="handleSearchTranscript(this.value)">
         </div>
-        <input type="text" class="search-filter-input" placeholder="搜索说话人或文本..." oninput="handleSearchTranscript(this.value)">
-      </div>
 
-      <!-- 一句一句往下，时间倒序 (最新在前) -->
-      <div class="transcript-stream" id="transcriptStream">
-        <!-- 动态渲染速记条目 -->
+        <!-- 实时转写区域 Tab 栏（实时转写、AI速记、AI摘要、AI总结、AI素材包 - 仅展示不可点击） -->
+        <div class="right-pane-tabs-bar">
+          <div class="right-pane-tabs">
+            <div class="right-pane-tab-item active">实时转写</div>
+            <div class="right-pane-tab-item">AI速记</div>
+            <div class="right-pane-tab-item">AI摘要</div>
+            <div class="right-pane-tab-item">AI总结</div>
+            <div class="right-pane-tab-item">AI素材包</div>
+          </div>
+        </div>
+
+        <!-- 文本列表：时间正序向下流（最新内容从底部弹出） -->
+        <div class="transcript-stream" id="transcriptStream">
+          <!-- 动态渲染速记条目 -->
+        </div>
+
+        <!-- 向上滚动时出现的底部居中“⬇️”回到最新按钮 -->
+        <button class="btn-scroll-bottom" id="btnScrollBottom" onclick="scrollToLatestTranscript()" title="滚动到最新发言">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="19 12 12 19 5 12"></polyline>
+          </svg>
+          <span>回到最新</span>
+        </button>
       </div>
     </div>
   </div>
-</div>
 
-<!-- 3. 查看热词 Modal (全局 / 参会人) -->
-<div class="modal-backdrop" id="hotwordsModal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3 class="modal-title" id="hotwordsModalTitle">查看热词</h3>
-      <button class="modal-close-btn" onclick="closeHotwordsModal()">✕</button>
-    </div>
+  <!-- 3. 查看全局与参会人热词 Modal -->
+  <div class="modal-backdrop" id="hotwordsModal">
+    <div class="modal-card" style="width: 620px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="hotwordsModalTitle">热词管理</h3>
+        <button class="modal-close-btn" onclick="closeHotwordsModal()">✕</button>
+      </div>
 
-    <div style="display: flex; flex-direction: column; gap: 6px;">
-      <label style="font-size: 13px; font-weight: 500; color: #475569;">热词列表 (专有名词/人名/地名等)：</label>
-      <textarea class="hotwords-textarea" id="hotwordsInput" placeholder="请输入热词，多个热词用逗号或分号分隔..."></textarea>
-    </div>
+      <div class="hotwords-modal-body">
+        <!-- 1. 论坛全局热词 -->
+        <div class="hotwords-section-box">
+          <div class="hotwords-section-header">
+            <div class="hotwords-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              论坛全局热词
+            </div>
+          </div>
+          <textarea class="hotwords-textarea" id="globalHotwordsInput" placeholder="请输入论坛公共热词，支持中英文逗号、顿号、分号分隔，如：具身智能、大模型；强化学习, 智源..."></textarea>
+        </div>
 
-    <div class="modal-actions">
-      <button class="btn-crawl-hotwords" onclick="handleCrawlHotwords()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path>
-        </svg>
-        爬取热词
-      </button>
-      <div class="modal-right-btns">
-        <button class="btn-edit-cancel" onclick="closeHotwordsModal()">取消</button>
-        <button class="btn-edit-save" onclick="saveHotwords()">保存</button>
+        <!-- 2. 参会人专属热词 -->
+        <div class="hotwords-section-box">
+          <div class="hotwords-section-header">
+            <div class="hotwords-section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              参会人专属热词
+            </div>
+          </div>
+          <div class="participant-hotwords-list" id="participantHotwordsList">
+            <!-- 动态渲染各参会人热词输入条目 -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 4px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        <button class="btn-crawl-hotwords" id="btnCrawlGlobalHotwords" onclick="triggerCrawlHotwords('global')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9">
+            </path>
+          </svg>
+          爬取热词
+        </button>
+        <div class="modal-right-btns">
+          <button class="btn-edit-cancel" onclick="closeHotwordsModal()">取消</button>
+          <button class="btn-edit-save" onclick="saveHotwords()">保存全部</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-  // 模拟活动与论坛映射
-  const EVENT_MAP = {
-    'evt_101': {
-      name: '2026全球数字经济大会',
-      forums: {
-        'forum_1': '具身智能与大模型前沿论坛',
-        'forum_2': 'AI大模型安全与治理论坛',
-        'forum_3': '自动驾驶与智能网联论坛'
+  <!-- 3.1 单个参会人热词 Modal -->
+  <div class="modal-backdrop" id="participantSingleHotwordsModal">
+    <div class="modal-card" style="width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="participantSingleHotwordsModalTitle">查看热词</h3>
+        <button class="modal-close-btn" onclick="closeParticipantSingleHotwordsModal()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 13px; font-weight: 500; color: #475569;">热词列表 (专有名词/人名/地名等)：</label>
+        <textarea class="hotwords-textarea" id="participantSingleHotwordsInput" placeholder="请输入热词，支持中英文逗号、顿号、分号分隔，如：具身智能、大模型；强化学习, 智源..."></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-crawl-hotwords" id="btnCrawlSingleHotwords" onclick="triggerCrawlHotwords('single')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9">
+            </path>
+          </svg>
+          爬取热词
+        </button>
+        <div class="modal-right-btns">
+          <button class="btn-edit-cancel" onclick="closeParticipantSingleHotwordsModal()">取消</button>
+          <button class="btn-edit-save" onclick="saveParticipantSingleHotwords()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.2 屏蔽词管理 Modal (全局单多行输入框) -->
+  <div class="modal-backdrop" id="blockedWordsModal">
+    <div class="modal-card" style="width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">屏蔽词管理</h3>
+        <button class="modal-close-btn" onclick="closeBlockedWordsModal()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 13px; font-weight: 500; color: #475569;">全局屏蔽词库 (多个屏蔽词用逗号或换行分隔)：</label>
+        <textarea class="hotwords-textarea" id="globalBlockedWordsInput" style="height: 120px;" placeholder="请输入需要屏蔽的违规词、敏感词或敏感语料，系统将在实时转写中自动进行星号替换或过滤..."></textarea>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 6px;">
+        <button class="btn-crawl-hotwords" style="color: #b91c1c; background: #fef2f2; border-color: #fecaca;" onclick="handlePresetBlockedWords()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          导入预设常用词
+        </button>
+        <div class="modal-right-btns">
+          <button class="btn-edit-cancel" onclick="closeBlockedWordsModal()">取消</button>
+          <button class="btn-edit-save" onclick="saveBlockedWords()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 编辑/新增议程 Modal -->
+  <div class="modal-backdrop" id="editAgendaModal">
+    <div class="modal-card" style="width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="editAgendaModalTitle">编辑议程</h3>
+        <button class="modal-close-btn" onclick="closeEditAgendaModal()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- 1. 议题名称 -->
+        <div class="form-group">
+          <label class="form-label">议题名称：</label>
+          <input type="text" class="form-input" id="editAgendaTitle" placeholder="请输入议程/议题名称">
+        </div>
+
+        <!-- 2. 开始时间 & 结束时间 -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">开始时间：</label>
+            <input type="time" step="1" class="form-input" id="editAgendaStartTime" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">结束时间：</label>
+            <input type="time" step="1" class="form-input" id="editAgendaEndTime" required>
+          </div>
+        </div>
+
+        <!-- 3. 发言嘉宾放到最下面一行，带分词预览卡片 -->
+        <div class="form-group">
+          <label class="form-label">发言嘉宾 / 参会人：</label>
+          <input type="text" class="form-input" id="editAgendaSpeaker" placeholder="如：张三、李四、王五（支持中英文逗号、顿号、分号分隔）" oninput="updateSpeakerPreview()">
+          <div class="speaker-tags-preview-container">
+            <div class="speaker-tags-preview" id="speakerPreviewBox"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 10px;">
+        <div></div>
+        <div class="modal-right-btns">
+          <button type="button" class="btn-edit-delete-icon" id="btnDeleteAgenda" onclick="handleDeleteAgendaClick()" title="删除议程">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+          <button class="btn-edit-cancel" onclick="closeEditAgendaModal()">取消</button>
+          <button class="btn-edit-save" onclick="saveAgendaEdit()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 编辑参会人 Modal (支持上传头像、修改名字、编辑热词) -->
+  <div class="modal-backdrop" id="editParticipantModal">
+    <div class="modal-card" style="width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="editParticipantModalTitle">编辑参会人</h3>
+        <button class="modal-close-btn" onclick="closeEditParticipantModal()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- 1. 头像上传与预览 -->
+        <div class="form-group">
+          <label class="form-label">参会人头像：</label>
+          <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+            <div id="editParticipantAvatarPreviewBox" style="width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 1.5px solid #cbd5e1; box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex-shrink: 0; background: #e0e7ff; display: flex; align-items: center; justify-content: center;">
+              <!-- 动态预览 -->
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
+              <label style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                上传真实头像
+                <input type="file" id="editParticipantAvatarInput" accept="image/*" style="display: none;" onchange="handleParticipantAvatarUpload(event)">
+              </label>
+              <span style="font-size: 11px; color: #94a3b8;">支持 JPG、PNG 格式高清照片</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 参会人姓名 -->
+        <div class="form-group">
+          <label class="form-label">参会人姓名：</label>
+          <input type="text" class="form-input" id="editParticipantName" placeholder="请输入参会人姓名">
+        </div>
+
+        <!-- 3. 专属热词 -->
+        <div class="form-group">
+          <label class="form-label">专属热词：</label>
+          <textarea class="form-textarea" id="editParticipantHotwords" rows="3" placeholder="支持中英文逗号、顿号、分号分隔，如：张三、具身智能, 大模型；深度学习"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 12px;">
+        <button class="btn-crawl-hotwords" id="btnCrawlParticipantEdit" onclick="triggerCrawlHotwords('edit')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9">
+            </path>
+          </svg>
+          爬取热词
+        </button>
+        <div class="modal-right-btns">
+          <button type="button" class="btn-edit-delete-icon" id="btnDeleteParticipant" onclick="handleDeleteParticipantClick()" title="删除参会人">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+          <button class="btn-edit-cancel" onclick="closeEditParticipantModal()">取消</button>
+          <button class="btn-edit-save" onclick="saveParticipantEdit()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 热词爬取方式确认 Modal (增量更新 vs 覆盖更新) -->
+  <div class="modal-backdrop" id="crawlHotwordsConfirmModal" style="z-index: 1000;">
+    <div class="modal-card" style="width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 6px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path>
+          </svg>
+          选择热词提取方式
+        </h3>
+        <button class="modal-close-btn" onclick="closeCrawlConfirmModal()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+        <p style="font-size: 13px; color: #64748b; margin: 0;">请选择本次热词提取与写入的更新策略：</p>
+        
+        <!-- 选项 1: 增量更新 -->
+        <label class="crawl-mode-card selected" id="crawlModeCardIncremental" onclick="selectCrawlMode('incremental')">
+          <input type="radio" name="crawlModeRadio" id="crawlRadioIncremental" value="incremental" checked>
+          <div class="crawl-mode-info">
+            <div class="crawl-mode-title">
+              <span>增量更新</span>
+              <span class="crawl-recommend-badge">推荐</span>
+            </div>
+            <div class="crawl-mode-desc">保持输入框内已有热词不变，将新提取的热词智能追加至末尾（自动去重）。</div>
+          </div>
+        </label>
+
+        <!-- 选项 2: 覆盖更新 -->
+        <label class="crawl-mode-card" id="crawlModeCardOverwrite" onclick="selectCrawlMode('overwrite')">
+          <input type="radio" name="crawlModeRadio" id="crawlRadioOverwrite" value="overwrite">
+          <div class="crawl-mode-info">
+            <div class="crawl-mode-title">
+              <span>覆盖更新</span>
+            </div>
+            <div class="crawl-mode-desc">清空当前输入框中的所有热词，完全由本次新提取的热词替代。</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 14px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        <div></div>
+        <div class="modal-right-btns">
+          <button class="btn-edit-cancel" onclick="closeCrawlConfirmModal()">取消</button>
+          <button class="btn-edit-save" onclick="confirmAndExecuteCrawl()">确认并开始提取</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 通用删除二次确认 Modal -->
+  <div class="modal-backdrop" id="deleteConfirmModal" style="z-index: 1050;">
+    <div class="modal-card" style="width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="deleteConfirmModalTitle" style="display: flex; align-items: center; gap: 8px; color: #b91c1c;">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; color: #dc2626; flex-shrink: 0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <span id="deleteConfirmHeaderTitle">确认删除</span>
+        </h3>
+        <button class="modal-close-btn" onclick="closeDeleteConfirmModal()">✕</button>
+      </div>
+
+      <div id="deleteConfirmBody" style="font-size: 13px; color: #475569; line-height: 1.6; padding: 4px 0 6px 0;">
+        确定要执行删除操作吗？此操作不可撤销。
+      </div>
+
+      <div class="modal-actions" style="margin-top: 6px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        <div></div>
+        <div class="modal-right-btns">
+          <button class="btn-edit-cancel" onclick="closeDeleteConfirmModal()">取消</button>
+          <button class="btn-delete-confirm-action" onclick="executePendingDelete()">确认删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 模拟活动与论坛映射
+    const EVENT_MAP = {
+      'evt_101': {
+        name: '2026全球数字经济大会',
+        forums: {
+          'forum_1': '具身智能与大模型前沿论坛',
+          'forum_2': 'AI大模型安全与治理论坛',
+          'forum_3': '自动驾驶与智能网联论坛'
+        }
+      },
+      'evt_102': {
+        name: '北京大学2026学术论坛',
+        forums: {
+          'forum_101': '人工智能前沿计算研讨会'
+        }
       }
-    },
-    'evt_102': {
-      name: '北京大学2026学术论坛',
-      forums: {
-        'forum_101': '人工智能前沿计算研讨会'
+    };
+
+    // 核心说话人与参会人专属鲜明配色映射
+    const KNOWN_SPEAKER_COLORS = {
+      '说话人1': '#2563eb', // 蓝 (1)
+      '说话人2': '#7c3aed', // 紫 (2)
+      '说话人3': '#059669', // 翡翠绿 (3)
+      '说话人4': '#ea580c', // 鲜橙色 (4)
+      '说话人5': '#0891b2', // 青蓝色 (5)
+      '说话人6': '#db2777', // 鲜玫红 (6)
+      '说话人7': '#4f46e5', // 靛蓝色 (7)
+      '说话人8': '#d97706', // 琥珀黄 (8)
+      '张三': '#2563eb', // 蓝 (三)
+      '李四': '#7c3aed', // 紫 (四)
+      '王五': '#059669', // 翡翠绿 (五)
+      '赵六': '#ea580c', // 鲜橙色 (六)
+      '钱七': '#0891b2', // 青蓝色 (七)
+      '孙八': '#db2777', // 鲜玫红 (八)
+      '周九': '#4f46e5'  // 靛蓝色 (九)
+    };
+
+    // 备用色彩库
+    const AVATAR_PALETTES = [
+      '#2563eb', '#7c3aed', '#db2777', '#d97706',
+      '#059669', '#0891b2', '#4f46e5', '#ea580c',
+      '#0d9488', '#e11d48'
+    ];
+
+    // 全局热词与屏蔽词模拟数据
+    let globalHotwords = "具身智能, 大语言模型, 智源研究院, Transformer, 强化学习, VLA模型, 具身多模态, 机器视觉";
+    let globalBlockedWords = "内部绝密, 扫码进群, 加微信领资料, 兼职刷单, 稳赚不赔, 独家泄密, 私信免费领, 招商加盟热线";
+
+    // 议程模拟数据 (5个议程)
+    let agendas = [
+      { id: 'c1', title: '开幕致辞 & 领导致辞', speaker: '张三', startTime: '09:00:00', endTime: '09:20:00', active: true },
+      { id: 'c2', title: '智源人工智能前沿进展报告', speaker: '李四', startTime: '09:20:00', endTime: '10:05:00', active: false },
+      { id: 'c3', title: '具身智能大模型理论与实践', speaker: '王五', startTime: '10:05:00', endTime: '10:50:00', active: false },
+      { id: 'c4', title: '圆桌讨论：具身智能的未来十年', speaker: '赵六，钱七，孙八', startTime: '10:50:00', endTime: '11:30:00', active: false },
+      { id: 'c5', title: '闭幕总结与成果发布', speaker: '周九', startTime: '11:30:00', endTime: '11:45:00', active: false }
+    ];
+
+    // 参会人列表 (从议程中动态聚合)
+    let participants = [];
+
+    // 速记发言流丰富模拟数据：时间正序（每个条目保留原始声纹聚类 rawSpeaker）
+    let transcriptItems = [
+      // 议程1：开幕致辞 & 领导致辞 (说话人1 - 5句话)
+      { id: 't1_1', agendaId: 'c1', rawSpeaker: '说话人1', speakerName: '说话人1', time: '09:02:15', text: '尊敬的各位领导、院士专家，以及线上线下的科技同仁们，大家上午好！' },
+      { id: 't1_2', agendaId: 'c1', rawSpeaker: '说话人1', speakerName: '说话人1', time: '09:05:40', text: '欢迎莅临2026全球数字经济大会具身智能与大模型前沿论坛，共同探讨通用人工智能的最新发展范式。' },
+      { id: 't1_3', agendaId: 'c1', rawSpeaker: '说话人1', speakerName: '说话人1', time: '09:09:20', text: '过去几年，人工智能大模型实现了从单纯语言感知到物理世界通用行动能力的跨越式演进。' },
+      { id: 't1_4', agendaId: 'c1', rawSpeaker: '说话人1', speakerName: '说话人1', time: '09:14:05', text: '本次论坛汇聚了国内外顶尖产学研力量，旨在搭建一个完全开放、协同创新的高水平交流平台。' },
+      { id: 't1_5', agendaId: 'c1', rawSpeaker: '说话人1', speakerName: '说话人1', time: '09:18:30', text: '预祝本次具身智能与大模型前沿论坛取得圆满成功，下面让我们正式进入主题报告环节！' },
+
+      // 议程2：智源人工智能前沿进展报告 (说话人2 - 5句话)
+      { id: 't2_1', agendaId: 'c2', rawSpeaker: '说话人2', speakerName: '说话人2', time: '09:22:10', text: '非常荣幸在此向大家汇报智源研究院在过去一年里取得的前沿基础理论与系统级突破。' },
+      { id: 't2_2', agendaId: 'c2', rawSpeaker: '说话人2', speakerName: '说话人2', time: '09:30:45', text: '我们重点研发了新一代超大规模混合架构模型，将脉冲神经网络与自注意力机制进行了深度融合。' },
+      { id: 't2_3', agendaId: 'c2', rawSpeaker: '说话人2', speakerName: '说话人2', time: '09:38:20', text: '这一新型架构不仅将长序列复杂推理的硬件算力消耗降低了近40%，还大幅提升了动态泛化能力。' },
+      { id: 't2_4', agendaId: 'c2', rawSpeaker: '说话人2', speakerName: '说话人2', time: '09:47:15', text: '在具身感知层面，新模型实现了毫秒级的多模态端到端延迟，为物理实体的实时控制奠定了基石。' },
+      { id: 't2_5', agendaId: 'c2', rawSpeaker: '说话人2', speakerName: '说话人2', time: '09:58:30', text: '后续我们仍将坚持全面开源开放，把核心模型权重与全套评测基准公开共享给整个开源生态社区。' },
+
+      // 议程3：具身智能大模型理论与实践 (说话人3 - 5句话)
+      { id: 't3_1', agendaId: 'c3', rawSpeaker: '说话人3', speakerName: '说话人3', time: '10:07:30', text: '大家好，今天我带来的分享主题是《具身智能大模型：从物理感知到自主行动决策》。' },
+      { id: 't3_2', agendaId: 'c3', rawSpeaker: '说话人3', speakerName: '说话人3', time: '10:16:00', text: '传统机器人控制高度依赖结构化环境建模，而在开放动态环境中，多模态大模型赋予了机器人真正的大脑。' },
+      { id: 't3_3', agendaId: 'c3', rawSpeaker: '说话人3', speakerName: '说话人3', time: '10:25:40', text: '通过结合视觉-语言-动作（VLA）多模态大模型，机器人已经能够通过自然语言指令完成跨场景泛化抓取。' },
+      { id: 't3_4', agendaId: 'c3', rawSpeaker: '说话人3', speakerName: '说话人3', time: '10:35:10', text: '我们在工业装配与家庭服务两类场景中进行了大量实机部署验证，复合任务成功率已突破95%。' },
+      { id: 't3_5', agendaId: 'c3', rawSpeaker: '说话人3', speakerName: '说话人3', time: '10:44:50', text: '未来的核心挑战依然在于高质量具身交互数据的采集规模以及物理仿真环境下的持续强化学习探索。' },
+
+      // 议程4：圆桌讨论：具身智能的未来十年 (说话人4、说话人5、说话人6 - 6句话)
+      { id: 't4_1', agendaId: 'c4', rawSpeaker: '说话人4', speakerName: '说话人4', time: '10:52:00', text: '各位专家好，非常高兴主持今天的圆桌对话。想首先请问两位，未来十年具身智能最大的技术拐点会在哪里？' },
+      { id: 't4_2', agendaId: 'c4', rawSpeaker: '说话人5', speakerName: '说话人5', time: '10:58:15', text: '我认为首要拐点在于‘端到端强化学习与具身世界模型’的融合，真正赋予具身系统物理常识推理能力。' },
+      { id: 't4_3', agendaId: 'c4', rawSpeaker: '说话人6', speakerName: '说话人6', time: '11:05:30', text: '我非常赞同，同时我认为硬件端‘专用低功耗具身芯片’与触觉感知传感器的突破也是商业化落地的先决条件。' },
+      { id: 't4_4', agendaId: 'c4', rawSpeaker: '说话人4', speakerName: '说话人4', time: '11:12:40', text: '两位老师谈得非常深刻，那么从学术研发走向千行百业的产业规模化落地，我们当前最急需跨越的鸿沟是什么？' },
+      { id: 't4_5', agendaId: 'c4', rawSpeaker: '说话人5', speakerName: '说话人5', time: '11:19:20', text: '最关键的仍然是跨本体通用泛化能力，我们不能为每一种形态的机器人单独重新训练一次大模型基座。' },
+      { id: 't4_6', agendaId: 'c4', rawSpeaker: '说话人6', speakerName: '说话人6', time: '11:26:00', text: '从产业视角看，还需要完善行业安全标准与低成本部署方案，建立开放互通的具身大模型数据联盟。' },
+
+      // 议程5：闭幕总结与成果发布 (说话人7 - 5句话)
+      { id: 't5_1', agendaId: 'c5', rawSpeaker: '说话人7', speakerName: '说话人7', time: '11:31:20', text: '经过一上午高密度的思想碰撞与学术交流，本次前沿论坛即将进入尾声。' },
+      { id: 't5_2', agendaId: 'c5', rawSpeaker: '说话人7', speakerName: '说话人7', time: '11:34:00', text: '今天各位专家的真知灼见，为我们描绘了具身智能大模型未来十年的清晰演进蓝图与技术路线。' },
+      { id: 't5_3', agendaId: 'c5', rawSpeaker: '说话人7', speakerName: '说话人7', time: '11:37:45', text: '在这里，我谨代表组委会正式发布《2026具身智能大模型技术白皮书》及全新开源评测套件。' },
+      { id: 't5_4', agendaId: 'c5', rawSpeaker: '说话人7', speakerName: '说话人7', time: '11:41:10', text: '感谢所有线上线下的专家学者、企业代表与开发者们的积极参与和倾情支持！' },
+      { id: 't5_5', agendaId: 'c5', rawSpeaker: '说话人7', speakerName: '说话人7', time: '11:44:00', text: '让我们携手并进，共同开启通用具身智能的新时代！本次论坛圆满结束，谢谢大家！' }
+    ];
+
+    // 页面状态
+    let currentEventId = 'evt_101';
+    let currentForumId = 'forum_1';
+    let currentCatalogTab = 'chapter'; // 'chapter' | 'participant'
+    let editingTranscriptId = null;
+    let editingAgendaId = null;
+    let activeSpeakerPopoverId = null;
+    let isPlayingVideo = false;
+    let currentDebugStatus = 'not_started'; // 'not_started' | 'in_progress' | 'ended'
+    let videoProgressPercent = 0;
+    let videoCurrentTimeStr = '00:00:00';
+    let isProgrammaticScrolling = false;
+    let programmaticScrollTimer = null;
+
+    // 判断是否为未命名原始声纹编号（如 说话人1、说话人2...）
+    function isRawSpeaker(name) {
+      if (!name) return false;
+      return /^说话人\s*\d+$/.test(name.trim());
+    }
+
+    // 模拟参会人真实高清头像映射（张三、李四、王五模拟未设置头像的空态）
+    const PRESET_PARTICIPANT_AVATARS = {
+      '张三': '', // 模拟空态无头像
+      '李四': '', // 模拟空态无头像
+      '王五': '', // 模拟空态无头像
+      '赵六': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
+      '钱七': 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80',
+      '孙八': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
+      '周九': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80'
+    };
+
+    // 头像背景色与单字提取
+    function getSpeakerAvatarColor(name) {
+      if (!name) return '#1e1e24';
+      const clean = name.trim();
+      if (isRawSpeaker(clean)) {
+        return KNOWN_SPEAKER_COLORS[clean] || '#2563eb';
+      }
+      return '#1e1e24';
+    }
+
+    function getSpeakerAvatarChar(name) {
+      if (!name) return '人';
+      const clean = name.trim();
+      const m = clean.match(/^说话人\s*(\d+)$/);
+      if (m) return m[1];
+      return clean.slice(-1) || '人';
+    }
+
+    // 渲染说话人头像（参会人采用真人照片或现代通用的柔和浅底单字空态，与原始声纹聚类的深色纯色数字明显区分）
+    function renderAvatarHtml(name, size = 30, fontSize = 13) {
+      const clean = (name || '').trim();
+      if (clean === '未选择' || !clean) {
+        return `<div class="speaker-avatar-circle is-participant-empty" style="width: ${size}px; height: ${size}px; font-size: ${fontSize}px; background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; font-weight: 500;">未</div>`;
+      }
+      const char = getSpeakerAvatarChar(clean);
+      const isRaw = isRawSpeaker(clean);
+
+      if (!isRaw) {
+        // 具体参会人：优先展示真人照片头像，若未设置则为现代规范的浅色柔和底 + 靛蓝文字
+        const pObj = participants.find(p => p.name === clean);
+        const photoUrl = (pObj && pObj.avatarUrl) || PRESET_PARTICIPANT_AVATARS[clean];
+
+        if (photoUrl) {
+          return `
+            <div class="speaker-avatar-circle has-photo" style="width: ${size}px; height: ${size}px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.06); padding: 0; overflow: hidden; background: #f8fafc; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;">
+              <img src="${photoUrl}" alt="${escapeHtml(clean)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+              <span style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: #e0e7ff; color: #4338ca; font-size: ${fontSize}px; font-weight: 600;">${escapeHtml(char)}</span>
+            </div>
+          `;
+        }
+
+        // 参会人无头像空态：现代企业级规范（浅靛蓝背景 #e0e7ff + 靛蓝单字 #4338ca + 精致微边框 #c7d2fe），展示姓名末字，与原始声纹的高饱和纯色数字形成鲜明直观对比
+        return `<div class="speaker-avatar-circle is-participant-empty" style="width: ${size}px; height: ${size}px; font-size: ${fontSize}px; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); font-weight: 600;">${escapeHtml(char)}</div>`;
+      }
+
+      // 未命名原始声纹聚类：深色/高饱和纯色背景 + 纯白数字（如 说话人1 为深蓝色 #2563eb）
+      const bg = KNOWN_SPEAKER_COLORS[clean] || '#2563eb';
+      return `<div class="speaker-avatar-circle is-raw-speaker" style="width: ${size}px; height: ${size}px; font-size: ${fontSize}px; background-color: ${bg}; color: #ffffff; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.08); font-weight: 600;">${escapeHtml(char)}</div>`;
+    }
+
+    // 参会人与全部声纹聚类候选相似度/置信度完整映射（展示全部说话人，置信度降序）
+    const PRESET_PARTICIPANT_CANDIDATES = {
+      '张三': [
+        { speaker: '说话人1', score: 96 },
+        { speaker: '说话人2', score: 62 },
+        { speaker: '说话人3', score: 48 },
+        { speaker: '说话人4', score: 35 },
+        { speaker: '说话人5', score: 28 },
+        { speaker: '说话人6', score: 20 },
+        { speaker: '说话人7', score: 15 }
+      ],
+      '李四': [
+        { speaker: '说话人2', score: 94 },
+        { speaker: '说话人1', score: 58 },
+        { speaker: '说话人3', score: 52 },
+        { speaker: '说话人4', score: 42 },
+        { speaker: '说话人5', score: 33 },
+        { speaker: '说话人6', score: 25 },
+        { speaker: '说话人7', score: 18 }
+      ],
+      '王五': [
+        { speaker: '说话人3', score: 92 },
+        { speaker: '说话人4', score: 65 },
+        { speaker: '说话人2', score: 50 },
+        { speaker: '说话人1', score: 38 },
+        { speaker: '说话人5', score: 30 },
+        { speaker: '说话人6', score: 22 },
+        { speaker: '说话人7', score: 16 }
+      ],
+      '赵六': [
+        { speaker: '说话人4', score: 91 },
+        { speaker: '说话人5', score: 76 },
+        { speaker: '说话人6', score: 64 },
+        { speaker: '说话人1', score: 40 },
+        { speaker: '说话人2', score: 32 },
+        { speaker: '说话人3', score: 25 },
+        { speaker: '说话人7', score: 18 }
+      ],
+      '钱七': [
+        { speaker: '说话人5', score: 89 },
+        { speaker: '说话人6', score: 72 },
+        { speaker: '说话人4', score: 60 },
+        { speaker: '说话人1', score: 36 },
+        { speaker: '说话人2', score: 28 },
+        { speaker: '说话人3', score: 22 },
+        { speaker: '说话人7', score: 15 }
+      ],
+      '孙八': [
+        { speaker: '说话人6', score: 88 },
+        { speaker: '说话人5', score: 68 },
+        { speaker: '说话人4', score: 55 },
+        { speaker: '说话人1', score: 34 },
+        { speaker: '说话人2', score: 26 },
+        { speaker: '说话人3', score: 20 },
+        { speaker: '说话人7', score: 14 }
+      ],
+      '周九': [
+        { speaker: '说话人7', score: 95 },
+        { speaker: '说话人1', score: 60 },
+        { speaker: '说话人2', score: 48 },
+        { speaker: '说话人3', score: 40 },
+        { speaker: '说话人4', score: 30 },
+        { speaker: '说话人5', score: 24 },
+        { speaker: '说话人6', score: 18 }
+      ]
+    };
+
+    // 从议程人名中聚合参会人列表 (支持多选说话人与真人头像)
+    function syncParticipantsFromAgendas() {
+      const speakerNames = [];
+      agendas.forEach(a => {
+        const names = a.speaker.split(/[,，、;；]+/).map(s => s.trim()).filter(Boolean);
+        names.forEach(n => {
+          if (!speakerNames.includes(n)) speakerNames.push(n);
+        });
+      });
+
+      const existingMap = new Map(participants.map(p => [p.name, p]));
+      participants = speakerNames.map((name, idx) => {
+        if (existingMap.has(name)) {
+          return existingMap.get(name);
+        }
+        const defaultCands = PRESET_PARTICIPANT_CANDIDATES[name] || [
+          { speaker: `说话人${(idx % 7) + 1}`, score: 90 - idx * 2 },
+          { speaker: `说话人${((idx + 1) % 7) + 1}`, score: 65 - idx * 2 },
+          { speaker: `说话人${((idx + 2) % 7) + 1}`, score: 40 - idx * 2 },
+          { speaker: `说话人${((idx + 3) % 7) + 1}`, score: 30 - idx * 2 },
+          { speaker: `说话人${((idx + 4) % 7) + 1}`, score: 20 - idx * 2 }
+        ];
+        return {
+          id: 'p_' + (idx + 1),
+          name: name,
+          avatarUrl: PRESET_PARTICIPANT_AVATARS[name] || '',
+          hotwords: `${name}, 具身智能, 大模型, 深度学习`,
+          candidates: [...defaultCands].sort((a, b) => b.score - a.score),
+          assignedSpeakers: [], // 支持多选关联说话人
+          isManual: false
+        };
+      });
+    }
+
+    // 调试状态切换响应
+    function setDebugStatus(status) {
+      currentDebugStatus = status;
+      isPlayingVideo = false;
+      document.querySelectorAll('.status-debug-card').forEach(card => {
+        if (card.dataset.status === status) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+
+      if (status === 'in_progress') {
+        agendas.forEach((a, i) => a.active = (i === 3));
+        videoProgressPercent = 68;
+        videoCurrentTimeStr = '01:12:40';
+        // 如果是从 ended 切回且非人工选择的，重置自动绑定
+        participants.forEach(p => {
+          if (!p.isManual && p.assignedSpeakers && p.assignedSpeakers.length > 0) {
+            const toReset = [...p.assignedSpeakers];
+            p.assignedSpeakers = [];
+            transcriptItems.forEach(t => {
+              if (toReset.includes(t.rawSpeaker)) {
+                t.speakerName = t.rawSpeaker;
+                t.isAutoAssigned = false;
+              }
+            });
+          }
+        });
+      } else if (status === 'not_started') {
+        agendas.forEach((a, i) => a.active = (i === 0));
+        videoProgressPercent = 0;
+        videoCurrentTimeStr = '00:00:00';
+        participants.forEach(p => {
+          if (!p.isManual && p.assignedSpeakers && p.assignedSpeakers.length > 0) {
+            const toReset = [...p.assignedSpeakers];
+            p.assignedSpeakers = [];
+            transcriptItems.forEach(t => {
+              if (toReset.includes(t.rawSpeaker)) {
+                t.speakerName = t.rawSpeaker;
+                t.isAutoAssigned = false;
+              }
+            });
+          }
+        });
+      } else {
+        // 'ended' 状态：如果人工没有选择，系统默认自动选中最高置信度（排他）
+        agendas.forEach((a, i) => a.active = (i === 0));
+        videoProgressPercent = 100;
+        videoCurrentTimeStr = '01:45:00';
+
+        runAutoAssignForEnded();
+        showToast('会议已结束：系统已将未确认说话人按最高置信度自动标注（虚线标识）');
+      }
+
+      updateVideoBox();
+      renderAgendas();
+      renderTranscripts();
+      renderParticipants();
+
+      // 如果是切换到进行中状态，自动将右侧实时转写滚动跳转至当前进行中议程的第一条（置顶）
+      if (status === 'in_progress') {
+        const activeAgenda = agendas.find(a => a.active);
+        if (activeAgenda) {
+          scrollToAgendaFirstTranscript(activeAgenda.id, 'smooth');
+        }
+      } else {
+        handleTranscriptScroll();
       }
     }
-  };
 
-  // 全局热词与参会人模拟数据
-  let globalHotwords = "具身智能, 大语言模型, 智源研究院, 张宏江, Transformer, 强化学习, VLA模型, 北京大学";
+    document.addEventListener('DOMContentLoaded', function () {
+      // 1. 解析 URL 参数
+      const params = new URLSearchParams(window.location.search);
+      currentEventId = params.get('eventId') || 'evt_101';
+      currentForumId = params.get('forumId') || 'forum_1';
 
-  let participants = [
-    { id: 'p1', name: '张宏江', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Zhang', hotwords: '智源研究院, 具身智能, 大模型, 开源生态, AI基础设施' },
-    { id: 'p2', name: '黄铁军', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Huang', hotwords: '脉冲神经网络, 智源大模型, 具身多模态, 机器视觉' },
-    { id: 'p3', name: '林达华', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lin', hotwords: '书生大模型, 自动驾驶, 跨模态生成, 视觉感知' },
-    { id: 'p4', name: '王小川', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wang', hotwords: '百川智能, 医疗大模型, 长文本推理, 智商测评' },
-    { id: 'p5', name: '李笛', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Li', hotwords: '小冰框架, 情感计算, AI Being, 社交Agent' }
-  ];
+      // 2. 更新顶部路径
+      const eventInfo = EVENT_MAP[currentEventId] || { name: '2026全球数字经济大会', forums: { 'forum_1': '具身智能与大模型前沿论坛' } };
+      const forumName = (eventInfo.forums && eventInfo.forums[currentForumId]) || '具身智能与大模型前沿论坛';
+      document.getElementById('pathForumTag').textContent = `${eventInfo.name} - ${forumName}`;
+      document.getElementById('backLink').href = `forum-mgmt.html?eventId=${currentEventId}`;
 
-  // 章节模拟数据
-  let chapters = [
-    { id: 'c1', title: '开幕致辞 & 领导致辞', speaker: '张宏江', time: '09:00:00', duration: '20 min', active: true },
-    { id: 'c2', title: '智源人工智能前沿进展报告', speaker: '黄铁军', time: '09:20:00', duration: '45 min', active: false },
-    { id: 'c3', title: '具身智能具身大模型理论与实践', speaker: '林达华', time: '10:05:00', duration: '45 min', active: false },
-    { id: 'c4', title: '圆桌讨论：具身智能的未来十年', speaker: '嘉宾圆桌', time: '10:50:00', duration: '40 min', active: false },
-    { id: 'c5', title: '闭幕总结与成果发布', speaker: '组委会代表', time: '11:30:00', duration: '15 min', active: false }
-  ];
+      // 3. 聚合参会人并初始渲染
+      syncParticipantsFromAgendas();
+      updateVideoBox();
+      renderAgendas();
+      renderParticipants();
+      renderTranscripts();
 
-  // 速记发言流模拟数据 (倒序：时间最新在前)
-  let transcriptItems = [
-    {
-      id: 't6',
-      speakerId: 'p1',
-      speakerName: '张宏江',
-      time: '11:35:10',
-      text: '感谢各位嘉宾的精彩发言与深刻见解！总结而言，具身智能与大模型软硬件的深度融合是走向 AGI 的关键一步。智源研究院将继续坚定推动开源与算法创新，与全球学术界和产业界共建开放包容的 AI 生态。今天的大会直播论坛到此结束，谢谢大家！'
-    },
-    {
-      id: 't5',
-      speakerId: 'p4',
-      speakerName: '王小川',
-      time: '11:15:42',
-      text: '关于大模型长文本推理与实际业务场景落地，我认为不仅要在算法架构上进行微调，更要关注推理成本与响应时延的平衡。在医疗和法律等专业领域，结合知识图谱的高精度 Agent 方案正在展现出显著优势。'
-    },
-    {
-      id: 't4',
-      speakerId: 'p3',
-      speakerName: '林达华',
-      time: '10:45:00',
-      text: '我们在具身多模态感知与控制的最新研究中发现，将视觉-语言-动作 (VLA) 模型与端到端强化学习结合，能极大提升机械臂在复杂不确定环境下的自适应抓取成功率。未来的泛化能力将是跨场景部署的核心。'
-    },
-    {
-      id: 't3',
-      speakerId: 'p5',
-      speakerName: '李笛',
-      time: '10:20:15',
-      text: '多模态交互不仅是语音和视觉的简单叠加，更是情感计算与上下文长期记忆的自然融合。AI Being 正在从单向助手演化为具备共情能力的协同伙伴，这为未来的智慧家庭和养老服务打开了全新的空间。'
-    },
-    {
-      id: 't2',
-      speakerId: 'p2',
-      speakerName: '黄铁军',
-      time: '09:35:50',
-      text: '大家早上好！今天非常高兴代表智源报告我们在前沿大模型与具身视觉芯片上的最新突破。过去一年里，智源团队实现了超大规模脉冲神经网络与多模态大模型的融合架构，大幅降低了推理能耗。'
-    },
-    {
-      id: 't1',
-      speakerId: 'p1',
-      speakerName: '张宏江',
-      time: '09:05:00',
-      text: '尊敬的各位领导、专家和现场及在线的嘉宾们，欢迎大家参加 2026 全球数字经济大会具身智能与大模型前沿论坛！人工智能正在经历从数字空间走向物理世界的深刻变革。'
-    }
-  ];
-
-  // 页面状态
-  let currentEventId = 'evt_101';
-  let currentForumId = 'forum_1';
-  let activeHotwordsTarget = 'global'; // 'global' 或 participant.id
-  let editingTranscriptId = null;
-  let activeSpeakerPopoverId = null;
-  let isPlayingVideo = false;
-
-  document.addEventListener('DOMContentLoaded', function() {
-    // 1. 解析 URL 参数
-    const params = new URLSearchParams(window.location.search);
-    currentEventId = params.get('eventId') || 'evt_101';
-    currentForumId = params.get('forumId') || 'forum_1';
-
-    // 2. 更新顶部路径
-    const eventInfo = EVENT_MAP[currentEventId] || { name: '2026全球数字经济大会', forums: { 'forum_1': '具身智能与大模型前沿论坛' } };
-    const forumName = (eventInfo.forums && eventInfo.forums[currentForumId]) || '具身智能与大模型前沿论坛';
-    document.getElementById('pathForumTag').textContent = `${eventInfo.name} - ${forumName}`;
-    document.getElementById('backLink').href = `forum-mgmt.html?eventId=${currentEventId}`;
-
-    // 3. 初始渲染
-    renderChapters();
-    renderParticipants();
-    renderTranscripts();
-
-    // 4. 点击全局空白处关闭 Popover
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.speaker-name-wrapper') && !e.target.closest('.speaker-dropdown-popover')) {
-        closeSpeakerPopover();
+      // 4. 监听实时转写滚动，实现双向联动左侧议程及控制“回到最新”按钮
+      const streamContainer = document.getElementById('transcriptStream');
+      if (streamContainer) {
+        streamContainer.addEventListener('scroll', handleTranscriptScroll);
       }
+
+      // 5. 点击全局空白处关闭 Popover 与参会人下拉菜单
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest('.speaker-name-wrapper') && !e.target.closest('.speaker-dropdown-popover')) {
+          closeSpeakerPopover();
+        }
+        if (!e.target.closest('.participant-speaker-select-container')) {
+          closeAllParticipantDropdowns();
+        }
+      });
     });
-  });
 
-  // Tab 切换逻辑
-  function switchCatalogTab(tabName) {
-    const tabs = document.querySelectorAll('.catalog-tab-item');
-    tabs.forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    // 左侧 Tab 切换逻辑 (议程 | 参会人)
+    function switchCatalogTab(tabName) {
+      currentCatalogTab = tabName;
+      const tabs = document.querySelectorAll('.catalog-tab-item');
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-    if (tabName === 'chapter') {
-      tabs[0].classList.add('active');
-      document.getElementById('tabChapter').classList.add('active');
-    } else {
-      tabs[1].classList.add('active');
-      document.getElementById('tabParticipant').classList.add('active');
+      const btnText = document.getElementById('catalogHeaderBtnText');
+
+      if (tabName === 'chapter') {
+        tabs[0].classList.add('active');
+        document.getElementById('tabChapter').classList.add('active');
+        if (btnText) btnText.textContent = '新增议程';
+      } else {
+        tabs[1].classList.add('active');
+        document.getElementById('tabParticipant').classList.add('active');
+        if (btnText) btnText.textContent = '新增参会人';
+      }
     }
-  }
 
-  // 视频播放模拟
-  function togglePlayVideo() {
-    isPlayingVideo = !isPlayingVideo;
-    const playIcon = document.getElementById('playIcon');
-    if (isPlayingVideo) {
-      playIcon.innerHTML = `<rect x="5" y="4" width="4" height="16"></rect><rect x="15" y="4" width="4" height="16"></rect>`;
-    } else {
-      playIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
+    // 点击顶部“新增议程 / 新增参会人”动作分发
+    function handleCatalogHeaderAction() {
+      if (currentCatalogTab === 'chapter') {
+        openCreateAgendaModal();
+      } else {
+        handleAddParticipantPrompt();
+      }
     }
-  }
 
-  function seekVideo(e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const percent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
-    document.getElementById('videoProgressFill').style.width = percent + '%';
-    
-    const totalSec = 105 * 60; // 1h45m
-    const currSec = Math.floor((percent / 100) * totalSec);
-    const m = Math.floor(currSec / 60);
-    const s = currSec % 60;
-    document.getElementById('videoCurrentTime').textContent = `00:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
-  }
+    // 视频区域状态渲染
+    function updateVideoBox() {
+      const box = document.getElementById('videoWindowBox');
+      if (!box) return;
 
-  // 渲染章节
-  function renderChapters() {
-    const listEl = document.getElementById('chapterList');
-    listEl.innerHTML = chapters.map(c => `
-      <div class="chapter-item ${c.active ? 'active' : ''}" onclick="selectChapter('${c.id}')">
-        <div class="chapter-item-title">${escapeHtml(c.title)}</div>
-        <div class="chapter-item-meta">
-          <span>${escapeHtml(c.speaker)}</span>
-          <span style="font-family: monospace;">${c.time} (${c.duration})</span>
+      if (currentDebugStatus === 'not_started') {
+        box.innerHTML = `
+        <div class="video-placeholder-state">
+          <div class="video-not-started-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+              <polyline points="17 2 12 7 7 2"></polyline>
+            </svg>
+          </div>
+          <div class="video-not-started-title">直播未开始</div>
         </div>
-      </div>
-    `).join('');
-  }
-
-  function selectChapter(id) {
-    chapters.forEach(c => c.active = (c.id === id));
-    renderChapters();
-  }
-
-  // 渲染参会人列表 (含同高度虚线框添加按钮)
-  function renderParticipants() {
-    const listEl = document.getElementById('participantList');
-    let html = participants.map(p => `
-      <div class="participant-card">
-        <div class="participant-info">
-          <img class="participant-avatar" src="${p.avatar}" alt="${p.name}">
-          <span class="participant-name">${escapeHtml(p.name)}</span>
+      `;
+      } else if (currentDebugStatus === 'in_progress') {
+        box.innerHTML = `
+        <div class="video-live-tag-top">
+          <span class="video-live-pill">
+            <span class="video-live-pulse-dot"></span>
+            直播中
+          </span>
         </div>
-        <button class="btn-view-hotwords" onclick="openHotwordsModal('${p.id}')">查看热词</button>
-      </div>
-    `).join('');
 
-    // 置底渲染同等高度的虚拟框“添加参会人”按钮
-    html += `
-      <div class="participant-card-add" onclick="handleAddParticipantPrompt()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        添加参会人
-      </div>
-    `;
+        <div class="video-watermark">
+          <div class="video-play-btn" onclick="togglePlayVideo()">
+            <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              ${isPlayingVideo ? '<rect x="5" y="4" width="4" height="16"></rect><rect x="15" y="4" width="4" height="16"></rect>' : '<polygon points="5 3 19 12 5 21 5 3"></polygon>'}
+            </svg>
+          </div>
+        </div>
+      `;
+      } else { // 'ended'
+        box.innerHTML = `
+        <div class="video-live-tag-top">
+          <span class="video-ended-pill">回放</span>
+        </div>
 
-    listEl.innerHTML = html;
-  }
+        <div class="video-watermark">
+          <div class="video-play-btn" onclick="togglePlayVideo()">
+            <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              ${isPlayingVideo ? '<rect x="5" y="4" width="4" height="16"></rect><rect x="15" y="4" width="4" height="16"></rect>' : '<polygon points="5 3 19 12 5 21 5 3"></polygon>'}
+            </svg>
+          </div>
+        </div>
 
-  // 添加参会人弹窗逻辑
-  function handleAddParticipantPrompt() {
-    const name = prompt('请输入新参会人的姓名：');
-    if (name && name.trim()) {
-      addNewParticipant(name.trim());
-    }
-  }
-
-  function addNewParticipant(name) {
-    const newId = 'p_' + Date.now();
-    const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
-    const newP = { id: newId, name: name, avatar: avatar, hotwords: `${name}, 具身智能, 大模型` };
-    participants.push(newP);
-    renderParticipants();
-    return newP;
-  }
-
-  // 渲染右侧速记流 (倒序展示)
-  function renderTranscripts(filterVal = '') {
-    const streamEl = document.getElementById('transcriptStream');
-    let items = transcriptItems;
-
-    if (filterVal && filterVal.trim()) {
-      const q = filterVal.trim().toLowerCase();
-      items = items.filter(t => t.speakerName.toLowerCase().includes(q) || t.text.toLowerCase().includes(q));
+        <div class="video-controls">
+          <div class="video-progress-bar" onclick="seekVideo(event)">
+            <div class="video-progress-fill" id="videoProgressFill" style="width: ${videoProgressPercent}%;">
+              <div class="video-progress-handle"></div>
+            </div>
+          </div>
+          <div class="video-time-row">
+            <span id="videoCurrentTime">${videoCurrentTimeStr}</span>
+            <span>01:45:00</span>
+          </div>
+        </div>
+      `;
+      }
     }
 
-    if (items.length === 0) {
-      streamEl.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 40px 0; font-size: 14px;">无匹配发言内容</div>`;
-      return;
+    function togglePlayVideo() {
+      isPlayingVideo = !isPlayingVideo;
+      const playIcon = document.getElementById('playIcon');
+      if (playIcon) {
+        if (isPlayingVideo) {
+          playIcon.innerHTML = `<rect x="5" y="4" width="4" height="16"></rect><rect x="15" y="4" width="4" height="16"></rect>`;
+        } else {
+          playIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
+        }
+      }
     }
 
-    streamEl.innerHTML = items.map(item => {
-      // 查找参会人头像
-      const pObj = participants.find(p => p.name === item.speakerName) || { avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.speakerName)}` };
-      
-      const isEditingText = (editingTranscriptId === item.id);
-      const isPopoverOpen = (activeSpeakerPopoverId === item.id);
+    function seekVideo(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+      videoProgressPercent = percent;
+      const fillEl = document.getElementById('videoProgressFill');
+      if (fillEl) fillEl.style.width = percent + '%';
 
-      return `
-        <div class="transcript-item" id="item_${item.id}">
-          <!-- 头像 说话人 时间 所在行 -->
-          <div class="speaker-meta-row">
-            <img class="speaker-avatar-img" src="${pObj.avatar}" alt="${item.speakerName}">
-            
-            <div class="speaker-name-wrapper" onclick="toggleSpeakerPopover(event, '${item.id}')">
-              <span class="speaker-name-text">${escapeHtml(item.speakerName)}</span>
-              <!-- Hover 状态下的带透明度遮罩与编辑 Icon -->
-              <div class="speaker-hover-mask">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      const totalSec = 105 * 60;
+      const currSec = Math.floor((percent / 100) * totalSec);
+      const m = Math.floor(currSec / 60);
+      const s = currSec % 60;
+      videoCurrentTimeStr = `00:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+      const timeEl = document.getElementById('videoCurrentTime');
+      if (timeEl) timeEl.textContent = videoCurrentTimeStr;
+    }
+
+    // 计算议程状态
+    function getAgendaItemStatus(agenda, index) {
+      if (currentDebugStatus === 'not_started') {
+        return { key: 'not_started', label: '未开始' };
+      } else if (currentDebugStatus === 'in_progress') {
+        if (index < 3) {
+          return { key: 'ended', label: '已结束' };
+        } else if (index === 3) {
+          return { key: 'in_progress', label: '进行中' };
+        } else {
+          return { key: 'not_started', label: '未开始' };
+        }
+      } else {
+        return { key: 'ended', label: '已结束' };
+      }
+    }
+
+    // 边界冲突源记录
+    let boundarySources = {};
+
+    // 渲染议程列表
+    function renderAgendas() {
+      const listEl = document.getElementById('chapterList');
+      if (!listEl) return;
+
+      listEl.innerHTML = agendas.map((c, idx) => {
+        const st = getAgendaItemStatus(c, idx);
+        const conflictAlerts = [];
+
+        if (idx > 0) {
+          const prev = agendas[idx - 1];
+          const bKey = `${prev.id}_${c.id}`;
+          if (prev.endTime !== c.startTime) {
+            if (boundarySources[bKey] && boundarySources[bKey].targetId === c.id) {
+              conflictAlerts.push({
+                msg: `与上一议程结束时间 (${boundarySources[bKey].syncTime}) 不一致`,
+                btnText: `修改开始时间为 ${boundarySources[bKey].syncTime}`,
+                field: 'startTime',
+                syncTime: boundarySources[bKey].syncTime
+              });
+            } else if (!boundarySources[bKey]) {
+              conflictAlerts.push({
+                msg: `与上一议程结束时间 (${prev.endTime}) 不一致`,
+                btnText: `修改开始时间为 ${prev.endTime}`,
+                field: 'startTime',
+                syncTime: prev.endTime
+              });
+            }
+          }
+        }
+
+        if (idx < agendas.length - 1) {
+          const next = agendas[idx + 1];
+          const bKey = `${c.id}_${next.id}`;
+          if (c.endTime !== next.startTime) {
+            if (boundarySources[bKey] && boundarySources[bKey].targetId === c.id) {
+              conflictAlerts.push({
+                msg: `与下一议程开始时间 (${boundarySources[bKey].syncTime}) 不一致`,
+                btnText: `修改结束时间为 ${boundarySources[bKey].syncTime}`,
+                field: 'endTime',
+                syncTime: boundarySources[bKey].syncTime
+              });
+            }
+          }
+        }
+
+        const conflictHtml = conflictAlerts.map(alert => `
+          <div class="agenda-card-conflict-alert" onclick="event.stopPropagation()">
+            <div class="agenda-conflict-msg">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              ${alert.msg}
+            </div>
+            <button type="button" class="btn-quick-sync-inline" onclick="syncAgendaTime('${c.id}', '${alert.field}', '${alert.syncTime}')">
+              ${alert.btnText}
+            </button>
+          </div>
+        `).join('');
+
+        return `
+        <div class="chapter-item ${c.active ? 'active' : ''}" onclick="selectAgenda('${c.id}')">
+          <div class="chapter-item-top-row">
+            <div class="chapter-item-title" title="${escapeHtml(c.title)}">${escapeHtml(c.title)}</div>
+            <span class="agenda-status-pill ${st.key}">
+              ${st.key === 'in_progress' ? '<span class="status-dot in-progress" style="width:5px;height:5px;box-shadow:none;"></span>' : ''}
+              ${st.label}
+            </span>
+          </div>
+          <div class="chapter-item-bottom-row">
+            <span class="chapter-item-time">${c.startTime} - ${c.endTime}</span>
+            <span class="chapter-item-divider">·</span>
+            <span class="chapter-item-speaker" title="${escapeHtml(c.speaker)}">${escapeHtml(c.speaker)}</span>
+          </div>
+
+          ${conflictHtml}
+
+          <!-- Hover 状态下右上角浮层编辑按钮 -->
+          <div class="chapter-item-hover-mask">
+            <button class="btn-edit-agenda-pill" onclick="openEditAgendaModal(event, '${c.id}')" title="编辑议程">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              编辑
+            </button>
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    // 滚动定位到指定议程的第一条速记（置顶显示在最上方）
+    function scrollToAgendaFirstTranscript(agendaId, behavior = 'smooth') {
+      if (currentDebugStatus === 'not_started') return;
+      const targetItem = transcriptItems.find(t => t.agendaId === agendaId);
+      if (!targetItem) return;
+
+      isProgrammaticScrolling = true;
+      if (programmaticScrollTimer) clearTimeout(programmaticScrollTimer);
+      programmaticScrollTimer = setTimeout(() => {
+        isProgrammaticScrolling = false;
+      }, 700);
+
+      setTimeout(() => {
+        const el = document.getElementById(`item_${targetItem.id}`);
+        const streamContainer = document.getElementById('transcriptStream');
+        if (el && streamContainer) {
+          const targetScrollTop = el.offsetTop - streamContainer.offsetTop;
+          streamContainer.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: behavior
+          });
+          el.classList.add('transcript-item-highlight');
+          setTimeout(() => el.classList.remove('transcript-item-highlight'), 2200);
+        }
+      }, 60);
+    }
+
+    // 点击左侧议程：高亮议程并自动平滑滚动跳转到对应时间的速记文本（第一条置顶）
+    function selectAgenda(id) {
+      agendas.forEach(c => c.active = (c.id === id));
+      renderAgendas();
+      scrollToAgendaFirstTranscript(id, 'smooth');
+    }
+
+    // 实时转写平滑滚动至最底部（最新发言）
+    function scrollToLatestTranscript() {
+      const streamEl = document.getElementById('transcriptStream');
+      if (!streamEl) return;
+
+      isProgrammaticScrolling = true;
+      if (programmaticScrollTimer) clearTimeout(programmaticScrollTimer);
+      programmaticScrollTimer = setTimeout(() => {
+        isProgrammaticScrolling = false;
+      }, 700);
+
+      streamEl.scrollTo({
+        top: streamEl.scrollHeight,
+        behavior: 'smooth'
+      });
+
+      const btn = document.getElementById('btnScrollBottom');
+      if (btn) btn.classList.remove('visible');
+
+      // 滚动到底部后，自动将左侧议程选中同步为当前最新的议程
+      let activeList = transcriptItems;
+      if (currentDebugStatus === 'in_progress') {
+        activeList = transcriptItems.filter(t => t.agendaId !== 'c5');
+      }
+      if (activeList.length > 0) {
+        const lastItem = activeList[activeList.length - 1];
+        if (lastItem && lastItem.agendaId) {
+          const targetAgenda = agendas.find(a => a.id === lastItem.agendaId);
+          if (targetAgenda && !targetAgenda.active) {
+            agendas.forEach(a => a.active = (a.id === lastItem.agendaId));
+            renderAgendas();
+            const activeChapterEl = document.querySelector('.chapter-item.active');
+            if (activeChapterEl) {
+              activeChapterEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        }
+      }
+    }
+
+    // 监听实时转写滚动：1. 控制“⬇️”回到最新按钮 2. 同步左侧议程章节选中
+    function handleTranscriptScroll() {
+      const streamEl = document.getElementById('transcriptStream');
+      if (!streamEl) return;
+
+      const btnScrollBottom = document.getElementById('btnScrollBottom');
+
+      // 1. 未开始状态隐藏按钮
+      if (currentDebugStatus === 'not_started') {
+        if (btnScrollBottom) btnScrollBottom.classList.remove('visible');
+        return;
+      }
+
+      // 2. 控制底部居中“⬇️ 回到最新”按钮显隐（向上滚动超过 60px 时出现）
+      const threshold = 60;
+      const isNearBottom = (streamEl.scrollHeight - streamEl.scrollTop - streamEl.clientHeight) <= threshold;
+      if (btnScrollBottom) {
+        if (!isNearBottom && streamEl.scrollHeight > streamEl.clientHeight) {
+          btnScrollBottom.classList.add('visible');
+        } else {
+          btnScrollBottom.classList.remove('visible');
+        }
+      }
+
+      // 3. 关联左侧议程选中同步（章节式双向联动）
+      if (isProgrammaticScrolling) return;
+
+      const containerRect = streamEl.getBoundingClientRect();
+      const itemEls = streamEl.querySelectorAll('.transcript-item');
+      let currentVisibleAgendaId = null;
+
+      for (let i = 0; i < itemEls.length; i++) {
+        const el = itemEls[i];
+        const rect = el.getBoundingClientRect();
+        // 当条目顶部在视口顶部以内或底部跨过顶部基准线时
+        if (rect.bottom >= containerRect.top + 30) {
+          const itemId = el.id.replace('item_', '');
+          const tObj = transcriptItems.find(t => t.id === itemId);
+          if (tObj && tObj.agendaId) {
+            currentVisibleAgendaId = tObj.agendaId;
+            break;
+          }
+        }
+      }
+
+      if (currentVisibleAgendaId) {
+        const currentActive = agendas.find(a => a.active);
+        if (!currentActive || currentActive.id !== currentVisibleAgendaId) {
+          agendas.forEach(a => a.active = (a.id === currentVisibleAgendaId));
+          renderAgendas();
+          const activeChapterEl = document.querySelector('.chapter-item.active');
+          if (activeChapterEl) {
+            activeChapterEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }
+    }
+
+    // 快捷同步某一议题的时间
+    function syncAgendaTime(agendaId, field, value) {
+      const idx = agendas.findIndex(a => a.id === agendaId);
+      if (idx === -1) return;
+
+      agendas[idx][field] = value;
+
+      if (field === 'startTime' && idx > 0) {
+        const prev = agendas[idx - 1];
+        if (agendas[idx].startTime === prev.endTime) {
+          delete boundarySources[`${prev.id}_${agendas[idx].id}`];
+        }
+      }
+      if (field === 'endTime' && idx < agendas.length - 1) {
+        const next = agendas[idx + 1];
+        if (agendas[idx].endTime === next.startTime) {
+          delete boundarySources[`${agendas[idx].id}_${next.id}`];
+        }
+      }
+
+      renderAgendas();
+    }
+
+    // 实时更新发言嘉宾卡片预览
+    function updateSpeakerPreview() {
+      const input = document.getElementById('editAgendaSpeaker');
+      const box = document.getElementById('speakerPreviewBox');
+      if (!input || !box) return;
+
+      const val = input.value.trim();
+      if (!val) {
+        box.innerHTML = '';
+        return;
+      }
+
+      const names = val.split(/[,，、;；]+/).map(s => s.trim()).filter(Boolean);
+      if (names.length === 0) {
+        box.innerHTML = '';
+        return;
+      }
+
+      box.innerHTML = names.map(name => `
+        <div class="speaker-preview-chip">
+          <span>${escapeHtml(name)}</span>
+        </div>
+      `).join('');
+    }
+
+    // 打开新增议程 Modal
+    function openCreateAgendaModal() {
+      editingAgendaId = null;
+      document.getElementById('editAgendaModalTitle').textContent = '新增议程';
+      document.getElementById('editAgendaTitle').value = '';
+      const delBtn = document.getElementById('btnDeleteAgenda');
+      if (delBtn) delBtn.style.display = 'none';
+
+      const now = new Date();
+      const pad = n => n < 10 ? '0' + n : n;
+      const currentClock = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+      if (agendas.length > 0) {
+        const lastAgenda = agendas[agendas.length - 1];
+        const defaultStart = lastAgenda.endTime || currentClock;
+        document.getElementById('editAgendaStartTime').value = defaultStart;
+
+        const [h, m, s] = defaultStart.split(':').map(Number);
+        const totalSec = h * 3600 + m * 60 + s + 30 * 60;
+        const endH = Math.floor((totalSec % 86400) / 3600);
+        const endM = Math.floor((totalSec % 3600) / 60);
+        const endS = totalSec % 60;
+        document.getElementById('editAgendaEndTime').value = `${pad(endH)}:${pad(endM)}:${pad(endS)}`;
+      } else {
+        document.getElementById('editAgendaStartTime').value = currentClock;
+        const [h, m, s] = currentClock.split(':').map(Number);
+        const totalSec = h * 3600 + m * 60 + s + 30 * 60;
+        const endH = Math.floor((totalSec % 86400) / 3600);
+        const endM = Math.floor((totalSec % 3600) / 60);
+        const endS = totalSec % 60;
+        document.getElementById('editAgendaEndTime').value = `${pad(endH)}:${pad(endM)}:${pad(endS)}`;
+      }
+
+      document.getElementById('editAgendaSpeaker').value = '';
+      updateSpeakerPreview();
+      document.getElementById('editAgendaModal').classList.add('show');
+    }
+
+    // 打开编辑议程 Modal
+    function openEditAgendaModal(e, id) {
+      if (e) e.stopPropagation();
+      editingAgendaId = id;
+      document.getElementById('editAgendaModalTitle').textContent = '编辑议程';
+      const delBtn = document.getElementById('btnDeleteAgenda');
+      if (delBtn) delBtn.style.display = 'inline-flex';
+      const agenda = agendas.find(a => a.id === id);
+      if (!agenda) return;
+
+      document.getElementById('editAgendaTitle').value = agenda.title || '';
+      document.getElementById('editAgendaStartTime').value = agenda.startTime || '';
+      document.getElementById('editAgendaEndTime').value = agenda.endTime || '';
+      document.getElementById('editAgendaSpeaker').value = agenda.speaker || '';
+
+      updateSpeakerPreview();
+      document.getElementById('editAgendaModal').classList.add('show');
+    }
+
+    function closeEditAgendaModal() {
+      document.getElementById('editAgendaModal').classList.remove('show');
+      editingAgendaId = null;
+    }
+
+    // 保存议程 (新增或编辑)
+    function saveAgendaEdit() {
+      const titleInput = document.getElementById('editAgendaTitle').value.trim();
+      const startTimeInput = document.getElementById('editAgendaStartTime').value.trim();
+      const endTimeInput = document.getElementById('editAgendaEndTime').value.trim();
+      const speakerInput = document.getElementById('editAgendaSpeaker').value.trim();
+
+      if (!titleInput) {
+        alert('请输入议题名称');
+        return;
+      }
+
+      if (!startTimeInput || !endTimeInput) {
+        alert('请选择开始和结束时间');
+        return;
+      }
+
+      if (editingAgendaId) {
+        const idx = agendas.findIndex(a => a.id === editingAgendaId);
+        if (idx !== -1) {
+          const agenda = agendas[idx];
+          agenda.title = titleInput;
+          agenda.startTime = startTimeInput;
+          agenda.endTime = endTimeInput;
+          agenda.speaker = speakerInput || agenda.speaker;
+
+          if (idx > 0) {
+            const prev = agendas[idx - 1];
+            const bKey = `${prev.id}_${agenda.id}`;
+            if (agenda.startTime !== prev.endTime) {
+              boundarySources[bKey] = {
+                targetId: prev.id,
+                syncField: 'endTime',
+                syncTime: agenda.startTime
+              };
+            } else {
+              delete boundarySources[bKey];
+            }
+          }
+
+          if (idx < agendas.length - 1) {
+            const next = agendas[idx + 1];
+            const bKey = `${agenda.id}_${next.id}`;
+            if (agenda.endTime !== next.startTime) {
+              boundarySources[bKey] = {
+                targetId: next.id,
+                syncField: 'startTime',
+                syncTime: agenda.endTime
+              };
+            } else {
+              delete boundarySources[bKey];
+            }
+          }
+        }
+      } else {
+        const newId = 'c_' + Date.now();
+        const newAgenda = {
+          id: newId,
+          title: titleInput,
+          speaker: speakerInput || '待定嘉宾',
+          startTime: startTimeInput,
+          endTime: endTimeInput,
+          active: false
+        };
+        agendas.push(newAgenda);
+
+        if (agendas.length > 1) {
+          const prev = agendas[agendas.length - 2];
+          const bKey = `${prev.id}_${newAgenda.id}`;
+          if (newAgenda.startTime !== prev.endTime) {
+            boundarySources[bKey] = {
+              targetId: prev.id,
+              syncField: 'endTime',
+              syncTime: newAgenda.startTime
+            };
+          }
+        }
+      }
+
+      syncParticipantsFromAgendas();
+      renderAgendas();
+      renderParticipants();
+      renderTranscripts();
+      closeEditAgendaModal();
+    }
+
+    let activeParticipantDropdownId = null;
+    let tempDropdownSelectedSpeakers = [];
+
+    function closeAllParticipantDropdowns() {
+      if (activeParticipantDropdownId !== null) {
+        activeParticipantDropdownId = null;
+        tempDropdownSelectedSpeakers = [];
+        renderParticipants();
+      }
+    }
+
+    function toggleParticipantDropdown(pId) {
+      if (currentDebugStatus === 'not_started') {
+        showToast('会议未开播，暂无声纹说话人可关联');
+        return;
+      }
+      if (activeParticipantDropdownId === pId) {
+        activeParticipantDropdownId = null;
+        tempDropdownSelectedSpeakers = [];
+      } else {
+        activeParticipantDropdownId = pId;
+        const p = participants.find(item => item.id === pId);
+        tempDropdownSelectedSpeakers = p && p.assignedSpeakers ? [...p.assignedSpeakers] : [];
+      }
+      renderParticipants();
+    }
+
+    // 渲染参会人列表 (下拉紧跟在名字后面，支持多选、点击保存后生效、取消已关联标签与清空按钮)
+    function renderParticipants() {
+      const listEl = document.getElementById('participantList');
+      if (!listEl) return;
+
+      const isNotStarted = (currentDebugStatus === 'not_started');
+
+      // 统计已被其他参会人选中的说话人映射：speaker -> participant
+      const occupiedMap = new Map();
+      if (!isNotStarted) {
+        participants.forEach(other => {
+          if (other.assignedSpeakers && other.assignedSpeakers.length > 0) {
+            other.assignedSpeakers.forEach(s => occupiedMap.set(s, other));
+          }
+        });
+      }
+
+      // 获取当前会议所有已出现或预设的说话人集合 (如 说话人1 ~ 说话人8)
+      const standardSpeakers = Object.keys(KNOWN_SPEAKER_COLORS).filter(isRawSpeaker);
+
+      const html = participants.map(p => {
+        const currentSavedSelected = isNotStarted ? [] : (p.assignedSpeakers || []);
+        const isDropdownOpen = (activeParticipantDropdownId === p.id);
+        // 若下拉打开，显示临时勾选状态；关闭时显示已保存状态
+        const currentSelected = isDropdownOpen ? tempDropdownSelectedSpeakers : currentSavedSelected;
+
+        // 1. 触发器 Trigger 内容 (未开始时为空态；已选中紧凑平铺无x按钮)
+        let triggerContentHtml = '';
+        if (isNotStarted) {
+          triggerContentHtml = '';
+        } else if (currentSavedSelected.length === 0) {
+          triggerContentHtml = `
+            <div class="participant-speaker-select-trigger is-empty" onclick="event.stopPropagation(); toggleParticipantDropdown('${p.id}')" title="点击选择说话人">
+              <span>未选择</span>
+              <svg class="dropdown-arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          `;
+        } else {
+          triggerContentHtml = `
+            <div class="participant-speaker-select-trigger" onclick="event.stopPropagation(); toggleParticipantDropdown('${p.id}')" title="已关联: ${currentSavedSelected.join('、')}，点击修改">
+              <div class="selected-speakers-chips">
+                ${currentSavedSelected.map(s => `
+                  <span class="selected-speaker-pill">
+                    ${renderAvatarHtml(s, 14, 8)}
+                    <span>${escapeHtml(s)}</span>
+                  </span>
+                `).join('')}
+              </div>
+              <svg class="dropdown-arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          `;
+        }
+
+        // 2. 下拉菜单 Dropdown 展开时的选项内容
+        let dropdownMenuHtml = '';
+        if (isDropdownOpen && !isNotStarted) {
+          const candMap = new Map();
+          (p.candidates || []).forEach(c => candMap.set(c.speaker, c.score));
+
+          const allSpeakerList = Array.from(new Set([
+            ...Array.from(candMap.keys()),
+            ...standardSpeakers,
+            ...currentSelected
+          ])).filter(isRawSpeaker);
+
+          const availableList = [];
+          const boundToOtherList = [];
+
+          allSpeakerList.forEach(s => {
+            const boundOther = occupiedMap.get(s);
+            if (boundOther && boundOther.id !== p.id) {
+              boundToOtherList.push({ speaker: s, boundTo: boundOther.name });
+            } else {
+              const isSelected = tempDropdownSelectedSpeakers.includes(s);
+              const score = candMap.get(s) || 0;
+              availableList.push({ speaker: s, isSelected, score });
+            }
+          });
+
+          // 可选项排序：按置信度分数降序（不将选中的项置顶）
+          availableList.sort((a, b) => b.score - a.score);
+
+          const availableItemsHtml = availableList.map(item => {
+            const jsParam = item.speaker.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            return `
+              <div class="p-dropdown-item ${item.isSelected ? 'selected' : ''}" onclick="event.stopPropagation(); handleToggleParticipantSpeakerInDropdown('${p.id}', '${jsParam}')">
+                <div class="p-dropdown-left">
+                  <input type="checkbox" class="p-dropdown-checkbox" ${item.isSelected ? 'checked' : ''} onclick="event.stopPropagation(); handleToggleParticipantSpeakerInDropdown('${p.id}', '${jsParam}')">
+                  ${renderAvatarHtml(item.speaker, 20, 10)}
+                  <span class="p-dropdown-speaker-name">${escapeHtml(item.speaker)}</span>
+                </div>
+                ${item.score > 0 ? `<span class="p-dropdown-score">${item.score}%</span>` : ''}
+              </div>
+            `;
+          }).join('');
+
+          const boundItemsHtml = boundToOtherList.map(item => `
+            <div class="p-dropdown-item is-disabled" title="已被【${escapeHtml(item.boundTo)}】绑定">
+              <div class="p-dropdown-left">
+                <input type="checkbox" class="p-dropdown-checkbox" disabled>
+                ${renderAvatarHtml(item.speaker, 20, 10)}
+                <span class="p-dropdown-speaker-name">${escapeHtml(item.speaker)}</span>
+              </div>
+              <span class="p-dropdown-bound-tag">-> ${escapeHtml(item.boundTo)}</span>
+            </div>
+          `).join('');
+
+          dropdownMenuHtml = `
+            <div class="participant-speaker-dropdown-menu" onclick="event.stopPropagation()">
+              <div class="p-dropdown-header">
+                <span>选择说话人 (支持多选)</span>
+              </div>
+              <div class="p-dropdown-list">
+                ${availableItemsHtml}
+                ${boundItemsHtml}
+              </div>
+              <div class="p-dropdown-footer" style="justify-content: flex-end;">
+                <button class="btn-dropdown-done" onclick="event.stopPropagation(); handleSaveParticipantSpeakers('${p.id}')">保存</button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="participant-card" id="pcard_${p.id}">
+            <div class="participant-left-info">
+              ${renderAvatarHtml(p.name, 34, 13)}
+              <span class="participant-name">${escapeHtml(p.name)}</span>
+              
+              <!-- 下拉选择关联说话人容器：紧跟在名字后面，不置右 -->
+              <div class="participant-speaker-select-container" id="pSelectContainer_${p.id}">
+                ${triggerContentHtml}
+                ${dropdownMenuHtml}
+              </div>
+            </div>
+
+            <!-- 右上角 Hover 编辑按钮 -->
+            <div class="participant-card-hover-mask">
+              <button class="btn-edit-agenda-pill" onclick="event.stopPropagation(); openEditParticipantModal('${p.id}')" title="编辑参会人信息">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
-                修改
-              </div>
+                编辑
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listEl.innerHTML = html;
+    }
+
+    // 在已结束模式下，对所有未人工确认的参会人执行 AI 自动匹配（按最高置信度排他）
+    function runAutoAssignForEnded() {
+      if (currentDebugStatus !== 'ended') return;
+
+      const occupiedByManual = new Set();
+      participants.forEach(p => {
+        if (p.isManual && p.assignedSpeakers && p.assignedSpeakers.length > 0) {
+          p.assignedSpeakers.forEach(s => occupiedByManual.add(s));
+        }
+      });
+
+      participants.forEach(p => {
+        if (!p.isManual) {
+          if (p.assignedSpeakers && p.assignedSpeakers.length > 0) {
+            const oldAuto = [...p.assignedSpeakers];
+            p.assignedSpeakers = [];
+            transcriptItems.forEach(t => {
+              if (oldAuto.includes(t.rawSpeaker) && t.isAutoAssigned) {
+                if (!t.isSingleOverride) {
+                  t.speakerName = t.rawSpeaker;
+                  t.isAutoAssigned = false;
+                }
+              }
+            });
+          }
+        }
+      });
+
+      const occupied = new Set(occupiedByManual);
+      participants.forEach(p => {
+        if (!p.isManual) {
+          const availableCand = (p.candidates || []).find(c => !occupied.has(c.speaker));
+          if (availableCand) {
+            p.assignedSpeakers = [availableCand.speaker];
+            p.isManual = false;
+            occupied.add(availableCand.speaker);
+
+            transcriptItems.forEach(t => {
+              if (t.rawSpeaker === availableCand.speaker) {
+                if (!t.isSingleOverride) {
+                  t.speakerName = p.name;
+                  t.isAutoAssigned = true;
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+
+    // 下拉框内多选临时勾选/反选（不实时生效）
+    function handleToggleParticipantSpeakerInDropdown(participantId, speaker) {
+      if (!speaker) return;
+      const idx = tempDropdownSelectedSpeakers.indexOf(speaker);
+      if (idx >= 0) {
+        tempDropdownSelectedSpeakers.splice(idx, 1);
+      } else {
+        tempDropdownSelectedSpeakers.push(speaker);
+      }
+      renderParticipants();
+    }
+
+    // 点击下拉框内的“保存”按钮，正式提交生效 (单句独立标注具有最高优先级，不被参会人批量覆盖)
+    function handleSaveParticipantSpeakers(participantId) {
+      const p = participants.find(item => item.id === participantId);
+      if (!p) return;
+
+      const oldSpeakers = [...(p.assignedSpeakers || [])];
+      const newSpeakers = [...tempDropdownSelectedSpeakers];
+
+      p.assignedSpeakers = newSpeakers;
+      p.isManual = (newSpeakers.length > 0);
+
+      // 若新选中的说话人被其他参会人占用，将其从其他人身上解除
+      newSpeakers.forEach(speaker => {
+        participants.forEach(other => {
+          if (other.id !== p.id && other.assignedSpeakers && other.assignedSpeakers.includes(speaker)) {
+            other.assignedSpeakers = other.assignedSpeakers.filter(s => s !== speaker);
+            if (other.assignedSpeakers.length === 0) other.isManual = false;
+          }
+        });
+      });
+
+      // 同步转写中对应的说话人 (跳过已单独标句子的条目，保持其最高优先级)
+      transcriptItems.forEach(item => {
+        if (newSpeakers.includes(item.rawSpeaker)) {
+          if (!item.isSingleOverride) {
+            item.speakerName = p.name;
+            item.isAutoAssigned = false;
+          }
+        }
+      });
+
+      // 恢复被移除的旧关联
+      oldSpeakers.filter(s => !newSpeakers.includes(s)).forEach(removedSpeaker => {
+        transcriptItems.forEach(item => {
+          if (item.rawSpeaker === removedSpeaker) {
+            if (!item.isSingleOverride) {
+              item.speakerName = item.rawSpeaker;
+              item.isAutoAssigned = false;
+            }
+          }
+        });
+      });
+
+      if (currentDebugStatus === 'ended') {
+        runAutoAssignForEnded();
+      }
+
+      activeParticipantDropdownId = null;
+      tempDropdownSelectedSpeakers = [];
+
+      renderTranscripts();
+      renderParticipants();
+      showToast(`已成功保存【${p.name}】的说话人关联`);
+    }
+
+    // 点击已选小胶囊标签上的 ✕ 进行取消关联
+    function handleRemoveSpeakerFromParticipant(participantId, speaker) {
+      const p = participants.find(item => item.id === participantId);
+      if (!p) return;
+
+      if (activeParticipantDropdownId === participantId) {
+        const idx = tempDropdownSelectedSpeakers.indexOf(speaker);
+        if (idx >= 0) tempDropdownSelectedSpeakers.splice(idx, 1);
+        renderParticipants();
+      } else {
+        if (p.assignedSpeakers) {
+          p.assignedSpeakers = p.assignedSpeakers.filter(s => s !== speaker);
+          if (p.assignedSpeakers.length === 0) p.isManual = false;
+        }
+        transcriptItems.forEach(item => {
+          if (item.rawSpeaker === speaker) {
+            if (!item.isSingleOverride) {
+              item.speakerName = item.rawSpeaker;
+              item.isAutoAssigned = false;
+            }
+          }
+        });
+        if (currentDebugStatus === 'ended') {
+          runAutoAssignForEnded();
+        }
+        renderTranscripts();
+        renderParticipants();
+        showToast(`已取消【${p.name}】对【${speaker}】的关联`);
+      }
+    }
+
+    // 参会人编辑弹窗状态与逻辑
+    let editingParticipantId = null;
+    let editingParticipantAvatarData = null;
+
+    function openEditParticipantModal(participantId) {
+      editingParticipantId = participantId;
+      const p = participants.find(item => item.id === participantId);
+      const delBtn = document.getElementById('btnDeleteParticipant');
+      if (delBtn) delBtn.style.display = p ? 'inline-flex' : 'none';
+
+      if (p) {
+        editingParticipantAvatarData = p.avatarUrl || PRESET_PARTICIPANT_AVATARS[p.name] || '';
+        document.getElementById('editParticipantModalTitle').textContent = `编辑参会人 - ${p.name}`;
+        document.getElementById('editParticipantName').value = p.name;
+        document.getElementById('editParticipantHotwords').value = p.hotwords || '';
+        updateParticipantAvatarPreviewInModal(p.name, editingParticipantAvatarData);
+      } else {
+        // 新增模式
+        editingParticipantAvatarData = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80';
+        document.getElementById('editParticipantModalTitle').textContent = '新增参会人';
+        document.getElementById('editParticipantName').value = '';
+        document.getElementById('editParticipantHotwords').value = '具身智能, 大模型';
+        updateParticipantAvatarPreviewInModal('新', editingParticipantAvatarData);
+      }
+
+      document.getElementById('editParticipantModal').classList.add('show');
+    }
+
+    function updateParticipantAvatarPreviewInModal(name, avatarUrl) {
+      const box = document.getElementById('editParticipantAvatarPreviewBox');
+      if (!box) return;
+
+      if (avatarUrl) {
+        box.innerHTML = `<img src="${avatarUrl}" alt="${escapeHtml(name)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+      } else {
+        const char = getSpeakerAvatarChar(name);
+        box.innerHTML = `<span style="font-size: 22px; font-weight: 600; color: #4338ca; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: #e0e7ff;">${escapeHtml(char)}</span>`;
+      }
+    }
+
+    function handleParticipantAvatarUpload(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        editingParticipantAvatarData = evt.target.result;
+        const name = document.getElementById('editParticipantName').value || '参';
+        updateParticipantAvatarPreviewInModal(name, editingParticipantAvatarData);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function closeEditParticipantModal() {
+      document.getElementById('editParticipantModal').classList.remove('show');
+      editingParticipantId = null;
+      editingParticipantAvatarData = null;
+    }
+
+    function saveParticipantEdit() {
+      const newName = document.getElementById('editParticipantName').value.trim();
+      const newHotwords = document.getElementById('editParticipantHotwords').value.trim();
+
+      if (!newName) {
+        alert('请输入参会人姓名');
+        return;
+      }
+
+      if (editingParticipantId) {
+        const p = participants.find(item => item.id === editingParticipantId);
+        if (p) {
+          const oldName = p.name;
+          p.name = newName;
+          p.hotwords = newHotwords;
+          if (editingParticipantAvatarData) {
+            p.avatarUrl = editingParticipantAvatarData;
+            PRESET_PARTICIPANT_AVATARS[newName] = editingParticipantAvatarData;
+          }
+
+          // 同步转写中的发言人名
+          if (oldName !== newName) {
+            transcriptItems.forEach(t => {
+              if (t.speakerName === oldName) {
+                t.speakerName = newName;
+              }
+            });
+            agendas.forEach(a => {
+              if (a.speaker.includes(oldName)) {
+                a.speaker = a.speaker.replace(new RegExp(oldName, 'g'), newName);
+              }
+            });
+          }
+          showToast(`已成功保存参会人【${newName}】的信息`);
+        }
+      } else {
+        // 新增参会人
+        addNewParticipant(newName, editingParticipantAvatarData || '', newHotwords);
+        if (editingParticipantAvatarData) {
+          PRESET_PARTICIPANT_AVATARS[newName] = editingParticipantAvatarData;
+        }
+        showToast(`已添加新参会人【${newName}】`);
+      }
+
+      renderAgendas();
+      renderParticipants();
+      renderTranscripts();
+      closeEditParticipantModal();
+    }
+
+    // 新增参会人公共方法
+    function addNewParticipant(name, avatarUrl = '', hotwords = '') {
+      const newId = 'p_' + Date.now();
+      const allSpeakers = ['说话人1', '说话人2', '说话人3', '说话人4', '说话人5', '说话人6', '说话人7'];
+      const defaultCands = allSpeakers.map((spk, idx) => ({
+        speaker: spk,
+        score: Math.max(10, 85 - idx * 10)
+      }));
+      const newP = {
+        id: newId,
+        name: name,
+        avatarUrl: avatarUrl || PRESET_PARTICIPANT_AVATARS[name] || '',
+        hotwords: hotwords || `${name}, 具身智能, 大模型, 深度学习`,
+        candidates: defaultCands,
+        assignedSpeakers: [],
+        isManual: false
+      };
+      participants.push(newP);
+      renderParticipants();
+      return newP;
+    }
+
+    // 二次确认删除状态与操作
+    let pendingDeleteType = null; // 'agenda' | 'participant'
+    let pendingDeleteId = null;
+
+    function handleDeleteAgendaClick() {
+      if (!editingAgendaId) return;
+      const agenda = agendas.find(a => a.id === editingAgendaId);
+      if (!agenda) return;
+
+      pendingDeleteType = 'agenda';
+      pendingDeleteId = editingAgendaId;
+      document.getElementById('deleteConfirmHeaderTitle').textContent = '删除议程确认';
+      document.getElementById('deleteConfirmBody').innerHTML = `确定要删除议程 <strong>【${escapeHtml(agenda.title || '未命名议程')}】</strong> 吗？`;
+      document.getElementById('deleteConfirmModal').classList.add('show');
+    }
+
+    function handleDeleteParticipantClick() {
+      if (!editingParticipantId) return;
+      const p = participants.find(item => item.id === editingParticipantId);
+      if (!p) return;
+
+      pendingDeleteType = 'participant';
+      pendingDeleteId = editingParticipantId;
+      document.getElementById('deleteConfirmHeaderTitle').textContent = '删除参会人确认';
+      document.getElementById('deleteConfirmBody').innerHTML = `确定要删除参会人 <strong>【${escapeHtml(p.name)}】</strong> 吗？`;
+      document.getElementById('deleteConfirmModal').classList.add('show');
+    }
+
+    function closeDeleteConfirmModal() {
+      document.getElementById('deleteConfirmModal').classList.remove('show');
+      pendingDeleteType = null;
+      pendingDeleteId = null;
+    }
+
+    function executePendingDelete() {
+      if (pendingDeleteType === 'agenda' && pendingDeleteId) {
+        const idx = agendas.findIndex(a => a.id === pendingDeleteId);
+        if (idx !== -1) {
+          const deletedTitle = agendas[idx].title || '议程';
+          agendas.splice(idx, 1);
+
+          // 清除相关边界冲突缓存
+          for (const k in boundarySources) {
+            if (k.startsWith(pendingDeleteId + '_') || k.endsWith('_' + pendingDeleteId)) {
+              delete boundarySources[k];
+            }
+          }
+
+          if (agendas.length > 0 && !agendas.some(a => a.active)) {
+            agendas[0].active = true;
+          }
+
+          syncParticipantsFromAgendas();
+          renderAgendas();
+          renderParticipants();
+          renderTranscripts();
+          closeDeleteConfirmModal();
+          closeEditAgendaModal();
+          showToast(`已成功删除议程【${deletedTitle}】`);
+        }
+      } else if (pendingDeleteType === 'participant' && pendingDeleteId) {
+        const idx = participants.findIndex(p => p.id === pendingDeleteId);
+        if (idx !== -1) {
+          const p = participants[idx];
+          const deletedName = p.name;
+
+          // 解除关联的声纹说话人并还原
+          if (p.assignedSpeakers && p.assignedSpeakers.length > 0) {
+            transcriptItems.forEach(item => {
+              if (p.assignedSpeakers.includes(item.rawSpeaker)) {
+                if (!item.isSingleOverride && item.speakerName === p.name) {
+                  item.speakerName = item.rawSpeaker;
+                  item.isAutoAssigned = false;
+                }
+              }
+            });
+          }
+
+          participants.splice(idx, 1);
+
+          if (currentDebugStatus === 'ended') {
+            runAutoAssignForEnded();
+          }
+
+          renderParticipants();
+          renderTranscripts();
+          closeDeleteConfirmModal();
+          closeEditParticipantModal();
+          showToast(`已成功删除参会人【${deletedName}】`);
+        }
+      }
+    }
+
+    // 添加参会人按钮触发
+    function handleAddParticipantPrompt() {
+      openEditParticipantModal(null);
+    }
+
+    // 渲染右侧速记流（时间正序向下流，最新内容在最底部）
+    function renderTranscripts(filterVal = '') {
+      const streamEl = document.getElementById('transcriptStream');
+      if (!streamEl) return;
+
+      if (currentDebugStatus === 'not_started') {
+        streamEl.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 60px 0; font-size: 13.5px;">直播未开始</div>`;
+        return;
+      }
+
+      let items = transcriptItems;
+      if (currentDebugStatus === 'in_progress') {
+        items = transcriptItems.filter(t => t.agendaId !== 'c5');
+      }
+
+      if (filterVal && filterVal.trim()) {
+        const q = filterVal.trim().toLowerCase();
+        items = items.filter(t => t.speakerName.toLowerCase().includes(q) || t.text.toLowerCase().includes(q));
+      }
+
+      if (items.length === 0) {
+        streamEl.innerHTML = `<div style="text-align: center; color: #94a3b8; padding: 40px 0; font-size: 14px;">无匹配发言内容</div>`;
+        return;
+      }
+
+      streamEl.innerHTML = items.map(item => {
+        const isAuto = !!item.isAutoAssigned;
+        return `
+        <div class="transcript-item" id="item_${item.id}">
+          <!-- 头像 说话人 时间 所在行 -->
+          <div class="speaker-meta-row" id="meta_${item.id}">
+            ${renderAvatarHtml(item.speakerName, 30, 13)}
+            
+            <div class="speaker-name-wrapper ${isAuto ? 'ai-auto-assigned' : ''}" id="speakerBtn_${item.id}" onclick="toggleSpeakerPopover(event, '${item.id}')" title="${isAuto ? 'AI自动推断标注（虚线标识），点击可修改' : '点击修改说话人'}">
+              <span class="speaker-name-text">${escapeHtml(item.speakerName)}</span>
+              <svg class="speaker-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
             </div>
 
             <span class="speaker-time-stamp">${item.time}</span>
-
-            <!-- 下方弹出说话人选项框 Popover -->
-            ${isPopoverOpen ? renderSpeakerPopoverHtml(item.id) : ''}
           </div>
 
-          <!-- 文本内容 (平铺，与头像左对齐，无缩进) -->
-          ${isEditingText ? `
-            <div class="transcript-edit-box">
-              <textarea class="transcript-textarea" id="textarea_${item.id}" oninput="autoResizeTextarea(this)">${escapeHtml(item.text)}</textarea>
-              <div class="edit-actions-row">
-                <button class="btn-edit-cancel" onclick="cancelEditText()">取消</button>
-                <button class="btn-edit-save" onclick="saveEditText('${item.id}')">保存</button>
-              </div>
-            </div>
-          ` : `
+          <!-- 文本内容 -->
+          <div class="transcript-text-container" id="textContainer_${item.id}">
             <div class="transcript-text-content" ondblclick="enableEditText('${item.id}')" title="双击可直接修改内容">
               ${escapeHtml(item.text)}
             </div>
-          `}
+          </div>
         </div>
       `;
-    }).join('');
-  }
+      }).join('');
 
-  // 动态计算并适配 Textarea 高度
-  function autoResizeTextarea(el) {
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-  }
+      handleTranscriptScroll();
+    }
 
-  // 搜索速记
-  function handleSearchTranscript(val) {
-    renderTranscripts(val);
-  }
+    // 动态计算并适配 Textarea 高度
+    function autoResizeTextarea(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
 
-  // 双击编辑文本
-  function enableEditText(id) {
-    editingTranscriptId = id;
-    renderTranscripts();
-    setTimeout(() => {
+    // 搜索速记
+    function handleSearchTranscript(val) {
+      renderTranscripts(val);
+    }
+
+    // 局部双击编辑文本，零刷新
+    function enableEditText(id) {
+      const container = document.getElementById(`textContainer_${id}`);
+      const item = transcriptItems.find(t => t.id === id);
+      if (!container || !item) return;
+
+      editingTranscriptId = id;
+      container.innerHTML = `
+        <div class="transcript-edit-box">
+          <textarea class="transcript-textarea" id="textarea_${id}" oninput="autoResizeTextarea(this)">${escapeHtml(item.text)}</textarea>
+          <div class="edit-actions-row">
+            <button class="btn-edit-cancel" onclick="cancelEditText('${id}')">取消</button>
+            <button class="btn-edit-save" onclick="saveEditText('${id}')">保存</button>
+          </div>
+        </div>
+      `;
+
       const ta = document.getElementById(`textarea_${id}`);
       if (ta) {
         autoResizeTextarea(ta);
         ta.focus();
         ta.setSelectionRange(ta.value.length, ta.value.length);
       }
-    }, 50);
-  }
+    }
 
-  function cancelEditText() {
-    editingTranscriptId = null;
-    renderTranscripts();
-  }
-
-  function saveEditText(id) {
-    const ta = document.getElementById(`textarea_${id}`);
-    if (ta) {
+    function cancelEditText(id) {
+      const container = document.getElementById(`textContainer_${id}`);
       const item = transcriptItems.find(t => t.id === id);
-      if (item) {
+      if (!container || !item) return;
+
+      editingTranscriptId = null;
+      container.innerHTML = `
+        <div class="transcript-text-content" ondblclick="enableEditText('${id}')" title="双击可直接修改内容">
+          ${escapeHtml(item.text)}
+        </div>
+      `;
+    }
+
+    function saveEditText(id) {
+      const ta = document.getElementById(`textarea_${id}`);
+      const item = transcriptItems.find(t => t.id === id);
+      if (ta && item) {
         item.text = ta.value.trim();
       }
-    }
-    editingTranscriptId = null;
-    renderTranscripts();
-  }
-
-  // 说话人切换与新增 Popover
-  function toggleSpeakerPopover(e, id) {
-    e.stopPropagation();
-    if (activeSpeakerPopoverId === id) {
-      activeSpeakerPopoverId = null;
-    } else {
-      activeSpeakerPopoverId = id;
-    }
-    renderTranscripts();
-  }
-
-  function closeSpeakerPopover() {
-    if (activeSpeakerPopoverId !== null) {
-      activeSpeakerPopoverId = null;
-      renderTranscripts();
-    }
-  }
-
-  function renderSpeakerPopoverHtml(itemId) {
-    return `
-      <div class="speaker-dropdown-popover" onclick="event.stopPropagation()">
-        <div class="dropdown-input-row">
-          <input type="text" class="dropdown-speaker-input" id="newSpeakerInput_${itemId}" placeholder="输入新说话人姓名..." onkeydown="if(event.key==='Enter') saveNewSpeakerForLine('${itemId}')">
-          <button class="btn-save-new-speaker" onclick="saveNewSpeakerForLine('${itemId}')">保存</button>
-        </div>
-        <hr class="dropdown-divider">
-        <div class="dropdown-options-list">
-          ${participants.map(p => `
-            <div class="dropdown-option-item" onclick="selectSpeakerForLine('${itemId}', '${p.name}')">
-              <img class="dropdown-option-avatar" src="${p.avatar}" alt="${p.name}">
-              <span class="dropdown-option-name">${escapeHtml(p.name)}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  // 输入框新增说话人，并应用到当前条目与参会人列表
-  function saveNewSpeakerForLine(itemId) {
-    const input = document.getElementById(`newSpeakerInput_${itemId}`);
-    if (!input || !input.value.trim()) return;
-
-    const name = input.value.trim();
-    // 检查参会人列表中是否存在
-    let p = participants.find(item => item.name === name);
-    if (!p) {
-      p = addNewParticipant(name);
+      cancelEditText(id);
     }
 
-    const tItem = transcriptItems.find(t => t.id === itemId);
-    if (tItem) {
-      tItem.speakerId = p.id;
-      tItem.speakerName = p.name;
-    }
+    // 丝滑局部打开/关闭说话人 Popover，绝不全局重新渲染
+    function toggleSpeakerPopover(e, id) {
+      e.stopPropagation();
+      const metaRow = document.getElementById(`meta_${id}`);
+      const btn = document.getElementById(`speakerBtn_${id}`);
+      if (!metaRow || !btn) return;
 
-    activeSpeakerPopoverId = null;
-    renderTranscripts();
-  }
-
-  // 选择已有的说话人
-  function selectSpeakerForLine(itemId, speakerName) {
-    const tItem = transcriptItems.find(t => t.id === itemId);
-    if (tItem) {
-      tItem.speakerName = speakerName;
-    }
-    activeSpeakerPopoverId = null;
-    renderTranscripts();
-  }
-
-  // 热词 Modal 逻辑
-  function openHotwordsModal(target) {
-    activeHotwordsTarget = target;
-    const modal = document.getElementById('hotwordsModal');
-    const titleEl = document.getElementById('hotwordsModalTitle');
-    const inputEl = document.getElementById('hotwordsInput');
-
-    if (target === 'global') {
-      titleEl.textContent = '论坛全局热词';
-      inputEl.value = globalHotwords;
-    } else {
-      const p = participants.find(item => item.id === target);
-      titleEl.textContent = `参会人热词 - ${p ? p.name : ''}`;
-      inputEl.value = p ? p.hotwords : '';
-    }
-
-    modal.classList.add('show');
-  }
-
-  function closeHotwordsModal() {
-    document.getElementById('hotwordsModal').classList.remove('show');
-  }
-
-  function saveHotwords() {
-    const val = document.getElementById('hotwordsInput').value.trim();
-    if (activeHotwordsTarget === 'global') {
-      globalHotwords = val;
-    } else {
-      const p = participants.find(item => item.id === activeHotwordsTarget);
-      if (p) p.hotwords = val;
-    }
-    closeHotwordsModal();
-  }
-
-  // 模拟爬取热词
-  function handleCrawlHotwords() {
-    const btn = event.currentTarget;
-    const origText = btn.innerHTML;
-    btn.innerHTML = `
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
-        <line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line>
-        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-      </svg>
-      正在爬取音轨与文本...
-    `;
-    btn.style.pointerEvents = 'none';
-
-    setTimeout(() => {
-      const crawlCandidates = [
-        '具身大模型', '端到端控制', '强化学习', 'VLA模型', '开源生态', '机器视觉', '自适应抓取', '智源AI前沿'
-      ];
-      const inputEl = document.getElementById('hotwordsInput');
-      let currentVal = inputEl.value.trim();
-
-      const newWords = crawlCandidates.filter(w => !currentVal.includes(w)).slice(0, 4);
-      if (newWords.length > 0) {
-        if (currentVal.length > 0 && !currentVal.endsWith(',') && !currentVal.endsWith('，')) {
-          currentVal += ', ';
+      const existingPopover = document.getElementById('activeSpeakerPopover');
+      if (existingPopover) {
+        const parentId = existingPopover.dataset.itemId;
+        existingPopover.remove();
+        document.querySelectorAll('.speaker-name-wrapper').forEach(w => w.classList.remove('popover-active'));
+        if (parentId === id) {
+          activeSpeakerPopoverId = null;
+          return;
         }
-        currentVal += newWords.join(', ');
       }
-      inputEl.value = currentVal;
 
-      btn.innerHTML = origText;
-      btn.style.pointerEvents = 'auto';
-    }, 800);
-  }
+      activeSpeakerPopoverId = id;
+      btn.classList.add('popover-active');
 
-  // 转义工具
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-</script>
+      const popoverEl = document.createElement('div');
+      popoverEl.id = 'activeSpeakerPopover';
+      popoverEl.dataset.itemId = id;
+      popoverEl.className = 'speaker-dropdown-popover';
+      popoverEl.onclick = function (event) { event.stopPropagation(); };
+      popoverEl.innerHTML = renderPopoverMainViewHtml(id);
+
+      metaRow.appendChild(popoverEl);
+      updatePopoverSaveBtnState(id);
+      setTimeout(() => {
+        const inp = document.getElementById(`popoverSearchInput_${id}`);
+        if (inp) inp.focus();
+      }, 50);
+    }
+
+    function closeSpeakerPopover() {
+      const existingPopover = document.getElementById('activeSpeakerPopover');
+      if (existingPopover) {
+        existingPopover.remove();
+        document.querySelectorAll('.speaker-name-wrapper').forEach(w => w.classList.remove('popover-active'));
+        activeSpeakerPopoverId = null;
+        currentPopoverSelectedSpeaker = null;
+      }
+    }
+
+    let currentPopoverSelectedSpeaker = null;
+
+    // 渲染 Popover 单界面：顶部搜索框 + 参会人单选/反选列表/添加项 + 底部操作栏(批量勾选+保存)
+    function renderPopoverMainViewHtml(itemId) {
+      const tItem = transcriptItems.find(t => t.id === itemId);
+      if (!tItem) return '';
+
+      const currentSpeaker = tItem.speakerName || '';
+      // 如果当前不是原始说话人格式（如“说话人1”）且不是未选择，则初始选中该参会人
+      if (currentSpeaker && !isRawSpeaker(currentSpeaker) && currentSpeaker !== '未选择') {
+        currentPopoverSelectedSpeaker = currentSpeaker;
+      } else {
+        currentPopoverSelectedSpeaker = null;
+      }
+
+      const matchRaw = tItem.rawSpeaker || currentSpeaker;
+      const matchCount = transcriptItems.filter(t => (t.rawSpeaker === matchRaw || t.speakerName === currentSpeaker)).length;
+      const speakerLabel = tItem.rawSpeaker || currentSpeaker;
+
+      return `
+        <div class="popover-search-row">
+          <svg class="popover-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="popover-search-input" id="popoverSearchInput_${itemId}" placeholder="搜索或输入参会人姓名..." oninput="handlePopoverSearchInput('${itemId}')" onkeydown="if(event.key==='Enter') handlePopoverSearchEnter('${itemId}')" autofocus>
+          <button class="btn-clear-search" id="popoverClearSearchBtn_${itemId}" onclick="clearPopoverSearch('${itemId}')" style="display: none;">✕</button>
+        </div>
+
+        <div class="popover-options-list" id="popoverOptionsList_${itemId}">
+          ${renderPopoverOptionsItemsHtml(itemId, '')}
+        </div>
+
+        <div class="popover-footer-row">
+          <label class="popover-batch-checkbox-label" title="勾选后将自动批量替换当前论坛中所有 ${matchCount} 处发言">
+            <input type="checkbox" id="popoverBatchCheckbox_${itemId}" onchange="updatePopoverSaveBtnState('${itemId}')">
+            <span class="batch-checkbox-text">批量修改 <b id="popoverBatchCount_${itemId}">${matchCount}</b> 处【${escapeHtml(speakerLabel)}】</span>
+          </label>
+          <button class="btn-popover-save" id="popoverSaveBtn_${itemId}" onclick="handleSavePopoverSpeakerChange('${itemId}')" disabled>保存</button>
+        </div>
+      `;
+    }
+
+    // 检测当前是否有发生有效修改（支持单选与反选取消选择）
+    function checkPopoverHasChanges(itemId) {
+      const tItem = transcriptItems.find(t => t.id === itemId);
+      if (!tItem) return false;
+
+      const checkbox = document.getElementById(`popoverBatchCheckbox_${itemId}`);
+      const isBatch = checkbox ? checkbox.checked : false;
+      const targetSpeaker = currentPopoverSelectedSpeaker || (tItem.rawSpeaker || '未选择');
+
+      if (isBatch) {
+        const matchRaw = tItem.rawSpeaker || tItem.speakerName;
+        const itemsToChange = transcriptItems.filter(item =>
+          (item.rawSpeaker === matchRaw || item.speakerName === tItem.speakerName) && item.speakerName !== targetSpeaker
+        );
+        return itemsToChange.length > 0;
+      } else {
+        return tItem.speakerName !== targetSpeaker;
+      }
+    }
+
+    // 刷新保存按钮的可用/置灰状态
+    function updatePopoverSaveBtnState(itemId) {
+      const saveBtn = document.getElementById(`popoverSaveBtn_${itemId}`);
+      if (!saveBtn) return;
+      const hasChanges = checkPopoverHasChanges(itemId);
+      saveBtn.disabled = !hasChanges;
+    }
+
+    // 动态渲染搜索过滤后的候选参会人与“添加{输入内容}为说话人”（单选，支持点击选中/再次点击取消选择）
+    function renderPopoverOptionsItemsHtml(itemId, query = '') {
+      const tItem = transcriptItems.find(t => t.id === itemId);
+      if (!tItem) return '';
+
+      const q = (query || '').trim().toLowerCase();
+      const rawSpk = tItem.rawSpeaker;
+      const filtered = participants.filter(p => !q || p.name.toLowerCase().includes(q));
+
+      let itemsHtml = filtered.map(p => {
+        const isSelected = (p.name === currentPopoverSelectedSpeaker);
+        const jsParamName = p.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `
+          <div class="popover-option-item ${isSelected ? 'selected' : ''}" onclick="event.stopPropagation(); handleSelectSpeakerInPopover('${itemId}', '${jsParamName}')">
+            <div class="popover-option-left">
+              ${renderAvatarHtml(p.name, 26, 11)}
+              <span class="popover-option-name">${escapeHtml(p.name)}</span>
+            </div>
+            <div class="popover-option-radio-indicator"></div>
+          </div>
+        `;
+      }).join('');
+
+      // 输入了内容且列表无完全重名项时，展示“添加{输入内容}为说话人”
+      let addCustomHtml = '';
+      const hasExactMatch = participants.some(p => p.name.toLowerCase() === q);
+      if (q && !hasExactMatch) {
+        const escapedQuery = escapeHtml(query.trim());
+        const jsParamQuery = query.trim().replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        addCustomHtml = `
+          <div class="popover-add-custom-option" onclick="event.stopPropagation(); handleAddCustomSpeakerInPopover('${itemId}', '${jsParamQuery}')">
+            <div class="popover-add-icon">+</div>
+            <div class="popover-add-text">添加 <b>"${escapedQuery}"</b> 为说话人</div>
+          </div>
+        `;
+      }
+
+      if (!itemsHtml && !addCustomHtml) {
+        return `<div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 16px 0;">未找到相关参会人</div>`;
+      }
+
+      return itemsHtml + addCustomHtml;
+    }
+
+    function handlePopoverSearchInput(itemId) {
+      const input = document.getElementById(`popoverSearchInput_${itemId}`);
+      const clearBtn = document.getElementById(`popoverClearSearchBtn_${itemId}`);
+      const listEl = document.getElementById(`popoverOptionsList_${itemId}`);
+      if (!input || !listEl) return;
+
+      const query = input.value;
+      if (clearBtn) clearBtn.style.display = query ? 'inline-block' : 'none';
+      listEl.innerHTML = renderPopoverOptionsItemsHtml(itemId, query);
+    }
+
+    function handlePopoverSearchEnter(itemId) {
+      const input = document.getElementById(`popoverSearchInput_${itemId}`);
+      if (!input || !input.value.trim()) return;
+      const val = input.value.trim();
+      const existing = participants.find(p => p.name === val);
+      if (existing) {
+        handleSelectSpeakerInPopover(itemId, existing.name);
+      } else {
+        handleAddCustomSpeakerInPopover(itemId, val);
+      }
+    }
+
+    function clearPopoverSearch(itemId) {
+      const input = document.getElementById(`popoverSearchInput_${itemId}`);
+      const clearBtn = document.getElementById(`popoverClearSearchBtn_${itemId}`);
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      if (clearBtn) clearBtn.style.display = 'none';
+      const listEl = document.getElementById(`popoverOptionsList_${itemId}`);
+      if (listEl) listEl.innerHTML = renderPopoverOptionsItemsHtml(itemId, '');
+      updatePopoverSaveBtnState(itemId);
+    }
+
+    // 单选/反选说话人：点一下选中，再点一下取消选择
+    function handleSelectSpeakerInPopover(itemId, speakerName) {
+      if (currentPopoverSelectedSpeaker === speakerName) {
+        currentPopoverSelectedSpeaker = null; // 再次点击取消选择
+      } else {
+        currentPopoverSelectedSpeaker = speakerName; // 点击选中
+      }
+
+      const input = document.getElementById(`popoverSearchInput_${itemId}`);
+      const query = input ? input.value : '';
+      const listEl = document.getElementById(`popoverOptionsList_${itemId}`);
+      if (listEl) listEl.innerHTML = renderPopoverOptionsItemsHtml(itemId, query);
+      updatePopoverSaveBtnState(itemId);
+    }
+
+    // 点击“添加{输入内容}为说话人”：自动新增并选中
+    function handleAddCustomSpeakerInPopover(itemId, newName) {
+      if (!newName || !newName.trim()) return;
+      newName = newName.trim();
+
+      let p = participants.find(item => item.name === newName);
+      if (!p) {
+        p = addNewParticipant(newName);
+      }
+
+      currentPopoverSelectedSpeaker = newName;
+
+      const input = document.getElementById(`popoverSearchInput_${itemId}`);
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      const clearBtn = document.getElementById(`popoverClearSearchBtn_${itemId}`);
+      if (clearBtn) clearBtn.style.display = 'none';
+
+      const listEl = document.getElementById(`popoverOptionsList_${itemId}`);
+      if (listEl) listEl.innerHTML = renderPopoverOptionsItemsHtml(itemId, '');
+      updatePopoverSaveBtnState(itemId);
+      showToast(`已添加【${newName}】并设为选中`);
+    }
+
+    // 点击底部“保存”
+    function handleSavePopoverSpeakerChange(itemId) {
+      const checkbox = document.getElementById(`popoverBatchCheckbox_${itemId}`);
+      const isBatch = checkbox ? checkbox.checked : false;
+
+      applySpeakerChange(itemId, currentPopoverSelectedSpeaker, isBatch);
+    }
+
+    // 执行修改说话人 (单选、取消选择恢复原始声纹、单句最高优先级)
+    function applySpeakerChange(itemId, targetSpeaker, isBatch = false) {
+      const tItem = transcriptItems.find(t => t.id === itemId);
+      if (!tItem) {
+        closeSpeakerPopover();
+        return;
+      }
+
+      const oldSpeaker = tItem.speakerName;
+      const rawSpk = tItem.rawSpeaker || oldSpeaker;
+
+      if (!targetSpeaker || targetSpeaker === rawSpk) {
+        // 取消选择 / 恢复原始声纹说话人
+        const speakerToRestore = rawSpk || '未选择';
+
+        if (isBatch) {
+          // 解除所有参会人中对该 rawSpk 的关联
+          participants.forEach(p => {
+            if (p.assignedSpeakers && p.assignedSpeakers.includes(rawSpk)) {
+              p.assignedSpeakers = p.assignedSpeakers.filter(s => s !== rawSpk);
+              if (p.assignedSpeakers.length === 0) p.isManual = false;
+            }
+          });
+
+          let count = 0;
+          transcriptItems.forEach(item => {
+            if (item.rawSpeaker === rawSpk || (oldSpeaker && item.speakerName === oldSpeaker)) {
+              item.speakerName = item.rawSpeaker;
+              item.isAutoAssigned = false;
+              item.isSingleOverride = false;
+              count++;
+            }
+          });
+
+          if (currentDebugStatus === 'ended') {
+            runAutoAssignForEnded();
+          }
+
+          renderTranscripts();
+          renderParticipants();
+          showToast(`已取消【${rawSpk}】的参会人绑定，恢复原始说话人 (共 ${count} 处)`);
+        } else {
+          // 单句恢复：重置单句覆盖标记
+          tItem.speakerName = speakerToRestore;
+          tItem.isAutoAssigned = false;
+          tItem.isSingleOverride = false;
+          renderTranscripts();
+          renderParticipants();
+          showToast(`已取消当前单句说话人，恢复为【${speakerToRestore}】`);
+        }
+      } else {
+        // 选中参会人
+        let p = participants.find(item => item.name === targetSpeaker);
+        if (!p) {
+          addNewParticipant(targetSpeaker);
+        }
+
+        if (isBatch) {
+          const targetP = participants.find(item => item.name === targetSpeaker);
+          if (targetP) {
+            if (!targetP.assignedSpeakers) targetP.assignedSpeakers = [];
+            if (!targetP.assignedSpeakers.includes(rawSpk)) {
+              targetP.assignedSpeakers.push(rawSpk);
+            }
+            targetP.isManual = true;
+          }
+
+          // 从其他未被选中的参会人身上解除该 rawSpk
+          participants.forEach(other => {
+            if (other.name !== targetSpeaker && other.assignedSpeakers && other.assignedSpeakers.includes(rawSpk)) {
+              other.assignedSpeakers = other.assignedSpeakers.filter(s => s !== rawSpk);
+              if (other.assignedSpeakers.length === 0) other.isManual = false;
+            }
+          });
+
+          let replacedCount = 0;
+          transcriptItems.forEach(item => {
+            if (item.rawSpeaker === rawSpk || (oldSpeaker && item.speakerName === oldSpeaker)) {
+              item.speakerName = targetSpeaker;
+              item.isAutoAssigned = false;
+              item.isSingleOverride = false;
+              replacedCount++;
+            }
+          });
+
+          if (currentDebugStatus === 'ended') {
+            runAutoAssignForEnded();
+          }
+
+          renderTranscripts();
+          renderParticipants();
+          showToast(`已将全部【${rawSpk}】统一标注为【${targetSpeaker}】(共 ${replacedCount} 处)`);
+        } else {
+          // 单句修改：独立设置最高优先级单句覆盖标记 isSingleOverride = true
+          tItem.speakerName = targetSpeaker;
+          tItem.isAutoAssigned = false;
+          tItem.isSingleOverride = true;
+          renderTranscripts();
+          renderParticipants();
+          showToast(`已将当前单句单独标记为【${targetSpeaker}】(单句最高优先级)`);
+        }
+      }
+
+      closeSpeakerPopover();
+    }
+
+    // 局部更新单个条目的说话人与头像 DOM (支持真实照片与黑金配色)
+    function updateSpeakerDomInPlace(itemId, speakerName, isAuto = false) {
+      const metaRow = document.getElementById(`meta_${itemId}`);
+      if (!metaRow) return;
+
+      const avatarEl = metaRow.querySelector('.speaker-avatar-circle');
+      if (avatarEl) {
+        avatarEl.outerHTML = renderAvatarHtml(speakerName, 30, 13);
+      }
+
+      const nameWrapper = metaRow.querySelector('.speaker-name-wrapper');
+      if (nameWrapper) {
+        if (isAuto) {
+          nameWrapper.classList.add('ai-auto-assigned');
+          nameWrapper.title = 'AI自动推断标注（虚线标识），点击可修改';
+        } else {
+          nameWrapper.classList.remove('ai-auto-assigned');
+          nameWrapper.title = '点击修改说话人';
+        }
+      }
+
+      const nameSpan = metaRow.querySelector('.speaker-name-text');
+      if (nameSpan) {
+        nameSpan.textContent = speakerName;
+      }
+    }
+
+    // 全局 Toast 提示组件
+    let toastTimer = null;
+    function showToast(msg) {
+      let toast = document.getElementById('globalToastNotice');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'globalToastNotice';
+        toast.className = 'toast-notice';
+        document.body.appendChild(toast);
+      }
+
+      toast.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5"></path>
+        </svg>
+        <span>${escapeHtml(msg)}</span>
+      `;
+
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // 全局与参会人热词整合 Modal
+    function openHotwordsModal() {
+      const modal = document.getElementById('hotwordsModal');
+      const globalInput = document.getElementById('globalHotwordsInput');
+      const listEl = document.getElementById('participantHotwordsList');
+
+      if (globalInput) globalInput.value = globalHotwords;
+
+      if (listEl) {
+        listEl.innerHTML = participants.map(p => `
+          <div class="participant-hotword-row" id="pHotwordRow_${p.id}">
+            <div class="participant-hotword-label">
+              <span class="participant-hotword-name">${escapeHtml(p.name)}</span>
+            </div>
+            <textarea class="participant-hotword-textarea" id="hotwordInput_${p.id}" placeholder="输入 ${escapeHtml(p.name)} 专属热词...">${escapeHtml(p.hotwords || '')}</textarea>
+          </div>
+        `).join('');
+      }
+
+      modal.classList.add('show');
+      if (globalInput) {
+        setTimeout(() => globalInput.focus(), 100);
+      }
+    }
+
+    function closeHotwordsModal() {
+      document.getElementById('hotwordsModal').classList.remove('show');
+    }
+
+    function saveHotwords() {
+      const globalInput = document.getElementById('globalHotwordsInput');
+      if (globalInput) {
+        globalHotwords = globalInput.value.trim();
+      }
+
+      participants.forEach(p => {
+        const pInput = document.getElementById(`hotwordInput_${p.id}`);
+        if (pInput) {
+          p.hotwords = pInput.value.trim();
+        }
+      });
+
+      renderParticipants();
+      closeHotwordsModal();
+      showToast('已成功保存热词配置');
+    }
+
+    let activeParticipantHotwordsId = null;
+
+    function openParticipantSingleHotwordsModal(pId) {
+      activeParticipantHotwordsId = pId;
+      const p = participants.find(item => item.id === pId);
+      if (!p) return;
+
+      const modal = document.getElementById('participantSingleHotwordsModal');
+      const titleEl = document.getElementById('participantSingleHotwordsModalTitle');
+      const inputEl = document.getElementById('participantSingleHotwordsInput');
+
+      titleEl.textContent = `参会人热词 - ${p.name}`;
+      inputEl.value = p.hotwords || '';
+
+      modal.classList.add('show');
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+      }, 100);
+    }
+
+    function closeParticipantSingleHotwordsModal() {
+      document.getElementById('participantSingleHotwordsModal').classList.remove('show');
+      activeParticipantHotwordsId = null;
+    }
+
+    function saveParticipantSingleHotwords() {
+      if (!activeParticipantHotwordsId) return;
+      const inputEl = document.getElementById('participantSingleHotwordsInput');
+      const p = participants.find(item => item.id === activeParticipantHotwordsId);
+      if (p && inputEl) {
+        p.hotwords = inputEl.value.trim();
+      }
+      renderParticipants();
+      closeParticipantSingleHotwordsModal();
+      showToast(`已成功保存【${p ? p.name : ''}】的热词`);
+    }
+
+    // ==========================================
+    // 爬取热词逻辑 (增量更新 / 覆盖更新 + 状态禁用)
+    // ==========================================
+    let currentCrawlContext = null; // 'global' | 'single' | 'edit'
+    let currentCrawlMode = 'incremental'; // 'incremental' | 'overwrite'
+
+    function triggerCrawlHotwords(context) {
+      currentCrawlContext = context;
+      selectCrawlMode('incremental');
+      document.getElementById('crawlHotwordsConfirmModal').classList.add('show');
+    }
+
+    function selectCrawlMode(mode) {
+      currentCrawlMode = mode;
+      const radioInc = document.getElementById('crawlRadioIncremental');
+      const radioOvr = document.getElementById('crawlRadioOverwrite');
+      const cardInc = document.getElementById('crawlModeCardIncremental');
+      const cardOvr = document.getElementById('crawlModeCardOverwrite');
+
+      if (radioInc && radioOvr && cardInc && cardOvr) {
+        if (mode === 'incremental') {
+          radioInc.checked = true;
+          cardInc.classList.add('selected');
+          cardOvr.classList.remove('selected');
+        } else {
+          radioOvr.checked = true;
+          cardOvr.classList.add('selected');
+          cardInc.classList.remove('selected');
+        }
+      }
+    }
+
+    function closeCrawlConfirmModal() {
+      document.getElementById('crawlHotwordsConfirmModal').classList.remove('show');
+      currentCrawlContext = null;
+    }
+
+    function confirmAndExecuteCrawl() {
+      const mode = currentCrawlMode;
+      const context = currentCrawlContext;
+      closeCrawlConfirmModal();
+
+      let targetBtn = null;
+      let textareasToDisable = [];
+
+      if (context === 'global') {
+        targetBtn = document.getElementById('btnCrawlGlobalHotwords');
+        const gInput = document.getElementById('globalHotwordsInput');
+        if (gInput) textareasToDisable.push(gInput);
+        document.querySelectorAll('.participant-hotword-textarea').forEach(ta => textareasToDisable.push(ta));
+      } else if (context === 'single') {
+        targetBtn = document.getElementById('btnCrawlSingleHotwords');
+        const sInput = document.getElementById('participantSingleHotwordsInput');
+        if (sInput) textareasToDisable.push(sInput);
+      } else if (context === 'edit') {
+        targetBtn = document.getElementById('btnCrawlParticipantEdit');
+        const eInput = document.getElementById('editParticipantHotwords');
+        if (eInput) textareasToDisable.push(eInput);
+      }
+
+      let origBtnHtml = '';
+      if (targetBtn) {
+        origBtnHtml = targetBtn.innerHTML;
+        targetBtn.disabled = true;
+        targetBtn.classList.add('is-crawling');
+        targetBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+            <line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+          </svg>
+          爬取热词中...
+        `;
+      }
+
+      textareasToDisable.forEach(ta => {
+        if (ta) ta.disabled = true;
+      });
+
+      setTimeout(() => {
+        const crawlCandidates = [
+          '具身大模型', '端到端控制', '强化学习', 'VLA模型', '开源生态', '机器视觉', '自适应抓取', '智源AI前沿', '脉冲神经网络'
+        ];
+
+        function applyHotwordUpdate(textarea, newCandidates) {
+          if (!textarea) return;
+          if (mode === 'overwrite') {
+            textarea.value = newCandidates.slice(0, 4).join('、');
+          } else {
+            let currentVal = textarea.value.trim();
+            const existingList = currentVal ? currentVal.split(/[,，、;；\n]/).map(w => w.trim()).filter(Boolean) : [];
+            const toAdd = newCandidates.filter(w => !existingList.includes(w)).slice(0, 3);
+            if (toAdd.length > 0) {
+              if (currentVal.length > 0 && !currentVal.endsWith(',') && !currentVal.endsWith('，') && !currentVal.endsWith('、') && !currentVal.endsWith(';')) {
+                currentVal += '、';
+              }
+              currentVal += toAdd.join('、');
+              textarea.value = currentVal;
+            }
+          }
+        }
+
+        if (context === 'global') {
+          const globalInput = document.getElementById('globalHotwordsInput');
+          applyHotwordUpdate(globalInput, crawlCandidates);
+          document.querySelectorAll('.participant-hotword-textarea').forEach(ta => {
+            applyHotwordUpdate(ta, crawlCandidates);
+          });
+        } else if (context === 'single') {
+          const inputEl = document.getElementById('participantSingleHotwordsInput');
+          applyHotwordUpdate(inputEl, crawlCandidates);
+        } else if (context === 'edit') {
+          const editInput = document.getElementById('editParticipantHotwords');
+          applyHotwordUpdate(editInput, crawlCandidates);
+        }
+
+        if (targetBtn) {
+          targetBtn.disabled = false;
+          targetBtn.classList.remove('is-crawling');
+          targetBtn.innerHTML = origBtnHtml;
+        }
+
+        textareasToDisable.forEach(ta => {
+          if (ta) ta.disabled = false;
+        });
+
+        showToast(mode === 'incremental' ? '已增量提取并追加热词' : '已覆盖更新热词');
+      }, 800);
+    }
+
+    // ==========================================
+    // 屏蔽词管理 Modal 逻辑 (全局单多行输入框)
+    // ==========================================
+    function openBlockedWordsModal() {
+      const modal = document.getElementById('blockedWordsModal');
+      const input = document.getElementById('globalBlockedWordsInput');
+      if (input) input.value = globalBlockedWords;
+      modal.classList.add('show');
+      if (input) {
+        setTimeout(() => {
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+        }, 100);
+      }
+    }
+
+    function closeBlockedWordsModal() {
+      document.getElementById('blockedWordsModal').classList.remove('show');
+    }
+
+    function saveBlockedWords() {
+      const input = document.getElementById('globalBlockedWordsInput');
+      if (input) {
+        globalBlockedWords = input.value.trim();
+      }
+      closeBlockedWordsModal();
+    }
+
+    function handlePresetBlockedWords() {
+      const presetCandidates = ['内部绝密', '扫码进群', '加微信领资料', '兼职刷单', '稳赚不赔', '独家泄密', '私信免费领', '招商加盟热线'];
+      const input = document.getElementById('globalBlockedWordsInput');
+      if (input) {
+        let cur = input.value.trim();
+        const newWords = presetCandidates.filter(w => !cur.includes(w));
+        if (newWords.length > 0) {
+          if (cur.length > 0 && !cur.endsWith(',') && !cur.endsWith('，')) {
+            cur += ', ';
+          }
+          cur += newWords.join(', ');
+        }
+        input.value = cur;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
 
 </body>
+
 </html>

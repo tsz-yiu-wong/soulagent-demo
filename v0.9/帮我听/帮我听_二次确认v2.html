@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听 - 二次确认方案 v2</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1e293b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 36px 20px;
+    }
+
+    .header-bar { margin-bottom: 10px; text-align: center; }
+    .header-bar h1 { font-size: 18px; font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+    .header-bar p { font-size: 13px; color: #64748b; }
+
+    .tabs-nav {
+      display: inline-flex;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 10px;
+      gap: 4px;
+      margin: 18px 0 28px;
+    }
+    .tab-btn {
+      border: none; background: transparent;
+      padding: 8px 18px; border-radius: 7px;
+      font-size: 13px; font-weight: 500; color: #64748b;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: #ffffff; color: #ea580c;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 600;
+    }
+
+    .demo-actions {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 28px; flex-wrap: wrap;
+    }
+    .action-chip {
+      border: 1px dashed #cbd5e1; background: #fff;
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 12px; color: #475569; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+    }
+    .action-chip:hover { border-color: #ff9800; color: #ff9800; background: #fffaf0; }
+    .action-chip.primary {
+      border-color: #f97316; background: #fff7ed; color: #ea580c;
+      font-weight: 600; border-style: solid;
+    }
+    .action-chip.primary:hover { background: #ffedd5; }
+    .action-chip.reset { border-style: solid; color: #94a3b8; }
+    .action-chip.reset:hover { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+
+    .stage-container { width: 560px; position: relative; }
+    .scheme-panel { display: none; }
+    .scheme-panel.active { display: block; animation: fadeIn 0.22s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .scheme-label {
+      font-size: 12px; color: #94a3b8;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .scheme-label strong { font-size: 13px; color: #334155; }
+    .scheme-label .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 4px;
+      background: #ffedd5; color: #c2410c; font-weight: 500;
+    }
+
+    .input-shell {
+      width: 100%; background: #ffffff;
+      border: 1px solid #e2e8f0; border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+      padding: 14px; transition: border-color 0.2s, box-shadow 0.2s; position: relative;
+    }
+    .input-shell:focus-within {
+      border-color: #ff9800; box-shadow: 0 0 0 3px rgba(255,152,0,0.14);
+    }
+    textarea.base-input {
+      width: 100%; height: 64px; border: none; outline: none;
+      resize: none; font-size: 14px; color: #1e293b;
+      background: transparent; line-height: 1.5;
+    }
+    textarea.base-input::placeholder { color: #94a3b8; }
+
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 8px;
+    }
+    .btn-add {
+      width: 28px; height: 28px; border: 1px solid #cbd5e1;
+      border-radius: 6px; background: transparent; color: #64748b;
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    .btn-add:hover { border-color: #94a3b8; color: #334155; }
+    .btn-send {
+      width: 28px; height: 28px; border: none; border-radius: 6px;
+      background: #ff9800; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .btn-send svg { width: 14px; height: 14px; fill: currentColor; }
+    .btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .btn-send.loading { background: #ffb74d; cursor: wait; }
+    .btn-send.loading svg { animation: spin 0.9s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .badge-pill {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 600; padding: 2px 7px;
+      border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+    }
+    .badge-pill.xiaoyuzhou { background: #fef08a; color: #854d0e; }
+    .badge-pill.bilibili   { background: #fce7f3; color: #be185d; }
+    .badge-pill.youtube    { background: #fee2e2; color: #b91c1c; }
+
+    /* ── 方案 A 气泡 ── */
+    .bubble-wrap { position: relative; }
+    .s-a-bubble {
+      position: absolute; top: calc(100% + 10px); left: 0; right: 0;
+      background: #ffffff; border: 1.5px solid #fed7aa; border-radius: 14px;
+      box-shadow: 0 12px 28px -6px rgba(255,152,0,0.16), 0 6px 12px -4px rgba(0,0,0,0.06);
+      padding: 14px; z-index: 20; animation: bubblePop 0.22s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes bubblePop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .bubble-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px;
+    }
+    .bubble-title strong { color: #0f172a; font-size: 13px; }
+    .bubble-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 180px; overflow-y: auto; margin-bottom: 12px;
+    }
+    .bubble-item {
+      display: flex; align-items: center; gap: 9px;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; padding: 8px 10px; transition: background 0.15s;
+    }
+    .bubble-item:hover { background: #f1f5f9; }
+    .bubble-item-info { flex: 1; min-width: 0; }
+    .bubble-item-title {
+      font-size: 13px; font-weight: 500; color: #0f172a;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .bubble-item-url {
+      font-size: 11px; color: #94a3b8; margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-remove {
+      border: none; background: transparent; color: #cbd5e1;
+      font-size: 17px; cursor: pointer; padding: 2px 6px;
+      line-height: 1; border-radius: 4px; transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-remove:hover { background: #fee2e2; color: #ef4444; }
+    .bubble-footer {
+      display: flex; justify-content: flex-end;
+      align-items: center; gap: 8px;
+    }
+    .bubble-btn-cancel {
+      border: 1px solid #e2e8f0; background: #fff; color: #64748b;
+      padding: 6px 12px; border-radius: 7px; font-size: 12px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .bubble-btn-cancel:hover { border-color: #94a3b8; }
+    .bubble-btn-confirm {
+      border: none; background: #ff9800; color: #fff;
+      padding: 6px 16px; border-radius: 7px; font-size: 12px;
+      font-weight: 600; cursor: pointer; transition: background 0.15s;
+    }
+    .bubble-btn-confirm:hover { background: #f57c00; }
+
+    /* ── 方案 B Token 化 ── */
+    .token-shell {
+      width: 100%; background: #ffffff;
+      border: 1px solid #e2e8f0; border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+      padding: 12px 14px; transition: border-color 0.2s, box-shadow 0.2s; cursor: text;
+    }
+    .token-shell:focus-within {
+      border-color: #ff9800; box-shadow: 0 0 0 3px rgba(255,152,0,0.14);
+    }
+    .token-area {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      align-items: center; min-height: 40px;
+    }
+    .link-token {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: 6px; padding: 4px 8px 4px 9px;
+      font-size: 12px; color: #9a3412; max-width: 240px;
+      animation: tokenIn 0.18s ease-out;
+    }
+    @keyframes tokenIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .link-token-icon { font-size: 13px; }
+    .link-token-label {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      flex: 1; font-weight: 500;
+    }
+    .link-token-x {
+      border: none; background: transparent; color: #fdba74;
+      font-size: 14px; cursor: pointer; line-height: 1;
+      padding: 0 2px; border-radius: 3px; transition: all 0.12s; flex-shrink: 0;
+    }
+    .link-token-x:hover { color: #ef4444; background: #fee2e2; }
+    .token-input {
+      border: none; outline: none; font-size: 14px; color: #1e293b;
+      background: transparent; flex: 1; min-width: 160px; height: 28px;
+    }
+    .token-input::placeholder { color: #94a3b8; }
+    .token-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 8px;
+    }
+    .btn-send-full {
+      border: none; background: #ff9800; color: #fff;
+      padding: 6px 16px; border-radius: 8px; font-size: 13px;
+      font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: background 0.15s;
+    }
+    .btn-send-full:hover { background: #f57c00; }
+    .btn-send-full svg { width: 13px; height: 13px; fill: currentColor; }
+    .btn-send-full:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    /* 解析中 pending URL 样式（显示在 token 区里，还没变成 chip） */
+    .pending-url {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f8fafc; border: 1px dashed #cbd5e1;
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 12px; color: #64748b; max-width: 300px;
+      animation: tokenIn 0.15s ease-out;
+    }
+    .pending-url-text {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+    }
+    .pending-spinner {
+      width: 12px; height: 12px; border: 2px solid #e2e8f0;
+      border-top-color: #ff9800; border-radius: 50%;
+      animation: spin 0.8s linear infinite; flex-shrink: 0;
+    }
+
+    /* 行为说明框 */
+    .behavior-note {
+      margin-top: 14px; padding: 12px 14px;
+      background: #f0f9ff; border: 1px solid #bae6fd;
+      border-radius: 8px; font-size: 12px; color: #0369a1; line-height: 1.8;
+    }
+    .behavior-note strong { color: #0c4a6e; }
+
+    .state-tip {
+      margin-top: 70px; text-align: center;
+      font-size: 12px; color: #94a3b8; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header-bar">
+  <h1>帮我听 — 二次确认方案 v2</h1>
+</div>
+
+<div class="tabs-nav">
+  <button class="tab-btn active" onclick="switchScheme('a')">方案 A：下方气泡</button>
+  <button class="tab-btn" onclick="switchScheme('b')">方案 B：输入框 Tag 化</button>
+</div>
+
+<div class="demo-actions">
+  <button class="action-chip primary" onclick="simulatePaste(3)">✨ 模拟粘贴 3 个链接（播客 + 视频）</button>
+  <button class="action-chip" onclick="simulatePaste(1)">🎙️ 模拟粘贴单个链接</button>
+  <button class="action-chip reset" onclick="resetAll()">🔄 重置</button>
+</div>
+
+<div class="stage-container">
+
+  <!-- ====== 方案 A ====== -->
+  <div class="scheme-panel active" id="panel-a">
+    <div class="scheme-label">
+      <strong>方案 A：下方气泡</strong>
+    </div>
+
+    <div class="bubble-wrap" id="a-wrap">
+      <div class="input-shell">
+        <textarea class="base-input" id="a-input" placeholder="输入或粘贴链接…"></textarea>
+        <div class="toolbar">
+          <button class="btn-add" title="附件">+</button>
+          <button class="btn-send" id="a-send-btn" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 气泡 -->
+      <div class="s-a-bubble" id="a-bubble" style="display:none;">
+        <div class="bubble-header">
+          <div class="bubble-title"><strong id="a-bubble-title">已解析 3 个音频资源</strong></div>
+        </div>
+        <div class="bubble-list" id="a-bubble-list"></div>
+        <div class="bubble-footer">
+          <button class="bubble-btn-cancel" onclick="resetSchemeA()">清空</button>
+          <button class="bubble-btn-confirm" id="a-confirm-btn" onclick="handleConfirmA()">确认听取 (3)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="behavior-note" style="margin-top:130px;" id="a-behavior-note">
+      <strong>发送与联动逻辑说明</strong><br>
+      1. 粘贴 / 输入链接 → 检测到 URL → 发送按钮短暂 loading → 解析结果填入<strong>下方气泡</strong><br>
+      2. 气泡里点 × 移除某项 → <strong>输入框对应那行 URL 同步删掉</strong>，计数更新<br>
+      3. 全部移除 → 气泡关闭，输入框也清空<br>
+      4. 气泡开着时<strong>再粘贴新链接</strong> → 新结果<strong>追加</strong>到气泡（不覆盖旧的）<br>
+      5. 点「确认听取」→ 所有剩余项提交，输入框 + 气泡一起清空
+    </div>
+  </div>
+
+  <!-- ====== 方案 B ====== -->
+  <div class="scheme-panel" id="panel-b">
+    <div class="scheme-label">
+      <strong>方案 B：输入框 Tag 化</strong>
+    </div>
+
+    <div class="token-shell" id="b-shell" onclick="document.getElementById('b-input').focus()">
+      <div class="token-area" id="b-token-area">
+        <input class="token-input" id="b-input" placeholder="输入或粘贴链接…" autocomplete="off"/>
+      </div>
+      <div class="token-toolbar">
+        <button class="btn-add" title="附件">+</button>
+        <button class="btn-send-full" id="b-send-btn" disabled onclick="handleConfirmB()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          帮我听
+        </button>
+      </div>
+    </div>
+
+    <div class="behavior-note" style="margin-top:20px;">
+      <strong>逻辑说明</strong><br>
+      1. 粘贴链接 → 检测到 URL → 输入框内<strong>就地替换成可删除的 chip</strong>，无弹层<br>
+      2. chip 上点 × → 该链接从队列移除，发送按钮计数减一<br>
+      3. 可继续在 chip 后输入文字，或再粘贴更多链接（每条单独成 chip）<br>
+      4. Backspace 删除最后一个 chip（光标在输入框空白时）<br>
+      5. 发送按钮动态显示链接数，点击即提交，<strong>没有额外弹层</strong>
+    </div>
+  </div>
+
+</div>
+
+<div class="state-tip" id="state-tip">
+  💡 点击上方「模拟粘贴」按钮体验两种方案的完整交互
+</div>
+
+<script>
+  const MOCK_ITEMS = [
+    { id: 'item-1', platform: '小宇宙', badgeClass: 'xiaoyuzhou', icon: '🎙️',
+      title: 'E108 与具身智能创业者聊聊落地瓶颈与春天', sub: '时长 48 分钟 · 纯净音轨已就绪',
+      url: 'https://www.xiaoyuzhoufm.com/episode/664123' },
+    { id: 'item-2', platform: '哔哩哔哩', badgeClass: 'bilibili', icon: '📺',
+      title: '【智源大会】多模态与世界模型前沿探索专题论坛', sub: '时长 32 分钟 · 音频轨道已分离',
+      url: 'https://www.bilibili.com/video/BV1xx411c7mD' },
+    { id: 'item-3', platform: 'YouTube', badgeClass: 'youtube', icon: '▶️',
+      title: 'Andrej Karpathy: Intro to Large Language Models', sub: '时长 60 分钟 · 英文字幕与音轨',
+      url: 'https://www.youtube.com/watch?v=zjkBMFhNj_g' },
+    { id: 'item-4', platform: '小宇宙', badgeClass: 'xiaoyuzhou', icon: '🎙️',
+      title: 'No.105 对话月之暗面：我们在 AGI 前夜能做什么', sub: '时长 62 分钟 · 纯净音轨已就绪',
+      url: 'https://www.xiaoyuzhoufm.com/episode/6641ab' }
+  ];
+
+  let currentScheme = 'a';
+
+  function switchScheme(id) {
+    currentScheme = id;
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', ['a','b'][i] === id);
+    });
+    document.querySelectorAll('.scheme-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'panel-' + id);
+    });
+    resetAll();
+  }
+
+  function simulatePaste(count) {
+    if (currentScheme === 'a') simulatePasteA(count);
+    else simulatePasteB(count);
+    // count===1 时自动从尚未添加的条目里取，详见各方案内部逻辑
+  }
+
+  /* ─── 方案 A ─── */
+  let aItems = [];
+
+  function simulatePasteA(count) {
+    const existingUrls = aItems.map(i => i.url);
+    const available = MOCK_ITEMS.filter(i => !existingUrls.includes(i.url));
+    if (available.length === 0) { setTip('⚠️ 所有示例链接已全部添加'); return; }
+    const newItems = available.slice(0, count);
+
+    const input = document.getElementById('a-input');
+    const cur = input.value.trim();
+    input.value = cur ? cur + '\n' + newItems.map(i => i.url).join('\n') : newItems.map(i => i.url).join('\n');
+
+    triggerParseA(newItems);
+  }
+
+  function triggerParseA(newItems) {
+    const sendBtn = document.getElementById('a-send-btn');
+    sendBtn.disabled = true;
+    sendBtn.classList.add('loading');
+    setTip('⏳ 正在解析 ' + newItems.length + ' 个链接…');
+    setTimeout(() => {
+      sendBtn.classList.remove('loading');
+      sendBtn.disabled = false;
+      aItems = [...aItems, ...newItems];
+      renderBubbleA();
+      setTip('✅ 成功解析 ' + newItems.length + ' 个资源，已追加到气泡。可继续粘贴新链接追加。');
+    }, 600);
+  }
+
+  function renderBubbleA() {
+    const bubble = document.getElementById('a-bubble');
+    if (aItems.length === 0) { bubble.style.display = 'none'; return; }
+    bubble.style.display = 'block';
+    document.getElementById('a-bubble-title').textContent = '已解析 ' + aItems.length + ' 个音频资源';
+    document.getElementById('a-confirm-btn').textContent = '确认听取 (' + aItems.length + ')';
+    document.getElementById('a-bubble-list').innerHTML = aItems.map(item => `
+      <div class="bubble-item" id="a-item-${item.id}">
+        <span class="badge-pill ${item.badgeClass}">${item.platform}</span>
+        <div class="bubble-item-info">
+          <div class="bubble-item-title">${item.title}</div>
+          <div class="bubble-item-url">${item.url}</div>
+        </div>
+        <button class="btn-remove" onclick="removeItemA('${item.id}')" title="移除">×</button>
+      </div>
+    `).join('');
+  }
+
+  function removeItemA(itemId) {
+    const removed = aItems.find(i => i.id === itemId);
+    if (!removed) return;
+    aItems = aItems.filter(i => i.id !== itemId);
+
+    // ★ 输入框同步删除对应 URL 行
+    const input = document.getElementById('a-input');
+    input.value = input.value.split('\n').filter(line => line.trim() !== removed.url).join('\n');
+
+    if (aItems.length === 0) {
+      document.getElementById('a-bubble').style.display = 'none';
+      setTip('已全部移除，可重新粘贴');
+    } else {
+      renderBubbleA();
+    }
+  }
+
+  function handleConfirmA() {
+    const count = aItems.length;
+    aItems = [];
+    document.getElementById('a-input').value = '';
+    document.getElementById('a-bubble').style.display = 'none';
+    setTip('🎉 已将 ' + count + ' 个音视频加入「帮我听」处理队列！');
+  }
+
+  function resetSchemeA() {
+    aItems = [];
+    document.getElementById('a-input').value = '';
+    document.getElementById('a-bubble').style.display = 'none';
+    setTip('已重置，可重新粘贴链接');
+  }
+
+  document.getElementById('a-input').addEventListener('paste', () => {
+    setTimeout(() => {
+      const urls = extractUrls(document.getElementById('a-input').value);
+      const existingUrls = aItems.map(i => i.url);
+      const newItems = MOCK_ITEMS.filter(m => urls.includes(m.url) && !existingUrls.includes(m.url));
+      if (newItems.length > 0) triggerParseA(newItems);
+    }, 80);
+  });
+
+  /* ─── 方案 B ─── */
+  let bTokens = [];
+
+  function simulatePasteB(count) {
+    const existingUrls = bTokens.map(t => t.url);
+    const available = MOCK_ITEMS.filter(i => !existingUrls.includes(i.url));
+    if (available.length === 0) { setTip('⚠️ 所有示例链接已全部添加'); return; }
+    const newItems = available.slice(0, count);
+
+    const bInput = document.getElementById('b-input');
+    bInput.value = newItems.map(i => i.url).join('  ');
+    parsePendingUrlsB(newItems);
+  }
+
+  // 核心解析流程：URL 文本 → pending 状态 → 解析完成 → chip
+  function parsePendingUrlsB(newItems) {
+    const bInput = document.getElementById('b-input');
+    const area = document.getElementById('b-token-area');
+
+    // 清空输入框，把 URL 变成 pending chip 插入 token 区
+    bInput.value = '';
+    const pendingChips = newItems.map(item => {
+      const el = document.createElement('div');
+      el.className = 'pending-url';
+      el.id = 'pending-' + item.id;
+      el.innerHTML =
+        '<div class="pending-spinner"></div>' +
+        '<span class="pending-url-text">' + item.url + '</span>';
+      area.insertBefore(el, bInput);
+      return el;
+    });
+
+    updateCountLabelB();
+    setTip('⏳ 正在解析 ' + newItems.length + ' 个链接…');
+
+    // 3. 模拟网络延迟，逐个把 pending 替换成真正的 chip
+    newItems.forEach((item, idx) => {
+      setTimeout(() => {
+        const pendingEl = document.getElementById('pending-' + item.id);
+        if (!pendingEl) return;
+        // 替换为 chip
+        if (!bTokens.find(t => t.url === item.url)) {
+          bTokens.push(item);
+        }
+        pendingEl.remove();
+        // 重新渲染（保留已有 chip，追加新 chip）
+        renderTokensB();
+        if (idx === newItems.length - 1) {
+          setTip('✅ 成功解析 ' + newItems.length + ' 个资源，已转为标签');
+        }
+      }, 500 + idx * 300); // 稍微错开，一个一个出现
+    });
+  }
+
+  function addTokenB(item) {
+    if (bTokens.find(t => t.url === item.url)) return;
+    bTokens.push(item);
+    renderTokensB();
+  }
+
+  function removeTokenB(itemId) {
+    bTokens = bTokens.filter(t => t.id !== itemId);
+    renderTokensB();
+  }
+
+  function renderTokensB() {
+    const area = document.getElementById('b-token-area');
+    const input = document.getElementById('b-input');
+
+    // ★ 只删除已有的 confirmed chip，保留 .pending-url 不动
+    area.querySelectorAll('.link-token').forEach(el => el.remove());
+
+    // 找到第一个 pending 元素（或 input）作为插入锚点
+    const anchor = area.querySelector('.pending-url') || input;
+
+    bTokens.forEach(token => {
+      // 如果这个 chip 已经在 DOM 里了就跳过（避免重复）
+      if (area.querySelector('#b-token-' + token.id)) return;
+      const chip = document.createElement('div');
+      chip.className = 'link-token';
+      chip.id = 'b-token-' + token.id;
+      const shortPlatform = token.badgeClass === 'xiaoyuzhou' ? '小宇宙' : token.badgeClass === 'bilibili' ? 'B站' : 'YouTube';
+      chip.innerHTML =
+        '<span class="link-token-icon">' + token.icon + '</span>' +
+        '<span class="badge-pill ' + token.badgeClass + '" style="font-size:10px;padding:1px 5px;">' + shortPlatform + '</span>' +
+        '<span class="link-token-label">' + token.title + '</span>' +
+        '<button class="link-token-x" onclick="removeTokenB(\'' + token.id + '\')" title="移除">×</button>';
+      area.insertBefore(chip, anchor);
+    });
+
+    area.appendChild(input);
+    input.focus();
+
+    updateCountLabelB();
+  }
+
+  function updateCountLabelB() {
+    const sendBtn = document.getElementById('b-send-btn');
+    const bInput = document.getElementById('b-input');
+    const pendingCount = document.querySelectorAll('.pending-url').length;
+    const total = bTokens.length;
+
+    if (bInput) {
+      bInput.placeholder = (total === 0 && pendingCount === 0) ? '输入或粘贴链接…' : '';
+    }
+
+    if (total === 0 || pendingCount > 0) {
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> 帮我听';
+    } else {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> 帮我听 (' + total + ')';
+    }
+  }
+
+  function handleConfirmB() {
+    const count = bTokens.length;
+    bTokens = [];
+    renderTokensB();
+    setTip('🎉 已将 ' + count + ' 个音视频加入「帮我听」处理队列！');
+  }
+
+  document.getElementById('b-input').addEventListener('paste', () => {
+    setTimeout(() => {
+      const text = document.getElementById('b-input').value;
+      const urls = extractUrls(text);
+      if (urls.length > 0) {
+        const existingUrls = bTokens.map(t => t.url);
+        const newItems = urls
+          .filter(url => !existingUrls.includes(url))
+          .map(url => {
+            const mock = MOCK_ITEMS.find(m => m.url === url);
+            return mock || { id: 'custom-' + Date.now() + Math.random(), url, title: url, icon: '🔗', badgeClass: 'youtube', platform: '链接' };
+          });
+        if (newItems.length > 0) parsePendingUrlsB(newItems);
+      }
+    }, 60);
+  });
+
+  document.getElementById('b-input').addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && !e.shiftKey) {
+      const val = document.getElementById('b-input').value.trim();
+      if (val.startsWith('http')) {
+        e.preventDefault();
+        const mock = MOCK_ITEMS.find(m => m.url === val);
+        if (mock) { addTokenB(mock); document.getElementById('b-input').value = ''; }
+      }
+    }
+    if (e.key === 'Backspace' && document.getElementById('b-input').value === '' && bTokens.length > 0) {
+      removeTokenB(bTokens[bTokens.length - 1].id);
+    }
+  });
+
+  /* ─── 工具 ─── */
+  function extractUrls(text) { return (text.match(/https?:\/\/[^\s]+/g) || []); }
+  function setTip(html) { document.getElementById('state-tip').innerHTML = html; }
+  function resetAll() { resetSchemeA(); bTokens = []; renderTokensB(); setTip('💡 点击上方「模拟粘贴」按钮体验两种方案的完整交互'); }
+</script>
+</body>
+</html>
