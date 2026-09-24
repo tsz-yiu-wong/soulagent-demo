@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Platform Demo</title>
+  <style>
+    :root {
+      --bg-base: #f7f8fa;
+      --bg-sidebar: #ffffff;
+      --bg-sidebar-hover: #f1f3f7;
+      --bg-sidebar-active: #e8ecf4;
+      --bg-card: #ffffff;
+      --bg-input: #ffffff;
+      --border-color: #e5e7eb;
+      --border-subtle: #f0f1f4;
+      --text-main: #1f2430;
+      --text-muted: #4b5563;
+      --text-dim: #9ca3af;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --tag-public-bg: #ecfdf5;
+      --tag-public-text: #059669;
+      --tag-private-bg: #fff7ed;
+      --tag-private-text: #ea580c;
+      --tag-prefix-bg: #eff6ff;
+      --tag-prefix-text: #2563eb;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      user-select: none;
+    }
+
+    /* 侧边栏顶部Tab导航（一行一个） */
+    .sidebar-top {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-nav-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+
+    .tab-nav-item:hover:not(.disabled) {
+      background-color: var(--bg-sidebar-hover);
+      color: var(--text-main);
+    }
+
+    .tab-nav-item.active {
+      background-color: var(--bg-sidebar-active);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tab-nav-item.primary-highlight {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-color: #dbeafe;
+    }
+
+    .tab-nav-item.primary-highlight:hover {
+      background-color: #dbeafe;
+    }
+
+    .tab-nav-item.disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      color: var(--text-dim);
+    }
+
+    .nav-icon {
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+    }
+
+    /* 滚动列表区 */
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 10px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-section-header .sidebar-section-title {
+      padding: 0;
+      margin-bottom: 0;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 4px 10px;
+      margin-bottom: 4px;
+    }
+
+    .btn-add-avatar {
+      display: none;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      color: var(--primary);
+      background-color: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+      padding: 1px 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .sidebar-section-header:hover .btn-add-avatar {
+      display: inline-flex;
+    }
+
+    .btn-add-avatar:hover {
+      background-color: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    /* AI分身模块 */
+    .avatar-group-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      position: relative;
+    }
+
+    .avatar-group-item:hover {
+      background-color: var(--bg-sidebar-hover);
+    }
+
+    .avatar-group-item.active {
+      background-color: var(--bg-sidebar-active);
+    }
+
+    .avatar-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .avatar-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #fff;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .avatar-name {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .avatar-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: var(--tag-public-bg);
+      color: var(--tag-public-text);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .avatar-badge.private {
+      background-color: var(--tag-private-bg);
+      color: var(--tag-private-text);
+    }
+
+    .avatar-item-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-manage {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background-color: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .avatar-group-item:hover .btn-manage {
+      display: inline-flex;
+    }
+
+    .btn-manage:hover {
+      color: var(--primary);
+      border-color: #bfdbfe;
+      background-color: var(--primary-light);
+    }
+
+    /* 分身下的对话列表 */
+    .avatar-sub-chats {
+      margin-left: 24px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-left: 1px dashed var(--border-color);
+      padding-left: 8px;
+    }
+
+    .sub-chat-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s ease;
+    }
+
+    .sub-chat-item:hover {
+      background-color: var(--bg-sidebar-hover);
+      color: var(--text-main);
+    }
+
+    .sub-chat-item.active {
+      background-color: var(--bg-sidebar-active);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* 历史对话列表 */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      overflow: hidden;
+    }
+
+    .history-item:hover {
+      background-color: var(--bg-sidebar-hover);
+      color: var(--text-main);
+    }
+
+    .history-item.active {
+      background-color: var(--bg-sidebar-active);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .history-tag {
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background-color: var(--tag-prefix-bg);
+      color: var(--tag-prefix-text);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .history-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 右侧主工作区 */
+    .main-container {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 视图类型1：纯新建对话（极简：仅输入框 + 按钮） */
+    .view-new-chat-minimal {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .minimal-input-box {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.15s ease;
+    }
+
+    .minimal-input-box:focus-within {
+      border-color: var(--primary);
+    }
+
+    .minimal-input-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 14px;
+      padding: 6px 8px;
+    }
+
+    .minimal-input-box input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn-send {
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-send:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* 视图类型2：点击黄铁军新建对话（顶部信息卡片 + 输入框） */
+    .view-avatar-new-chat {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 36px 48px;
+      overflow-y: auto;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .expert-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      display: flex;
+      gap: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .expert-avatar-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+    .expert-info {
+      flex: 1;
+    }
+
+    .expert-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .expert-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .expert-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background-color: var(--tag-public-bg);
+      color: var(--tag-public-text);
+      font-weight: 500;
+    }
+
+    .expert-badge.private {
+      background-color: var(--tag-private-bg);
+      color: var(--tag-private-text);
+    }
+
+    .expert-title {
+      font-size: 13px;
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .expert-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .avatar-chat-bottom {
+      margin-top: auto;
+      padding-bottom: 24px;
+    }
+
+    /* 视图类型3：分身资产管理（知识库与记忆） */
+    .view-avatar-manage {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 36px 48px;
+      overflow-y: auto;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .manage-header {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .manage-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .manage-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .manage-tabs {
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 14px;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: var(--primary);
+      border-radius: 2px;
+    }
+
+    .assets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .asset-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .asset-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: var(--shadow-md);
+    }
+
+    .asset-main {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .asset-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .asset-meta {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .visibility-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .visibility-toggle-btn.public {
+      background-color: var(--tag-public-bg);
+      color: var(--tag-public-text);
+      border-color: #a7f3d0;
+    }
+
+    .visibility-toggle-btn.private {
+      background-color: var(--tag-private-bg);
+      color: var(--tag-private-text);
+      border-color: #fed7aa;
+    }
+
+    .visibility-toggle-btn:hover {
+      filter: brightness(0.96);
+    }
+
+    /* 侧边栏未激活AI分身项 */
+    .avatar-activate-entry {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      background-color: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin: 4px 6px;
+      color: var(--text-main);
+    }
+
+    .avatar-activate-entry:hover {
+      background-color: var(--primary-light);
+      border-color: #93c5fd;
+      color: var(--primary);
+    }
+
+    .avatar-activate-entry.active {
+      background-color: var(--bg-sidebar-active);
+      border-color: var(--primary);
+      border-style: solid;
+      color: var(--primary);
+    }
+
+    .avatar-activate-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .avatar-activate-content {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .avatar-activate-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .avatar-activate-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+
+    .avatar-activate-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: #f1f5f9;
+      color: var(--text-muted);
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    /* 底部激活卡片样式 */
+    .activation-card {
+      margin-top: 28px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activation-card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activation-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .activation-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b45309;
+      background-color: #fef3c7;
+      border: 1px solid #fde68a;
+      padding: 4px 12px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .activation-status-badge.success {
+      color: #047857;
+      background-color: #d1fae5;
+      border-color: #a7f3d0;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
+    .activation-status-badge.success .status-dot {
+      background-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .activation-tip-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .activation-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .action-channel-card {
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .action-channel-card:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 3px 10px rgba(37, 99, 235, 0.05);
+    }
+
+    .channel-main {
+      display: flex;
+      gap: 10px;
+    }
+
+    .channel-icon {
+      font-size: 20px;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    .channel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .channel-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .btn-channel-action {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-channel-action:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .btn-channel-action.primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .btn-channel-action.primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* 上传解析中动画提示 */
+    .upload-toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #1f2430;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      animation: fadeInToast 0.2s ease;
+    }
+
+    @keyframes fadeInToast {
+      from { opacity: 0; transform: translate(-50%, -10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* 上架开关 Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* 视图类型4：通用对话历史详情 */
+    .view-chat-detail {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 24px 36px;
+      overflow-y: auto;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .chat-detail-header {
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-detail-tag {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: var(--tag-prefix-bg);
+      color: var(--tag-prefix-text);
+      font-weight: 500;
+    }
+
+    .chat-detail-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .chat-messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 20px;
+      overflow-y: auto;
+    }
+
+    .msg-bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background-color: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-agent {
+      align-self: flex-start;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* 视图类型5：AI分身广场 */
+    .view-avatar-plaza {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 36px 48px;
+      overflow-y: auto;
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .plaza-header {
+      margin-bottom: 24px;
+    }
+
+    .plaza-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .plaza-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .plaza-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .plaza-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .plaza-card:hover {
+      border-color: #bfdbfe;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .plaza-card-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .plaza-card-info h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .plaza-card-info p {
+      font-size: 12px;
+      color: var(--primary);
+    }
+
+    .plaza-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <!-- 顶部Tab导航（一行一个） -->
+    <div class="sidebar-top">
+      <button class="tab-nav-item active primary-highlight" id="btnSidebarNewChat">
+        <span class="nav-icon">+</span>
+        <span class="nav-text">新建对话</span>
+      </button>
+      <button class="tab-nav-item" id="btnSidebarListen">
+        <span class="nav-icon">🎧</span>
+        <span class="nav-text">帮我听</span>
+      </button>
+      <button class="tab-nav-item" id="btnSidebarPlaza">
+        <span class="nav-icon">🏛️</span>
+        <span class="nav-text">AI分身广场</span>
+      </button>
+    </div>
+
+    <!-- 侧边栏滚动区域 -->
+    <div class="sidebar-content">
+      <!-- AI分身模块（未激活状态） -->
+      <div>
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">AI分身</span>
+        </div>
+        <div class="avatar-activate-entry" id="btnActivateAvatar" title="激活我的AI分身">
+          <div class="avatar-activate-icon">✨</div>
+          <div class="avatar-activate-content">
+            <div class="avatar-activate-title">激活我的AI分身</div>
+            <div class="avatar-activate-sub">资料积累中</div>
+          </div>
+          <span class="avatar-activate-tag">待激活</span>
+        </div>
+      </div>
+
+      <!-- 底部历史对话 -->
+      <div>
+        <div class="sidebar-section-title">历史对话</div>
+        <div class="history-list">
+          <div class="history-item" data-id="hist-1" data-tag="MyAgent" data-title="智源大会发言提纲整理">
+            <span class="history-tag">【MyAgent】</span>
+            <span class="history-text">智源大会发言提纲整理</span>
+          </div>
+          <div class="history-item" data-id="hist-2" data-tag="王仲远" data-title="多模态大模型前沿学术研讨">
+            <span class="history-tag">【王仲远】</span>
+            <span class="history-text">多模态大模型前沿学术研讨</span>
+          </div>
+          <div class="history-item" data-id="hist-3" data-tag="MyAgent" data-title="周五学术沙龙与日程规划">
+            <span class="history-tag">【MyAgent】</span>
+            <span class="history-text">周五学术沙龙与日程规划</span>
+          </div>
+          <div class="history-item" data-id="hist-4" data-tag="王仲远" data-title="具身具脑技术协同可行性方案">
+            <span class="history-tag">【王仲远】</span>
+            <span class="history-text">具身具脑技术协同可行性方案</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 右侧主区域 -->
+  <main class="main-container">
+
+    <!-- 视图1：顶层纯新建对话（极简：仅输入框 + 发送按钮） -->
+    <section class="view-new-chat-minimal" id="viewNewChatMinimal">
+      <div class="minimal-input-box">
+        <input type="text" placeholder="给 MyAgent 发送消息..." />
+        <button class="btn-send">发送</button>
+      </div>
+    </section>
+
+    <!-- 视图2：点击AI分身新建对话（顶部专家信息卡片 + 下方输入框） -->
+    <section class="view-avatar-new-chat" id="viewAvatarNewChat">
+      <div class="expert-card">
+        <div class="expert-avatar-large" id="expertAvatarLarge">黄</div>
+        <div class="expert-info">
+          <div class="expert-header">
+            <h2 class="expert-name" id="expertName">黄铁军</h2>
+            <span class="expert-badge" id="expertBadge">已公开</span>
+          </div>
+          <div class="expert-title" id="expertTitle">智源研究院学术顾问 · 北京大学计算机学院教授 · 类脑计算与脉冲视觉专家</div>
+          <p class="expert-desc" id="expertDesc">
+            长期从事视觉信息处理与类脑智能研究，主持研制超高速脉冲视觉芯片与“天眸芯”系统。此AI分身融合了黄铁军教授在类脑视觉、神经形态计算与人工生命等领域的学术见解与公开论述。
+          </p>
+        </div>
+      </div>
+
+      <div class="avatar-chat-bottom">
+        <div class="minimal-input-box" style="max-width: 100%;">
+          <input type="text" id="avatarChatInput" placeholder="向 黄铁军 分身请教问题..." />
+          <button class="btn-send">发送</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视图3：分身管理（知识库与记忆，当前为未激活积累态） -->
+    <section class="view-avatar-manage" id="viewAvatarManage">
+      <div class="manage-header">
+        <div>
+          <h2 class="manage-title" id="manageTitle">我的AI分身 · 资料与激活准备</h2>
+          <p class="manage-subtitle">分身将基于您的真实资料与互动习惯深度构建，当前处于基础数据积累阶段</p>
+        </div>
+      </div>
+
+      <!-- Tab 切换（没有“管理”Tab） -->
+      <div class="manage-tabs">
+        <button class="tab-btn active" id="tabBtnKnowledge">知识库 (<span id="kbCount">1</span>)</button>
+        <button class="tab-btn" id="tabBtnMemory">记忆 (<span id="memCount">1</span>)</button>
+      </div>
+
+      <!-- 知识库列表 -->
+      <div class="assets-list" id="knowledgeList">
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">2026年度业务规划与技术路线纲要.docx</div>
+            <div class="asset-meta">格式：Word · 大小：2.1 MB · 上传时间：2026-09-20</div>
+          </div>
+          <button class="visibility-toggle-btn public" onclick="toggleVisibility(this)">
+            <span>🌐</span>
+            <span class="vis-text">公开</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 记忆列表 -->
+      <div class="assets-list" id="memoryList" style="display: none;">
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">行文偏好：倾向于逻辑严密、结论先行，习惯以清单和对比形式梳理技术架构</div>
+            <div class="asset-meta">记忆类型：认知习惯 · 更新时间：2026-09-21</div>
+          </div>
+          <button class="visibility-toggle-btn private" onclick="toggleVisibility(this)">
+            <span>🔒</span>
+            <span class="vis-text">仅自己可见</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 底部激活引导卡片 -->
+      <div class="activation-card" id="activationCard">
+        <div class="activation-card-header">
+          <div class="activation-status-row">
+            <div class="activation-status-badge" id="statusBadgeEl">
+              <span class="status-dot"></span>
+              <span id="statusBadgeText">当前资料尚不足以激活分身</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="activation-card-body">
+          <div class="activation-tip-title">推荐通过以下两种方式快速积累，解锁您的专属 AI 分身：</div>
+          <div class="activation-actions-grid" style="margin-top: 12px;">
+            <!-- 途径1：多跟AI聊天 -->
+            <div class="action-channel-card">
+              <div class="channel-main">
+                <div class="channel-icon">💬</div>
+                <div>
+                  <div class="channel-title">多跟 AI 对话协作</div>
+                  <div class="channel-desc">让 AI 帮您整理思路、撰写文档或推敲方案，AI 会在日常任务中自发提炼并沉淀您的表达习惯与专业偏好。</div>
+                </div>
+              </div>
+              <button class="btn-channel-action" id="btnGoChat">去聊几句 →</button>
+            </div>
+
+            <!-- 途径2：补充上传资料 -->
+            <div class="action-channel-card">
+              <div class="channel-main">
+                <div class="channel-icon">📑</div>
+                <div>
+                  <div class="channel-title">补充上传专业资料</div>
+                  <div class="channel-desc">上传您的文章著作、业务报告、演讲纪要或学术手稿，快速扩充专属专业知识库，直达激活标准。</div>
+                </div>
+              </div>
+              <label class="btn-channel-action primary" id="btnUploadDoc" style="margin: 0; cursor: pointer;">
+                <span>+ 上传资料</span>
+                <input type="file" id="fileDocInput" accept=".pdf,.docx,.doc,.txt,.md" style="display: none;" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 全局提示框 -->
+    <div class="upload-toast" id="uploadToast">
+      <span>⏳</span>
+      <span id="uploadToastText">提示信息</span>
+    </div>
+
+    <!-- 视图4：通用对话历史详情 -->
+    <section class="view-chat-detail" id="viewChatDetail">
+      <div class="chat-detail-header">
+        <span class="chat-detail-tag" id="detailTag">【MyAgent】</span>
+        <span class="chat-detail-title" id="detailTitle">对话标题</span>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <!-- 动态装填 -->
+      </div>
+
+      <div class="minimal-input-box" style="max-width: 100%;">
+        <input type="text" placeholder="输入回复内容..." />
+        <button class="btn-send">发送</button>
+      </div>
+    </section>
+
+    <!-- 视图5：AI分身广场 -->
+    <section class="view-avatar-plaza" id="viewAvatarPlaza">
+      <div class="plaza-header">
+        <h2 class="plaza-title">AI分身广场</h2>
+        <p class="plaza-subtitle">浏览与体验智源学者与专家的公开AI分身</p>
+      </div>
+
+      <div class="plaza-grid">
+        <div class="plaza-card" id="plazaCardHuang">
+          <div class="plaza-card-top">
+            <div class="avatar-icon" style="width: 40px; height: 40px; font-size: 16px;">黄</div>
+            <div class="plaza-card-info">
+              <h3>黄铁军</h3>
+              <p>类脑计算与脉冲视觉专家</p>
+            </div>
+          </div>
+          <p class="plaza-card-desc">探索超高速脉冲视觉芯片与生物启发式类脑智能体系。</p>
+        </div>
+
+        <div class="plaza-card">
+          <div class="plaza-card-top">
+            <div class="avatar-icon" style="width: 40px; height: 40px; font-size: 16px; background: linear-gradient(135deg, #059669, #10b981);">王</div>
+            <div class="plaza-card-info">
+              <h3>王仲远</h3>
+              <p>多模态与大模型系统专家</p>
+            </div>
+          </div>
+          <p class="plaza-card-desc">深入研讨大规模多模态模型前沿发展与具身计算实践。</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // 视图引用
+    const viewNewChatMinimal = document.getElementById('viewNewChatMinimal');
+    const viewAvatarNewChat = document.getElementById('viewAvatarNewChat');
+    const viewAvatarManage = document.getElementById('viewAvatarManage');
+    const viewChatDetail = document.getElementById('viewChatDetail');
+    const viewAvatarPlaza = document.getElementById('viewAvatarPlaza');
+
+    // 侧边栏按钮引用
+    const btnSidebarNewChat = document.getElementById('btnSidebarNewChat');
+    const btnSidebarPlaza = document.getElementById('btnSidebarPlaza');
+    const itemAvatarHuang = document.getElementById('itemAvatarHuang');
+    const btnManageHuang = document.getElementById('btnManageHuang');
+    const plazaCardHuang = document.getElementById('plazaCardHuang');
+    const itemAvatarPoetry = document.getElementById('itemAvatarPoetry');
+
+    // 分身详情配置表
+    const AVATAR_PROFILES = {
+      'huang': {
+        avatarText: '黄',
+        avatarBg: 'var(--primary)',
+        name: '黄铁军',
+        badge: '已公开',
+        isPrivate: false,
+        title: '智源研究院学术顾问 · 北京大学计算机学院教授 · 类脑计算与脉冲视觉专家',
+        desc: '长期从事视觉信息处理与类脑智能研究，主持研制超高速脉冲视觉芯片与“天眸芯”系统。此AI分身融合了黄铁军教授在类脑视觉、神经形态计算与人工生命等领域的学术见解与公开论述。',
+        placeholder: '向 黄铁军 分身请教问题...'
+      },
+      'poetry-private': {
+        avatarText: '诗',
+        avatarBg: 'linear-gradient(135deg, #0d9488, #059669)',
+        name: '写诗分身',
+        badge: '私密',
+        isPrivate: true,
+        title: '文学与韵律创作助手 · 诗词鉴赏与现代诗生成',
+        desc: '专精于古典诗词格律（平仄、押韵、对仗）与现代抒情、哲理诗歌的创作与润色，助您捕捉灵感与修辞意境。',
+        placeholder: '向 写诗分身 抛出一个意象或诗歌主题...'
+      }
+    };
+
+    // 隐藏全部主区域视图
+    function hideAllViews() {
+      viewNewChatMinimal.style.display = 'none';
+      viewAvatarNewChat.style.display = 'none';
+      viewAvatarManage.style.display = 'none';
+      viewChatDetail.style.display = 'none';
+      viewAvatarPlaza.style.display = 'none';
+    }
+
+    // 清除侧边栏选中高亮
+    function clearActiveStates() {
+      document.querySelectorAll('.tab-nav-item, .avatar-group-item, .sub-chat-item, .history-item, .avatar-activate-entry').forEach(el => {
+        el.classList.remove('active');
+        if (el.id === 'btnSidebarNewChat') {
+          el.classList.remove('primary-highlight');
+        }
+      });
+    }
+
+    // 切换至指定分身的新建对话页（广场体验使用）
+    function switchToAvatar(avatarType) {
+      clearActiveStates();
+      hideAllViews();
+
+      const profile = AVATAR_PROFILES[avatarType];
+      if (profile) {
+        const avatarLarge = document.getElementById('expertAvatarLarge');
+        avatarLarge.textContent = profile.avatarText;
+        avatarLarge.style.background = profile.avatarBg;
+
+        document.getElementById('expertName').textContent = profile.name;
+
+        const badgeEl = document.getElementById('expertBadge');
+        badgeEl.textContent = profile.badge;
+        if (profile.isPrivate) {
+          badgeEl.classList.add('private');
+        } else {
+          badgeEl.classList.remove('private');
+        }
+
+        document.getElementById('expertTitle').textContent = profile.title;
+        document.getElementById('expertDesc').textContent = profile.desc;
+        document.getElementById('avatarChatInput').placeholder = profile.placeholder;
+      }
+
+      viewAvatarNewChat.style.display = 'flex';
+    }
+
+    // 全局轻量提示
+    const uploadToast = document.getElementById('uploadToast');
+    const uploadToastText = document.getElementById('uploadToastText');
+    let toastTimer = null;
+    function showToast(msg, duration = 2400) {
+      if (!uploadToast) return;
+      uploadToastText.textContent = msg;
+      uploadToast.style.display = 'inline-flex';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        uploadToast.style.display = 'none';
+      }, duration);
+    }
+
+    // 1. 点击侧边栏顶部“新建对话”：右边仅输入框与发送按钮
+    btnSidebarNewChat.addEventListener('click', () => {
+      clearActiveStates();
+      btnSidebarNewChat.classList.add('active', 'primary-highlight');
+      hideAllViews();
+      viewNewChatMinimal.style.display = 'flex';
+    });
+
+    // 2. 点击“AI分身广场”
+    btnSidebarPlaza.addEventListener('click', () => {
+      clearActiveStates();
+      btnSidebarPlaza.classList.add('active');
+      hideAllViews();
+      viewAvatarPlaza.style.display = 'flex';
+    });
+
+    // 广场中点击黄铁军卡片直达其公开分身体验
+    if (plazaCardHuang) {
+      plazaCardHuang.addEventListener('click', () => {
+        switchToAvatar('huang');
+      });
+    }
+
+    // 3. 点击侧边栏“激活我的AI分身”：直达分身资料与激活准备页
+    const btnActivateAvatar = document.getElementById('btnActivateAvatar');
+    if (btnActivateAvatar) {
+      btnActivateAvatar.addEventListener('click', () => {
+        clearActiveStates();
+        btnActivateAvatar.classList.add('active');
+        hideAllViews();
+        viewAvatarManage.style.display = 'flex';
+      });
+    }
+
+    // 4. 知识库与记忆 Tab 切换（无管理Tab）
+    const tabBtnKnowledge = document.getElementById('tabBtnKnowledge');
+    const tabBtnMemory = document.getElementById('tabBtnMemory');
+    const knowledgeList = document.getElementById('knowledgeList');
+    const memoryList = document.getElementById('memoryList');
+
+    if (tabBtnKnowledge) {
+      tabBtnKnowledge.addEventListener('click', () => {
+        tabBtnKnowledge.classList.add('active');
+        if (tabBtnMemory) tabBtnMemory.classList.remove('active');
+        if (knowledgeList) knowledgeList.style.display = 'flex';
+        if (memoryList) memoryList.style.display = 'none';
+      });
+    }
+
+    if (tabBtnMemory) {
+      tabBtnMemory.addEventListener('click', () => {
+        tabBtnMemory.classList.add('active');
+        if (tabBtnKnowledge) tabBtnKnowledge.classList.remove('active');
+        if (memoryList) memoryList.style.display = 'flex';
+        if (knowledgeList) knowledgeList.style.display = 'none';
+      });
+    }
+
+    // 5. 底部卡片途径1：多跟 AI 聊天（点击直接跳转至新建对话）
+    const btnGoChat = document.getElementById('btnGoChat');
+    if (btnGoChat) {
+      btnGoChat.addEventListener('click', () => {
+        clearActiveStates();
+        btnSidebarNewChat.classList.add('active', 'primary-highlight');
+        hideAllViews();
+        viewNewChatMinimal.style.display = 'flex';
+        const input = viewNewChatMinimal.querySelector('input');
+        if (input) {
+          input.focus();
+        }
+      });
+    }
+
+    // 6. 底部卡片途径2：补充上传专业资料
+    const fileDocInput = document.getElementById('fileDocInput');
+    const statusBadgeText = document.getElementById('statusBadgeText');
+    const statusBadgeEl = document.getElementById('statusBadgeEl');
+    const kbCountEl = document.getElementById('kbCount');
+
+    if (fileDocInput) {
+      fileDocInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        const fileName = file ? file.name : '大模型具身智能前沿研究讲义.pdf';
+        const fileSize = file ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : '3.8 MB';
+        const fileExt = fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : 'PDF';
+
+        showToast('正在解析文档并提取个人专业特征...');
+
+        setTimeout(() => {
+          // 动态插入新卡片
+          if (knowledgeList) {
+            const newCard = document.createElement('div');
+            newCard.className = 'asset-card';
+            newCard.style.animation = 'fadeInToast 0.3s ease';
+            newCard.innerHTML = `
+              <div class="asset-main">
+                <div class="asset-title">${fileName}</div>
+                <div class="asset-meta">格式：${fileExt} · 大小：${fileSize} · 上传时间：刚刚</div>
+              </div>
+              <button class="visibility-toggle-btn public" onclick="toggleVisibility(this)">
+                <span>🌐</span>
+                <span class="vis-text">公开</span>
+              </button>
+            `;
+            knowledgeList.insertBefore(newCard, knowledgeList.firstChild);
+          }
+
+          // 更新知识库计数
+          if (kbCountEl && knowledgeList) {
+            const count = knowledgeList.querySelectorAll('.asset-card').length;
+            kbCountEl.textContent = count;
+          }
+
+          if (statusBadgeText) statusBadgeText.textContent = '已成功补充专业资料 · 持续积累即可激活分身';
+          if (statusBadgeEl) {
+            statusBadgeEl.style.backgroundColor = '#eff6ff';
+            statusBadgeEl.style.color = '#1d4ed8';
+            statusBadgeEl.style.borderColor = '#bfdbfe';
+            const dot = statusBadgeEl.querySelector('.status-dot');
+            if (dot) dot.style.backgroundColor = '#2563eb';
+          }
+
+          showToast('资料已成功加入知识库！分身资料储备已显著提升');
+        }, 800);
+      });
+    }
+
+    // 新建分身按钮点击阻止冒泡
+    const btnCreateAvatar = document.getElementById('btnCreateAvatar');
+    if (btnCreateAvatar) {
+      btnCreateAvatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    // 切换“公开”与“仅自己可见”
+    function toggleVisibility(button) {
+      const isPublic = button.classList.contains('public');
+      const textSpan = button.querySelector('.vis-text');
+      const iconSpan = button.querySelector('span:first-child');
+
+      if (isPublic) {
+        button.classList.remove('public');
+        button.classList.add('private');
+        iconSpan.textContent = '🔒';
+        textSpan.textContent = '仅自己可见';
+      } else {
+        button.classList.remove('private');
+        button.classList.add('public');
+        iconSpan.textContent = '🌐';
+        textSpan.textContent = '公开';
+      }
+    }
+
+    // 5. 点击分身下的对话
+    document.querySelectorAll('.sub-chat-item').forEach(item => {
+      item.addEventListener('click', () => {
+        clearActiveStates();
+        item.classList.add('active');
+        hideAllViews();
+
+        const title = item.textContent.trim();
+        const tag = item.dataset.tag || '黄铁军';
+        document.getElementById('detailTag').textContent = `【${tag}】`;
+        document.getElementById('detailTitle').textContent = title;
+
+        const id = item.dataset.id;
+        let userMsg = `请问${title}的核心逻辑应该如何拆解？`;
+        let agentMsg = `在神经拟态与类脑计算的框架下，我们首先要关注信息的时空编码与脉冲发射频率。区别于传统人工神经网络的帧驱动机制，类脑体系依靠离散事件流直接反映动态变化，具有极低功耗与纳秒级时延优势。`;
+
+        if (id === 'huang-sub-2') {
+          userMsg = `关于具身智能的类脑路线，当前主要的瓶颈和突破口在哪些层面？`;
+          agentMsg = `主要在于多模态传感脉冲化融合与实时闭环控制。目前天眸芯在端侧感知上实现了超低时延，下一步的关键在于将运动控制回路与类脑决策网络进行毫秒级的低延迟对齐。`;
+        } else if (id === 'poetry-sub-1') {
+          userMsg = `写一首描写秋夜智源学者潜心探索脑科学与AI的七言绝句，要求押平水韵十一真韵。`;
+          agentMsg = `秋夜研思客意深，<br/>微毫脉冲探灵真。<br/>机心欲解千回意，<br/>冷月霜华照赤辰。<br/><br/>*注：押平水韵上平十一真韵（深、真、辰），颔联与颈联对仗工整，借微毫脉冲喻类脑探索。*`;
+        } else if (id === 'poetry-sub-2') {
+          userMsg = `为我的散文诗集写一段关于时间与计算的序诗，风格偏向里尔克或博尔赫斯。`;
+          agentMsg = `不是钟表里金属齿轮的咬合，<br/>是光子撞击硅片时的那一瞬战栗。<br/>我们在无声的数据深渊里垂钓，<br/>每一束脉冲，都是时间未曾言说的倒影——<br/>世界在计算中老去，<br/>而思维在此刻新生。`;
+        }
+
+        document.getElementById('chatMessages').innerHTML = `
+          <div class="msg-bubble msg-user">${userMsg}</div>
+          <div class="msg-bubble msg-agent">${agentMsg}</div>
+        `;
+        viewChatDetail.style.display = 'flex';
+      });
+    });
+
+    // 6. 点击历史对话
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        clearActiveStates();
+        item.classList.add('active');
+        hideAllViews();
+
+        const tag = item.dataset.tag;
+        const title = item.dataset.title;
+        document.getElementById('detailTag').textContent = `【${tag}】`;
+        document.getElementById('detailTitle').textContent = title;
+
+        document.getElementById('chatMessages').innerHTML = `
+          <div class="msg-bubble msg-user">帮我梳理一下关于“${title}”的主要要点。</div>
+          <div class="msg-bubble msg-agent">已为您整理相关核心记录与行动项：<br/>1. 明确核心技术路线与分阶段目标；<br/>2. 联合相关团队进行算力与实验平台对齐；<br/>3. 输出可落地的技术评测方案。</div>
+        `;
+        viewChatDetail.style.display = 'flex';
+      });
+    });
+
+    // 初始默认打开“新建对话”视图
+    viewNewChatMinimal.style.display = 'flex';
+  </script>
+</body>
+</html>

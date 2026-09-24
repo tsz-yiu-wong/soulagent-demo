@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>方案二：全沉浸·iOS 液态玻璃收纳坞 (浅色)</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --phone-bg: radial-gradient(circle at 50% 20%, #ffffff 0%, #f1f5f9 100%);
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.06);
+      --primary: #0284c7;
+      --accent: #9333ea;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --glass-base: rgba(255, 255, 255, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.9);
+      --glass-shadow: 0 16px 35px -8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .top-meta-bar {
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .top-meta-bar a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .toggle-guide-btn {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .toggle-guide-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .device-shell {
+      width: 390px;
+      height: 844px;
+      background: var(--phone-bg);
+      border-radius: 50px;
+      border: 8px solid #cbd5e1;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.14);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .island-dot { width: 10px; height: 10px; border-radius: 50%; background: #1e293b; }
+    .island-lens { width: 10px; height: 10px; border-radius: 50%; background: #0f172a; }
+
+    .status-bar {
+      height: 48px;
+      padding: 12px 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      z-index: 99;
+    }
+
+    .guide-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .tag-entry { background: #ecfdf5; color: #047857; border: 1px dashed #059669; }
+    .tag-expand { background: #faf5ff; color: #7e22ce; border: 1px dashed #a855f7; }
+    .tag-exit { background: #fff1f2; color: #be123c; border: 1px dashed #e11d48; }
+
+    body.hide-guides .guide-tag { display: none !important; }
+
+    /* 全屏沉浸式主会话视口 */
+    .immersive-canvas {
+      flex: 1;
+      padding: 14px 18px 110px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .canvas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+    .canvas-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+    }
+    .status-pill {
+      font-size: 11px;
+      background: #e0f2fe;
+      color: var(--primary);
+      border: 1px solid #bae6fd;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    /* 会话流中的气泡卡片 */
+    .chat-bubble-agent {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      border-top-left-radius: 4px;
+      padding: 14px;
+      align-self: flex-start;
+      max-width: 90%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .chat-bubble-user {
+      background: linear-gradient(135deg, #e0f2fe, #f3e8ff);
+      border: 1px solid #bae6fd;
+      border-radius: 18px;
+      border-top-right-radius: 4px;
+      padding: 12px 14px;
+      align-self: flex-end;
+      max-width: 80%;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    .bubble-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #0f172a;
+    }
+    .bubble-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .skeleton-line {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+      margin: 6px 0;
+    }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-line.w-60 { width: 60%; }
+
+    /* ================= iOS 液态玻璃收纳坞 (浅色透亮) ================= */
+    .dock-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.25);
+      backdrop-filter: blur(8px);
+      z-index: 150;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    .dock-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .liquid-dock-panel {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: var(--glass-base);
+      backdrop-filter: blur(35px) saturate(180%);
+      -webkit-backdrop-filter: blur(35px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 36px;
+      box-shadow: var(--glass-shadow);
+      z-index: 200;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 66px;
+    }
+
+    .liquid-dock-panel.expanded {
+      height: 720px;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .mini-bar-content {
+      height: 66px;
+      min-height: 66px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .mini-input-box {
+      flex: 1;
+      height: 40px;
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 20px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      gap: 6px;
+    }
+    .dock-expand-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .liquid-dock-panel.expanded .dock-expand-btn {
+      transform: rotate(180deg);
+    }
+
+    .expanded-drawer {
+      flex: 1;
+      padding: 0 18px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      opacity: 0;
+      transition: opacity 0.25s ease 0.1s;
+    }
+    .liquid-dock-panel.expanded .expanded-drawer {
+      opacity: 1;
+    }
+
+    .drag-handle {
+      width: 44px;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.18);
+      border-radius: 10px;
+      margin: 10px auto 4px;
+      cursor: pointer;
+    }
+
+    .drawer-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .tool-tile-card {
+      background: #f8fafc;
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tool-tile-card:active {
+      background: #f1f5f9;
+      transform: scale(0.98);
+    }
+    .tile-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .tile-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tile-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .chips-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .chip-item {
+      flex-shrink: 0;
+      background: #f1f5f9;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 8px 12px;
+      border-radius: 14px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: #0f172a;
+    }
+    .chip-item:active {
+      background: #e0f2fe;
+    }
+
+    /* 浮动子页面模态 (浅色) */
+    .liquid-modal {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .liquid-modal.show {
+      transform: translateY(0);
+    }
+    .modal-header {
+      height: 52px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .close-modal-btn {
+      color: var(--primary);
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .modal-body {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: #f8fafc;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      z-index: 400;
+      pointer-events: none;
+    }
+
+    .action-toast {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 1000;
+      white-space: nowrap;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .action-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-meta-bar">
+    <a href="index.html">← 返回所有方案概览</a>
+    <button class="toggle-guide-btn active" id="toggleGuideBtn" onclick="toggleGuide()">
+      <span>💡</span> 交互动线高亮已开启
+    </button>
+  </div>
+
+  <div class="device-shell">
+    <div class="island">
+      <div class="island-dot"></div>
+      <div class="island-lens"></div>
+    </div>
+    <div class="status-bar">
+      <span>09:41</span>
+      <span>5G · 100%</span>
+    </div>
+
+    <div class="action-toast" id="actionToast">
+      <span id="toastText">已切换</span>
+    </div>
+
+    <!-- 主画布：沉浸式 AI 对话底座 -->
+    <div class="immersive-canvas">
+      <div class="canvas-header">
+        <div class="canvas-title">
+          <span>SoulAgent</span>
+          <span class="status-pill">主中枢在线</span>
+        </div>
+        <div class="guide-tag tag-entry">全屏对话底座</div>
+      </div>
+
+      <div class="chat-bubble-agent">
+        <div class="bubble-title">
+          <span>🤖 MyAgent 核心状态</span>
+        </div>
+        <div class="bubble-text">
+          欢迎回来。我已接入您的专属分身与记忆知识库，随时待命。
+        </div>
+        <div class="skeleton-line w-80"></div>
+        <div class="skeleton-line w-60"></div>
+      </div>
+
+      <div class="chat-bubble-user">
+        请帮我总结今天具身智能论坛的关键观点，并让张教授分身点评。
+      </div>
+
+      <div class="chat-bubble-agent">
+        <div class="bubble-title">
+          <span style="color: #9333ea;">👤 调用【张教授分身】第一视角协同</span>
+          <span class="guide-tag tag-entry">Skill调度机制</span>
+        </div>
+        <div class="bubble-text">
+          “从具身导航的工程落地来看，当前的核心痛点依然是闭环延迟……”
+        </div>
+        <div class="skeleton-line w-80"></div>
+      </div>
+
+      <div style="margin-top: 10px; background: #f0f9ff; border: 1px dashed #bae6fd; border-radius: 12px; padding: 12px; font-size: 11px; color: #0369a1; line-height: 1.5;">
+        💡 <b>液态收纳交互演示</b>：<br>
+        底部输入栏如 Apple Music 迷你播放条。<b>点击右侧展开按钮或向上滑动</b>，即可展开全部功能面板（帮我听记、分身广场、记忆调度）。
+      </div>
+    </div>
+
+    <div class="dock-backdrop" id="dockBackdrop" onclick="collapseDock()"></div>
+
+    <!-- ================= 液态玻璃收纳坞主体 ================= -->
+    <div class="liquid-dock-panel" id="liquidDock">
+      <div class="drag-handle" onclick="toggleDock()"></div>
+
+      <div class="mini-bar-content" onclick="expandDock()">
+        <div class="mini-input-box">
+          <span>💬</span>
+          <span>提问、粘贴链接、或输入 @ 唤出分身...</span>
+        </div>
+        <div class="dock-expand-btn" title="展开功能坞">
+          <span>▲</span>
+        </div>
+      </div>
+
+      <div class="expanded-drawer">
+        <div class="drawer-section-title">
+          <span>收纳坞 · 快捷调用中枢</span>
+          <span class="guide-tag tag-exit" onclick="collapseDock()">↓ 下滑或点击退出</span>
+        </div>
+
+        <div class="tool-tile-card" onclick="openModal('modal-listen')">
+          <div class="tile-top">
+            <div class="tile-title">
+              <span>🎙️ 帮我听记 (音视频解析)</span>
+            </div>
+            <span class="guide-tag tag-entry">点击进入</span>
+          </div>
+          <div class="tile-desc">输入任意直播网址、B站/腾讯会议链接或上传录音，生成速记、核心观点与逐字稿。</div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+
+        <div class="drawer-section-title">
+          <span>AI 分身矩阵 (第一大核心)</span>
+          <span class="guide-tag tag-entry" onclick="openModal('modal-persona-build')">＋ 构建分身</span>
+        </div>
+
+        <div class="chips-row">
+          <div class="chip-item" onclick="openModal('modal-persona-chat')">
+            <span>👤</span>
+            <span>张教授(我的分身·直聊)</span>
+          </div>
+          <div class="chip-item" onclick="openModal('modal-persona-plaza')">
+            <span>🏛️</span>
+            <span>智库专家广场 ❯</span>
+          </div>
+        </div>
+
+        <div class="drawer-section-title">
+          <span>系统底座与调度</span>
+          <span class="guide-tag tag-entry">辅助管理</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="tool-tile-card" onclick="openModal('modal-memory')">
+            <div class="tile-title">🧠 记忆中心</div>
+            <div class="tile-desc">个人知识沉淀与偏好</div>
+          </div>
+          <div class="tool-tile-card" onclick="openModal('modal-cron')">
+            <div class="tile-title">⏰ 定时任务</div>
+            <div class="tile-desc">早报自动抓取巡检</div>
+          </div>
+        </div>
+
+        <div class="tool-tile-card" onclick="openModal('modal-skills')">
+          <div class="tile-title">🧩 技能中心 (Web Search / ArXiv / Code)</div>
+          <div class="tile-desc">配置 MyAgent 具备的扩展工具生态。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 模态子页面 1: 帮我听记详情 ================= -->
+    <div class="liquid-modal" id="modal-listen">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-listen')">
+          <span>‹ 收起听记工作台</span>
+          <span class="guide-tag tag-exit">返回</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">帮我听记</div>
+        <div style="width: 30px;"></div>
+      </div>
+      <div class="modal-body">
+        <div class="tool-tile-card" style="border-color: var(--primary); background: #ffffff;">
+          <div class="tile-title">🔗 粘贴音视频/直播链接</div>
+          <div class="tile-desc">已就绪自动抓取画面并生成时间戳速记。</div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+        <div class="tool-tile-card" style="background: #ffffff;">
+          <div class="tile-title">🔴 官方精选：具身智能 2026 前沿论坛</div>
+          <div class="tile-desc">已沉淀 4 位专家观点。</div>
+          <button style="margin-top: 10px; width: 100%; padding: 10px; border-radius: 12px; background: #e0f2fe; border: 1px solid #bae6fd; color: #0284c7; font-weight: 600; cursor: pointer;" onclick="showToast('已反哺注入给我的分身！')">
+            🔄 将纪要反哺给我的分身
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 模态子页面 2: 分身广场 ================= -->
+    <div class="liquid-modal" id="modal-persona-plaza">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-persona-plaza')">
+          <span>‹ 退出广场</span>
+          <span class="guide-tag tag-exit">返回</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">专家智库广场</div>
+        <div style="width: 30px;"></div>
+      </div>
+      <div class="modal-body">
+        <div class="tool-tile-card" style="background: #ffffff;" onclick="openModal('modal-persona-chat')">
+          <div class="tile-title">👨‍🏫 李院士（量子信息）</div>
+          <div class="tile-desc">点击发起 1v1 单聊提问</div>
+        </div>
+        <div class="tool-tile-card" style="background: #ffffff;" onclick="showToast('已开启多专家跨界协同群聊！')">
+          <div class="tile-title">⚡️ 多专家接力研讨组</div>
+          <div class="tile-desc">勾选多位专家接力发言</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 模态子页面 3: 分身 1v1 独立对话 ================= -->
+    <div class="liquid-modal" id="modal-persona-chat">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-persona-chat')">
+          <span>‹ 退出对话</span>
+          <span class="guide-tag tag-exit">返回</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">分身第一视角独立问答</div>
+        <div style="width: 30px;"></div>
+      </div>
+      <div class="modal-body">
+        <div class="chat-bubble-agent">
+          <div class="bubble-title">张教授分身（已进入独立会话）</div>
+          <div class="bubble-text">你好，我是张教授的 AI 分身，欢迎就我的论文与专业研究方向进行交流。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 模态子页面 4: 构建分身 ================= -->
+    <div class="liquid-modal" id="modal-persona-build">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-persona-build')">
+          <span>✕ 取消构建</span>
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">3步提炼个人分身</div>
+        <div style="width: 30px;"></div>
+      </div>
+      <div class="modal-body">
+        <div class="tool-tile-card" style="background: #ffffff;">
+          <div class="tile-title">1. 输入主页或论文链接</div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+        <div class="tool-tile-card" style="background: #ffffff;">
+          <div class="tile-title">2. 全网提炼学术成果与讲话语气</div>
+          <div class="skeleton-line w-60"></div>
+        </div>
+        <button style="margin-top: auto; padding: 12px; border-radius: 14px; background: var(--primary); color: #fff; font-weight: 600; border: none; cursor: pointer;" onclick="showToast('分身开始合成'); closeModal('modal-persona-build');">
+          开始全自动提炼
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= 模态子页面 5: 记忆/定时/技能 ================= -->
+    <div class="liquid-modal" id="modal-memory">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-memory')">‹ 返回</div>
+        <div style="font-size: 15px; font-weight: 600;">长期记忆管理</div>
+        <div></div>
+      </div>
+      <div class="modal-body">
+        <div class="tool-tile-card" style="background: #ffffff;">
+          <div class="tile-title">用户画像与偏好事实列表</div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="liquid-modal" id="modal-cron">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-cron')">‹ 返回</div>
+        <div style="font-size: 15px; font-weight: 600;">定时自动化任务</div>
+        <div></div>
+      </div>
+      <div class="modal-body">
+        <div class="tool-tile-card" style="background: #ffffff;">
+          <div class="tile-title">每日 08:30 自动研报追踪</div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="liquid-modal" id="modal-skills">
+      <div class="modal-header">
+        <div class="close-modal-btn" onclick="closeModal('modal-skills')">‹ 返回</div>
+        <div style="font-size: 15px; font-weight: 600;">技能中心</div>
+        <div></div>
+      </div>
+      <div class="modal-body">
+        <div class="tool-tile-card" style="background: #ffffff;">
+          <div class="tile-title">已启用 8 个核心 Agent 工具</div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    const dock = document.getElementById('liquidDock');
+    const backdrop = document.getElementById('dockBackdrop');
+
+    function toggleDock() {
+      if (dock.classList.contains('expanded')) {
+        collapseDock();
+      } else {
+        expandDock();
+      }
+    }
+
+    function expandDock() {
+      dock.classList.add('expanded');
+      backdrop.classList.add('active');
+      showToast('液态收纳坞已平滑展开，呈现功能全集');
+    }
+
+    function collapseDock() {
+      dock.classList.remove('expanded');
+      backdrop.classList.remove('active');
+      showToast('收纳坞已缩回到底部胶囊');
+    }
+
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('show');
+        showToast('打开功能详情（点击左上角退出）');
+      }
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('show');
+        showToast('已关闭返回');
+      }
+    }
+
+    function toggleGuide() {
+      const body = document.body;
+      const btn = document.getElementById('toggleGuideBtn');
+      if (body.classList.contains('hide-guides')) {
+        body.classList.remove('hide-guides');
+        btn.classList.add('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已开启';
+        showToast('动线高亮已开启');
+      } else {
+        body.classList.add('hide-guides');
+        btn.classList.remove('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已关闭';
+        showToast('纯净视图模式');
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(text) {
+      const toast = document.getElementById('actionToast');
+      const toastText = document.getElementById('toastText');
+      toastText.innerText = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

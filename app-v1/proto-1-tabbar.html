@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>方案一：经典分权·稳健 TabBar 范式 (浅色)</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --phone-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.06);
+      --card-active: #f1f5f9;
+      --primary: #2563eb;
+      --primary-glow: rgba(37, 99, 235, 0.18);
+      --accent: #0284c7;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --tabbar-bg: rgba(255, 255, 255, 0.88);
+      --guide-tag: #d97706;
+      --guide-exit: #e11d48;
+      --guide-entry: #059669;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* 顶部全局控制条 */
+    .top-meta-bar {
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .top-meta-bar a {
+      color: var(--primary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+    }
+    .toggle-guide-btn {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+    .toggle-guide-btn.active {
+      background: #f59e0b;
+      color: #ffffff;
+      font-weight: 600;
+      border-color: #d97706;
+    }
+
+    /* 手机外壳容器 */
+    .device-shell {
+      width: 390px;
+      height: 844px;
+      background: var(--phone-bg);
+      border-radius: 50px;
+      border: 8px solid #cbd5e1;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 灵动岛 */
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .island-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1e293b;
+    }
+    .island-lens {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #0f172a;
+      box-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+    }
+
+    /* 状态栏 */
+    .status-bar {
+      height: 48px;
+      padding: 12px 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      z-index: 99;
+    }
+
+    /* 交互动线标签 (Guide Tags) */
+    .guide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .tag-entry {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px dashed #059669;
+    }
+    .tag-switch {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px dashed #d97706;
+    }
+    .tag-exit {
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px dashed #e11d48;
+    }
+
+    body.hide-guides .guide-tag,
+    body.hide-guides .logic-hint {
+      display: none !important;
+    }
+
+    /* 页面视口 */
+    .app-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 各Tab主视图 */
+    .view-page {
+      position: absolute;
+      inset: 0;
+      padding: 12px 18px 90px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      opacity: 0;
+      transform: scale(0.98);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .view-page.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 模块通用卡片骨架 */
+    .proto-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 6px;
+    }
+    .proto-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+    }
+    .proto-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 15px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .proto-card:hover, .proto-card:active {
+      background: var(--card-active);
+      border-color: rgba(37, 99, 235, 0.3);
+      transform: translateY(-1px);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(0, 0, 0, 0.06);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .tap-action {
+      color: var(--primary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* 骨架条纹条 */
+    .skeleton-line {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+      margin: 6px 0;
+    }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-line.w-60 { width: 60%; }
+    .skeleton-line.w-40 { width: 40%; }
+
+    /* 下钻子页面 */
+    .sub-page {
+      position: absolute;
+      inset: 0;
+      background: var(--phone-bg);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      padding-bottom: 30px;
+    }
+    .sub-page.show {
+      transform: translateX(0);
+    }
+    .sub-page-header {
+      height: 52px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(15px);
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      padding: 6px 8px;
+      margin-left: -8px;
+      border-radius: 8px;
+    }
+    .back-btn:active {
+      background: rgba(37, 99, 235, 0.1);
+    }
+    .sub-page-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .sub-page-body {
+      flex: 1;
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* 对话输入框骨架 (MyAgent 页面常驻) */
+    .chat-dock {
+      margin-top: auto;
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+    .chat-input-placeholder {
+      font-size: 13px;
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .chat-btn-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 经典底部 TabBar (浅色磨砂) */
+    .tabbar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: var(--tabbar-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding-top: 8px;
+      z-index: 100;
+    }
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      width: 72px;
+      position: relative;
+    }
+    .tab-item.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .tab-item .tab-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .tab-item .tab-label {
+      font-size: 11px;
+    }
+    .tab-guide-tip {
+      position: absolute;
+      top: -14px;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    /* 底部 Home Indicator 横条 */
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      z-index: 300;
+    }
+
+    /* Toast 提示 */
+    .action-toast {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 1000;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .action-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部控制条 -->
+  <div class="top-meta-bar">
+    <a href="index.html">← 返回所有方案概览</a>
+    <button class="toggle-guide-btn active" id="toggleGuideBtn" onclick="toggleGuide()">
+      <span>💡</span> 交互动线高亮已开启
+    </button>
+  </div>
+
+  <!-- 手机外壳 -->
+  <div class="device-shell">
+    <div class="island">
+      <div class="island-dot"></div>
+      <div class="island-lens"></div>
+    </div>
+    <div class="status-bar">
+      <span>09:41</span>
+      <span>5G · 100%</span>
+    </div>
+
+    <!-- 交互提示 Toast -->
+    <div class="action-toast" id="actionToast">
+      <span>⚡️</span> <span id="toastText">已切换</span>
+    </div>
+
+    <!-- 核心页面视口 -->
+    <div class="app-viewport">
+
+      <!-- ================= Tab 1: MyAgent 对话主场 ================= -->
+      <div class="view-page active" id="view-myagent">
+        <div class="proto-header">
+          <div class="proto-title">
+            <span>🧠 MyAgent</span>
+            <span class="guide-tag tag-entry">主助手入口</span>
+          </div>
+          <div class="tap-action" onclick="openSubPage('page-skills')">
+            <span class="guide-tag tag-entry">点击下钻</span> 技能中心 ↗
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-agent-settings')">
+          <div class="card-top">
+            <div class="card-title">💡 调度与中枢底座</div>
+            <span class="guide-tag tag-entry">入口：系统设置</span>
+          </div>
+          <div class="card-desc">展示 MyAgent 的记忆沉淀机制与自动化定时配置状态。</div>
+          <div class="skeleton-line w-80"></div>
+          <div class="skeleton-line w-40"></div>
+          <div class="card-footer">
+            <span>点击查看记忆库 & 定时任务</span>
+            <span class="tap-action">进入配置 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-chat-persona-collab')">
+          <div class="card-top">
+            <div class="card-title">💬 主对话中调用【AI分身】</div>
+            <span class="guide-tag tag-entry">核心交互</span>
+          </div>
+          <div class="card-desc">在会话中键入 @ 或调用子分身，AI分身输出第一视角研讨，主助手综合收敛。</div>
+          <div class="skeleton-line w-60"></div>
+          <div class="card-footer">
+            <span>查看协同对话流程原型</span>
+            <span class="tap-action">点击演示 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-cron-tasks')">
+          <div class="card-top">
+            <div class="card-title">⏰ 定时研究自动化任务</div>
+            <span class="guide-tag tag-entry">入口：后台巡检</span>
+          </div>
+          <div class="card-desc">已开启 2 项：每日行业技术早报、每周学者前沿追踪。</div>
+          <div class="card-footer">
+            <span>管理调度周期与已生成研报</span>
+            <span class="tap-action">查看任务 ❯</span>
+          </div>
+        </div>
+
+        <!-- 底部对话输入框骨架 -->
+        <div class="chat-dock">
+          <div class="chat-input-placeholder">输入问题，或输入 @ 呼叫专家分身...</div>
+          <div class="chat-btn-circle" onclick="showToast('点击发送：向 MyAgent 提问')">↑</div>
+        </div>
+      </div>
+
+      <!-- ================= Tab 2: 帮我听记 ================= -->
+      <div class="view-page" id="view-listen">
+        <div class="proto-header">
+          <div class="proto-title">
+            <span>🎙️ 帮我听记</span>
+            <span class="guide-tag tag-entry">核心功能二</span>
+          </div>
+          <span class="guide-tag tag-switch">音视频解析</span>
+        </div>
+
+        <!-- 快速粘贴入口 -->
+        <div class="proto-card" onclick="openSubPage('page-listen-create')">
+          <div class="card-top">
+            <div class="card-title">🔗 粘贴会议/直播/视频链接</div>
+            <span class="guide-tag tag-entry">主入口</span>
+          </div>
+          <div class="card-desc">支持输入直播网址、长视频链接或本地音频文件，自动采集画面并生成带图速记。</div>
+          <div class="skeleton-line w-80"></div>
+          <div class="card-footer">
+            <span>支持：B站、腾讯会议、学术直播等</span>
+            <span class="tap-action">立刻解析 ❯</span>
+          </div>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 600; color: #64748b; margin-top: 4px;">
+          📌 官方直播与学术论坛精选（点击查看听记详情）
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-listen-detail')">
+          <div class="card-top">
+            <div class="card-title">🟢 正在进行：2026 具身大模型前沿论坛</div>
+            <span class="guide-tag tag-entry">点击下钻</span>
+          </div>
+          <div class="card-desc">已有 1,240 人在听 · 实时生成速览纪要与多嘉宾发言脉络。</div>
+          <div class="skeleton-line w-60"></div>
+          <div class="card-footer">
+            <span>具备：速览/嘉宾观点/逐字稿</span>
+            <span class="tap-action">进入听记会场 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-listen-detail')">
+          <div class="card-top">
+            <div class="card-title">📁 已转录：多模态 Agent 顶会演讲录音</div>
+            <span class="guide-tag tag-entry">点击下钻</span>
+          </div>
+          <div class="card-desc">时长 45 分钟 · 提炼出 5 条核心学术结论与反哺知识。</div>
+          <div class="card-footer">
+            <span>一键反哺给我的分身</span>
+            <span class="tap-action">查看成果 ❯</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= Tab 3: AI分身 ================= -->
+      <div class="view-page" id="view-personas">
+        <div class="proto-header">
+          <div class="proto-title">
+            <span>👥 AI分身</span>
+            <span class="guide-tag tag-entry">核心功能一</span>
+          </div>
+          <div class="tap-action" onclick="openSubPage('page-create-persona')">
+            <span class="guide-tag tag-entry">点击创建</span> ＋ 构建分身
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-persona-management')">
+          <div class="card-top">
+            <div class="card-title">👤 我打造的专属 AI 分身</div>
+            <span class="guide-tag tag-entry">入口：分身管理</span>
+          </div>
+          <div class="card-desc">张教授（已就绪 · 个人知识库 12 篇论文 · 表达风格已拟合）</div>
+          <div class="skeleton-line w-80"></div>
+          <div class="card-footer">
+            <span class="tap-action" onclick="event.stopPropagation(); openSubPage('page-persona-chat')">💬 1v1单独提问</span>
+            <span class="tap-action">人设/知识库管理 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-persona-plaza')">
+          <div class="card-top">
+            <div class="card-title">🏛️ 智库专家广场</div>
+            <span class="guide-tag tag-entry">入口：公共广场</span>
+          </div>
+          <div class="card-desc">汇聚各领域官方预置与认证学者分身，支持单选请教，或勾选多位专家发起跨学科群聊研讨。</div>
+          <div class="skeleton-line w-60"></div>
+          <div class="card-footer">
+            <span>支持多专家协同碰撞发言</span>
+            <span class="tap-action">进入广场 ❯</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= Tab 4: 我的 / 系统中心 ================= -->
+      <div class="view-page" id="view-profile">
+        <div class="proto-header">
+          <div class="proto-title">
+            <span>⚙️ 个人中心</span>
+          </div>
+          <span class="guide-tag tag-entry">辅助与管理</span>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-memory-center')">
+          <div class="card-top">
+            <div class="card-title">🧠 长期记忆管理</div>
+            <span class="guide-tag tag-entry">入口</span>
+          </div>
+          <div class="card-desc">查看 MyAgent 积累的用户画像偏好、历史会话中提取的个人习惯与事实。</div>
+          <div class="card-footer">
+            <span>支持编辑、遗忘与隐私清除</span>
+            <span class="tap-action">查看记忆 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-cron-tasks')">
+          <div class="card-top">
+            <div class="card-title">⏰ 定时调度与自动化任务</div>
+            <span class="guide-tag tag-entry">入口</span>
+          </div>
+          <div class="card-desc">管理每日早报推送时间、抓取学术期刊源配置。</div>
+          <div class="card-footer">
+            <span>当前运行中：2项</span>
+            <span class="tap-action">管理调度 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openSubPage('page-skills')">
+          <div class="card-top">
+            <div class="card-title">🧩 技能中心 (Tools & Skills)</div>
+            <span class="guide-tag tag-entry">入口</span>
+          </div>
+          <div class="card-desc">联网搜索、论文 ArXiv 爬取、图表生成等扩展能力。</div>
+          <div class="card-footer">
+            <span>已启用 8 个技能插件</span>
+            <span class="tap-action">配置技能 ❯</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 1: 听记详情 ================= -->
+      <div class="sub-page" id="page-listen-detail">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-listen-detail')">
+            <span>‹</span> 返回
+            <span class="guide-tag tag-exit">点击退出</span>
+          </div>
+          <div class="sub-page-title">听记成果与详情</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card">
+            <div class="card-title">📌 核心速览与结论纪要</div>
+            <div class="card-desc">已提炼 4 个核心观点、3 位主讲人论点。带时间戳跳转。</div>
+            <div class="skeleton-line w-80"></div>
+            <div class="skeleton-line w-60"></div>
+          </div>
+          <div class="proto-card">
+            <div class="card-title">👥 嘉宾观点提炼</div>
+            <div class="card-desc">演讲者 A：关于 Agent 记忆机制的演进思路。</div>
+          </div>
+          <div class="proto-card">
+            <div class="card-title">📝 全文逐字稿 (带声纹分离)</div>
+            <div class="card-desc">支持全文检索与关键段落定位。</div>
+          </div>
+          <div class="proto-card" style="border-color: rgba(5, 150, 105, 0.4); background: #ecfdf5;" onclick="showToast('已一键保存至【我的分身资料库】！')">
+            <div class="card-title" style="color: #047857;">🔄 一键反哺知识给【我的分身】</div>
+            <div class="card-desc" style="color: #065f46;">将本场会议提取的关键观点注入分身，让分身持续学习演进。</div>
+            <div class="card-footer" style="border-color: rgba(5, 150, 105, 0.2);">
+              <span style="color: #047857;">点击反哺数据</span>
+              <span class="tap-action" style="color: #047857;">执行保存 ❯</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 2: 分身广场 ================= -->
+      <div class="sub-page" id="page-persona-plaza">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-persona-plaza')">
+            <span>‹</span> 返回
+            <span class="guide-tag tag-exit">点击退出</span>
+          </div>
+          <div class="sub-page-title">AI 分身广场</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card" onclick="openSubPage('page-persona-chat')">
+            <div class="card-top">
+              <div class="card-title">👨‍🏫 李院士（量子信息专家）</div>
+              <span class="guide-tag tag-entry">1v1 对话</span>
+            </div>
+            <div class="card-desc">清华大学教授 · 擅长超导量子计算与量子纠错。</div>
+            <div class="card-footer">
+              <span>点击直接发起第一视角对话</span>
+              <span class="tap-action">请教专家 ❯</span>
+            </div>
+          </div>
+          <div class="proto-card" onclick="showToast('已选中2位专家，可发起多专家接力研讨！')">
+            <div class="card-top">
+              <div class="card-title">⚡️ 多专家跨界群聊研讨</div>
+              <span class="guide-tag tag-entry">协同研讨</span>
+            </div>
+            <div class="card-desc">勾选多个不同领域学者分身，针对同一命题轮流发表见解、碰撞辩论。</div>
+            <div class="card-footer">
+              <span>支持轮流接力思考机制</span>
+              <span class="tap-action">创建讨论组 ❯</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 3: 分身独立对话 ================= -->
+      <div class="sub-page" id="page-persona-chat">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-persona-chat')">
+            <span>‹</span> 退出
+            <span class="guide-tag tag-exit">返回上一级</span>
+          </div>
+          <div class="sub-page-title">AI分身第一视角问答</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card">
+            <div class="card-title">🎯 当前身份视角</div>
+            <div class="card-desc">当前会话完全以该分身的人设语气、知识资料库独立回答，而非 MyAgent。</div>
+          </div>
+          <div class="skeleton-line w-80"></div>
+          <div class="skeleton-line w-60"></div>
+          <div class="chat-dock" style="margin-top: auto;">
+            <div class="chat-input-placeholder">直接向分身提问专业问题...</div>
+            <div class="chat-btn-circle" onclick="showToast('分身正在以第一视角思考回答')">↑</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 4: 分身创建向导 ================= -->
+      <div class="sub-page" id="page-create-persona">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-create-persona')">
+            <span>✕</span> 取消
+            <span class="guide-tag tag-exit">退出创建</span>
+          </div>
+          <div class="sub-page-title">构建我的 AI 分身</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card">
+            <div class="card-title">1. 基础人设（姓名/头衔/学术主页）</div>
+            <div class="skeleton-line w-80"></div>
+          </div>
+          <div class="proto-card">
+            <div class="card-title">2. 资料注入（双渠道）</div>
+            <div class="card-desc">智能全网检索 + 上传个人论文/演讲音视频。</div>
+          </div>
+          <div class="proto-card">
+            <div class="card-title">3. 提炼合成（4阶段）</div>
+            <div class="card-desc">清洗资料 → 提炼专业观点 → 学习逻辑框架 → 拟合说话风格。</div>
+          </div>
+          <button class="chat-dock" style="justify-content: center; background: var(--primary); color: #fff; font-weight: 600; cursor: pointer; border: none; margin-top: auto;" onclick="showToast('分身开始合成'); closeSubPage('page-create-persona');">
+            立即生成分身
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 5: 技能中心 ================= -->
+      <div class="sub-page" id="page-skills">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-skills')">
+            <span>‹</span> 返回
+            <span class="guide-tag tag-exit">退出</span>
+          </div>
+          <div class="sub-page-title">技能中心</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card">
+            <div class="card-title">🌐 全网智能搜索检索</div>
+            <div class="card-desc">MyAgent 对话中按需自动调度。</div>
+          </div>
+          <div class="proto-card">
+            <div class="card-title">📚 学术论文库直连</div>
+            <div class="card-desc">支持 arXiv 与学术数据库即时精读。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 6: 长期记忆 ================= -->
+      <div class="sub-page" id="page-memory-center">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-memory-center')">
+            <span>‹</span> 返回
+            <span class="guide-tag tag-exit">退出</span>
+          </div>
+          <div class="sub-page-title">长期记忆库</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card">
+            <div class="card-title">👤 用户人设立体画像</div>
+            <div class="card-desc">研究领域、常用写作风格、习惯与限制偏好。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 下钻子页面 7: 定时自动化任务 ================= -->
+      <div class="sub-page" id="page-cron-tasks">
+        <div class="sub-page-header">
+          <div class="back-btn" onclick="closeSubPage('page-cron-tasks')">
+            <span>‹</span> 返回
+            <span class="guide-tag tag-exit">退出</span>
+          </div>
+          <div class="sub-page-title">定时自动化任务</div>
+          <div style="width: 40px;"></div>
+        </div>
+        <div class="sub-page-body">
+          <div class="proto-card">
+            <div class="card-title">📰 每日行业技术早报（每日 08:30）</div>
+            <div class="card-desc">自动巡检 12 个重点会议与论文源。</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= 底部 TabBar ================= -->
+    <div class="tabbar-container">
+      <div class="tab-item active" onclick="switchTab('myagent', this)">
+        <span class="guide-tag tag-switch tab-guide-tip">切换Tab</span>
+        <div class="tab-icon">🧠</div>
+        <div class="tab-label">MyAgent</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('listen', this)">
+        <div class="tab-icon">🎙️</div>
+        <div class="tab-label">帮我听记</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('personas', this)">
+        <div class="tab-icon">👥</div>
+        <div class="tab-label">AI分身</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('profile', this)">
+        <div class="tab-icon">⚙️</div>
+        <div class="tab-label">我的</div>
+      </div>
+    </div>
+
+    <!-- 底部 Home 横条 -->
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+
+      document.querySelectorAll('.view-page').forEach(page => page.classList.remove('active'));
+      const targetPage = document.getElementById('view-' + tabId);
+      if (targetPage) {
+        targetPage.classList.add('active');
+      }
+      showToast('已切换至【' + el.querySelector('.tab-label').innerText + '】Tab');
+    }
+
+    function openSubPage(pageId) {
+      const page = document.getElementById(pageId);
+      if (page) {
+        page.classList.add('show');
+        showToast('下钻打开子页面（点击左上角退出）');
+      }
+    }
+
+    function closeSubPage(pageId) {
+      const page = document.getElementById(pageId);
+      if (page) {
+        page.classList.remove('show');
+        showToast('已退出子页面，返回主层级');
+      }
+    }
+
+    function toggleGuide() {
+      const body = document.body;
+      const btn = document.getElementById('toggleGuideBtn');
+      if (body.classList.contains('hide-guides')) {
+        body.classList.remove('hide-guides');
+        btn.classList.add('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已开启';
+        showToast('动线高亮标签已展示');
+      } else {
+        body.classList.add('hide-guides');
+        btn.classList.remove('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已关闭';
+        showToast('已切换为纯净骨架视图');
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(text) {
+      const toast = document.getElementById('actionToast');
+      const toastText = document.getElementById('toastText');
+      toastText.innerText = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

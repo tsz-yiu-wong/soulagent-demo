@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulAgent - 侧边栏与智能体协作</title>
+  <style>
+    :root {
+      --bg-main: #ffffff;
+      --bg-sidebar: #f9f9fb;
+      --bg-hover: #f0f0f4;
+      --bg-active: #ececef;
+      --border-color: #e5e5e8;
+      --border-light: #f0f0f2;
+      --text-primary: #0d0d0d;
+      --text-secondary: #5d5d66;
+      --text-muted: #8e8e93;
+      --accent-color: #10a37f;
+      --accent-hover: #0e8e6f;
+      --card-bg: #ffffff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* SVG Base Style */
+    .icon {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      height: 100vh;
+    }
+
+    .sidebar-header {
+      padding: 16px 14px 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+      background: #000;
+      color: #fff;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #fff;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 10px;
+    }
+
+    .sidebar-content::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar-content::-webkit-scrollbar-thumb {
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+
+    /* 菜单列表 */
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .nav-item.active {
+      background-color: var(--bg-active);
+      font-weight: 500;
+    }
+
+    .divider {
+      height: 1px;
+      background-color: var(--border-light);
+      margin: 10px 4px;
+    }
+
+    /* 底部智能体区域 */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 10px 6px 10px;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.2px;
+    }
+
+    .section-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* 智能体项目列表（可展开） */
+    .project-item {
+      margin-bottom: 2px;
+    }
+
+    .project-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: background-color 0.15s ease;
+    }
+
+    .project-header:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .project-edit-btn {
+      width: 22px;
+      height: 22px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, background 0.15s ease;
+      margin-left: auto;
+    }
+
+    .project-header:hover .project-edit-btn {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .project-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chevron {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .project-item.expanded .chevron {
+      transform: rotate(90deg);
+    }
+
+    .sub-chat-list {
+      display: none;
+      flex-direction: column;
+      gap: 1px;
+      padding-left: 24px;
+      margin-top: 2px;
+    }
+
+    .project-item.expanded .sub-chat-list {
+      display: flex;
+    }
+
+    .sub-chat-item {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sub-chat-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .sub-chat-item.active {
+      background-color: var(--bg-active);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* 侧边栏底部用户信息 */
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .user-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .user-plan {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 主内容区域 */
+    .main-container {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background-color: var(--bg-main);
+      overflow: hidden;
+    }
+
+    /* View View-Container */
+    .view-pane {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+    }
+
+    .view-pane.active {
+      display: flex;
+    }
+
+    /* View 1: 召唤 智能体 (新建对话 style) */
+    .summon-agent-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    /* 输入框容器 */
+    .input-card {
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 14px 16px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .input-card:focus-within {
+      border-color: #b0b0b8;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 选择智能体 触发器及下拉 */
+    .agent-selector-wrapper {
+      position: relative;
+      display: inline-block;
+      align-self: flex-start;
+    }
+
+    .agent-selector-trigger {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background-color: var(--bg-sidebar);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .agent-selector-trigger:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .agent-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      width: 220px;
+      padding: 6px;
+      z-index: 100;
+      display: none;
+    }
+
+    .agent-dropdown-menu.show {
+      display: block;
+    }
+
+    .agent-dropdown-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.15s ease;
+    }
+
+    .agent-dropdown-item:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .agent-dropdown-item.selected {
+      background-color: var(--bg-active);
+      font-weight: 500;
+    }
+
+    /* 消息文本框 */
+    .chat-textarea {
+      width: 100%;
+      min-height: 80px;
+      max-height: 200px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: transparent;
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* 底部操作栏 */
+    .input-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+
+    .input-action-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .input-action-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .send-btn {
+      border: none;
+      background: var(--text-primary);
+      color: #ffffff;
+    }
+
+    .send-btn:hover {
+      background: #2a2a2a;
+      color: #ffffff;
+    }
+
+    .send-btn svg {
+      stroke: #ffffff;
+    }
+
+    /* View 2: 召唤 专家分身 (专家列表大卡片) */
+    .summon-expert-view {
+      flex: 1;
+      padding: 32px 40px;
+      overflow-y: auto;
+    }
+
+    .view-header {
+      margin-bottom: 24px;
+    }
+
+    .view-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .view-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .experts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .expert-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .expert-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: #cfcfd5;
+    }
+
+    .expert-avatar-box {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #f0f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: #475569;
+    }
+
+    .expert-card:nth-child(2) .expert-avatar-box {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .expert-card:nth-child(3) .expert-avatar-box {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .expert-card:nth-child(4) .expert-avatar-box {
+      background: #faf5ff;
+      color: #9333ea;
+    }
+
+    .expert-card:nth-child(5) .expert-avatar-box {
+      background: #fff7ed;
+      color: #ea580c;
+    }
+
+    .expert-card:nth-child(6) .expert-avatar-box {
+      background: #ecfeff;
+      color: #0891b2;
+    }
+
+    .expert-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .expert-role {
+      font-size: 12.5px;
+      color: var(--accent-color);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .expert-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+
+    .expert-btn {
+      width: 100%;
+      padding: 9px 0;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .expert-btn:hover {
+      background: var(--bg-hover);
+      border-color: #c5c5cb;
+    }
+
+    /* View 3: 默认对话视图 */
+    .chat-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .msg-bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14.5px;
+      line-height: 1.5;
+    }
+
+    .msg-bubble.user {
+      align-self: flex-end;
+      background-color: var(--bg-sidebar);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .msg-bubble.assistant {
+      align-self: flex-start;
+      background-color: #ffffff;
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chat-input-area {
+      padding: 16px 24px 24px 24px;
+    }
+
+    /* Modal 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 440px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      overflow: hidden;
+      animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px 20px;
+    }
+
+    .placeholder-box {
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      background-color: #fafafa;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background-color: #fafafa;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-primary);
+      transition: background 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+    }
+
+    .btn-primary {
+      background: var(--text-primary);
+      color: #ffffff;
+      border-color: var(--text-primary);
+    }
+
+    .btn-primary:hover {
+      background: #2a2a2a;
+    }
+
+    /* 编辑智能体列表 */
+    .agent-edit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .agent-edit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background-color: #ffffff;
+    }
+
+    .agent-edit-name {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span>SoulAgent</span>
+      </div>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- 顶部功能区 -->
+      <div class="nav-group">
+        <div class="nav-item active" id="nav-summon-agent" onclick="switchView('summon-agent', this)">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          <span>召唤 智能体</span>
+        </div>
+        <div class="nav-item" id="nav-summon-expert" onclick="switchView('summon-expert', this)">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>召唤 专家分身</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 中部静态项 (无交互) -->
+      <div class="nav-group">
+        <div class="nav-item" style="cursor: default;">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          <span>帮我听会</span>
+        </div>
+        <div class="nav-item" style="cursor: default;">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>知识库</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 底部智能体及分身列表（可展开项目） -->
+      <div class="section-header">
+        <span class="section-title">智能体</span>
+        <div class="section-actions">
+          <button class="icon-btn" title="添加智能体" onclick="openModal('add-modal')">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <!-- 智能体 1: 写诗 智能体 -->
+        <div class="project-item" id="project-1">
+          <div class="project-header" onclick="toggleProject('project-1')">
+            <div class="project-header-left">
+              <svg class="icon chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>写诗 智能体</span>
+            </div>
+            <button class="icon-btn project-edit-btn" title="编辑智能体" onclick="editAgent(event, '写诗 智能体')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div class="sub-chat-list">
+            <div class="sub-chat-item" onclick="openChat('写诗 智能体', '七言律诗·咏秋月')">七言律诗·咏秋月</div>
+            <div class="sub-chat-item" onclick="openChat('写诗 智能体', '现代抒情诗创作提纲')">现代抒情诗创作提纲</div>
+            <div class="sub-chat-item" onclick="openChat('写诗 智能体', '宋词意境美化与润色')">宋词意境美化与润色</div>
+            <div class="sub-chat-item" onclick="openChat('写诗 智能体', '五言绝句·塞外雪景')">五言绝句·塞外雪景</div>
+          </div>
+        </div>
+
+        <!-- 智能体 2: 需求文档 智能体 -->
+        <div class="project-item" id="project-2">
+          <div class="project-header" onclick="toggleProject('project-2')">
+            <div class="project-header-left">
+              <svg class="icon chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>需求文档 智能体</span>
+            </div>
+            <button class="icon-btn project-edit-btn" title="编辑智能体" onclick="editAgent(event, '需求文档 智能体')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div class="sub-chat-list">
+            <div class="sub-chat-item" onclick="openChat('需求文档 智能体', '侧边栏架构PRD初稿')">侧边栏架构PRD初稿</div>
+            <div class="sub-chat-item" onclick="openChat('需求文档 智能体', '智能体协作权限设计')">智能体协作权限设计</div>
+            <div class="sub-chat-item" onclick="openChat('需求文档 智能体', '专家卡片模版交互规范')">专家卡片模版交互规范</div>
+            <div class="sub-chat-item" onclick="openChat('需求文档 智能体', '多模态输入流对接说明')">多模态输入流对接说明</div>
+          </div>
+        </div>
+
+        <!-- 专家分身 1: 王仲远 专家分身 -->
+        <div class="project-item" id="project-3">
+          <div class="project-header" onclick="toggleProject('project-3')">
+            <div class="project-header-left">
+              <svg class="icon chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>王仲远 专家分身</span>
+            </div>
+            <button class="icon-btn project-edit-btn" title="编辑专家分身" onclick="editAgent(event, '王仲远 专家分身')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div class="sub-chat-list">
+            <div class="sub-chat-item" onclick="openChat('王仲远 专家分身', '具身智能大模型探讨')">具身智能大模型探讨</div>
+            <div class="sub-chat-item" onclick="openChat('王仲远 专家分身', '智源Q3科研路线规划')">智源Q3科研路线规划</div>
+            <div class="sub-chat-item" onclick="openChat('王仲远 专家分身', '机器人视觉与操控协作')">机器人视觉与操控协作</div>
+          </div>
+        </div>
+
+        <!-- 专家分身 2: 黄铁军 专家分身 -->
+        <div class="project-item" id="project-4">
+          <div class="project-header" onclick="toggleProject('project-4')">
+            <div class="project-header-left">
+              <svg class="icon chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>黄铁军 专家分身</span>
+            </div>
+            <button class="icon-btn project-edit-btn" title="编辑专家分身" onclick="editAgent(event, '黄铁军 专家分身')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div class="sub-chat-list">
+            <div class="sub-chat-item" onclick="openChat('黄铁军 专家分身', '脉冲神经网络趋势分析')">脉冲神经网络趋势分析</div>
+            <div class="sub-chat-item" onclick="openChat('黄铁军 专家分身', '类脑计算发展论坛致辞')">类脑计算发展论坛致辞</div>
+            <div class="sub-chat-item" onclick="openChat('黄铁军 专家分身', '神经形态芯片架构研讨')">神经形态芯片架构研讨</div>
+          </div>
+        </div>
+
+        <!-- 智能体 3: 默认 智能体 (默认展开) -->
+        <div class="project-item expanded" id="project-5">
+          <div class="project-header" onclick="toggleProject('project-5')">
+            <div class="project-header-left">
+              <svg class="icon chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>默认 智能体</span>
+            </div>
+            <button class="icon-btn project-edit-btn" title="编辑智能体" onclick="editAgent(event, '默认 智能体')">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div class="sub-chat-list">
+            <div class="sub-chat-item" onclick="openChat('默认 智能体', 'SoulAgent 架构设计问答')">SoulAgent 架构设计问答</div>
+            <div class="sub-chat-item" onclick="openChat('默认 智能体', '智能体路由与并发调度')">智能体路由与并发调度</div>
+            <div class="sub-chat-item" onclick="openChat('默认 智能体', '前端组件库重构要点')">前端组件库重构要点</div>
+            <div class="sub-chat-item" onclick="openChat('默认 智能体', '数据安全与隐私合规咨询')">数据安全与隐私合规咨询</div>
+            <div class="sub-chat-item" onclick="openChat('默认 智能体', '通用日常问答对话')">通用日常问答对话</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户底部信息栏 -->
+    <div class="sidebar-footer">
+      <div class="user-avatar">TY</div>
+      <div class="user-info">
+        <div class="user-name">TY User</div>
+        <div class="user-plan">Pro Member</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="main-container">
+
+    <!-- View 1: 召唤 智能体 -->
+    <div class="view-pane active" id="view-summon-agent">
+      <div class="summon-agent-view">
+        <h1 class="hero-title">TY，今天需要帮你做什么</h1>
+
+        <div class="input-card">
+          <!-- 选择智能体 触发器 -->
+          <div class="agent-selector-wrapper">
+            <button class="agent-selector-trigger" onclick="toggleAgentDropdown(event)">
+              <svg class="icon" style="width:15px;height:15px;" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+              <span id="selected-agent-name">默认 智能体</span>
+              <svg class="icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+
+            <!-- 下拉选项菜单 -->
+            <div class="agent-dropdown-menu" id="agent-dropdown">
+              <div class="agent-dropdown-item selected" onclick="selectAgent('默认 智能体', this)">默认 智能体</div>
+              <div class="agent-dropdown-item" onclick="selectAgent('写诗 智能体', this)">写诗 智能体</div>
+              <div class="agent-dropdown-item" onclick="selectAgent('需求文档 智能体', this)">需求文档 智能体</div>
+              <div class="agent-dropdown-item" onclick="selectAgent('王仲远 专家分身', this)">王仲远 专家分身</div>
+              <div class="agent-dropdown-item" onclick="selectAgent('黄铁军 专家分身', this)">黄铁军 专家分身</div>
+            </div>
+          </div>
+
+          <!-- 输入文本框 -->
+          <textarea class="chat-textarea" placeholder="给智能体发送消息..."></textarea>
+
+          <!-- 底部工具栏 -->
+          <div class="input-card-bottom">
+            <!-- 左侧 附件 icon -->
+            <button class="input-action-btn" title="上传附件">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <!-- 右侧 发送 icon -->
+            <button class="input-action-btn send-btn" title="发送">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 2: 召唤 专家分身 -->
+    <div class="view-pane" id="view-summon-expert">
+      <div class="summon-expert-view">
+        <div class="view-header">
+          <h2 class="view-title">召唤专家智库</h2>
+          <p class="view-subtitle">与各行业顶级专家专家分身直接沟通，获取专业解答</p>
+        </div>
+
+        <div class="experts-grid">
+          <!-- 专家卡片 1 -->
+          <div class="expert-card">
+            <div class="expert-avatar-box">
+              <svg class="icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="expert-name">张教授</div>
+            <div class="expert-role">计算机视觉专家</div>
+            <div class="expert-desc">精通三维重建、多模态视觉感知与自动驾驶算法，15年科研落地经验。</div>
+            <button class="expert-btn" onclick="startExpertChat('张教授 · 计算机视觉专家')">召唤专家</button>
+          </div>
+
+          <!-- 专家卡片 2 -->
+          <div class="expert-card">
+            <div class="expert-avatar-box">
+              <svg class="icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="expert-name">李博士</div>
+            <div class="expert-role">生物医药顾问</div>
+            <div class="expert-desc">专注于AI蛋白质结构预测、计算药学与靶点发现前沿领域研究。</div>
+            <button class="expert-btn" onclick="startExpertChat('李博士 · 生物医药顾问')">召唤专家</button>
+          </div>
+
+          <!-- 专家卡片 3 -->
+          <div class="expert-card">
+            <div class="expert-avatar-box">
+              <svg class="icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <div class="expert-name">陈总监</div>
+            <div class="expert-role">商业策略与产品专家</div>
+            <div class="expert-desc">擅长大模型商业化落地、商业模式构想及企业级产品架构规划。</div>
+            <button class="expert-btn" onclick="startExpertChat('陈总监 · 商业策略专家')">召唤专家</button>
+          </div>
+
+          <!-- 专家卡片 4 -->
+          <div class="expert-card">
+            <div class="expert-avatar-box">
+              <svg class="icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="expert-name">林首席</div>
+            <div class="expert-role">系统架构专家</div>
+            <div class="expert-desc">精通超大规模分布式训练系统、GPU集群调度与高性能算力优化。</div>
+            <button class="expert-btn" onclick="startExpertChat('林首席 · 系统架构专家')">召唤专家</button>
+          </div>
+
+          <!-- 专家卡片 5 -->
+          <div class="expert-card">
+            <div class="expert-avatar-box">
+              <svg class="icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="expert-name">赵合伙人</div>
+            <div class="expert-role">AI法律与合规顾问</div>
+            <div class="expert-desc">提供数据隐私安全、生成式AI版权风险治理与全球伦理合规咨询。</div>
+            <button class="expert-btn" onclick="startExpertChat('赵合伙人 · AI法律顾问')">召唤专家</button>
+          </div>
+
+          <!-- 专家卡片 6 -->
+          <div class="expert-card">
+            <div class="expert-avatar-box">
+              <svg class="icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            </div>
+            <div class="expert-name">周研究员</div>
+            <div class="expert-role">量子计算与算法专家</div>
+            <div class="expert-desc">探索量子算法与人工智能交叉创新，在量子化学模拟方面有着深厚积累。</div>
+            <button class="expert-btn" onclick="startExpertChat('周研究员 · 量子计算专家')">召唤专家</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 3: 具体对话界面 (点击列表后展示) -->
+    <div class="view-pane" id="view-chat-dialog">
+      <div class="chat-view">
+        <div class="chat-header">
+          <span class="chat-header-title" id="chat-title-text">对话对话</span>
+        </div>
+        <div class="chat-body" id="chat-body-messages">
+          <div class="msg-bubble assistant">你好！我是该项目的智能体助手，有什么我可以帮你的？</div>
+          <div class="msg-bubble user">请帮我整理一份今天讨论的要点。</div>
+          <div class="msg-bubble assistant">好的，已为你提取以下关键要点：<br>1. 确定侧边栏交互规范<br>2. 完成智能体与分身项目化管理方案<br>3. 优化专家召唤流程</div>
+        </div>
+        <div class="chat-input-area">
+          <div class="input-card" style="box-shadow: none;">
+            <textarea class="chat-textarea" style="min-height: 50px;" placeholder="发送消息..."></textarea>
+            <div class="input-card-bottom">
+              <button class="input-action-btn" title="上传附件">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <button class="input-action-btn send-btn" title="发送">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal 1: 新建智能体表单占位 -->
+  <div class="modal-overlay" id="add-modal" onclick="closeModalOnOverlay(event, 'add-modal')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">新建智能体</span>
+        <button class="icon-btn" onclick="closeModal('add-modal')">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="placeholder-box">
+          <svg class="icon" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <div>智能体新建配置表单占位区域</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('add-modal')">取消</button>
+        <button class="btn btn-primary" onclick="closeModal('add-modal')">确认新建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: 编辑智能体 -->
+  <div class="modal-overlay" id="edit-modal" onclick="closeModalOnOverlay(event, 'edit-modal')">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title" id="edit-modal-title">编辑智能体</span>
+        <button class="icon-btn" onclick="closeModal('edit-modal')">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="placeholder-box">
+          <svg class="icon" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <div id="edit-modal-placeholder">智能体编辑配置表单占位区域</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('edit-modal')">取消</button>
+        <button class="btn btn-primary" onclick="closeModal('edit-modal')">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 视图切换
+    function switchView(viewName, el) {
+      document.querySelectorAll('.view-pane').forEach(pane => pane.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+      document.querySelectorAll('.sub-chat-item').forEach(chat => chat.classList.remove('active'));
+
+      if (viewName === 'summon-agent') {
+        document.getElementById('view-summon-agent').classList.add('active');
+        if (el) el.classList.add('active');
+      } else if (viewName === 'summon-expert') {
+        document.getElementById('view-summon-expert').classList.add('active');
+        if (el) el.classList.add('active');
+      }
+    }
+
+    // 智能体项目 展开/收起
+    function toggleProject(projectId) {
+      const proj = document.getElementById(projectId);
+      proj.classList.toggle('expanded');
+    }
+
+    // 打开具体对话
+    function openChat(agentName, chatTitle) {
+      document.querySelectorAll('.view-pane').forEach(pane => pane.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+
+      const chatPane = document.getElementById('view-chat-dialog');
+      chatPane.classList.add('active');
+
+      document.getElementById('chat-title-text').innerText = `${agentName} - ${chatTitle}`;
+    }
+
+    // 召唤专家
+    function startExpertChat(expertTitle) {
+      openChat('专家智库', expertTitle);
+    }
+
+    // 智能体下拉菜单控制
+    function toggleAgentDropdown(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('agent-dropdown');
+      menu.classList.toggle('show');
+    }
+
+    function selectAgent(name, el) {
+      document.getElementById('selected-agent-name').innerText = name;
+      document.querySelectorAll('.agent-dropdown-item').forEach(item => item.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('agent-dropdown').classList.remove('show');
+    }
+
+    // 点击空白处关闭下拉菜单
+    window.addEventListener('click', function() {
+      const menu = document.getElementById('agent-dropdown');
+      if (menu && menu.classList.contains('show')) {
+        menu.classList.remove('show');
+      }
+    });
+
+    // 编辑单个智能体/分身
+    function editAgent(e, agentName) {
+      e.stopPropagation();
+      if (agentName) {
+        document.getElementById('edit-modal-title').innerText = `编辑：${agentName}`;
+        document.getElementById('edit-modal-placeholder').innerText = `「${agentName}」编辑表单占位区域`;
+      } else {
+        document.getElementById('edit-modal-title').innerText = '编辑智能体';
+        document.getElementById('edit-modal-placeholder').innerText = '智能体编辑表单占位区域';
+      }
+      openModal('edit-modal');
+    }
+
+    // 弹窗控制
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('show');
+    }
+
+    function closeModalOnOverlay(e, modalId) {
+      if (e.target.id === modalId) {
+        closeModal(modalId);
+      }
+    }
+  </script>
+</body>
+</html>

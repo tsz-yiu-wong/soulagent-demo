@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SoulAgent · 方案C · 三大空间横滑</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #F5F5F7;
+  --surface:  #FFFFFF;
+  --border:   rgba(0,0,0,.07);
+  --blue:     #007AFF;
+  --blue-lt:  #EBF4FF;
+  --purple:   #5856D6;
+  --purple-lt:#F0EFFD;
+  --teal:     #34C759;
+  --teal-lt:  #E9F9EE;
+  --red:      #FF3B30;
+  --orange:   #FF9500;
+  --text1:    #1C1C1E;
+  --text2:    #48484A;
+  --text3:    #8E8E93;
+  font-family: -apple-system, 'SF Pro Text', 'PingFang SC', sans-serif;
+}
+body {
+  background: #E0E0E8;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.phone {
+  width: 390px; height: 844px;
+  background: var(--bg);
+  border-radius: 55px;
+  box-shadow: 0 0 0 12px #1C1C1E, 0 0 0 14px #3A3A3C, 0 32px 80px rgba(0,0,0,.45);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 126px; height: 34px; background: #1C1C1E;
+  border-radius: 0 0 22px 22px; z-index: 99;
+}
+.statusbar {
+  height: 50px; padding: 0 28px 8px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  font-size: 15px; font-weight: 600; color: var(--text1); flex-shrink: 0;
+}
+
+/* ── 顶部：空间导航指示器 ── */
+.space-nav {
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+}
+.space-tabs {
+  display: flex; gap: 6px;
+  background: rgba(0,0,0,.05);
+  border-radius: 14px;
+  padding: 3px;
+}
+.space-tab {
+  flex: 1; text-align: center;
+  padding: 8px 4px;
+  border-radius: 11px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.space-tab.active {
+  background: var(--surface);
+  color: var(--text1);
+  box-shadow: 0 1px 6px rgba(0,0,0,.1);
+}
+
+/* ── 横滑容器 ── */
+.spaces-track {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.spaces-track::-webkit-scrollbar { display: none; }
+.space {
+  min-width: 390px; width: 390px;
+  scroll-snap-align: start;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 28px;
+}
+
+/* ── Space 1: MyAgent 对话 ── */
+.space-1 { background: var(--bg); }
+.space-1 .messages {
+  flex: 1; overflow-y: auto;
+  padding: 8px 0 12px;
+  display: flex; flex-direction: column; gap: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.bubble-row { display: flex; padding: 4px 16px; }
+.bubble-row.user { justify-content: flex-end; }
+.bubble {
+  max-width: 78%; padding: 11px 14px;
+  border-radius: 18px; font-size: 15px; line-height: 1.5; color: var(--text1);
+}
+.bubble.ai { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 5px; }
+.bubble.user { background: var(--blue); color: #fff; border-bottom-right-radius: 5px; }
+
+.quick-chips {
+  display: flex; gap: 6px; padding: 6px 16px 10px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.quick-chips::-webkit-scrollbar { display: none; }
+.quick-chip {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 12px;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  white-space: nowrap; cursor: pointer; flex-shrink: 0;
+  transition: background .15s;
+}
+.quick-chip:active { background: var(--blue-lt); color: var(--blue); }
+
+.input-row {
+  display: flex; gap: 8px; padding: 0 12px 4px; align-items: flex-end;
+}
+.input-box {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 24px; padding: 10px 14px;
+  cursor: text;
+}
+.input-box-text { flex: 1; font-size: 15px; color: var(--text3); }
+.send-btn {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: var(--blue); color: #fff; font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 2px 8px rgba(0,122,255,.35);
+}
+
+/* ── Space 2: 帮我听记 ── */
+.space-2 { background: var(--bg); overflow-y: auto; }
+.sp-header {
+  padding: 4px 20px 12px;
+  font-size: 28px; font-weight: 700; letter-spacing: -.4px; color: var(--text1);
+  flex-shrink: 0;
+}
+.section-label {
+  font-size: 13px; font-weight: 600; color: var(--text3);
+  padding: 8px 20px 6px; text-transform: uppercase; letter-spacing: .5px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; margin: 0 16px 10px; overflow: hidden;
+  cursor: pointer; transition: transform .15s;
+}
+.card:active { transform: scale(.98); }
+.card-body { padding: 14px 16px; }
+.card-label { font-size: 16px; font-weight: 600; color: var(--text1); }
+.card-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+.card-footer {
+  border-top: 1px solid var(--border); padding: 9px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-footer-text { font-size: 13px; color: var(--text3); }
+
+.link-input {
+  margin: 0 16px 12px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1.5px solid var(--blue);
+  border-radius: 14px; padding: 13px 14px; cursor: text;
+}
+.link-input-text { flex: 1; font-size: 15px; color: var(--text3); }
+.go-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+
+.badge { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px; }
+.badge-red { background:#FFE5E4;color:var(--red); }
+.badge-blue { background:var(--blue-lt);color:var(--blue); }
+.badge-green { background:var(--teal-lt);color:var(--teal); }
+.badge-purple { background:var(--purple-lt);color:var(--purple); }
+
+/* ── Space 3: AI 分身 ── */
+.space-3 { background: var(--bg); overflow-y: auto; }
+
+.persona-hero {
+  margin: 0 16px 12px;
+  background: linear-gradient(135deg, #F0EFFD 0%, #E8EEFF 100%);
+  border: 1px solid rgba(88,86,214,.15);
+  border-radius: 20px; padding: 20px;
+  cursor: pointer;
+}
+.persona-hero-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.persona-avatar-lg {
+  width: 56px; height: 56px; border-radius: 16px;
+  background: var(--surface); display: flex; align-items: center; justify-content: center;
+  font-size: 30px; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+.persona-hero-name { font-size: 20px; font-weight: 700; color: var(--purple); }
+.persona-hero-sub { font-size: 14px; color: var(--text2); margin-top: 2px; }
+.persona-hero-actions { display: flex; gap: 8px; }
+.persona-hero-btn {
+  flex: 1; padding: 10px; border-radius: 12px;
+  font-size: 14px; font-weight: 600; text-align: center; cursor: pointer;
+  transition: opacity .15s;
+}
+.persona-hero-btn:active { opacity: .7; }
+
+.expert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px 12px; }
+.expert-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px; cursor: pointer; transition: transform .15s;
+}
+.expert-card:active { transform: scale(.96); }
+.expert-avatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--purple-lt);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 8px;
+}
+.expert-name { font-size: 14px; font-weight: 600; color: var(--text1); }
+.expert-field { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* ── Push 页 ── */
+.push-page {
+  position: absolute; inset: 0; background: var(--bg);
+  transform: translateX(100%); transition: transform .32s cubic-bezier(.32,.72,0,1);
+  z-index: 50; display: flex; flex-direction: column; overflow: hidden;
+}
+.push-page.open { transform: translateX(0); }
+.push-header {
+  height: 52px; display: flex; align-items: center;
+  border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0;
+}
+.back-btn { padding: 8px 16px; font-size: 17px; color: var(--blue); cursor: pointer; }
+.push-title { flex: 1; text-align: center; font-size: 17px; font-weight: 600; color: var(--text1); margin-right: 60px; }
+.push-content {
+  flex: 1; overflow-y: auto; padding: 12px 16px 24px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* 底部 home bar */
+.home-bar {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 134px; height: 5px; background: var(--text1);
+  border-radius: 3px; opacity: .2; z-index: 10;
+}
+
+.toast {
+  position: absolute; bottom: 60px; left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(30,30,32,.88); color: #fff; font-size: 14px;
+  padding: 10px 20px; border-radius: 20px; opacity: 0;
+  pointer-events: none; transition: opacity .25s, transform .25s;
+  white-space: nowrap; z-index: 200;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="statusbar"><span>9:41</span><span>●●● 5G ⬛</span></div>
+
+  <!-- 空间切换导航 -->
+  <div class="space-nav">
+    <div class="space-tabs">
+      <div class="space-tab active" id="tab-0" onclick="goSpace(0)">💬 MyAgent</div>
+      <div class="space-tab" id="tab-1" onclick="goSpace(1)">🎙️ 听记</div>
+      <div class="space-tab" id="tab-2" onclick="goSpace(2)">👥 分身</div>
+    </div>
+  </div>
+
+  <!-- 三空间横滑 -->
+  <div class="spaces-track" id="track" onscroll="onTrackScroll()">
+
+    <!-- ── Space 1: MyAgent ── -->
+    <div class="space space-1">
+      <div class="space-1 messages" style="flex:1;overflow-y:auto;padding:8px 0 12px;display:flex;flex-direction:column;gap:0;">
+        <div class="bubble-row">
+          <div class="bubble ai">你好，我是你的专属 AI 助手 MyAgent。</div>
+        </div>
+        <div class="bubble-row user">
+          <div class="bubble user">帮我用张伟分身的视角点评今天智源大会</div>
+        </div>
+        <div class="bubble-row">
+          <div class="bubble ai">
+            <div style="font-size:12px;color:var(--purple);font-weight:600;margin-bottom:6px">已调用听记 + 张伟分身</div>
+            <div style="height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:6px;width:90%"></div>
+            <div style="height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:6px;width:75%"></div>
+            <div style="height:8px;background:#f0f0f0;border-radius:4px;width:85%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快捷调用 -->
+      <div class="quick-chips">
+        <div class="quick-chip" onclick="push('push-memory')">🧠 记忆库</div>
+        <div class="quick-chip" onclick="push('push-cron')">⏰ 定时任务</div>
+        <div class="quick-chip" onclick="push('push-skills')">🧩 技能</div>
+        <div class="quick-chip" onclick="goSpace(2)">👥 @分身</div>
+      </div>
+
+      <!-- 输入 -->
+      <div class="input-row">
+        <div class="input-box" onclick="toast('键盘弹起 · 向 MyAgent 发消息')">
+          <span style="font-size:18px">💬</span>
+          <span class="input-box-text">输入问题，或 @ 分身…</span>
+        </div>
+        <div class="send-btn" onclick="toast('发送')">↑</div>
+      </div>
+    </div>
+
+    <!-- ── Space 2: 听记 ── -->
+    <div class="space space-2">
+      <div class="sp-header">帮我听记</div>
+
+      <div class="link-input" onclick="push('push-listen-result')">
+        <span style="font-size:18px">🔗</span>
+        <span class="link-input-text">粘贴链接或上传音视频…</span>
+        <div class="go-btn">→</div>
+      </div>
+
+      <div class="section-label">官方精选</div>
+      <div class="card" onclick="push('push-listen-result')">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="badge badge-red">🔴 直播中</span><span style="font-size:12px;color:var(--text3)">3.2k 在听</span></div>
+          <div class="card-label">2026 智源大会 · 具身大模型主论坛</div>
+          <div class="card-sub">AI 速记生成中</div>
+        </div>
+        <div class="card-footer"><span class="card-footer-text">进入听记工作台</span><span>›</span></div>
+      </div>
+      <div class="card" onclick="push('push-listen-result')">
+        <div class="card-body">
+          <div style="margin-bottom:6px"><span class="badge badge-blue">课程回放</span></div>
+          <div class="card-label">李沐 · 动手学深度学习 Ep.48</div>
+          <div class="card-sub">38 分钟 · 速记已就绪</div>
+        </div>
+        <div class="card-footer"><span class="card-footer-text">已反哺分身 ✓</span><span>›</span></div>
+      </div>
+      <div class="card" onclick="push('push-listen-result')">
+        <div class="card-body">
+          <div style="margin-bottom:6px"><span class="badge badge-green">论坛</span></div>
+          <div class="card-label">NeurIPS 2025 · Keynote 精彩回顾</div>
+          <div class="card-sub">52 分钟 · 观点已提炼</div>
+        </div>
+        <div class="card-footer"><span class="card-footer-text">查看速记结果</span><span>›</span></div>
+      </div>
+    </div>
+
+    <!-- ── Space 3: AI 分身 ── -->
+    <div class="space space-3">
+      <div class="sp-header">AI 分身</div>
+
+      <!-- 我的分身 Hero -->
+      <div class="persona-hero" onclick="push('push-persona-chat')">
+        <div class="persona-hero-top">
+          <div class="persona-avatar-lg">👨‍🏫</div>
+          <div>
+            <div class="persona-hero-name">张伟</div>
+            <div class="persona-hero-sub">我的个人分身 · 知识库 14 份</div>
+          </div>
+        </div>
+        <div class="persona-hero-actions">
+          <div class="persona-hero-btn" style="background:var(--purple);color:#fff" onclick="event.stopPropagation();push('push-persona-chat')">发起对话</div>
+          <div class="persona-hero-btn" style="background:rgba(255,255,255,.7);color:var(--purple)" onclick="event.stopPropagation();push('push-persona-manage')">管理</div>
+          <div class="persona-hero-btn" style="background:rgba(255,255,255,.7);color:var(--purple)" onclick="event.stopPropagation();push('push-persona-build')">构建新的</div>
+        </div>
+      </div>
+
+      <!-- 广场 -->
+      <div class="section-label">AI 分身广场</div>
+      <div class="expert-grid">
+        <div class="expert-card" onclick="push('push-persona-chat')">
+          <div class="expert-avatar">👩‍🔬</div>
+          <div class="expert-name">李明院士</div>
+          <div class="expert-field">量子计算</div>
+        </div>
+        <div class="expert-card" onclick="push('push-persona-chat')">
+          <div class="expert-avatar">🧑‍💻</div>
+          <div class="expert-name">王芳教授</div>
+          <div class="expert-field">具身智能</div>
+        </div>
+        <div class="expert-card" onclick="push('push-persona-chat')">
+          <div class="expert-avatar">👨‍⚕️</div>
+          <div class="expert-name">赵磊研究员</div>
+          <div class="expert-field">生物信息</div>
+        </div>
+        <div class="expert-card" style="border:1.5px dashed var(--blue);background:var(--blue-lt);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px" onclick="toast('更多专家即将上线')">
+          <div style="font-size:22px;color:var(--blue)">···</div>
+          <div style="font-size:11px;color:var(--blue);font-weight:600">更多</div>
+        </div>
+      </div>
+
+      <!-- 多专家研讨 -->
+      <div class="card" onclick="push('push-group')">
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:44px;height:44px;border-radius:12px;background:#FFF4E5;display:flex;align-items:center;justify-content:center;font-size:24px">🗣️</div>
+            <div>
+              <div class="card-label">多专家研讨</div>
+              <div class="card-sub">选 2+ 专家，就议题接力发言</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer"><span class="card-footer-text">选择参与专家 →</span><span>›</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-bar"></div>
+
+  <!-- ═══ Push Pages ═══ -->
+
+  <div class="push-page" id="push-listen-result">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-listen-result')">‹ 听记</div>
+      <div class="push-title">速记结果</div>
+    </div>
+    <div class="push-content">
+      <div class="card"><div class="card-body"><div class="card-label">📋 AI 速记摘要</div><div style="height:8px;background:#f0f0f0;border-radius:4px;margin-top:10px;width:95%"></div><div style="height:8px;background:#f0f0f0;border-radius:4px;margin-top:6px;width:76%"></div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">🎙️ 嘉宾观点</div><div class="card-sub">按发言人分类提炼核心论点</div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">📝 全文逐字稿</div><div class="card-sub">带时间戳，支持搜索</div></div></div>
+      <div class="card" style="border-color:var(--teal);background:var(--teal-lt)" onclick="toast('已反哺到张伟分身知识库 ✓')">
+        <div class="card-body"><div class="card-label" style="color:var(--teal)">↗ 反哺到 AI 分身</div><div class="card-sub" style="color:var(--teal)">将本场要点加入分身知识库</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-persona-chat">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-persona-chat')">‹ 分身</div>
+      <div class="push-title">张伟 · 分身对话</div>
+    </div>
+    <div class="push-content" style="justify-content:space-between">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 14px;font-size:15px;line-height:1.5;color:var(--text1)">你好，我是张伟的 AI 分身。有什么想讨论的？</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:10px 10px 10px 16px;" onclick="toast('向张伟分身发起提问')">
+        <span style="flex:1;font-size:15px;color:var(--text3)">向分身提问…</span>
+        <div style="width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">↑</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-persona-manage">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-persona-manage')">‹ 分身</div>
+      <div class="push-title">分身管理</div>
+    </div>
+    <div class="push-content">
+      <div class="card"><div class="card-body"><div class="card-label">人设信息</div><div class="card-sub">姓名 / 头衔 / 所属机构 / 研究方向</div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">📚 知识库（14 份）</div><div class="card-sub">论文 · 演讲 · 文章 · 主页链接</div></div><div class="card-footer"><span class="card-footer-text">添加新资料</span><span>›</span></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">回答风格</div><div class="card-sub">严谨 / 亲切 / 发散 程度调节</div></div></div>
+      <div class="card" style="border-color:var(--blue);background:var(--blue-lt)" onclick="toast('已提交上架申请 🚀')"><div class="card-body"><div class="card-label" style="color:var(--blue)">申请上架到 AI 分身广场</div></div></div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-persona-build">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-persona-build')">取消</div>
+      <div class="push-title">构建 AI 分身</div>
+    </div>
+    <div class="push-content">
+      <div class="card"><div class="card-body"><div class="card-label">① 基本信息</div><div style="height:34px;background:#f5f5f7;border-radius:8px;margin-top:8px"></div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">② 注入知识</div><div class="card-sub" style="margin-top:4px">论文 · 音视频 · 文章链接 · 主页 URL</div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">③ AI 合成（约 5 分钟）</div><div class="card-sub" style="margin-top:4px">提炼观点 → 学习逻辑 → 拟合风格</div></div></div>
+      <div style="background:var(--blue);color:#fff;font-size:16px;font-weight:600;text-align:center;padding:14px;border-radius:14px;cursor:pointer" onclick="toast('分身合成任务已启动 🚀');pop('push-persona-build')">开始合成</div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-group">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-group')">‹ 分身</div>
+      <div class="push-title">多专家研讨</div>
+    </div>
+    <div class="push-content">
+      <div style="font-size:13px;color:var(--text3);font-weight:600">选择参与专家（≥2）</div>
+      <div class="card"><div class="card-body"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:10px;background:var(--purple-lt);display:flex;align-items:center;justify-content:center;font-size:20px">👩‍🔬</div><div><div class="card-label">李明院士</div><div class="card-sub">量子计算</div></div><div style="margin-left:auto;font-size:20px;color:var(--blue)">☑</div></div></div></div>
+      <div class="card"><div class="card-body"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:10px;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:20px">🧑‍💻</div><div><div class="card-label">王芳教授</div><div class="card-sub">具身智能</div></div><div style="margin-left:auto;font-size:20px;color:var(--blue)">☑</div></div></div></div>
+      <div style="background:var(--blue);color:#fff;font-size:16px;font-weight:600;text-align:center;padding:14px;border-radius:14px;cursor:pointer" onclick="toast('群聊已创建，专家将接力发言')">发起群聊研讨</div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-memory">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-memory')">‹ 返回</div>
+      <div class="push-title">记忆系统</div>
+    </div>
+    <div class="push-content">
+      <div class="card"><div class="card-body"><div class="card-label">研究兴趣偏好</div><div style="height:8px;background:#f0f0f0;border-radius:4px;margin-top:8px;width:70%"></div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">表达 & 输出偏好</div><div style="height:8px;background:#f0f0f0;border-radius:4px;margin-top:8px;width:55%"></div></div></div>
+      <div class="card"><div class="card-body"><div class="card-label">常用工具 & 习惯</div><div style="height:8px;background:#f0f0f0;border-radius:4px;margin-top:8px;width:65%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-cron">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-cron')">‹ 返回</div>
+      <div class="push-title">定时任务</div>
+    </div>
+    <div class="push-content">
+      <div class="card" style="border-color:var(--teal)"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="card-label">每日早报</div><span class="badge badge-green">运行中</span></div><div class="card-sub" style="margin-top:4px">每天 08:30</div></div></div>
+      <div class="card" style="border-color:var(--teal)"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="card-label">每周综述</div><span class="badge badge-green">运行中</span></div><div class="card-sub" style="margin-top:4px">每周一 09:00</div></div></div>
+      <div class="card" style="border:1.5px dashed var(--border)"><div class="card-body" style="text-align:center;color:var(--blue);font-weight:600">＋ 新建任务</div></div>
+    </div>
+  </div>
+
+  <div class="push-page" id="push-skills">
+    <div class="push-header">
+      <div class="back-btn" onclick="pop('push-skills')">‹ 返回</div>
+      <div class="push-title">技能中心</div>
+    </div>
+    <div class="push-content">
+      <div class="card"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="card-label">🌐 联网搜索</div><span style="font-size:13px;color:var(--teal);font-weight:600">已开启</span></div></div></div>
+      <div class="card"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="card-label">📄 ArXiv 论文</div><span style="font-size:13px;color:var(--teal);font-weight:600">已开启</span></div></div></div>
+      <div class="card"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:center"><div class="card-label">💻 代码执行</div><span style="font-size:13px;color:var(--text3);font-weight:600">已关闭</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast-el"></div>
+</div>
+
+<script>
+const track = document.getElementById('track');
+const spaceW = 390;
+
+function goSpace(idx) {
+  track.scrollTo({ left: idx * spaceW, behavior: 'smooth' });
+  updateTabs(idx);
+}
+
+function updateTabs(idx) {
+  document.querySelectorAll('.space-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === idx);
+  });
+}
+
+function onTrackScroll() {
+  const idx = Math.round(track.scrollLeft / spaceW);
+  updateTabs(idx);
+}
+
+function push(id) { document.getElementById(id)?.classList.add('open'); }
+function pop(id) { document.getElementById(id)?.classList.remove('open'); }
+
+let tt;
+function toast(msg) {
+  const el = document.getElementById('toast-el');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>

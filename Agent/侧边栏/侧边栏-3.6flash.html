@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulAgent - Agent 项目化侧边栏 (Codex 风格)</title>
+    <!-- Inter Font & Lucide Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-workspace: #0d0d10;
+            --bg-sidebar: #121215;
+            --bg-hover: #1a1a1f;
+            --bg-active: #22222a;
+            --bg-button: #1c1c22;
+            --bg-button-hover: #262630;
+            
+            --border: #1f1f26;
+            --border-light: #2c2c36;
+
+            --text-primary: #f0f0f3;
+            --text-secondary: #90909c;
+            --text-muted: #5a5a66;
+
+            --accent: #5e6ad2;
+            --accent-light: #707ce6;
+            
+            --dot-running: #10b981;
+            --dot-listening: #f59e0b;
+            --dot-idle: #4b4b56;
+
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 52px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-workspace);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 13px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Sidebar Container */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100%;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        /* Header */
+        .sidebar-header {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .workspace-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 4px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .brand-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: var(--accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        .sidebar.collapsed .brand-name,
+        .sidebar.collapsed .btn-text,
+        .sidebar.collapsed .btn-shortcut,
+        .sidebar.collapsed .task-count,
+        .sidebar.collapsed .agent-arrow {
+            display: none;
+        }
+
+        /* Codex Quick Task Button */
+        .btn-new-task {
+            background: var(--bg-button);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 7px 10px;
+            color: var(--text-primary);
+            font-size: 12.5px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-new-task:hover {
+            background: var(--bg-button-hover);
+            border-color: #383845;
+        }
+
+        .btn-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-shortcut {
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1px 5px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .sidebar.collapsed .btn-new-task {
+            justify-content: center;
+            padding: 7px;
+        }
+
+        /* Sidebar Tree Scroll Area */
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #262630;
+            border-radius: 4px;
+        }
+
+        /* AGENT ITEM (Top Level Project Node) */
+        .agent-node {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 8px;
+            border-radius: 5px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.12s;
+            font-weight: 500;
+        }
+
+        .agent-header:hover {
+            background: var(--bg-hover);
+        }
+
+        .agent-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow: hidden;
+        }
+
+        .agent-arrow {
+            width: 14px;
+            height: 14px;
+            color: var(--text-muted);
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        .agent-node.collapsed .agent-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .agent-icon {
+            width: 16px;
+            height: 16px;
+            color: var(--accent-light);
+            flex-shrink: 0;
+        }
+
+        .agent-title {
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .task-count {
+            font-size: 10.5px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+
+        /* TASK LIST (Nested Tasks under Agent Project) */
+        .task-tree {
+            display: flex;
+            flex-direction: column;
+            padding-left: 20px;
+            gap: 1px;
+            margin-top: 1px;
+            border-left: 1px solid var(--border);
+            margin-left: 14px;
+        }
+
+        .agent-node.collapsed .task-tree,
+        .sidebar.collapsed .task-tree {
+            display: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 8px;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.12s, color 0.12s;
+        }
+
+        .task-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .task-item.active {
+            background: var(--bg-active);
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .task-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.running { background: var(--dot-running); }
+        .status-dot.listening { background: var(--dot-listening); }
+        .status-dot.done { background: var(--text-muted); }
+
+        .add-task-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            color: var(--text-muted);
+            font-size: 11.5px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: color 0.12s;
+        }
+
+        .add-task-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 10px 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .sidebar.collapsed .footer-status-text {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        /* Right Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-workspace);
+            overflow: hidden;
+        }
+
+        .top-bar {
+            height: 42px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: #101013;
+        }
+
+        .top-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editor-area {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .codex-panel {
+            background: #121215;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-content {
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .code-block {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            background: #09090b;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 5px;
+            color: #a1a1aa;
+            white-space: pre-wrap;
+        }
+
+        /* Command Palette Modal (⌘K) */
+        .command-palette-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 100px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s;
+        }
+
+        .command-palette-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .command-palette {
+            width: 520px;
+            background: #16161a;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .palette-input-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+        }
+
+        .palette-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 13px;
+        }
+
+        .palette-list {
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .palette-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 12.5px;
+        }
+
+        .palette-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- AGENT AS PROJECT CONTAINER SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Header -->
+        <div class="sidebar-header">
+            <div class="workspace-title">
+                <div class="brand">
+                    <div class="brand-icon">S</div>
+                    <span class="brand-name">SoulAgent</span>
+                </div>
+            </div>
+
+            <!-- New Task Global Trigger -->
+            <button class="btn-new-task" id="openPalette">
+                <div class="btn-left">
+                    <i data-lucide="plus" style="width:14px; color:var(--text-secondary);"></i>
+                    <span class="btn-text">新建任务</span>
+                </div>
+                <span class="btn-shortcut">⌘K</span>
+            </button>
+        </div>
+
+        <!-- Scrollable Tree View: Agent -> Tasks -->
+        <div class="sidebar-scroll">
+
+            <!-- AGENT 1: 听悟 Agent (Project Container) -->
+            <div class="agent-node">
+                <div class="agent-header" onclick="toggleNode(this)">
+                    <div class="agent-left">
+                        <i data-lucide="chevron-down" class="agent-arrow"></i>
+                        <i data-lucide="headphones" class="agent-icon" style="color:#f59e0b;"></i>
+                        <span class="agent-title">听悟 Agent</span>
+                    </div>
+                    <span class="task-count">2</span>
+                </div>
+                <div class="task-tree">
+                    <div class="task-item active" onclick="selectTask('周会实时转录与摘要', '听悟 Agent', this)">
+                        <div class="task-name">
+                            <span class="status-dot listening" title="监听中"></span>
+                            周会实时转录与摘要
+                        </div>
+                    </div>
+                    <div class="task-item" onclick="selectTask('7月月度例会金句萃取', '听悟 Agent', this)">
+                        <div class="task-name">
+                            <span class="status-dot done"></span>
+                            7月月度例会金句萃取
+                        </div>
+                    </div>
+                    <div class="add-task-btn" onclick="openPaletteWithAgent('听悟 Agent')">
+                        <i data-lucide="plus" style="width:12px;"></i>
+                        <span>新建听悟任务...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AGENT 2: 调研 Agent (Project Container) -->
+            <div class="agent-node">
+                <div class="agent-header" onclick="toggleNode(this)">
+                    <div class="agent-left">
+                        <i data-lucide="chevron-down" class="agent-arrow"></i>
+                        <i data-lucide="globe" class="agent-icon" style="color:#10b981;"></i>
+                        <span class="agent-title">调研 Agent</span>
+                    </div>
+                    <span class="task-count">2</span>
+                </div>
+                <div class="task-tree">
+                    <div class="task-item" onclick="selectTask('多模态架构全网调研', '调研 Agent', this)">
+                        <div class="task-name">
+                            <span class="status-dot running" title="运行中"></span>
+                            多模态架构全网调研
+                        </div>
+                    </div>
+                    <div class="task-item" onclick="selectTask('Agent 侧边栏竞品对比报告', '调研 Agent', this)">
+                        <div class="task-name">
+                            <span class="status-dot done"></span>
+                            Agent 侧边栏竞品对比报告
+                        </div>
+                    </div>
+                    <div class="add-task-btn" onclick="openPaletteWithAgent('调研 Agent')">
+                        <i data-lucide="plus" style="width:12px;"></i>
+                        <span>新建调研任务...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AGENT 3: 创作 Agent (Project Container) -->
+            <div class="agent-node">
+                <div class="agent-header" onclick="toggleNode(this)">
+                    <div class="agent-left">
+                        <i data-lucide="chevron-down" class="agent-arrow"></i>
+                        <i data-lucide="pen-tool" class="agent-icon" style="color:#ec4899;"></i>
+                        <span class="agent-title">创作 Agent</span>
+                    </div>
+                    <span class="task-count">1</span>
+                </div>
+                <div class="task-tree">
+                    <div class="task-item" onclick="selectTask('SoulAgent v0.2 发布新闻稿', '创作 Agent', this)">
+                        <div class="task-name">
+                            <span class="status-dot listening" title="待审核"></span>
+                            SoulAgent v0.2 发布新闻稿
+                        </div>
+                    </div>
+                    <div class="add-task-btn" onclick="openPaletteWithAgent('创作 Agent')">
+                        <i data-lucide="plus" style="width:12px;"></i>
+                        <span>新建创作任务...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AGENT 4: 代码 Agent (Project Container) -->
+            <div class="agent-node collapsed">
+                <div class="agent-header" onclick="toggleNode(this)">
+                    <div class="agent-left">
+                        <i data-lucide="chevron-down" class="agent-arrow"></i>
+                        <i data-lucide="code-2" class="agent-icon" style="color:#8b5cf6;"></i>
+                        <span class="agent-title">代码 Agent</span>
+                    </div>
+                    <span class="task-count">0</span>
+                </div>
+                <div class="task-tree">
+                    <div class="add-task-btn" onclick="openPaletteWithAgent('代码 Agent')">
+                        <i data-lucide="plus" style="width:12px;"></i>
+                        <span>新建代码任务...</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="sidebar-footer">
+            <div class="footer-status">
+                <span class="status-dot running"></span>
+                <span class="footer-status-text">2 Active Tasks</span>
+            </div>
+            <button class="toggle-btn" id="toggleSidebar" title="折叠/展开侧边栏">
+                <i data-lucide="panel-left-close" id="toggleIcon" style="width:14px;"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="top-title">
+                <span style="color:var(--text-muted);">听悟 Agent /</span>
+                <span id="activeTaskTitle" style="color:var(--text-primary);">周会实时转录与摘要</span>
+                <span class="task-count" style="background:rgba(245,158,11,0.15); color:#fbbf24;">● 监听中</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-new-task" style="padding:4px 8px; font-size:11px;">分享任务</button>
+            </div>
+        </header>
+
+        <div class="editor-area">
+            <div class="codex-panel">
+                <div class="panel-header">💡 Agent 即项目 (Agent-as-Project Architecture)</div>
+                <div class="panel-content">
+                    <b>核心架构更正：</b>
+                    <br>1. <b>Agent = 项目/领域容器</b>：侧边栏树形结构的顶层即为具体的 Agent（如“听悟 Agent”、“调研 Agent”、“代码 Agent”）。
+                    <br>2. <b>Task = 实例任务 Thread</b>：展开某个 Agent 项目节点，下面直接显示该 Agent 承接的所有 Task 列表。
+                    <br>3. <b>移除冗余模块</b>：不再拆分“Agent”、“Task”、“Project”三个平行板块，实现层级清晰的目录树结构。
+                </div>
+            </div>
+
+            <div class="codex-panel">
+                <div class="panel-header">Task 工作现场</div>
+                <div class="code-block" id="taskContentPreview">[13:31:02] Task "周会实时转录与摘要" 正在执行...
+- 归属 Agent: 听悟 Agent
+- 状态: 监听中 (Listening)
+- 当前操作: 实时采集语音并抽取 Key Points</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- COMMAND PALETTE (⌘K) -->
+<div class="command-palette-overlay" id="paletteOverlay">
+    <div class="command-palette">
+        <div class="palette-input-row">
+            <i data-lucide="plus-circle" style="width:14px; color:var(--accent-light);"></i>
+            <input type="text" class="palette-input" placeholder="新建 Task (输入任务目标)..." id="paletteInput">
+            <span class="btn-shortcut">ESC</span>
+        </div>
+        <div class="palette-list" id="paletteAgentList">
+            <div class="palette-item">
+                <span>指定归属 Agent: 听悟 Agent</span>
+                <span class="task-count">Selected</span>
+            </div>
+            <div class="palette-item">
+                <span>指定归属 Agent: 调研 Agent</span>
+            </div>
+            <div class="palette-item">
+                <span>指定归属 Agent: 创作 Agent</span>
+            </div>
+            <div class="palette-item">
+                <span>指定归属 Agent: 代码 Agent</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    // Node Expand/Collapse
+    function toggleNode(headerEl) {
+        const node = headerEl.parentElement;
+        node.classList.toggle('collapsed');
+    }
+
+    // Sidebar Collapse
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const toggleIcon = document.getElementById('toggleIcon');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        if (sidebar.classList.contains('collapsed')) {
+            toggleIcon.setAttribute('data-lucide', 'panel-left-open');
+        } else {
+            toggleIcon.setAttribute('data-lucide', 'panel-left-close');
+        }
+        lucide.createIcons();
+    });
+
+    // Task Selection
+    function selectTask(taskName, agentName, element) {
+        document.querySelectorAll('.task-item').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        document.getElementById('activeTaskTitle').innerText = taskName;
+        document.getElementById('taskContentPreview').innerText = 
+`[${new Date().toLocaleTimeString()}] Task "${taskName}" 载入成功...
+- 归属 Agent 项目: ${agentName}
+- 状态: 活跃中 (Active)
+- 上下文数据: 已挂载该 Task 的实时历史记录与产出物`;
+    }
+
+    // Command Palette Modal
+    const overlay = document.getElementById('paletteOverlay');
+    const openBtn = document.getElementById('openPalette');
+    const input = document.getElementById('paletteInput');
+
+    function openModal() {
+        overlay.classList.add('active');
+        setTimeout(() => input.focus(), 50);
+    }
+
+    function closeModal() {
+        overlay.classList.remove('active');
+    }
+
+    function openPaletteWithAgent(agentName) {
+        openModal();
+        input.placeholder = `在 [${agentName}] 下新建 Task...`;
+    }
+
+    openBtn.addEventListener('click', openModal);
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            openModal();
+        }
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
+</body>
+</html>

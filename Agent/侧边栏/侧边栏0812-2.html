@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT风格 侧边栏与智能体对话</title>
+  <style>
+    :root {
+      --bg-main: #ffffff;
+      --bg-sidebar: #f9f9fb;
+      --bg-hover: #ececec;
+      --bg-active: #e3e3e8;
+      --border-color: #e5e5e8;
+      --border-light: #efefe0;
+      --text-primary: #0d0d0d;
+      --text-secondary: #5d5d66;
+      --text-muted: #8e8e93;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* SVG Icon 基本样式 */
+    .icon {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      height: 100vh;
+      padding: 12px 10px;
+    }
+
+    /* 召唤智能体 触发器容器 */
+    .agent-summon-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .agent-summon-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 6px 6px 12px;
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: border-color 0.15s ease;
+    }
+
+    .agent-summon-bar:hover {
+      border-color: #cfcfd5;
+    }
+
+    .agent-summon-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      flex: 1;
+      padding: 4px 0;
+    }
+
+    .agent-summon-left span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 独占点击热区的 v 图标按钮 */
+    .chevron-trigger-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background-color 0.15s ease, color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .chevron-trigger-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .chevron-down {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .agent-summon-wrapper.open .chevron-down {
+      transform: rotate(180deg);
+    }
+
+    /* 召唤智能体 下拉菜单 */
+    .agent-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      padding: 6px;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .agent-dropdown-menu.show {
+      display: flex;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 10px;
+      font-size: 13.5px;
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .dropdown-item.active {
+      background-color: var(--bg-active);
+      font-weight: 500;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 4px 0;
+    }
+
+    .dropdown-item.create-item {
+      color: #10a37f;
+      font-weight: 500;
+    }
+
+    .dropdown-item.create-item:hover {
+      background-color: #f0fdf4;
+    }
+
+    /* 分割线 */
+    .divider {
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 10px 4px;
+    }
+
+    /* 静态菜单组 (分身广场、帮我听会、智能体档案) */
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item-static {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: var(--text-primary);
+      cursor: default;
+    }
+
+    /* 智能体二级菜单 (归属于当前智能体，缩进显示) */
+    .agent-sub-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 2px;
+      margin-bottom: 2px;
+      margin-left: 12px;
+      padding-left: 10px;
+      border-left: 2px solid var(--border-color);
+    }
+
+    .sub-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sub-nav-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .sub-nav-item .icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* 历史对话 区域 */
+    .history-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .history-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-right: 2px;
+    }
+
+    .history-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .history-list::-webkit-scrollbar-thumb {
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: default;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 主内容区 */
+    .main-container {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-main);
+      position: relative;
+    }
+
+    /* ChatGPT style 居中新建对话 */
+    .chat-new-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .hero-title {
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 36px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    /* 居中输入框容器 */
+    .input-card {
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-card:focus-within {
+      border-color: #b4b4bb;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 80px;
+      max-height: 200px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: transparent;
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* 底部图标控制栏 */
+    .input-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+
+    .action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .send-btn {
+      border: none;
+      background: var(--text-primary);
+      color: #ffffff;
+    }
+
+    .send-btn:hover {
+      background: #2a2a2a;
+      color: #ffffff;
+    }
+
+    .send-btn svg {
+      stroke: #ffffff;
+    }
+
+    /* Modal 弹窗（新建智能体） */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: var(--text-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: var(--text-primary);
+      color: #ffffff;
+      border-color: var(--text-primary);
+    }
+    /* 产品 Header 样式 */
+    .sidebar-header {
+      padding: 4px 4px 8px 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--text-primary);
+      color: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+
+    <!-- 产品名称 Header -->
+    <div class="sidebar-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span>SoulAgent</span>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 召唤 智能体 v 下拉触发器 (只有 v 的 icon 是点击热区) -->
+    <div class="agent-summon-wrapper" id="agent-summon-wrapper">
+      <div class="agent-summon-bar">
+        <div class="agent-summon-left">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span id="current-agent-label">召唤 智能体</span>
+        </div>
+        
+        <!-- 只有该 v 按钮是点击下拉菜单的热区 -->
+        <button class="chevron-trigger-btn" id="chevron-trigger" title="选择智能体" onclick="toggleAgentMenu(event)">
+          <svg class="icon chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <!-- 下拉菜单选项 -->
+      <div class="agent-dropdown-menu" id="agent-dropdown">
+        <div class="dropdown-item active" onclick="selectAgent('默认智能体', this)">
+          <span>默认智能体</span>
+          <svg class="icon check-icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="dropdown-item" onclick="selectAgent('写诗智能体', this)">
+          <span>写诗智能体</span>
+        </div>
+        <div class="dropdown-item" onclick="selectAgent('王仲远的AI分身', this)">
+          <span>王仲远的AI分身</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item create-item" onclick="openCreateAgentModal(event)">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>新建智能体</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 智能体二级菜单 (属于当前智能体，缩进显示：包含智能体档案、定时任务) -->
+    <div class="agent-sub-nav" id="agent-sub-nav">
+      <div class="sub-nav-item" id="sub-nav-profile">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>智能体档案</span>
+      </div>
+      <div class="sub-nav-item" id="sub-nav-tasks">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>定时任务</span>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 静态列表项（不触发交互） -->
+    <div class="nav-group">
+      <div class="nav-item-static">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>分身广场</span>
+      </div>
+      <div class="nav-item-static">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+        <span>帮我听会</span>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 历史对话 列表 -->
+    <div class="history-section">
+      <div class="history-title">历史对话</div>
+      <div class="history-list" id="history-list">
+        <!-- 动态由JS填充 -->
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- 右侧主区域 (ChatGPT类新建对话风格) -->
+  <main class="main-container">
+    <div class="chat-new-view">
+      <h1 class="hero-title">TY，今天需要帮你做什么</h1>
+
+      <div class="input-card">
+        <textarea class="chat-textarea" id="chat-input" placeholder="给智能体发送消息..."></textarea>
+        
+        <div class="input-card-bottom">
+          <!-- 置左 附件 icon -->
+          <button class="action-btn" title="上传附件">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          
+          <!-- 置右 发送 icon -->
+          <button class="action-btn send-btn" title="发送">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: 新建智能体 -->
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOnOverlay(event)">
+    <div class="modal-card">
+      <div class="modal-title">新建智能体</div>
+      <input type="text" class="modal-input" id="new-agent-name" placeholder="请输入智能体名称，例如：翻译 智能体">
+      <div class="modal-actions">
+        <button class="btn" onclick="closeCreateAgentModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmCreateAgent()">确认新建</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 智能体及对应的历史对话数据结构
+    const agentData = {
+      "默认智能体": [
+        "欢迎使用 SoulAgent 默认智能体",
+        "探索智能体多样化功能",
+        "快速开始提示指南"
+      ],
+      "写诗智能体": [
+        "七言律诗·咏秋月",
+        "现代抒情诗创作提纲",
+        "宋词意境美化"
+      ],
+      "写诗 智能体": [
+        "七言律诗·咏秋月",
+        "现代抒情诗创作提纲",
+        "宋词意境美化"
+      ],
+      "王仲远的AI": [
+        "巴菲特价值投资策略分析",
+        "美股与A股优质标的复盘",
+        "长期持仓与护城河评估"
+      ],
+      "炒股 智能体": [
+        "A股大盘趋势研判",
+        "科技板块量化策略",
+        "龙头企业财报解读"
+      ]
+    };
+
+    let currentAgentKey = "默认智能体";
+
+    // 获取智能体对应的历史对话（带容错与动态生成兜底）
+    function getAgentChats(agentName) {
+      if (agentData[agentName]) return agentData[agentName];
+      const cleanName = agentName.replace(/\s+/g, '');
+      for (let k in agentData) {
+        if (k.replace(/\s+/g, '') === cleanName) {
+          return agentData[k];
+        }
+      }
+      return [
+        `${cleanName} 对话记录一`,
+        `${cleanName} 策略研讨`,
+        `${cleanName} 实践记录`
+      ];
+    }
+
+    // 渲染历史对话列表
+    function renderHistoryList() {
+      const historyListContainer = document.getElementById('history-list');
+      historyListContainer.innerHTML = '';
+
+      const chats = getAgentChats(currentAgentKey);
+      chats.forEach((chatTitle) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>${chatTitle}</span>
+        `;
+        historyListContainer.appendChild(item);
+      });
+    }
+
+    // 仅通过 v 图标触发下拉菜单显隐
+    function toggleAgentMenu(e) {
+      e.stopPropagation();
+      const wrapper = document.getElementById('agent-summon-wrapper');
+      const menu = document.getElementById('agent-dropdown');
+      wrapper.classList.toggle('open');
+      menu.classList.toggle('show');
+    }
+
+    // 切换智能体
+    function selectAgent(agentName, element) {
+      currentAgentKey = agentName;
+
+      // 设置显示文本：当选中“默认智能体”时，外侧显示“召唤 智能体”；选择其它智能体变成“召唤 写诗智能体”
+      const labelSpan = document.getElementById('current-agent-label');
+      if (agentName === '默认智能体' || agentName === '默认') {
+        labelSpan.innerText = '召唤 智能体';
+      } else {
+        const cleanName = agentName.replace(/\s+/g, '');
+        labelSpan.innerText = `召唤 ${cleanName}`;
+      }
+
+      // 控制二级菜单项的显隐：AI分身（如王仲远的AI分身）不显示“智能体档案”，但显示“定时任务”
+      const profileItem = document.getElementById('sub-nav-profile');
+      const tasksItem = document.getElementById('sub-nav-tasks');
+      if (profileItem && tasksItem) {
+        if (agentName.includes('AI分身')) {
+          profileItem.style.display = 'none';
+          tasksItem.style.display = 'flex';
+        } else {
+          profileItem.style.display = 'flex';
+          tasksItem.style.display = 'flex';
+        }
+      }
+
+      // 更新下拉菜单选中态
+      const items = document.querySelectorAll('.agent-dropdown-menu .dropdown-item');
+      items.forEach(item => {
+        item.classList.remove('active');
+        const checkIcon = item.querySelector('.check-icon');
+        if (checkIcon) checkIcon.remove();
+      });
+
+      if (element) {
+        element.classList.add('active');
+        const check = document.createElement('div');
+        check.className = 'check-icon';
+        check.innerHTML = `<svg class="icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+        element.appendChild(check);
+      }
+
+      // 关闭菜单
+      closeAgentMenu();
+
+      // 更新历史对话
+      renderHistoryList();
+    }
+
+    function closeAgentMenu() {
+      document.getElementById('agent-summon-wrapper').classList.remove('open');
+      document.getElementById('agent-dropdown').classList.remove('show');
+    }
+
+    // 新建智能体弹窗
+    function openCreateAgentModal(e) {
+      e.stopPropagation();
+      closeAgentMenu();
+      document.getElementById('create-modal').classList.add('show');
+    }
+
+    function closeCreateAgentModal() {
+      document.getElementById('create-modal').classList.remove('show');
+      document.getElementById('new-agent-name').value = '';
+    }
+
+    function closeModalOnOverlay(e) {
+      if (e.target.id === 'create-modal') {
+        closeCreateAgentModal();
+      }
+    }
+
+    function confirmCreateAgent() {
+      const nameInput = document.getElementById('new-agent-name').value.trim();
+      if (!nameInput) {
+        alert('请输入智能体名称');
+        return;
+      }
+
+      const newAgentName = nameInput.endsWith('智能体') ? nameInput : `${nameInput} 智能体`;
+
+      if (!agentData[newAgentName]) {
+        agentData[newAgentName] = [
+          `${newAgentName} 初始化对话`,
+          `关于 ${newAgentName} 的使用指南`
+        ];
+
+        // 动态添加选项到下拉菜单
+        const dropdownMenu = document.getElementById('agent-dropdown');
+        const divider = dropdownMenu.querySelector('.dropdown-divider');
+        
+        const newItem = document.createElement('div');
+        newItem.className = 'dropdown-item';
+        newItem.onclick = function() { selectAgent(newAgentName, newItem); };
+        newItem.innerHTML = `<span>${newAgentName}</span>`;
+        
+        dropdownMenu.insertBefore(newItem, divider);
+
+        // 直接选中新建的智能体
+        selectAgent(newAgentName, newItem);
+      } else {
+        selectAgent(newAgentName);
+      }
+
+      closeCreateAgentModal();
+    }
+
+    // 点击空白处收起下拉
+    window.addEventListener('click', function() {
+      closeAgentMenu();
+    });
+
+    // 初始化运行
+    renderHistoryList();
+  </script>
+</body>
+</html>

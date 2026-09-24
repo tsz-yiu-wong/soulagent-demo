@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulAgent Sidebar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #ffffff;
+      --bg-sidebar: #f7f7f5;
+      --bg-hover:   #efefed;
+      --bg-active:  #e8e8e6;
+      --border:     #e5e5e3;
+      --text-1:     #1a1a1a;
+      --text-2:     #6b6b6b;
+      --text-3:     #a8a8a8;
+      --accent:     #1a1a1a;
+      --green:      #16a34a;
+      --amber:      #d97706;
+      --sidebar-w:  240px;
+      --font:       "Inter", -apple-system, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-1);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .sidebar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px 10px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.01em;
+    }
+
+    .icon-btn {
+      width: 26px; height: 26px;
+      border: none; border-radius: 6px;
+      background: transparent;
+      color: var(--text-3);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, color 0.12s;
+    }
+    .icon-btn:hover { background: var(--bg-hover); color: var(--text-2); }
+
+    /* ── New task input ── */
+    .new-task-wrap {
+      padding: 0 10px 10px;
+      flex-shrink: 0;
+    }
+
+    .new-task-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text-3);
+      font-family: var(--font);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: border-color 0.12s, color 0.12s;
+      text-align: left;
+    }
+    .new-task-btn:hover {
+      border-color: #c0c0be;
+      color: var(--text-2);
+    }
+    .new-task-btn svg { flex-shrink: 0; }
+    .new-task-shortcut {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--text-3);
+      background: var(--bg-hover);
+      border-radius: 4px;
+      padding: 1px 4px;
+    }
+
+    /* ── Scroll ── */
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 4px 0 8px;
+    }
+    .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #d5d5d3; border-radius: 99px; }
+
+    /* ── Section label ── */
+    .section-label {
+      padding: 8px 14px 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-add {
+      font-size: 15px;
+      line-height: 1;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: color 0.12s;
+      font-weight: 400;
+    }
+    .section-add:hover { color: var(--text-1); }
+
+    /* ── Agent row ── */
+    .agent-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px 5px 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      margin: 0 4px;
+      transition: background 0.1s;
+      user-select: none;
+    }
+    .agent-row:hover { background: var(--bg-hover); }
+    .agent-row.open   { background: var(--bg-hover); }
+
+    .agent-chevron {
+      width: 14px; height: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-3);
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .agent-row.open .agent-chevron { transform: rotate(90deg); }
+
+    .agent-emoji {
+      font-size: 14px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .agent-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Running indicator (tiny animated dot) */
+    .agent-running {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      animation: pulse-g 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-g {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .agent-count {
+      font-size: 11px;
+      color: var(--text-3);
+      flex-shrink: 0;
+    }
+
+    /* ── Task list ── */
+    .task-list {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.18s ease;
+    }
+    .task-list.open { max-height: 600px; }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px 4px 36px;
+      cursor: pointer;
+      border-radius: 6px;
+      margin: 0 4px;
+      transition: background 0.1s;
+    }
+    .task-item:hover  { background: var(--bg-hover); }
+    .task-item.active { background: var(--bg-active); }
+
+    .task-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--text-3);
+    }
+    .task-dot.running { background: var(--green); }
+    .task-dot.draft   { background: var(--amber); }
+    .task-dot.done    { background: #d5d5d3; }
+
+    .task-name {
+      flex: 1;
+      font-size: 12.5px;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-item.active .task-name { color: var(--text-1); font-weight: 500; }
+
+    .task-time {
+      font-size: 10.5px;
+      color: var(--text-3);
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    .sidebar-footer {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .user-dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--text-1);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .user-name { font-size: 12.5px; font-weight: 500; color: var(--text-1); flex: 1; }
+    .status-pill {
+      font-size: 10px;
+      color: var(--green);
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 99px;
+      padding: 1px 7px;
+    }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      font-size: 13px;
+      background: var(--bg);
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.25);
+      backdrop-filter: blur(4px);
+      z-index: 1000; align-items: flex-start; justify-content: center;
+      padding-top: 120px;
+    }
+    .modal-overlay.open { display: flex; animation: fade-in 0.1s ease; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      width: 520px; max-width: 90vw;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      animation: slide-down 0.15s ease;
+    }
+    @keyframes slide-down {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .modal-input-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-input-row svg { color: var(--text-3); flex-shrink: 0; }
+    .modal-input {
+      flex: 1; border: none; outline: none;
+      font-family: var(--font); font-size: 14px;
+      color: var(--text-1); background: transparent;
+    }
+    .modal-input::placeholder { color: var(--text-3); }
+
+    .modal-section {
+      padding: 10px 14px 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .modal-agent-list { padding: 4px 8px 10px; display: flex; flex-direction: column; gap: 1px; }
+
+    .modal-agent-opt {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 7px; cursor: pointer;
+      transition: background 0.1s;
+    }
+    .modal-agent-opt:hover  { background: var(--bg-hover); }
+    .modal-agent-opt.sel    { background: var(--bg-active); }
+    .modal-agent-opt-emoji  { font-size: 16px; }
+    .modal-agent-opt-name   { font-size: 13px; font-weight: 500; color: var(--text-1); }
+    .modal-agent-opt-desc   { font-size: 11.5px; color: var(--text-3); }
+    .modal-agent-opt-right  { margin-left: auto; }
+    .modal-running-dot      { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+    .modal-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 12px; border-top: 1px solid var(--border);
+    }
+    .modal-hint { font-size: 11px; color: var(--text-3); }
+    .modal-hint kbd {
+      background: var(--bg-sidebar); border: 1px solid var(--border);
+      border-radius: 4px; padding: 0 4px;
+      font-family: var(--font); font-size: 10px;
+    }
+    .modal-submit {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border: none; border-radius: 7px;
+      background: var(--text-1); color: #fff;
+      font-family: var(--font); font-size: 12.5px; font-weight: 500;
+      cursor: pointer; transition: opacity 0.12s;
+    }
+    .modal-submit:hover { opacity: 0.82; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+
+  <div class="sidebar-top">
+    <span class="brand">SoulAgent</span>
+    <div style="display:flex;gap:2px">
+      <button class="icon-btn" title="搜索">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button class="icon-btn" title="折叠">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="new-task-wrap">
+    <button class="new-task-btn" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      新任务
+      <span class="new-task-shortcut">⌘K</span>
+    </button>
+  </div>
+
+  <div class="sidebar-scroll">
+    <div class="section-label">
+      Agents
+      <span class="section-add" onclick="showMain('+ 新建 Agent')">+</span>
+    </div>
+
+    <!-- Agent: 研究员 ARIA -->
+    <div class="agent-row open" id="row-aria" onclick="toggleAgent('aria')">
+      <span class="agent-chevron">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+      <span class="agent-emoji">🔬</span>
+      <span class="agent-name">研究员 ARIA</span>
+      <span class="agent-running" title="运行中"></span>
+    </div>
+    <div class="task-list open" id="tasks-aria">
+      <div class="task-item active" onclick="selectTask(this,'Q3 竞品分析报告')">
+        <span class="task-dot running"></span>
+        <span class="task-name">Q3 竞品分析报告</span>
+        <span class="task-time">2m</span>
+      </div>
+      <div class="task-item" onclick="selectTask(this,'市场调研：AI 工具')">
+        <span class="task-dot done"></span>
+        <span class="task-name">市场调研：AI 工具</span>
+        <span class="task-time">昨天</span>
+      </div>
+      <div class="task-item" onclick="selectTask(this,'用户访谈分析 · 8月')">
+        <span class="task-dot done"></span>
+        <span class="task-name">用户访谈分析 · 8月</span>
+        <span class="task-time">昨天</span>
+      </div>
+    </div>
+
+    <!-- Agent: 写作者 NOVA -->
+    <div class="agent-row open" id="row-nova" onclick="toggleAgent('nova')">
+      <span class="agent-chevron">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+      <span class="agent-emoji">✍️</span>
+      <span class="agent-name">写作者 NOVA</span>
+    </div>
+    <div class="task-list open" id="tasks-nova">
+      <div class="task-item" onclick="selectTask(this,'新功能发布文案 v2.3')">
+        <span class="task-dot draft"></span>
+        <span class="task-name">新功能发布文案 v2.3</span>
+        <span class="task-time">1h</span>
+      </div>
+      <div class="task-item" onclick="selectTask(this,'官网落地页 SEO 重写')">
+        <span class="task-dot done"></span>
+        <span class="task-name">官网落地页 SEO 重写</span>
+        <span class="task-time">昨天</span>
+      </div>
+    </div>
+
+    <!-- Agent: 数据师 FLUX -->
+    <div class="agent-row" id="row-flux" onclick="toggleAgent('flux')">
+      <span class="agent-chevron">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+      <span class="agent-emoji">📊</span>
+      <span class="agent-name">数据师 FLUX</span>
+      <span class="agent-count">5</span>
+    </div>
+    <div class="task-list" id="tasks-flux">
+      <div class="task-item" onclick="selectTask(this,'7月用户留存趋势')">
+        <span class="task-dot done"></span>
+        <span class="task-name">7月用户留存趋势</span>
+        <span class="task-time">3h</span>
+      </div>
+      <div class="task-item" onclick="selectTask(this,'注册转化漏斗分析')">
+        <span class="task-dot done"></span>
+        <span class="task-name">注册转化漏斗分析</span>
+        <span class="task-time">昨天</span>
+      </div>
+      <div class="task-item" onclick="selectTask(this,'A/B 实验结果汇总')">
+        <span class="task-dot done"></span>
+        <span class="task-name">A/B 实验结果汇总</span>
+        <span class="task-time">2天</span>
+      </div>
+    </div>
+
+    <!-- Agent: 会议助手 ECHO -->
+    <div class="agent-row" id="row-echo" onclick="toggleAgent('echo')">
+      <span class="agent-chevron">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+      <span class="agent-emoji">🎧</span>
+      <span class="agent-name">会议助手 ECHO</span>
+      <span class="agent-count">12</span>
+    </div>
+    <div class="task-list" id="tasks-echo">
+      <div class="task-item" onclick="selectTask(this,'产品周会纪要 8.9')">
+        <span class="task-dot done"></span>
+        <span class="task-name">产品周会纪要 8.9</span>
+        <span class="task-time">昨天</span>
+      </div>
+      <div class="task-item" onclick="selectTask(this,'季度复盘会议纪要')">
+        <span class="task-dot done"></span>
+        <span class="task-name">季度复盘会议纪要</span>
+        <span class="task-time">2天</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="sidebar-footer">
+    <div class="user-dot">B</div>
+    <span class="user-name">Baai</span>
+    <span class="status-pill">1 运行中</span>
+  </footer>
+</aside>
+
+<!-- Main -->
+<main class="main" id="mainArea">
+  <span id="mainText">选择一个 Agent 或任务</span>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="closeOnBg(event)">
+  <div class="modal">
+    <div class="modal-input-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      <input class="modal-input" id="taskInput" placeholder="描述你的任务…">
+    </div>
+    <div class="modal-section">交给哪个 Agent</div>
+    <div class="modal-agent-list">
+      <div class="modal-agent-opt sel" onclick="selAgent(this)">
+        <span class="modal-agent-opt-emoji">🔬</span>
+        <div>
+          <div class="modal-agent-opt-name">研究员 ARIA</div>
+          <div class="modal-agent-opt-desc">调研、分析、洞察</div>
+        </div>
+        <div class="modal-agent-opt-right"><div class="modal-running-dot"></div></div>
+      </div>
+      <div class="modal-agent-opt" onclick="selAgent(this)">
+        <span class="modal-agent-opt-emoji">✍️</span>
+        <div>
+          <div class="modal-agent-opt-name">写作者 NOVA</div>
+          <div class="modal-agent-opt-desc">文案、报告、文档</div>
+        </div>
+      </div>
+      <div class="modal-agent-opt" onclick="selAgent(this)">
+        <span class="modal-agent-opt-emoji">📊</span>
+        <div>
+          <div class="modal-agent-opt-name">数据师 FLUX</div>
+          <div class="modal-agent-opt-desc">数据分析、可视化</div>
+        </div>
+      </div>
+      <div class="modal-agent-opt" onclick="selAgent(this)">
+        <span class="modal-agent-opt-emoji">🎧</span>
+        <div>
+          <div class="modal-agent-opt-name">会议助手 ECHO</div>
+          <div class="modal-agent-opt-desc">会议纪要、跟进</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span class="modal-hint"><kbd>Esc</kbd> 关闭 &nbsp; <kbd>↵</kbd> 创建</span>
+      <button class="modal-submit" onclick="createTask()">创建任务</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Toggle agent expand/collapse
+  function toggleAgent(id) {
+    const row = document.getElementById('row-' + id);
+    const list = document.getElementById('tasks-' + id);
+    const isOpen = list.classList.contains('open');
+    list.classList.toggle('open', !isOpen);
+    row.classList.toggle('open', !isOpen);
+  }
+
+  // Select task
+  function selectTask(el, name) {
+    document.querySelectorAll('.task-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    showMain(name);
+  }
+
+  // Modal
+  function openModal() {
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('taskInput').focus(), 50);
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+  function closeOnBg(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+  function selAgent(el) {
+    document.querySelectorAll('.modal-agent-opt').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+  function createTask() {
+    const val = document.getElementById('taskInput').value.trim();
+    const sel = document.querySelector('.modal-agent-opt.sel');
+    const name = sel ? sel.querySelector('.modal-agent-opt-name').textContent : 'Agent';
+    closeModal();
+    showMain(val ? `"${val}" 已分配给 ${name}` : `新任务已分配给 ${name}`);
+    document.getElementById('taskInput').value = '';
+  }
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openModal(); }
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter' && document.getElementById('modal').classList.contains('open')) createTask();
+  });
+
+  function showMain(msg) { document.getElementById('mainText').textContent = msg; }
+</script>
+</body>
+</html>

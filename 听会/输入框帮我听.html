@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>帮我听 Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f5f6f8;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 居中输入区域容器 */
+    .input-card {
+      width: 580px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e5e7eb;
+      padding: 16px;
+      position: relative;
+    }
+
+    /* 输入框样式 */
+    .main-input {
+      width: 100%;
+      height: 80px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 15px;
+      color: #1f2937;
+      line-height: 1.5;
+    }
+
+    .main-input::placeholder {
+      color: #9ca3af;
+    }
+
+    /* 底部操作条 */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #f3f4f6;
+      position: relative;
+    }
+
+    /* 帮我听按钮 */
+    .btn-listen {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: #2563eb;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .btn-listen:hover {
+      background: #dbeafe;
+    }
+
+    /* 向上弹出菜单容器 */
+    .listen-popup {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      width: 220px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border: 1px solid #e5e7eb;
+      display: none;
+      z-index: 100;
+    }
+
+    .listen-popup.show {
+      display: block;
+    }
+
+    /* Tab 栏 */
+    .popup-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fafafa;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    .tab-item {
+      flex: 1;
+      text-align: center;
+      padding: 9px 0;
+      font-size: 13px;
+      color: #6b7280;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+
+    .tab-item.active {
+      color: #2563eb;
+      font-weight: 600;
+      background: #ffffff;
+      border-bottom: 2px solid #2563eb;
+      margin-bottom: -1px;
+    }
+
+    /* 列表固定高度：每行 38px，6 行刚好 228px */
+    .menu-list {
+      height: 228px;
+      overflow-y: auto;
+      list-style: none;
+      padding: 4px 0;
+      position: relative;
+    }
+
+    .menu-item {
+      height: 38px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      position: relative;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .menu-item:hover,
+    .menu-item.active {
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+
+    .menu-item.disabled-click {
+      cursor: default;
+    }
+
+    .item-arrow {
+      color: #9ca3af;
+      font-size: 10px;
+      margin-left: 6px;
+    }
+
+    /* 二级弹出菜单 */
+    .sub-menu-level2 {
+      position: absolute;
+      top: 0;
+      left: calc(100% + 4px);
+      width: 200px;
+      height: 228px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border: 1px solid #e5e7eb;
+      display: none;
+      padding: 4px 0;
+      overflow-y: auto;
+      list-style: none;
+      z-index: 101;
+    }
+
+    /* 桥接缝隙，避免鼠标滑向右侧子菜单时断连 */
+    .sub-menu-level2::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -8px;
+      width: 8px;
+      height: 100%;
+    }
+
+    /* 三级弹出菜单：位于二级菜单右侧 */
+    .sub-menu-level3 {
+      position: absolute;
+      top: 0;
+      left: calc(100% + 208px);
+      width: 180px;
+      height: 228px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border: 1px solid #e5e7eb;
+      display: none;
+      padding: 4px 0;
+      overflow-y: auto;
+      list-style: none;
+      z-index: 102;
+    }
+
+    .cascade-container {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 输入区域卡片 -->
+  <div class="input-card">
+    <textarea id="mainInput" class="main-input" placeholder="输入对话内容，或从下方选择..."></textarea>
+    
+    <div class="bottom-bar">
+      <!-- 帮我听 按钮 -->
+      <button id="btnListen" class="btn-listen" type="button">
+        🎧 帮我听
+      </button>
+
+      <!-- 向上弹出的菜单 -->
+      <div id="listenPopup" class="listen-popup">
+        <!-- 顶部 Tab -->
+        <div class="popup-tabs">
+          <div class="tab-item active" data-tab="meeting">会议</div>
+          <div class="tab-item" data-tab="course">课程</div>
+          <div class="tab-item" data-tab="mine">我的</div>
+        </div>
+
+        <div class="cascade-container">
+          <!-- 一级列表 (固定展示6行高度) -->
+          <ul id="level1List" class="menu-list"></ul>
+
+          <!-- 二级级联列表 -->
+          <ul id="level2List" class="sub-menu-level2"></ul>
+
+          <!-- 三级级联列表 -->
+          <ul id="level3List" class="sub-menu-level3"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 数据配置
+    const DATA_SOURCE = {
+      meeting: [
+        {
+          name: "智源大会",
+          children: [
+            {
+              name: "开幕式",
+              children: [
+                { name: "领导致辞" },
+                { name: "嘉宾演讲" },
+                { name: "圆桌讨论" }
+              ]
+            },
+            {
+              name: "具身智能论坛",
+              children: [
+                { name: "人形机器人本体技术" },
+                { name: "具身多模态大模型" }
+              ]
+            },
+            {
+              name: "闭幕式",
+              children: [
+                { name: "年度成果发布" },
+                { name: "颁奖典礼" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "GDEC",
+          children: [
+            {
+              name: "全球数字经济论坛",
+              children: [
+                { name: "主旨演讲" },
+                { name: "产业对话" }
+              ]
+            },
+            {
+              name: "数字技术创新专场",
+              children: [
+                { name: "前沿成果路演" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "WAIC",
+          children: [
+            {
+              name: "科学前沿全体会议",
+              children: [
+                { name: "图灵奖得主报告" }
+              ]
+            },
+            {
+              name: "AI基础设施论坛",
+              children: [
+                { name: "智算中心架构" },
+                { name: "算力协同调度" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "服贸会",
+          children: [
+            {
+              name: "服务贸易开放发展论坛",
+              children: [
+                { name: "领导致辞" },
+                { name: "白皮书发布" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "外滩大会",
+          children: [
+            {
+              name: "金融科技主论坛",
+              children: [
+                { name: "前沿金融大模型探讨" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "中关村论坛",
+          children: [
+            {
+              name: "人工智能创新平行论坛",
+              children: [
+                { name: "青年科学家创新分享" }
+              ]
+            }
+          ]
+        }
+      ],
+      course: [
+        {
+          name: "FlagOS每周直播课",
+          children: [
+            { name: "第1期：环境搭建与快速入门" },
+            { name: "第2期：分布式训练实操指南" }
+          ]
+        },
+        {
+          name: "黄铁军大模型系列课",
+          children: [
+            { name: "第一讲：概述" },
+            { name: "第二讲：脉冲神经网络与类脑计算" },
+            { name: "第三讲：大模型与具身智能展望" }
+          ]
+        }
+      ],
+      mine: [
+        { name: "苹果发布会" },
+        { name: "20260917新闻直播" },
+        { name: "B站【AI前沿探索】技术直播回放" }
+      ]
+    };
+
+    const mainInput = document.getElementById("mainInput");
+    const btnListen = document.getElementById("btnListen");
+    const listenPopup = document.getElementById("listenPopup");
+    const tabItems = document.querySelectorAll(".tab-item");
+
+    const level1List = document.getElementById("level1List");
+    const level2List = document.getElementById("level2List");
+    const level3List = document.getElementById("level3List");
+
+    let currentTab = "meeting";
+    let activeLevel1Item = null;
+    let activeLevel2Item = null;
+
+    // 填充内容并关闭菜单
+    function fillTextAndClose(text) {
+      mainInput.value = `帮我听${text}`;
+      closePopup();
+      mainInput.focus();
+    }
+
+    function closePopup() {
+      listenPopup.classList.remove("show");
+      hideLevel2();
+      hideLevel3();
+    }
+
+    function togglePopup() {
+      const isVisible = listenPopup.classList.contains("show");
+      if (isVisible) {
+        closePopup();
+      } else {
+        listenPopup.classList.add("show");
+        renderLevel1(currentTab);
+      }
+    }
+
+    // 隐藏级联列表
+    function hideLevel2() {
+      level2List.style.display = "none";
+      level2List.innerHTML = "";
+      activeLevel1Item = null;
+      hideLevel3();
+    }
+
+    function hideLevel3() {
+      level3List.style.display = "none";
+      level3List.innerHTML = "";
+      activeLevel2Item = null;
+    }
+
+    // 渲染一级菜单
+    function renderLevel1(tabKey) {
+      hideLevel2();
+      level1List.innerHTML = "";
+      const list = DATA_SOURCE[tabKey] || [];
+
+      list.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "menu-item";
+        
+        const hasChildren = item.children && item.children.length > 0;
+        
+        if (hasChildren) {
+          li.classList.add("disabled-click");
+          li.innerHTML = `<span>${item.name}</span><span class="item-arrow">▶</span>`;
+        } else {
+          li.innerHTML = `<span>${item.name}</span>`;
+          // 只有一级的情况下可直接点击
+          li.addEventListener("click", () => {
+            fillTextAndClose(item.name);
+          });
+        }
+
+        // Hover 触发二级菜单展示
+        li.addEventListener("mouseenter", () => {
+          document.querySelectorAll("#level1List .menu-item").forEach(el => el.classList.remove("active"));
+          li.classList.add("active");
+          activeLevel1Item = item;
+
+          if (hasChildren) {
+            renderLevel2(item);
+          } else {
+            hideLevel2();
+          }
+        });
+
+        level1List.appendChild(li);
+      });
+    }
+
+    // 渲染二级菜单
+    function renderLevel2(parentItem) {
+      hideLevel3();
+      level2List.innerHTML = "";
+      level2List.style.display = "block";
+
+      (parentItem.children || []).forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "menu-item";
+
+        const hasGrandChildren = item.children && item.children.length > 0;
+        if (hasGrandChildren) {
+          li.innerHTML = `<span>${item.name}</span><span class="item-arrow">▶</span>`;
+        } else {
+          li.innerHTML = `<span>${item.name}</span>`;
+        }
+
+        // 二级无论有无子集都可以点，点二级填充二级名字
+        li.addEventListener("click", (e) => {
+          e.stopPropagation();
+          fillTextAndClose(item.name);
+        });
+
+        // Hover 二级项
+        li.addEventListener("mouseenter", () => {
+          document.querySelectorAll("#level2List .menu-item").forEach(el => el.classList.remove("active"));
+          li.classList.add("active");
+          activeLevel2Item = item;
+
+          if (hasGrandChildren) {
+            renderLevel3(item);
+          } else {
+            hideLevel3();
+          }
+        });
+
+        level2List.appendChild(li);
+      });
+    }
+
+    // 渲染三级菜单
+    function renderLevel3(parentItem) {
+      level3List.innerHTML = "";
+      level3List.style.display = "block";
+
+      (parentItem.children || []).forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "menu-item";
+        li.innerHTML = `<span>${item.name}</span>`;
+
+        // 点三级填充二级+三级的名字
+        li.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const combinedText = `${parentItem.name}${item.name}`;
+          fillTextAndClose(combinedText);
+        });
+
+        li.addEventListener("mouseenter", () => {
+          document.querySelectorAll("#level3List .menu-item").forEach(el => el.classList.remove("active"));
+          li.classList.add("active");
+        });
+
+        level3List.appendChild(li);
+      });
+    }
+
+    // Tab 切换事件
+    tabItems.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabItems.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentTab = tab.dataset.tab;
+        renderLevel1(currentTab);
+      });
+    });
+
+    // 按钮点击切换
+    btnListen.addEventListener("click", (e) => {
+      e.stopPropagation();
+      togglePopup();
+    });
+
+    // 阻止菜单内部冒泡
+    listenPopup.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    // 点击页面外部关闭菜单
+    document.addEventListener("click", (e) => {
+      if (!listenPopup.contains(e.target) && e.target !== btnListen) {
+        closePopup();
+      }
+    });
+
+    // 移出菜单区域（且没有在子菜单上时保持或按需管理）
+    const cascadeContainer = document.querySelector(".cascade-container");
+    cascadeContainer.addEventListener("mouseleave", () => {
+      hideLevel2();
+    });
+  </script>
+</body>
+</html>

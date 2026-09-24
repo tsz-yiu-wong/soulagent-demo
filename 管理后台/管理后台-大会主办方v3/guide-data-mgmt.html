@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大会后台 - 导览数据管理</title>
+  <script src="sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1f2937;
+      background: #f8fafc;
+    }
+    .container {
+      width: 100%;
+      max-width: 1040px;
+      margin: 0 auto;
+      position: relative;
+      padding-bottom: 50px;
+    }
+
+    /* 顶部返回导航与当前活动胶囊 */
+    .back-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #4b5563;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .back-btn:hover {
+      color: #2563eb;
+      border-color: #bfdbfe;
+      background: #eff6ff;
+      transform: translateX(-2px);
+    }
+
+    .nav-divider {
+      width: 1px;
+      height: 16px;
+      background: #e5e7eb;
+    }
+
+    .event-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: #475569;
+    }
+
+    .event-tag .tag-name {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* 顶部 Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .page-nav-tabs {
+      display: inline-flex;
+      align-items: center;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+      width: fit-content;
+    }
+
+    .nav-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #64748b;
+      text-decoration: none;
+      border-radius: 9px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-tab:hover {
+      color: #1e293b;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .nav-tab.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-tab.active svg {
+      color: #2563eb;
+    }
+
+    .header-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* 主卡片公用样式 */
+    .section-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      margin-bottom: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    .section-desc {
+      font-size: 12.5px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* 按钮样式 */
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .btn-ai-magic {
+      background: linear-gradient(135deg, #4f46e5 0%, #2563eb 50%, #06b6d4 100%);
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-ai-magic:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(79, 70, 229, 0.38);
+      filter: brightness(1.05);
+    }
+
+    .btn-ai-magic:active {
+      transform: translateY(0);
+    }
+
+    .btn-ai-magic.loading {
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    /* 上半部分：资料文件上传区 */
+    .upload-section-body {
+      padding: 16px 20px 20px;
+    }
+
+    /* 三四行高度的大上传输入框/拖拽区 */
+    .upload-dropzone {
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 104px;
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone.drag-over {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .dropzone-icon {
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+      transition: transform 0.2s ease;
+    }
+
+    .upload-dropzone:hover .dropzone-icon {
+      transform: translateY(-2px);
+    }
+
+    .dropzone-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.3;
+    }
+
+    .dropzone-subtitle {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* 底部已上传文件胶囊列表 */
+    .uploaded-pill-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .file-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px 5px 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      font-size: 12.5px;
+      color: #334155;
+      transition: all 0.15s ease;
+      user-select: none;
+      max-width: 100%;
+    }
+
+    .file-pill:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+
+    .file-pill-icon {
+      width: 13px;
+      height: 13px;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .file-pill-name {
+      font-weight: 500;
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-pill-remove {
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 2px;
+      margin-left: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.15s ease;
+    }
+
+    .file-pill-remove:hover {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+
+    /* 解析状态横幅提示条 */
+    .ai-sync-banner {
+      background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .ai-sync-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ai-sync-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
+    .ai-sync-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .ai-sync-desc {
+      font-size: 12.5px;
+      color: #475569;
+      margin-top: 2px;
+    }
+
+    /* 下半部分：文件目录与预览容器 */
+    .knowledge-split-layout {
+      display: flex;
+      border-top: 1px solid #f1f5f9;
+      min-height: 520px;
+    }
+
+    /* 左侧：文件目录 (左小半边) */
+    .knowledge-dir-aside {
+      width: 280px;
+      min-width: 280px;
+      border-right: 1px solid #f1f5f9;
+      background: #fbfcfd;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .dir-item {
+      display: flex;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      position: relative;
+    }
+
+    .dir-item:hover {
+      background: #f1f5f9;
+    }
+
+    .dir-item.active {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .dir-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 7px;
+      bottom: 7px;
+      width: 3.5px;
+      background: #2563eb;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .dir-item-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .dir-item.active .dir-item-title-row {
+      color: #0f172a;
+    }
+
+    /* 右侧：Markdown 预览区 (右大半边) */
+    .knowledge-preview-main {
+      flex: 1;
+      padding: 24px 28px;
+      background: #ffffff;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 18px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .preview-doc-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preview-filename {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.2px;
+    }
+
+    /* Markdown 格式化渲染容器 */
+    .markdown-body {
+      font-size: 14px;
+      line-height: 1.75;
+      color: #334155;
+    }
+
+    .markdown-body h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .markdown-body h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .markdown-body h3 {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    .markdown-body p {
+      margin-bottom: 12px;
+    }
+
+    .markdown-body ul, .markdown-body ol {
+      margin-bottom: 14px;
+      padding-left: 20px;
+    }
+
+    .markdown-body li {
+      margin-bottom: 5px;
+    }
+
+    .markdown-body blockquote {
+      border-left: 4px solid #3b82f6;
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 14px;
+      color: #475569;
+      font-size: 13.5px;
+    }
+
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13px;
+    }
+
+    .markdown-body th, .markdown-body td {
+      border: 1px solid #e2e8f0;
+      padding: 9px 12px;
+      text-align: left;
+    }
+
+    .markdown-body th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .markdown-body tr:nth-child(even) {
+      background: #fbfcfd;
+    }
+
+    .markdown-callout {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 14px 0;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .markdown-callout.info {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+    }
+
+    .markdown-callout.tip {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+
+    /* 空态卡片（智能解析前） */
+    .knowledge-empty-state {
+      padding: 60px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+    }
+
+    .empty-icon-shield {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12);
+    }
+
+    .empty-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .empty-desc {
+      font-size: 13.5px;
+      color: #64748b;
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    /* 导览知识库局部智能解析进度蒙版 (与 forum-mgmt 完全一致) */
+    .ai-mask-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .ai-mask-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .ai-agent-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      background: #ffffff;
+      padding: 32px 48px;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(79, 70, 229, 0.12);
+      border: 1px solid #e0e7ff;
+    }
+
+    .spinner-ring {
+      width: 44px;
+      height: 44px;
+      border: 3.5px solid #e0e7ff;
+      border-top: 3.5px solid #4f46e5;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e1b4b;
+      letter-spacing: 0.2px;
+    }
+
+    .progress-bar-track {
+      width: 220px;
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%);
+      border-radius: 4px;
+      transition: width 0.08s linear;
+    }
+
+    /* 全局 Toast */
+    .toast-tip {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(30px);
+      background: #1e293b;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast-tip.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部面包屑/返回导航条 -->
+    <div class="back-nav">
+      <a href="event-mgmt.html" class="back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        返回
+      </a>
+      <span class="nav-divider"></span>
+      <div class="event-tag">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+        <span class="tag-label">当前活动:</span>
+        <strong class="tag-name" id="currentEventName">2026 智源大会（BAAI Conference）</strong>
+      </div>
+    </div>
+
+    <!-- 顶部 Header: Tab 切换 -->
+    <header class="header">
+      <div class="header-left">
+        <div class="page-nav-tabs">
+          <a href="forum-mgmt.html?eventId=evt_101" class="nav-tab" id="forumTabLink">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <span>直播论坛</span>
+          </a>
+          <a href="javascript:void(0);" class="nav-tab active">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>导览数据</span>
+          </a>
+        </div>
+        <p class="header-subtitle">管理活动资料，智能解析并构建导览知识库</p>
+      </div>
+    </header>
+
+    <!-- 上半部分：资料文件上传区 -->
+    <section class="section-card">
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            资料文件
+          </div>
+          <span class="section-badge" id="fileCountBadge">已上传 3 个文件</span>
+        </div>
+      </div>
+
+      <div class="upload-section-body">
+        <!-- 三四行高度的大上传输入框 / 拖拽区 -->
+        <div class="upload-dropzone" id="uploadDropzone" onclick="triggerFileUpload()">
+          <input type="file" id="rawFileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.markdown" style="display:none;" onchange="handleRawFileSelected(event)">
+          <div class="dropzone-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <div class="dropzone-title">点击或拖拽上传</div>
+          <div class="dropzone-subtitle">支持 PDF、Word、Excel、PPT、TXT、Markdown 等格式</div>
+        </div>
+
+        <!-- 底部已上传的文件列表（胶囊样式，只显示文件名） -->
+        <div class="uploaded-pill-container" id="filePillContainer">
+          <!-- JS 动态渲染胶囊 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 下半部分：智能解析后的导览文件预览（默认空态） -->
+    <section class="section-card">
+      <!-- 局部智能解析进度蒙版（仅覆盖本卡片） -->
+      <div class="ai-mask-overlay" id="aiMaskOverlay">
+        <div class="ai-agent-loader">
+          <div class="spinner-ring"></div>
+          <div class="loader-text" id="aiLoaderText">智能解析中... 0%</div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="aiProgressBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title-group">
+          <div class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            导览知识库
+          </div>
+          <span class="section-badge" id="parsedStatusBadge" style="display:none; background:#dcfce7; color:#15803d;">已生效 6 个模块</span>
+        </div>
+        <div id="parsedActionGroup" style="display:none;">
+          <button class="btn-ai-magic" onclick="triggerSmartParse()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            </svg>
+            重新解析
+          </button>
+        </div>
+      </div>
+
+      <!-- 1. 默认空态容器：未解析 -->
+      <div class="knowledge-empty-state" id="emptyStateBox">
+        <div class="empty-icon-shield">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <div class="empty-title">暂无导览知识</div>
+        <div class="empty-desc">
+          点击「智能解析」，系统将基于已上传的资料，自动整合、提炼并生成导览知识。<br>SoulAgent 将基于知识库回答参会者的相关提问。
+        </div>
+        <button class="btn-ai-magic" onclick="triggerSmartParse()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+          </svg>
+          智能解析
+        </button>
+      </div>
+
+      <!-- 2. 解析后呈现：左小半边文件目录，右大半边文件预览 -->
+      <div class="knowledge-split-layout" id="parsedSplitLayout" style="display:none;">
+        <!-- 左侧文件目录 -->
+        <aside class="knowledge-dir-aside">
+          <div id="dirItemList">
+            <!-- 动态渲染 6 个 Markdown 目录项 -->
+          </div>
+        </aside>
+
+        <!-- 右侧文件预览 -->
+        <main class="knowledge-preview-main">
+          <div class="preview-toolbar">
+            <div class="preview-doc-title-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <h2 class="preview-filename" id="previewFileName">03_会场交通出行指南.md</h2>
+            </div>
+          </div>
+
+          <!-- Markdown 正文内容渲染 -->
+          <article class="markdown-body" id="markdownRenderBox">
+            <!-- 动态渲染 Markdown 内容 -->
+          </article>
+        </main>
+      </div>
+    </section>
+  </div>
+
+  <!-- 全局轻量 Toast -->
+  <div class="toast-tip" id="globalToast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="toastMessage">操作成功</span>
+  </div>
+
+  <script>
+    // 原始上传文件数据（回显自 event-mgmt 中 2026 智源大会的数据）
+    let rawFiles = [
+      {
+        id: 'f_1',
+        name: '2026 智源大会日程指南.pdf',
+        size: '2.4 MB',
+        type: 'pdf',
+        time: '2026-06-01 10:20'
+      },
+      {
+        id: 'f_2',
+        name: '2026 智源大会展区导览与展商手册.pdf',
+        size: '3.8 MB',
+        type: 'pdf',
+        time: '2026-06-01 10:22'
+      },
+      {
+        id: 'f_3',
+        name: '会场周边交通与入场指引.pdf',
+        size: '1.5 MB',
+        type: 'pdf',
+        time: '2026-06-01 10:25'
+      }
+    ];
+
+    // 智能解析生成的 Markdown 导览知识库结构数据
+    const PARSED_DOCS = [
+      {
+        id: 'doc_traffic',
+        file: '01_会场交通出行指南.md',
+        contentHtml: `
+          <h1>会场交通出行指南</h1>
+          <div class="markdown-callout info">
+            <strong>核心指引：</strong>2026 智源大会在北京·中关村国家自主创新示范区展示交易中心举办。建议参会嘉宾首选公共交通绿色出行。
+          </div>
+
+          <h2>一、会场地理位置与主要入口</h2>
+          <ul>
+            <li><strong>主会址：</strong>北京市海淀区新建宫门路1号（中关村展示中心）</li>
+            <li><strong>普通参会嘉宾入场口：</strong>展示中心南门（凭大会电子门票二维码入场）</li>
+            <li><strong>VIP / 演讲嘉宾专用通道：</strong>展示中心东门（设专属签到台及贵宾休息区入口）</li>
+          </ul>
+
+          <h2>二、轨道交通与地铁接驳推荐</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>线路</th>
+                <th>到达站点</th>
+                <th>出站口</th>
+                <th>步行与接驳指引</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>地铁16号线</strong></td>
+                <td>万泉河桥站</td>
+                <td>A口（西北口）</td>
+                <td>出站后向北步行约 650 米即可到达展示中心南门。</td>
+              </tr>
+              <tr>
+                <td><strong>地铁4号线大兴线</strong></td>
+                <td>西苑站</td>
+                <td>C2口</td>
+                <td>出站后设大会接驳穿梭摆渡车（早 07:45 - 10:00，每 8 分钟一班）。</td>
+              </tr>
+              <tr>
+                <td><strong>地铁10号线</strong></td>
+                <td>苏州街站</td>
+                <td>B口</td>
+                <td>可换乘专线公交或打车约 10 分钟到达。</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>三、自驾与现场停车指引</h2>
+          <p>由于大会期间车流量较大，会场内部地面停车场优先面向会务保障车辆与特邀讲者车辆开放。</p>
+          <ul>
+            <li><strong>推荐自驾停放点：</strong>海淀公园地下停车场（距南门 300 米，车位充足，收费标准约 8 元/小时）。</li>
+            <li><strong>网约车与出租车上下客点：</strong>请在新建宫门路南侧临时落客专用港湾即停即走，严禁长时间驻留。</li>
+          </ul>
+
+          <h2>四、机场与主要高铁站抵离交通</h2>
+          <ul>
+            <li><strong>北京首都国际机场 (PEK)：</strong>打车约 36 公里（耗时约 45-60 分钟）；或乘首都机场线至三元桥站，换乘10号线至苏州街站。</li>
+            <li><strong>北京大兴国际机场 (PKX)：</strong>乘大兴机场线至草桥站，换乘19号线至牡丹园站，转10号线；打车约 65 公里。</li>
+            <li><strong>北京南站 / 北京西站：</strong>北京西站乘地铁9号线转4号线直达西苑站；北京南站乘4号线直达西苑站。</li>
+          </ul>
+        `
+      },
+      {
+        id: 'doc_hotel',
+        file: '02_周边住宿与协议酒店.md',
+        contentHtml: `
+          <h1>周边住宿与推荐酒店</h1>
+          <div class="markdown-callout tip">
+            <strong>协议房提示：</strong>报“2026智源大会”或凭参会凭证预订以下协议酒店，可享受大会专属会议特惠价（含双早），房量有限建议提前7天预订。
+          </div>
+
+          <h2>一、官方大会协议酒店清单</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>酒店名称</th>
+                <th>星级/规格</th>
+                <th>距离会场</th>
+                <th>协议特惠参考价</th>
+                <th>订房专线 / 联络</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>北京中关村皇冠假日酒店</strong></td>
+                <td>五星级商旅</td>
+                <td>2.8 km (打车8分钟)</td>
+                <td>￥780 / 晚 (含早)</td>
+                <td>010-59938888 转 会务组</td>
+              </tr>
+              <tr>
+                <td><strong>北京世纪金源大饭店</strong></td>
+                <td>豪华五星级</td>
+                <td>3.5 km (专车接驳)</td>
+                <td>￥680 / 晚 (含早)</td>
+                <td>010-88598888 (报代码 BAAI26)</td>
+              </tr>
+              <tr>
+                <td><strong>北京邮电会议中心</strong></td>
+                <td>舒适型会议酒店</td>
+                <td>1.2 km (步行15分钟)</td>
+                <td>￥450 / 晚 (含早)</td>
+                <td>010-62582299</td>
+              </tr>
+              <tr>
+                <td><strong>亚朵酒店 (中关村苏州街店)</strong></td>
+                <td>精品商旅</td>
+                <td>2.1 km</td>
+                <td>￥420 / 晚</td>
+                <td>010-82619888</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>二、入住与退房提示</h2>
+          <ul>
+            <li><strong>入住时间：</strong>通常为每日 14:00 后；如需提前入住，请于预定时与酒店前台沟通保留房间。</li>
+            <li><strong>退房延迟：</strong>持有智源大会参会胸卡的住客，可向协议酒店申请免费延迟退房至 14:00。</li>
+            <li><strong>免费会务穿梭巴：</strong>皇冠假日酒店与世纪金源大饭店门前，早间 08:15 均有大会免费穿梭班车直达会场。</li>
+          </ul>
+        `
+      },
+      {
+        id: 'doc_schedule',
+        file: '03_大会总体日程规划.md',
+        contentHtml: `
+          <h1>大会总体日程规划</h1>
+          <div class="markdown-callout info">
+            <strong>日程总览：</strong>本次 2026 智源大会共设 1 个开幕主论坛、12 场专业前沿分论坛、2 场具身智能闭门研讨会及 3 场尖峰对话圆桌。
+          </div>
+
+          <h2>第一天：6月5日（周五）· 开幕式与主论坛</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>时段</th>
+                <th>议程主题</th>
+                <th>地点</th>
+                <th>主讲/主持</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>08:00 - 09:00</td>
+                <td>参会嘉宾签到、领取参会资料袋及同传耳机</td>
+                <td>1层主大堂签到处</td>
+                <td>大会组委会</td>
+              </tr>
+              <tr>
+                <td>09:00 - 09:30</td>
+                <td>大会开幕致辞 & 2026 人工智能前沿报告发布</td>
+                <td>主报告厅（一层A厅）</td>
+                <td>智源研究院理事长及嘉宾</td>
+              </tr>
+              <tr>
+                <td>09:30 - 12:00</td>
+                <td>大模型基座与AGI演进主旨演讲（5位重磅学者）</td>
+                <td>主报告厅（一层A厅）</td>
+                <td>全球图灵奖得主及院士学者</td>
+              </tr>
+              <tr>
+                <td>12:00 - 13:30</td>
+                <td>午餐交流与前沿展区巡展</td>
+                <td>地下一层展区 / 阳光餐饮区</td>
+                <td>自由交流</td>
+              </tr>
+              <tr>
+                <td>13:30 - 17:30</td>
+                <td>分论坛一：大模型架构与强化学习<br>分论坛二：具身智能与机器人前沿</td>
+                <td>分论坛厅 B1 / B2</td>
+                <td>各论坛主席</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>第二天：6月6日（周六）· 垂直前沿与产业落地</h2>
+          <ul>
+            <li><strong>上午 09:00 - 12:00：</strong>AI 安全与大模型对齐论坛、多模态认知计算分论坛、多智能体协同研讨会。</li>
+            <li><strong>下午 13:30 - 17:00：</strong>端侧大模型与移动AI论坛、AI for Science 科学计算专场、青年科学家尖峰对话。</li>
+          </ul>
+
+          <h2>第三天：6月7日（周日）· 开发者生态与闭幕</h2>
+          <ul>
+            <li><strong>全天：</strong>开源生态峰会、黑客松优秀项目路演与颁奖典礼、闭幕冷餐酒会。</li>
+          </ul>
+        `
+      },
+      {
+        id: 'doc_venue',
+        file: '04_会场平面与入场签到.md',
+        contentHtml: `
+          <h1>会场平面与入场签到指引</h1>
+          <div class="markdown-callout tip">
+            <strong>无纸化签到：</strong>现场支持刷电子门票二维码或微信小程序核验直接出纸质胸卡。胸卡内置 RFID 芯片，请在会期内妥善佩戴。
+          </div>
+
+          <h2>一、签到时间与地点</h2>
+          <ul>
+            <li><strong>签到台开放时间：</strong>6月5日 - 6月7日 每日 08:00 - 17:00</li>
+            <li><strong>普通参会签到点：</strong>南门一层序厅（1-10号签到窗口）</li>
+            <li><strong>演讲嘉宾及媒体签到点：</strong>东门贵宾厅（VIP专道，设专人接待指引）</li>
+          </ul>
+
+          <h2>二、楼层功能分布速查</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>楼层</th>
+                <th>主要功能区</th>
+                <th>配套服务设施</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>一层 (1F)</strong></td>
+                <td>大会主报告厅 A、签到总服务台、VIP休息室</td>
+                <td>同传设备租借处、行李寄存处、急救医务室</td>
+              </tr>
+              <tr>
+                <td><strong>二层 (2F)</strong></td>
+                <td>分论坛厅 B1 - B4、青年学者海报区 (Poster)</td>
+                <td>茶歇服务区、静音商务洽谈室</td>
+              </tr>
+              <tr>
+                <td><strong>三层 (3F)</strong></td>
+                <td>闭门研讨室 C1 - C3、媒体专访间</td>
+                <td>VIP 讲者备席室</td>
+              </tr>
+              <tr>
+                <td><strong>地下一层 (B1)</strong></td>
+                <td>AI创新企业展区、互动体验互动区、自助快餐厅</td>
+                <td>咖啡吧、卫生间及无障碍电梯通道</td>
+              </tr>
+            </tbody>
+          </table>
+        `
+      },
+      {
+        id: 'doc_food',
+        file: '05_周边餐饮与会期就餐.md',
+        contentHtml: `
+          <h1>周边餐饮与会期就餐指南</h1>
+
+          <h2>一、会场内部就餐保障</h2>
+          <ul>
+            <li><strong>午餐套餐：</strong>购买含餐票的参会嘉宾，凭胸卡附带的餐券二维码至地下一层展区西侧餐饮兑领点领用精美商务盒饭（含中式荤素搭配、清真专属餐盒及素食特订）。</li>
+            <li><strong>供餐时段：</strong>每日中午 11:45 - 13:30。</li>
+            <li><strong>免费茶歇与咖啡：</strong>二层序厅及展区互动区，每日 10:00 及 15:00 提供免费研磨咖啡、矿泉水、精美茶点与时令水果。</li>
+          </ul>
+
+          <h2>二、会场步行圈精选餐厅（500米内）</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>餐厅名称</th>
+                <th>风味特色</th>
+                <th>步行距离</th>
+                <th>人均参考</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>那家小馆 (中关村店)</strong></td>
+                <td>北京宫廷私房菜 / 烤鸭</td>
+                <td>步行 6 分钟 (450米)</td>
+                <td>￥130 / 人</td>
+              </tr>
+              <tr>
+                <td><strong>西贝莜面村 (畅春园店)</strong></td>
+                <td>西北精品面食与牛羊肉</td>
+                <td>步行 8 分钟 (600米)</td>
+                <td>￥85 / 人</td>
+              </tr>
+              <tr>
+                <td><strong>眉州东坡酒楼</strong></td>
+                <td>川菜与经典小吃</td>
+                <td>步行 7 分钟 (550米)</td>
+                <td>￥90 / 人</td>
+              </tr>
+              <tr>
+                <td><strong>星巴克咖啡 / 瑞幸咖啡</strong></td>
+                <td>现磨咖啡、三明治简餐</td>
+                <td>会场 1 层大厅与展区内部</td>
+                <td>￥25 - 40 / 人</td>
+              </tr>
+            </tbody>
+          </table>
+        `
+      },
+      {
+        id: 'doc_faq',
+        file: '06_常见问答与现场应急.md',
+        contentHtml: `
+          <h1>常见问答与现场应急协助</h1>
+
+          <h2>一、现场网络与无线 Wi-Fi</h2>
+          <p>会场全覆盖高速 Wi-Fi 6 网络：</p>
+          <ul>
+            <li><strong>网络 SSID：</strong><code>BAAI-Conference-2026</code></li>
+            <li><strong>连接认证方式：</strong>连接后自动弹出欢迎页，输入参会注册手机号获取短信验证码，即可免密畅享千兆内网。</li>
+          </ul>
+
+          <h2>二、同声传译与设备租赁</h2>
+          <ul>
+            <li><strong>主论坛支持语言：</strong>中文、英文（双向同声传译）。</li>
+            <li><strong>耳机借领点：</strong>主报告厅正门入口两侧。</li>
+            <li><strong>借取凭证：</strong>需出示有效身份证件或押金 200 元（会议结束归还耳机后全额退还押金）。</li>
+          </ul>
+
+          <h2>三、发票开具与现场咨询</h2>
+          <ul>
+            <li><strong>电子发票申请：</strong>会后登录大会官方微信小程序“个人中心 - 购票订单”，可自主申请增值税普通/专用发票，1-3个工作日发送至邮箱。</li>
+            <li><strong>现场医务室：</strong>位于一层西侧 102 室，常驻海淀医院急诊全科医生，配备常用急救箱与AED除颤仪。</li>
+            <li><strong>失物招领处：</strong>一层南大门总服务台，大会期间拾得贵重物品将登记于前台。</li>
+          </ul>
+        `
+      }
+    ];
+
+    let currentSelectedDocId = 'doc_traffic';
+    let isParsed = false; // 是否已经智能解析
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // 解析 eventId 参数
+      const params = new URLSearchParams(window.location.search);
+      const eventId = params.get('eventId') || 'evt_101';
+      
+      const forumLink = document.getElementById('forumTabLink');
+      if (forumLink) {
+        forumLink.href = `forum-mgmt.html?eventId=${eventId}`;
+      }
+
+      // 如果有外部指定名称
+      if (eventId === 'evt_102') {
+        const nameEl = document.getElementById('currentEventName');
+        if (nameEl) nameEl.textContent = '2026 智源大会（BAAI Conference）';
+      }
+
+      initDropzone();
+      renderFileList();
+      updateParseButtonState();
+    });
+
+    // 初始化上传区拖拽监听
+    function initDropzone() {
+      const dropzone = document.getElementById('uploadDropzone');
+      if (!dropzone) return;
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('drag-over');
+        });
+      });
+
+      ['dragleave', 'dragend', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('drag-over');
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processUploadedFiles(Array.from(e.dataTransfer.files));
+        }
+      });
+    }
+
+    // 更新解析按钮文案：未解析为“智能解析”，已解析为“重新解析”
+    function updateParseButtonState() {
+      const btnText = isParsed ? '重新解析' : '智能解析';
+      const el = document.getElementById('parseActionBtnText');
+      if (el) el.textContent = btnText;
+    }
+
+    // 渲染已上传文件胶囊列表
+    function renderFileList() {
+      const pillContainer = document.getElementById('filePillContainer');
+      const badge = document.getElementById('fileCountBadge');
+      if (badge) badge.textContent = `已上传 ${rawFiles.length} 个文件`;
+
+      if (!pillContainer) return;
+
+      if (rawFiles.length === 0) {
+        pillContainer.innerHTML = `
+          <div style="font-size: 12px; color: #94a3b8; padding: 4px 0;">暂未上传文件</div>
+        `;
+        return;
+      }
+
+      pillContainer.innerHTML = rawFiles.map((file, idx) => `
+        <div class="file-pill" title="${file.name}">
+          <svg class="file-pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span class="file-pill-name">${file.name}</span>
+          <button class="file-pill-remove" onclick="removeRawFile(${idx})" title="移除此文件">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // 上传文件逻辑
+    function triggerFileUpload() {
+      document.getElementById('rawFileInput').click();
+    }
+
+    function handleRawFileSelected(e) {
+      const files = Array.from(e.target.files);
+      if (!files || files.length === 0) return;
+      processUploadedFiles(files);
+      e.target.value = '';
+    }
+
+    function processUploadedFiles(files) {
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      files.forEach(f => {
+        const sizeStr = f.size > 1024 * 1024 ? (f.size / (1024 * 1024)).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB';
+        let type = 'pdf';
+        if (f.name.endsWith('.docx') || f.name.endsWith('.doc')) type = 'doc';
+        if (f.name.endsWith('.xlsx') || f.name.endsWith('.xls') || f.name.endsWith('.csv')) type = 'sheet';
+        if (f.name.endsWith('.pptx') || f.name.endsWith('.ppt')) type = 'ppt';
+
+        rawFiles.push({
+          id: 'f_' + Date.now() + Math.random().toString(36).slice(2,5),
+          name: f.name,
+          size: sizeStr,
+          type: type,
+          time: timeStr
+        });
+      });
+
+      renderFileList();
+      showToast(`已上传 ${files.length} 个新文件`);
+
+      if (isParsed) {
+        updateParseButtonState();
+        showToast('检测到新文件加入，可点击“重新解析”更新知识库');
+      }
+    }
+
+    function removeRawFile(idx) {
+      const file = rawFiles[idx];
+      if (confirm(`确定要移除文件 "${file.name}" 吗？`)) {
+        rawFiles.splice(idx, 1);
+        renderFileList();
+        showToast('文件已移除');
+        updateParseButtonState();
+      }
+    }
+
+    // 智能解析动效（局限于导览知识库卡片）
+    function triggerSmartParse() {
+      if (rawFiles.length === 0) return alert('请至少上传一份大会相关文件！');
+
+      const overlay = document.getElementById('aiMaskOverlay');
+      const bar = document.getElementById('aiProgressBar');
+      const text = document.getElementById('aiLoaderText');
+
+      bar.style.width = '0%';
+      text.textContent = '智能解析中... 0%';
+      overlay.classList.add('active');
+
+      let percent = 0;
+      const timer = setInterval(() => {
+        percent = Math.min(percent + 2, 100);
+        bar.style.width = percent + '%';
+        text.textContent = `智能解析中... ${percent}%`;
+
+        if (percent >= 100) {
+          clearInterval(timer);
+          overlay.classList.remove('active');
+          isParsed = true;
+          applyParsedSuccessState();
+          showToast('智能解析完成！已成功构建 6 份结构化导览模块');
+        }
+      }, 30);
+    }
+
+    // 智能解析成功后切换视图
+    function applyParsedSuccessState() {
+      document.getElementById('emptyStateBox').style.display = 'none';
+      document.getElementById('parsedSplitLayout').style.display = 'flex';
+      document.getElementById('parsedStatusBadge').style.display = 'inline-block';
+      document.getElementById('parsedActionGroup').style.display = 'block';
+      updateParseButtonState();
+
+      renderDirList();
+      selectDoc(currentSelectedDocId);
+    }
+
+    // 渲染左侧文件目录
+    function renderDirList() {
+      const dirContainer = document.getElementById('dirItemList');
+      dirContainer.innerHTML = PARSED_DOCS.map(doc => `
+        <div class="dir-item ${doc.id === currentSelectedDocId ? 'active' : ''}" onclick="selectDoc('${doc.id}')">
+          <div class="dir-item-title-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${doc.id === currentSelectedDocId ? '#2563eb' : '#64748b'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${doc.file}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 选中某个 Markdown 文件并在右侧预览
+    function selectDoc(docId) {
+      currentSelectedDocId = docId;
+      renderDirList();
+
+      const doc = PARSED_DOCS.find(d => d.id === docId);
+      if (!doc) return;
+
+      document.getElementById('previewFileName').textContent = doc.file;
+      document.getElementById('markdownRenderBox').innerHTML = doc.contentHtml;
+    }
+
+    // 轻量 Toast 提示函数
+    function showToast(msg) {
+      const toast = document.getElementById('globalToast');
+      const text = document.getElementById('toastMessage');
+      if (toast && text) {
+        text.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2500);
+      }
+    }
+  </script>
+</body>
+</html>

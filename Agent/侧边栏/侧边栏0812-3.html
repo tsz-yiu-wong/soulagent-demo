@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>侧边栏</title>
+  <style>
+    :root {
+      --bg-main: #ffffff;
+      --bg-sidebar: #f9f9fb;
+      --bg-hover: #ececec;
+      --bg-active: #e3e3e8;
+      --border-color: #e5e5e8;
+      --border-light: #efefe0;
+      --text-primary: #0d0d0d;
+      --text-secondary: #5d5d66;
+      --text-muted: #8e8e93;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* SVG Icon 基本样式 */
+    .icon {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      height: 100vh;
+      padding: 12px 10px;
+    }
+
+    /* 召唤智能体 触发器容器 */
+    .agent-summon-wrapper {
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .agent-summon-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 6px 6px 12px;
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: border-color 0.15s ease;
+    }
+
+    .agent-summon-bar:hover {
+      border-color: #cfcfd5;
+    }
+
+    .agent-summon-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+      flex: 1;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .agent-summon-left:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .agent-summon-left span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 独占点击热区的 v 图标按钮 */
+    .chevron-trigger-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: background-color 0.15s ease, color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .chevron-trigger-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .chevron-down {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .agent-summon-wrapper.open .chevron-down {
+      transform: rotate(180deg);
+    }
+
+    /* 召唤智能体 下拉菜单 */
+    .agent-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      padding: 6px;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .agent-dropdown-menu.show {
+      display: flex;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 10px;
+      font-size: 13.5px;
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .dropdown-item.active {
+      background-color: var(--bg-active);
+      font-weight: 500;
+    }
+
+    .dropdown-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-avatar-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .agent-avatar-badge.create-badge {
+      background-color: #f1f5f9;
+      color: #64748b;
+      border: 1px dashed #cbd5e1;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 4px 0;
+    }
+
+    .dropdown-item.create-item {
+      color: #10a37f;
+      font-weight: 500;
+    }
+
+    .dropdown-item.create-item:hover {
+      background-color: #f0fdf4;
+    }
+
+    /* 分割线 */
+    .divider {
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 10px 4px;
+    }
+
+    /* 静态菜单组 (分身广场、帮我听会、智能体档案) */
+    .nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item-static {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .nav-item-static:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .nav-item-static.active {
+      background-color: var(--bg-active);
+      font-weight: 500;
+    }
+
+    /* 智能体二级菜单 (归属于当前智能体，缩进显示) */
+    .agent-sub-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 2px;
+      margin-bottom: 2px;
+      margin-left: 12px;
+      padding-left: 10px;
+      border-left: 2px solid var(--border-color);
+    }
+
+    .sub-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sub-nav-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .sub-nav-item .icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* 历史对话 区域 */
+    .history-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .history-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-right: 2px;
+    }
+
+    .history-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .history-list::-webkit-scrollbar-thumb {
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .history-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .history-item.active {
+      background-color: var(--bg-active);
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .history-item span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 主内容区 */
+    .main-container {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-main);
+      position: relative;
+    }
+
+    /* 对话视图容器 */
+    .chat-dialog-view {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-main);
+      position: relative;
+    }
+
+    .dialog-header {
+      height: 52px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: var(--bg-main);
+      flex-shrink: 0;
+    }
+
+    .dialog-header-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #f0f0f4;
+      color: var(--text-secondary);
+    }
+
+    .agent-badge.twin {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    .dialog-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .dialog-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    .dialog-messages::-webkit-scrollbar-thumb {
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+
+    /* 消息行 */
+    .msg-row {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-row.assistant {
+      justify-content: flex-start;
+    }
+
+    /* 用户气泡 */
+    .msg-bubble-user {
+      background-color: #f4f4f6;
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 16px 16px 4px 16px;
+      max-width: 80%;
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    /* Agent 消息 (ChatGPT 风格 - 无左右头像) */
+    .msg-content-agent {
+      flex: 1;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: transparent;
+      padding: 2px 0;
+    }
+
+    /* AI 分身 消息行 (带左侧分身头像) */
+    .msg-row.twin-assistant {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .twin-avatar-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+      margin-top: 2px;
+    }
+
+    .msg-content-twin {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px 16px 16px 16px;
+      padding: 14px 18px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-primary);
+    }
+
+    /* 格式样式 */
+    .msg-text p {
+      margin-bottom: 10px;
+    }
+    .msg-text p:last-child {
+      margin-bottom: 0;
+    }
+    .msg-text ul, .msg-text ol {
+      padding-left: 20px;
+      margin-bottom: 10px;
+    }
+    .msg-text li {
+      margin-bottom: 4px;
+    }
+    .poem-block {
+      background: #ffffff;
+      border-left: 3px solid #10a37f;
+      padding: 12px 16px;
+      margin: 10px 0;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #2c3e50;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .dialog-bottom-input {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 12px 20px 20px 20px;
+      background: var(--bg-main);
+      flex-shrink: 0;
+    }
+
+    /* ChatGPT style 居中新建对话 */
+    .chat-new-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 24px 24px;
+      max-width: 820px;
+      width: 100%;
+      margin: 0 auto;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .chat-new-view.is-expert {
+      justify-content: space-between;
+      padding-top: 24px;
+    }
+
+    /* 专家/分身 新建对话 顶部-中部 介绍卡片 */
+    .expert-intro-card {
+      width: 100%;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 32px 28px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      margin-top: 10px;
+      margin-bottom: 24px;
+      animation: fadeInIntro 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeInIntro {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .intro-avatar-box {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.22);
+      margin-bottom: 16px;
+    }
+
+    .intro-avatar-box svg {
+      width: 48px;
+      height: 48px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .intro-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .intro-role {
+      display: inline-block;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #4f46e5;
+      background: #eef2ff;
+      padding: 4px 14px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+    }
+
+    .intro-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 620px;
+      margin: 0 auto 20px auto;
+    }
+
+    .intro-prompts {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .prompt-chip {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .prompt-chip:hover {
+      border-color: #4f46e5;
+      color: #4f46e5;
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+
+    .hero-title {
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 36px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    /* 居中输入框容器 */
+    .input-card {
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-card:focus-within {
+      border-color: #b4b4bb;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 80px;
+      max-height: 200px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text-primary);
+      background: transparent;
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* 底部图标控制栏 */
+    .input-card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+
+    .action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .send-btn {
+      border: none;
+      background: var(--text-primary);
+      color: #ffffff;
+    }
+
+    .send-btn:hover {
+      background: #2a2a2a;
+      color: #ffffff;
+    }
+
+    .send-btn svg {
+      stroke: #ffffff;
+    }
+
+    /* Modal 弹窗（新建智能体） */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: var(--text-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: var(--text-primary);
+      color: #ffffff;
+      border-color: var(--text-primary);
+    }
+    /* 产品 Header 样式 */
+    .sidebar-header {
+      padding: 4px 4px 8px 4px;
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--text-primary);
+      color: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #ffffff;
+    }
+
+    /* 分身广场 视图样式 */
+    .plaza-view {
+      flex: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #fcfcfd;
+      overflow-y: auto;
+    }
+
+    .plaza-header {
+      padding: 28px 36px 20px 36px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .plaza-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .plaza-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.4px;
+    }
+
+    .plaza-subtitle {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .plaza-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .plaza-search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f4f4f6;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 14px;
+      width: 280px;
+      transition: all 0.15s ease;
+    }
+
+    .plaza-search-box:focus-within {
+      background: #ffffff;
+      border-color: #a0a0a8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .plaza-search-input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 13.5px;
+      width: 100%;
+      color: var(--text-primary);
+    }
+
+    .plaza-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .plaza-tab-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .plaza-tab-pill:hover {
+      background: #f0f0f4;
+      color: var(--text-primary);
+    }
+
+    .plaza-tab-pill.active {
+      background: var(--text-primary);
+      color: #ffffff;
+    }
+
+    /* 网格容器：一行 3 或 4 个卡片 */
+    .plaza-content {
+      padding: 28px 36px 40px 36px;
+      flex: 1;
+    }
+
+    .expert-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 1320px) {
+      .expert-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 960px) {
+      .expert-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* 专家竖版卡片 */
+    .expert-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 26px 20px 22px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .expert-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+      border-color: #d1d1d6;
+    }
+
+    /* 人物 SVG ICON 大尺寸容器 */
+    .expert-avatar-container {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .expert-avatar-box {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      transition: transform 0.25s ease;
+    }
+
+    .expert-card:hover .expert-avatar-box {
+      transform: scale(1.06);
+    }
+
+    /* 大尺寸人物 SVG Icon */
+    .expert-avatar-box svg.expert-person-svg {
+      width: 48px;
+      height: 48px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .expert-status-badge {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid #ffffff;
+    }
+
+    .expert-name {
+      font-size: 16.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .expert-role {
+      font-size: 12px;
+      font-weight: 500;
+      color: #4f46e5;
+      background: #eef2ff;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: inline-block;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .expert-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 39px;
+    }
+
+    .expert-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      width: 100%;
+      border-top: 1px solid #f0f0f4;
+      padding-top: 14px;
+      margin-top: auto;
+      transition: opacity 0.2s ease;
+    }
+
+    /* Hover 状态下展示双按钮行动区 */
+    .expert-card-hover-action {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 16px 16px 16px;
+      background: linear-gradient(to top, #ffffff 85%, rgba(255,255,255,0));
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .expert-card:hover .expert-card-hover-action {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .expert-card:hover .expert-footer {
+      opacity: 0.15;
+    }
+
+    /* 立即对话 - 强视觉主按钮 */
+    .btn-chat-now {
+      width: 100%;
+      padding: 9.5px 14px;
+      border-radius: 10px;
+      background: var(--text-primary);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      transition: all 0.15s ease;
+    }
+
+    .btn-chat-now:hover {
+      background: #2a2a2a;
+      transform: scale(1.02);
+    }
+
+    /* 添加到我的智能体 - 弱视觉次要按钮 */
+    .btn-add-agent {
+      width: 100%;
+      padding: 7px 14px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-add-agent:hover {
+      background: #f4f4f6;
+      color: var(--text-primary);
+      border-color: #c0c0c8;
+    }
+
+    .btn-add-agent.added {
+      color: #10b981;
+      border-color: #a7f3d0;
+      background: #f0fdf4;
+    }
+
+    /* Toast Notification */
+    .toast-notification {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: #0d0d0d;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 2000;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .toast-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+
+    <!-- 产品名称 Header -->
+    <div class="sidebar-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span>SoulAgent</span>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 召唤 MyAgent v 下拉触发器 (左侧为召唤/新建对话热区，右侧为下拉热区) -->
+    <div class="agent-summon-wrapper" id="agent-summon-wrapper">
+      <div class="agent-summon-bar">
+        <div class="agent-summon-left" id="agent-summon-left" onclick="startNewChat(event)" title="发起新建对话">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span id="current-agent-label">召唤 MyAgent</span>
+        </div>
+        
+        <!-- 只有该 v 按钮是点击下拉菜单的热区 -->
+        <button class="chevron-trigger-btn" id="chevron-trigger" title="选择智能体" onclick="toggleAgentMenu(event)">
+          <svg class="icon chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <!-- 下拉菜单选项 -->
+      <div class="agent-dropdown-menu" id="agent-dropdown">
+        <div class="dropdown-item active" onclick="selectAgent('MyAgent', this)">
+          <div class="dropdown-item-left">
+            <div class="agent-avatar-badge" style="background: linear-gradient(135deg, #4f46e5, #6366f1);">M</div>
+            <span>MyAgent</span>
+          </div>
+          <svg class="icon check-icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="dropdown-item" onclick="selectAgent('写诗智能体', this)">
+          <div class="dropdown-item-left">
+            <div class="agent-avatar-badge" style="background: linear-gradient(135deg, #059669, #10b981);">写</div>
+            <span>写诗智能体</span>
+          </div>
+        </div>
+        <div class="dropdown-item" onclick="selectAgent('王仲远的AI分身', this)">
+          <div class="dropdown-item-left">
+            <div class="agent-avatar-badge" style="background: linear-gradient(135deg, #7c3aed, #8b5cf6);">王</div>
+            <span>王仲远的AI分身</span>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item create-item" onclick="openCreateAgentModal(event)">
+          <div class="dropdown-item-left">
+            <div class="agent-avatar-badge create-badge">
+              <svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <span>新建智能体</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 智能体二级菜单 (属于当前智能体，缩进显示：包含智能体档案、定时任务) -->
+    <div class="agent-sub-nav" id="agent-sub-nav">
+      <div class="sub-nav-item" id="sub-nav-profile">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>智能体档案</span>
+      </div>
+      <div class="sub-nav-item" id="sub-nav-tasks">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>定时任务</span>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 静态列表项（不触发交互） -->
+    <div class="nav-group">
+      <div class="nav-item-static" id="nav-item-plaza" onclick="openPlazaView(event)">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>分身广场</span>
+      </div>
+      <div class="nav-item-static">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2H3z"/></svg>
+        <span>帮我听会</span>
+      </div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider"></div>
+
+    <!-- 历史对话 列表 -->
+    <div class="history-section">
+      <div class="history-title">历史对话</div>
+      <div class="history-list" id="history-list">
+        <!-- 动态由JS填充 -->
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- 右侧主区域 (ChatGPT类新建对话风格 & 对话详情) -->
+  <main class="main-container">
+    <!-- 新建对话视图 (支持专家分身顶部介绍+输入框置底) -->
+    <div class="chat-new-view" id="chat-new-view">
+      <!-- 通用智能体 Hero 标题 -->
+      <h1 class="hero-title" id="hero-title">TY，今天需要帮你做什么</h1>
+
+      <!-- 专家 AI 分身 顶部-中部 介绍卡片 -->
+      <div class="expert-intro-card" id="expert-intro-card" style="display: none;">
+        <div class="intro-avatar-box" id="intro-avatar-box">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="intro-meta">
+          <h2 class="intro-name" id="intro-name">王仲远 的 AI 分身</h2>
+          <div class="intro-role" id="intro-role">智源研究院院长 · 具身智能专家</div>
+          <p class="intro-desc" id="intro-desc">
+            专注于具身大模型、VLA端到端控制与人形机器人仿真落地研究。随时为您解答具身感知、多模态任务拆解与机器人交互等前沿问题。
+          </p>
+        </div>
+        <div class="intro-prompts" id="intro-prompts">
+          <!-- 动态充填提示卡片 -->
+        </div>
+      </div>
+
+      <!-- 置底输入框容器 -->
+      <div class="input-card">
+        <textarea class="chat-textarea" id="chat-input" placeholder="给智能体发送消息..."></textarea>
+        
+        <div class="input-card-bottom">
+          <!-- 置左 附件 icon -->
+          <button class="action-btn" title="上传附件">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          
+          <!-- 置右 发送 icon -->
+          <button class="action-btn send-btn" title="发送" onclick="handleSendNewChat()">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史对话详情视图 -->
+    <div class="chat-dialog-view" id="chat-dialog-view" style="display: none;">
+      <div class="dialog-header">
+        <div class="dialog-header-title">
+          <span id="dialog-header-text">对话详情</span>
+        </div>
+      </div>
+      
+      <div class="dialog-messages" id="dialog-messages">
+        <!-- 动态由JS填充对话 -->
+      </div>
+
+      <div class="dialog-bottom-input">
+        <div class="input-card" style="border-radius: 16px; padding: 12px 14px;">
+          <textarea class="chat-textarea" id="dialog-chat-input" style="min-height: 48px; max-height: 120px;" placeholder="发送消息..."></textarea>
+          
+          <div class="input-card-bottom">
+            <button class="action-btn" title="上传附件">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            
+            <button class="action-btn send-btn" title="发送" onclick="handleSendDialogChat()">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分身广场视图 -->
+    <div class="plaza-view" id="plaza-view" style="display: none;">
+      <div class="plaza-header">
+        <div class="plaza-title-row">
+          <div>
+            <h2 class="plaza-title">分身广场</h2>
+          </div>
+          <div class="plaza-search-box">
+            <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text-muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="plaza-search-input" id="plaza-search-input" placeholder="搜索专家姓名、领域或关键词..." oninput="handlePlazaSearch()">
+          </div>
+        </div>
+      </div>
+
+      <div class="plaza-content">
+        <div class="expert-grid" id="expert-grid">
+          <!-- 动态由JS渲染专家卡片 -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal: 新建智能体 -->
+  <div class="modal-overlay" id="create-modal" onclick="closeModalOnOverlay(event)">
+    <div class="modal-card">
+      <div class="modal-title">新建智能体</div>
+      <input type="text" class="modal-input" id="new-agent-name" placeholder="请输入智能体名称，例如：翻译 智能体">
+      <div class="modal-actions">
+        <button class="btn" onclick="closeCreateAgentModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmCreateAgent()">确认新建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示框 -->
+  <div class="toast-notification" id="toast-notification">
+    <svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#10b981;"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toast-message">已成功添加到我的智能体</span>
+  </div>
+
+  <script>
+    // 智能体及对应的历史对话数据结构
+    const agentData = {
+      "MyAgent": [
+        "欢迎使用 SoulAgent MyAgent",
+        "探索智能体多样化功能",
+        "快速开始提示指南"
+      ],
+      "写诗智能体": [
+        "七言律诗·咏秋月",
+        "现代抒情诗创作提纲",
+        "宋词意境美化"
+      ],
+      "写诗 智能体": [
+        "七言律诗·咏秋月",
+        "现代抒情诗创作提纲",
+        "宋词意境美化"
+      ],
+      "王仲远的AI分身": [
+        "具身智能大模型路线研讨",
+        "VLA模型端到端控制与仿真",
+        "人形机器人实机部署与泛化"
+      ],
+      "具身智能体": [
+        "具身感知与语义地图构建",
+        "机器人机械臂轨迹规划",
+        "Sim-to-Real 虚拟迁移算法"
+      ]
+    };
+
+    // 预设两组精致的模拟对话数据 (1. Agent智能体-ChatGPT风格无左右头像; 2. AI分身-左侧带SVG分身头像)
+    const mockConversations = {
+      // 组一：Agent 智能体对话 (ChatGPT 风格，无左右侧头像，纯粹的文字排版与高质感内容)
+      "七言律诗·咏秋月": {
+        type: "agent",
+        agentBadgeText: "写诗智能体",
+        messages: [
+          {
+            role: "user",
+            content: "请以“秋月”为题，创作一首七言律诗，要求平水韵，意境深远，包含对月思乡与岁月沉淀的感悟。"
+          },
+          {
+            role: "assistant",
+            htmlContent: `
+              <p>好的，为你创作一首七言律诗《咏秋月》：</p>
+              <div class="poem-block">
+                <strong>《咏秋月》</strong><br><br>
+                碧落霜清夜气森，广寒光满浸枫林。<br>
+                孤轮高挂乾坤静，万象遥相岁月深。<br>
+                关山客路思乡泪，竹影桐阴抚琴心。<br>
+                莫道凭栏无限意，露华沉浸到衣襟。
+              </div>
+              <p><strong>【诗意解析】</strong></p>
+              <ul>
+                <li><strong>首联</strong>：写秋夜清冷与月光普照，勾勒出广袤静谧的秋夜景色。</li>
+                <li><strong>颔联</strong>：以明月高悬对比人世沉浮，展现岁月沉淀的哲思与从容。</li>
+                <li><strong>颈联</strong>：转入抒情，借竹影琴声表达羁旅思乡之切。</li>
+                <li><strong>尾联</strong>：露湿衣襟，将绵绵情思融入冷月秋露之中，余味悠长。</li>
+              </ul>
+            `
+          },
+          {
+            role: "user",
+            content: "太棒了！请帮我把颔联再微调得更有画面感一些。"
+          },
+          {
+            role: "assistant",
+            htmlContent: `
+              <p>收到！我们可以将颔联修改为：</p>
+              <div class="poem-block">
+                <strong>“玉镜平铺千嶂雪，银河倾写一江金。”</strong>
+              </div>
+              <p>这样修改后画面感更加具象：上句如白雪覆盖千山山嶂，下句如金色月辉洒满江面，动静交融，视觉效果更加恢弘大方。</p>
+            `
+          }
+        ]
+      },
+
+      // 组二：AI 分身对话 (带左侧分身头像 SVG Icon)
+      "具身智能大模型路线研讨": {
+        type: "twin",
+        agentBadgeText: "王仲远的AI分身",
+        messages: [
+          {
+            role: "user",
+            content: "仲远总，结合智源在大模型方面的沉淀，您怎么看待具身智能（Embodied AI）未来的技术发展路线与落地挑战？"
+          },
+          {
+            role: "assistant",
+            htmlContent: `
+              <p>这是一个非常关键且前沿的方向。具身智能（Embodied AI）是将大模型“大脑”与物理世界“躯体”深度结合的必由路线。</p>
+              <p>结合我们在具身大模型方面的布局与思考，我的核心观点如下：</p>
+              <ol>
+                <li><strong>VLA 模型（Vision-Language-Action）是核心支撑</strong>：将视觉感知、语言理解与动作控制缝合在统一的大模型架构下，实现跨模态端到端的泛化控制。</li>
+                <li><strong>高质量物理仿真与数据闭环</strong>：物理真实数据的采集昂贵且危险，因此建立高逼真度的物理仿真平台（Sim-to-Real）是构建数据驱动闭环的关键。</li>
+                <li><strong>Task-centric 的自主规划能力</strong>：让机器人不仅能听懂指令，更能自主进行复杂长程任务拆解、环境感知与自我纠错。</li>
+              </ol>
+              <p>总结来说，具身智能是 AI 迈向物理世界的关键跨越。我们要用大模型的泛化能力重新定义机器人物理交互。</p>
+            `
+          },
+          {
+            role: "user",
+            content: "明白了！那从 SoulAgent 的技术规划来看，我们是如何把这种具身智能架构落地到智能体工作流中的？"
+          },
+          {
+            role: "assistant",
+            htmlContent: `
+              <p>问到点子上了！我们在 SoulAgent 的架构设计中，主要从三个维度与具身智能相融合：</p>
+              <ul>
+                <li><strong>多 Agent 协作控制链</strong>：通过高级 Task Agent 负责顶层规划，底层 Domain Agent 执行具体动作，形成分层递进的控制体系。</li>
+                <li><strong>长效物理环境记忆库（World Model Memory）</strong>：让 AI 分身和实体机器人具备环境三维语义地图与历史操作记忆。</li>
+                <li><strong>仿真与实机端到端反馈闭环</strong>：支持在虚拟仿真环境快速验证 Agent 策略，再安全迁移至实体设备部署。</li>
+              </ul>
+            `
+          }
+        ]
+      }
+    };
+
+    let currentAgentKey = "MyAgent";
+    let activeChatTitle = null;
+
+    // 获取智能体对应的历史对话（带容错与动态生成兜底）
+    function getAgentChats(agentName) {
+      if (agentData[agentName]) return agentData[agentName];
+      const cleanName = agentName.replace(/\s+/g, '');
+      for (let k in agentData) {
+        if (k.replace(/\s+/g, '') === cleanName) {
+          return agentData[k];
+        }
+      }
+      return [
+        `${cleanName} 对话记录一`,
+        `${cleanName} 策略研讨`,
+        `${cleanName} 实践记录`
+      ];
+    }
+
+    // 渲染历史对话列表
+    function renderHistoryList() {
+      const historyListContainer = document.getElementById('history-list');
+      historyListContainer.innerHTML = '';
+
+      const chats = getAgentChats(currentAgentKey);
+      chats.forEach((chatTitle) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        if (chatTitle === activeChatTitle) {
+          item.classList.add('active');
+        }
+        item.onclick = function(e) {
+          e.stopPropagation();
+          openHistoryChat(chatTitle, item);
+        };
+        item.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>${chatTitle}</span>
+        `;
+        historyListContainer.appendChild(item);
+      });
+    }
+
+    // 打开历史对话并切换视图
+    function openHistoryChat(chatTitle, itemElement) {
+      activeChatTitle = chatTitle;
+
+      // 清除分身广场选中态与隐藏广场视图
+      const navPlaza = document.getElementById('nav-item-plaza');
+      if (navPlaza) navPlaza.classList.remove('active');
+      const plazaView = document.getElementById('plaza-view');
+      if (plazaView) plazaView.style.display = 'none';
+
+      // 更新历史列表选中状态
+      const allItems = document.querySelectorAll('.history-item');
+      allItems.forEach(el => el.classList.remove('active'));
+      if (itemElement) itemElement.classList.add('active');
+
+      // 切换视图
+      document.getElementById('chat-new-view').style.display = 'none';
+      const dialogView = document.getElementById('chat-dialog-view');
+      dialogView.style.display = 'flex';
+
+      // 渲染 Header 标题
+      const isTwin = currentAgentKey.includes('分身') || chatTitle.includes('具身') || chatTitle.includes('VLA') || chatTitle.includes('机器人');
+      document.getElementById('dialog-header-text').innerText = chatTitle;
+
+      // 获取对话数据（若没有预设数据则动态生成）
+      let convData = mockConversations[chatTitle];
+      if (!convData) {
+        convData = generateDynamicConversation(chatTitle, isTwin);
+      }
+
+      renderDialogMessages(convData);
+    }
+
+    // 生成通用模拟对话数据
+    function generateDynamicConversation(title, isTwin) {
+      if (isTwin) {
+        return {
+          type: "twin",
+          messages: [
+            {
+              role: "user",
+              content: `关于“${title}”，想听听您的核心思路和战略建议。`
+            },
+            {
+              role: "assistant",
+              htmlContent: `
+                <p>针对<strong>“${title}”</strong>，我的思考主要分为三个重点维度：</p>
+                <ol>
+                  <li><strong>核心抓手</strong>：聚焦高价值场景，形成数据与业务流程的深度融合。</li>
+                  <li><strong>关键路线</strong>：通过模块化解耦与可扩展架构，保证高可用性与迭代效率。</li>
+                  <li><strong>复盘与沉淀</strong>：建立长效反馈机制，将实践经验快速转化为能力壁垒。</li>
+                </ol>
+                <p>我们可以先从第一阶段的试点工作切入，快速验证收益。</p>
+              `
+            }
+          ]
+        };
+      } else {
+        return {
+          type: "agent",
+          messages: [
+            {
+              role: "user",
+              content: `请帮我整理关于“${title}”的概要和核心要点。`
+            },
+            {
+              role: "assistant",
+              htmlContent: `
+                <p>已为您梳理关于<strong>“${title}”</strong>的核心要点：</p>
+                <ul>
+                  <li><strong>需求目标</strong>：明确业务边界，提升整体协同效率。</li>
+                  <li><strong>具体方案</strong>：遵循模块化设计原则，分阶段逐步落地。</li>
+                  <li><strong>预期收益</strong>：优化流程体验，大幅降低运营沟通成本。</li>
+                </ul>
+                <p>如需进一步补充细节或深化某一部分，请随时告知。</p>
+              `
+            }
+          ]
+        };
+      }
+    }
+
+    // 渲染对话消息流
+    function renderDialogMessages(convData) {
+      const msgContainer = document.getElementById('dialog-messages');
+      msgContainer.innerHTML = '';
+
+      convData.messages.forEach(msg => {
+        if (msg.role === 'user') {
+          const userRow = document.createElement('div');
+          userRow.className = 'msg-row user';
+          userRow.innerHTML = `<div class="msg-bubble-user">${escapeHtml(msg.content)}</div>`;
+          msgContainer.appendChild(userRow);
+        } else {
+          const botRow = document.createElement('div');
+          
+          if (convData.type === 'twin') {
+            // AI 分身：左侧展示 SVG 头像 icon
+            botRow.className = 'msg-row assistant twin-assistant';
+            botRow.innerHTML = `
+              <div class="twin-avatar-box" title="AI分身">
+                <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ffffff;fill:none;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="msg-content-twin msg-text">
+                ${msg.htmlContent || escapeHtml(msg.content)}
+              </div>
+            `;
+          } else {
+            // Agent 智能体：ChatGPT 风格，无左右侧头像
+            botRow.className = 'msg-row assistant';
+            botRow.innerHTML = `
+              <div class="msg-content-agent msg-text">
+                ${msg.htmlContent || escapeHtml(msg.content)}
+              </div>
+            `;
+          }
+          msgContainer.appendChild(botRow);
+        }
+      });
+
+      msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    // 点击 Prompt 芯片快速填入或发送
+    function usePrompt(promptText) {
+      const input = document.getElementById('chat-input');
+      if (input) {
+        input.value = promptText;
+        handleSendNewChat();
+      }
+    }
+
+    // 点击“召唤 智能体”或左侧热区，发起新建对话
+    function startNewChat(e) {
+      if (e) e.stopPropagation();
+      activeChatTitle = null;
+
+      // 清除分身广场选中态与隐藏广场视图
+      const navPlaza = document.getElementById('nav-item-plaza');
+      if (navPlaza) navPlaza.classList.remove('active');
+      const plazaView = document.getElementById('plaza-view');
+      if (plazaView) plazaView.style.display = 'none';
+
+      // 清除历史列表选中态
+      const allItems = document.querySelectorAll('.history-item');
+      allItems.forEach(el => el.classList.remove('active'));
+
+      // 切换至新建对话视图
+      document.getElementById('chat-dialog-view').style.display = 'none';
+      const newView = document.getElementById('chat-new-view');
+      newView.style.display = 'flex';
+
+      const heroTitle = document.getElementById('hero-title');
+      const introCard = document.getElementById('expert-intro-card');
+
+      // 判断是否属于 专家 AI 分身
+      const expertMatch = expertList.find(exp => exp.agentName === currentAgentKey || currentAgentKey.includes(exp.name));
+
+      if (expertMatch || currentAgentKey.includes('分身')) {
+        // 专家/分身模式：顶部到中部显示专家介绍卡片，输入框置底
+        newView.classList.add('is-expert');
+        if (heroTitle) heroTitle.style.display = 'none';
+        if (introCard) {
+          introCard.style.display = 'flex';
+          
+          const exp = expertMatch || {
+            name: currentAgentKey.replace('的AI分身', '').replace('AI分身', ''),
+            agentName: currentAgentKey,
+            role: "智源特邀 AI 分身专家",
+            gradient: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            desc: `我是 ${currentAgentKey}，专注于前沿技术路线与应用实践。随时与我进行深度学术交流或工程探讨。`,
+            tag: "AI分身"
+          };
+
+          document.getElementById('intro-avatar-box').style.background = exp.gradient || "linear-gradient(135deg, #4f46e5, #7c3aed)";
+          document.getElementById('intro-name').innerText = exp.agentName || `${exp.name}的AI分身`;
+          document.getElementById('intro-role').innerText = exp.role || "AI 分身专家";
+          document.getElementById('intro-desc').innerText = exp.desc || `我是 ${exp.name} 的 AI 分身，欢迎随时提出关于 ${exp.tag || 'AI'} 的研究与工程疑问。`;
+
+          // 填充专家推荐提问卡片
+          const promptsContainer = document.getElementById('intro-prompts');
+          if (promptsContainer) {
+            const p1 = `探讨 ${exp.tag || '大模型'} 前沿发展路线`;
+            const p2 = `请介绍您的代表性研究成果`;
+            const p3 = `如何与 SoulAgent 结合实践落地`;
+            promptsContainer.innerHTML = `
+              <div class="prompt-chip" onclick="usePrompt('${p1}')">💡 ${p1}</div>
+              <div class="prompt-chip" onclick="usePrompt('${p2}')">🎯 ${p2}</div>
+              <div class="prompt-chip" onclick="usePrompt('${p3}')">⚙️ ${p3}</div>
+            `;
+          }
+        }
+      } else {
+        // 普通智能体模式 (MyAgent等)
+        newView.classList.remove('is-expert');
+        if (introCard) introCard.style.display = 'none';
+        if (heroTitle) {
+          heroTitle.style.display = 'block';
+          if (currentAgentKey === 'MyAgent' || currentAgentKey === '默认智能体' || currentAgentKey === '默认') {
+            heroTitle.innerText = 'TY，今天需要帮你做什么';
+          } else {
+            const cleanName = currentAgentKey.replace(/\s+/g, '');
+            heroTitle.innerText = `召唤 ${cleanName}，今天需要帮你做什么`;
+          }
+        }
+      }
+    }
+
+    // 仅通过 v 图标触发下拉菜单显隐
+    function toggleAgentMenu(e) {
+      e.stopPropagation();
+      const wrapper = document.getElementById('agent-summon-wrapper');
+      const menu = document.getElementById('agent-dropdown');
+      wrapper.classList.toggle('open');
+      menu.classList.toggle('show');
+    }
+
+    // 切换智能体
+    function selectAgent(agentName, element) {
+      currentAgentKey = agentName;
+
+      // 设置显示文本：当选中“MyAgent”时，外侧显示“召唤 MyAgent”；选择其它智能体变成“召唤 写诗智能体”
+      const labelSpan = document.getElementById('current-agent-label');
+      if (agentName === 'MyAgent' || agentName === '默认智能体' || agentName === '默认') {
+        labelSpan.innerText = '召唤 MyAgent';
+      } else {
+        const cleanName = agentName.replace(/\s+/g, '');
+        labelSpan.innerText = `召唤 ${cleanName}`;
+      }
+
+      // 控制二级菜单项的显隐：AI分身（如王仲远的AI分身）不显示“智能体档案”，但显示“定时任务”
+      const profileItem = document.getElementById('sub-nav-profile');
+      const tasksItem = document.getElementById('sub-nav-tasks');
+      if (profileItem && tasksItem) {
+        if (agentName.includes('AI分身')) {
+          profileItem.style.display = 'none';
+          tasksItem.style.display = 'flex';
+        } else {
+          profileItem.style.display = 'flex';
+          tasksItem.style.display = 'flex';
+        }
+      }
+
+      // 更新下拉菜单选中态
+      const items = document.querySelectorAll('.agent-dropdown-menu .dropdown-item');
+      items.forEach(item => {
+        item.classList.remove('active');
+        const checkIcon = item.querySelector('.check-icon');
+        if (checkIcon) checkIcon.remove();
+      });
+
+      if (element) {
+        element.classList.add('active');
+        const check = document.createElement('div');
+        check.className = 'check-icon';
+        check.innerHTML = `<svg class="icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
+        element.appendChild(check);
+      }
+
+      // 关闭菜单
+      closeAgentMenu();
+
+      // 更新历史对话并切回新建对话模式
+      renderHistoryList();
+      startNewChat();
+    }
+
+    function closeAgentMenu() {
+      document.getElementById('agent-summon-wrapper').classList.remove('open');
+      document.getElementById('agent-dropdown').classList.remove('show');
+    }
+
+    // 新建智能体弹窗
+    function openCreateAgentModal(e) {
+      e.stopPropagation();
+      closeAgentMenu();
+      document.getElementById('create-modal').classList.add('show');
+    }
+
+    function closeCreateAgentModal() {
+      document.getElementById('create-modal').classList.remove('show');
+      document.getElementById('new-agent-name').value = '';
+    }
+
+    function closeModalOnOverlay(e) {
+      if (e.target.id === 'create-modal') {
+        closeCreateAgentModal();
+      }
+    }
+
+    function confirmCreateAgent() {
+      const nameInput = document.getElementById('new-agent-name').value.trim();
+      if (!nameInput) {
+        alert('请输入智能体名称');
+        return;
+      }
+
+      const newAgentName = nameInput.endsWith('智能体') || nameInput.includes('分身') ? nameInput : `${nameInput} 智能体`;
+
+      if (!agentData[newAgentName]) {
+        agentData[newAgentName] = [
+          `${newAgentName} 初始化对话`,
+          `关于 ${newAgentName} 的使用指南`
+        ];
+
+        // 动态添加选项到下拉菜单
+        const dropdownMenu = document.getElementById('agent-dropdown');
+        const divider = dropdownMenu.querySelector('.dropdown-divider');
+        
+        const firstChar = nameInput.charAt(0).toUpperCase();
+        const newItem = document.createElement('div');
+        newItem.className = 'dropdown-item';
+        newItem.onclick = function() { selectAgent(newAgentName, newItem); };
+        newItem.innerHTML = `
+          <div class="dropdown-item-left">
+            <div class="agent-avatar-badge" style="background: linear-gradient(135deg, #0284c7, #38bdf8);">${firstChar}</div>
+            <span>${newAgentName}</span>
+          </div>
+        `;
+        
+        dropdownMenu.insertBefore(newItem, divider);
+
+        // 直接选中新建的智能体
+        selectAgent(newAgentName, newItem);
+      } else {
+        selectAgent(newAgentName);
+      }
+
+      closeCreateAgentModal();
+    }
+
+    // 发送新对话消息处理
+    function handleSendNewChat() {
+      const input = document.getElementById('chat-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      input.value = '';
+      const chats = getAgentChats(currentAgentKey);
+      chats.unshift(val);
+      renderHistoryList();
+
+      openHistoryChat(val);
+    }
+
+    // 发送对话视图中消息
+    function handleSendDialogChat() {
+      const input = document.getElementById('dialog-chat-input');
+      const val = input.value.trim();
+      if (!val) return;
+
+      input.value = '';
+      const msgContainer = document.getElementById('dialog-messages');
+      
+      // 追加用户消息
+      const userRow = document.createElement('div');
+      userRow.className = 'msg-row user';
+      userRow.innerHTML = `<div class="msg-bubble-user">${escapeHtml(val)}</div>`;
+      msgContainer.appendChild(userRow);
+
+      const isTwin = currentAgentKey.includes('分身') || (activeChatTitle && (activeChatTitle.includes('具身') || activeChatTitle.includes('VLA')));
+
+      // 模拟回复
+      setTimeout(() => {
+        const botRow = document.createElement('div');
+        if (isTwin) {
+          botRow.className = 'msg-row assistant twin-assistant';
+          botRow.innerHTML = `
+            <div class="twin-avatar-box" title="AI分身">
+              <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ffffff;fill:none;">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div class="msg-content-twin msg-text">
+              <p>收到你的想法：<strong>“${escapeHtml(val)}”</strong>。</p>
+              <p>从分身视角来看，这方向非常值得持续深挖。后续我们可以配合团队进一步做策略验证。</p>
+            </div>
+          `;
+        } else {
+          botRow.className = 'msg-row assistant';
+          botRow.innerHTML = `
+            <div class="msg-content-agent msg-text">
+              <p>理解你的要求：<strong>“${escapeHtml(val)}”</strong>。</p>
+              <p>已为你更新对话上下文，随时可提出后续分析或生成任务！</p>
+            </div>
+          `;
+        }
+        msgContainer.appendChild(botRow);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+      }, 500);
+
+      msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // 点击空白处收起下拉
+    window.addEventListener('click', function() {
+      closeAgentMenu();
+    });
+
+    // -------------------------------------------------------------
+    // 分身广场 核心数据与逻辑
+    // -------------------------------------------------------------
+
+    // 专家广场数据集 (竖版卡片，包含突出的大图 SVG Icon 与专业简介)
+    const expertList = [
+      {
+        id: "wangzhongyuan",
+        name: "王仲远",
+        agentName: "王仲远的AI分身",
+        role: "智源研究院院长 · 具身智能专家",
+        tag: "具身智能",
+        gradient: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+        desc: "专注于具身大模型、VLA端到端控制与人形机器人仿真落地研究。",
+        added: true,
+        stat: "1.2k+ 次对话"
+      },
+      {
+        id: "huangtiejun",
+        name: "黄铁军",
+        agentName: "黄铁军的AI分身",
+        role: "智源学术理事长 · 脉冲视觉专家",
+        tag: "神经网络",
+        gradient: "linear-gradient(135deg, #059669, #10b981)",
+        desc: "主导脉冲神经视觉、超高速摄像头系统与类脑芯片架构研讨。",
+        added: false,
+        stat: "980 次对话"
+      },
+      {
+        id: "linyongwen",
+        name: "林咏文",
+        agentName: "林咏文的AI分身",
+        role: "大模型首席架构师",
+        tag: "大模型",
+        gradient: "linear-gradient(135deg, #0284c7, #38bdf8)",
+        desc: "精通千亿参数语言模型预训练、长上下文推理与对齐算法优化。",
+        added: false,
+        stat: "2.4k+ 次对话"
+      },
+      {
+        id: "zhanghongjiang",
+        name: "张宏江",
+        agentName: "张宏江的AI分身",
+        role: "智源智库专家 · 算法领军人",
+        tag: "算法专家",
+        gradient: "linear-gradient(135deg, #d97706, #f59e0b)",
+        desc: "多媒体检索与计算机视觉领域开拓者，指导前沿 AI 战略突破。",
+        added: false,
+        stat: "1.8k+ 次对话"
+      },
+      {
+        id: "quxin",
+        name: "屈鑫",
+        agentName: "屈鑫的AI分身",
+        role: "生态负责人 · 智能体专家",
+        tag: "智能体",
+        gradient: "linear-gradient(135deg, #ec4899, #f43f5e)",
+        desc: "负责 Multi-Agent 协作框架设计、开发者生态与应用场景建设。",
+        added: false,
+        stat: "860 次对话"
+      },
+      {
+        id: "chenbo",
+        name: "陈博士",
+        agentName: "陈博士的AI分身",
+        role: "算法研究员 · 强化学习",
+        tag: "强化学习",
+        gradient: "linear-gradient(135deg, #7c3aed, #a855f7)",
+        desc: "专注于 RLHF 人机对齐、PPO 优化算法及自主 Agent 试错学习。",
+        added: false,
+        stat: "1.5k+ 次对话"
+      },
+      {
+        id: "liujiao",
+        name: "刘教授",
+        agentName: "刘教授的AI分身",
+        role: "生命科学与 AI 交叉专家",
+        tag: "前沿交叉",
+        gradient: "linear-gradient(135deg, #0d9488, #14b8a6)",
+        desc: "致力于蛋白质结构预测、分子生成与 AI 驱动新药研发前沿。",
+        added: false,
+        stat: "720 次对话"
+      },
+      {
+        id: "ligong",
+        name: "李工",
+        agentName: "李工的AI分身",
+        role: "基础设施与算力加速专家",
+        tag: "系统算力",
+        gradient: "linear-gradient(135deg, #475569, #64748b)",
+        desc: "主导异构芯片集群调度、分布式训练框架与 GPU 通信优化。",
+        added: false,
+        stat: "1.1k+ 次对话"
+      }
+    ];
+
+    let plazaCurrentTag = "全部";
+    let plazaSearchKeyword = "";
+
+    // 渲染分身广场专家网格 (竖版卡片，一行 3 或 4 个)
+    function renderExpertGrid() {
+      const grid = document.getElementById('expert-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const filtered = expertList.filter(exp => {
+        const matchTag = (plazaCurrentTag === "全部") || exp.tag.includes(plazaCurrentTag) || (plazaCurrentTag === "智能体" && exp.tag.includes("智能体"));
+        const matchKeyword = !plazaSearchKeyword || exp.name.includes(plazaSearchKeyword) || exp.role.includes(plazaSearchKeyword) || exp.desc.includes(plazaSearchKeyword) || exp.tag.includes(plazaSearchKeyword);
+        return matchTag && matchKeyword;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 0; color: var(--text-muted); font-size: 14px;">
+            未找到匹配的专家分身
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(exp => {
+        const card = document.createElement('div');
+        card.className = 'expert-card';
+        // 卡片主体（非 hover-action 区域）点击 = 立即对话
+        card.onclick = function(e) {
+          if (!e.target.closest('.expert-card-hover-action')) {
+            startChatWithExpert(exp);
+          }
+        };
+
+        const addBtnClass = exp.added ? 'btn-add-agent added' : 'btn-add-agent';
+        const addBtnIcon = exp.added ?
+          `<svg class="icon" style="width:13px;height:13px;stroke:currentColor;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` :
+          `<svg class="icon" style="width:13px;height:13px;stroke:currentColor;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+        const addBtnText = exp.added ? '已添加' : '添加到我的智能体';
+
+        card.innerHTML = `
+          <div class="expert-avatar-container">
+            <div class="expert-avatar-box" style="background: ${exp.gradient};">
+              <svg class="expert-person-svg" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div class="expert-status-badge"></div>
+          </div>
+          <div class="expert-name">${escapeHtml(exp.name)}</div>
+          <div class="expert-role">${escapeHtml(exp.role)}</div>
+          <div class="expert-desc">${escapeHtml(exp.desc)}</div>
+
+          <div class="expert-footer">
+            <span>${exp.stat}</span>
+            <span>·</span>
+            <span>智源专家广场</span>
+          </div>
+
+          <div class="expert-card-hover-action">
+            <button class="${addBtnClass}" onclick="toggleAddAgent('${exp.id}', event)">
+              ${addBtnIcon}
+              <span>${addBtnText}</span>
+            </button>
+            <button class="btn-chat-now" onclick="startChatWithExpert_btn('${exp.id}', event)">
+              <svg class="icon" style="width:14px;height:14px;stroke:currentColor;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>立即对话</span>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // 打开分身广场视图
+    function openPlazaView(e) {
+      if (e) e.stopPropagation();
+      activeChatTitle = null;
+
+      // 侧边栏选中态
+      const allHistory = document.querySelectorAll('.history-item');
+      allHistory.forEach(el => el.classList.remove('active'));
+
+      const navPlaza = document.getElementById('nav-item-plaza');
+      if (navPlaza) navPlaza.classList.add('active');
+
+      // 视图切换
+      document.getElementById('chat-new-view').style.display = 'none';
+      document.getElementById('chat-dialog-view').style.display = 'none';
+      const plazaView = document.getElementById('plaza-view');
+      plazaView.style.display = 'flex';
+
+      renderExpertGrid();
+    }
+
+    // 标签筛选
+    function filterPlazaTag(tagName, element) {
+      plazaCurrentTag = tagName;
+      const pills = document.querySelectorAll('.plaza-tab-pill');
+      pills.forEach(p => p.classList.remove('active'));
+      if (element) element.classList.add('active');
+      renderExpertGrid();
+    }
+
+    // 关键字搜索
+    function handlePlazaSearch() {
+      const val = document.getElementById('plaza-search-input').value.trim();
+      plazaSearchKeyword = val;
+      renderExpertGrid();
+    }
+
+    // 立即对话：在当前智能体的历史里新建一个会话，icon 改为人名标签
+    function startChatWithExpert(exp) {
+      // 关闭广场视图
+      const navPlaza = document.getElementById('nav-item-plaza');
+      if (navPlaza) navPlaza.classList.remove('active');
+      document.getElementById('plaza-view').style.display = 'none';
+
+      // 在当前智能体历史中新增一条会话
+      const chatTitle = '\u4e0e' + exp.name + '\u5bf9\u8bdd';
+      const chats = getAgentChats(currentAgentKey);
+      if (!chats.includes(chatTitle)) {
+        chats.unshift(chatTitle);
+      }
+
+      activeChatTitle = chatTitle;
+
+      // 重新渲染历史列表，新条目用人名标签作为 icon
+      renderHistoryListWithExpert(chatTitle, exp);
+
+      // 打开对话视图
+      document.getElementById('chat-new-view').style.display = 'none';
+      document.getElementById('chat-dialog-view').style.display = 'flex';
+      document.getElementById('dialog-header-text').innerText = chatTitle;
+
+      let convData = mockConversations[chatTitle];
+      if (!convData) {
+        convData = {
+          type: 'twin',
+          agentBadgeText: exp.agentName,
+          messages: [
+            { role: 'user', content: '\u60a8\u597d\uff0c' + exp.name + '\uff0c\u60f3\u548c\u60a8\u804a\u804a ' + exp.tag + ' \u65b9\u5411\u7684\u524d\u6cbf\u8fdb\u5c55\u3002' },
+            { role: 'assistant', htmlContent: '<p>\u4f60\u597d\uff01\u5f88\u9ad8\u5174\u4e0e\u4f60\u4ea4\u6d41 <strong>' + escapeHtml(exp.tag) + '</strong> \u65b9\u5411\u7684\u8bdd\u9898\u3002</p><p>' + escapeHtml(exp.desc) + '</p><p>\u6709\u4ec0\u4e48\u5177\u4f53\u95ee\u9898\u6216\u65b9\u5411\uff0c\u6b22\u8fce\u76f4\u63a5\u63d0\u51fa\uff0c\u6211\u4eec\u6df1\u5165\u63a2\u8ba8\u3002</p>' }
+          ]
+        };
+      }
+      renderDialogMessages(convData);
+    }
+
+    // 分身广场 hover 区域"立即对话"按钮点击（阻止冒泡后调用）
+    function startChatWithExpert_btn(expertId, event) {
+      if (event) event.stopPropagation();
+      const exp = expertList.find(item => item.id === expertId);
+      if (exp) startChatWithExpert(exp);
+    }
+
+    // 渲染历史列表，对特定条目使用人名彩色标签 icon
+    function renderHistoryListWithExpert(expertChatTitle, exp) {
+      const historyListContainer = document.getElementById('history-list');
+      historyListContainer.innerHTML = '';
+
+      const chats = getAgentChats(currentAgentKey);
+      chats.forEach((chatTitle) => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        if (chatTitle === activeChatTitle) {
+          item.classList.add('active');
+        }
+        item.onclick = function(e) {
+          e.stopPropagation();
+          openHistoryChat(chatTitle, item);
+        };
+
+        if (chatTitle === expertChatTitle && exp) {
+          item.innerHTML =
+            '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;padding:0 6px;border-radius:4px;background:' + exp.gradient + ';color:#fff;font-size:11px;font-weight:600;flex-shrink:0;white-space:nowrap;">' + escapeHtml(exp.name) + '</span>' +
+            '<span>' + escapeHtml(chatTitle) + '</span>';
+        } else {
+          item.innerHTML =
+            '<svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+            '<span>' + escapeHtml(chatTitle) + '</span>';
+        }
+        historyListContainer.appendChild(item);
+      });
+    }
+
+    // 添加专家到我的智能体（保持原逻辑：新建智能体，跳转新对话，无历史对话）
+    function toggleAddAgent(expertId, event) {
+      if (event) event.stopPropagation();
+      const exp = expertList.find(item => item.id === expertId);
+      if (!exp) return;
+
+      if (!exp.added) {
+        exp.added = true;
+
+        // 新建智能体（无历史对话）
+        if (!agentData[exp.agentName]) {
+          agentData[exp.agentName] = [];
+        }
+
+        // 添加到下拉菜单
+        const dropdownMenu = document.getElementById('agent-dropdown');
+        const divider = dropdownMenu.querySelector('.dropdown-divider');
+        const firstChar = exp.name.charAt(0);
+
+        const newItem = document.createElement('div');
+        newItem.className = 'dropdown-item';
+        newItem.onclick = function() { selectAgent(exp.agentName, newItem); };
+        newItem.innerHTML =
+          '<div class="dropdown-item-left">' +
+          '<div class="agent-avatar-badge" style="background:' + exp.gradient + ';">' + firstChar + '</div>' +
+          '<span>' + exp.agentName + '</span>' +
+          '</div>';
+        dropdownMenu.insertBefore(newItem, divider);
+      }
+
+      // 切换到新建的智能体，进入新对话（无历史）
+      selectAgent(exp.agentName);
+      showToast('\u5df2\u6dfb\u52a0\u201c' + exp.name + '\u201d\u5230\u6211\u7684\u667a\u80fd\u4f53');
+
+      renderExpertGrid();
+    
+    }
+
+    // Toast 提示
+    function showToast(msg) {
+      const toast = document.getElementById('toast-notification');
+      const toastMsg = document.getElementById('toast-message');
+      if (!toast || !toastMsg) return;
+
+      toastMsg.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // 初始化运行
+    renderHistoryList();
+  </script>
+</body>
+</html>

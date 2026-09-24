@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>方案四：空间卡片流·Arc/Deck 多任务空间堆叠范式 (浅色)</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --phone-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.07);
+      --primary: #4f46e5;
+      --primary-glow: rgba(79, 70, 229, 0.2);
+      --accent: #db2777;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .top-meta-bar {
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .top-meta-bar a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .toggle-guide-btn {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .toggle-guide-btn.active {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .device-shell {
+      width: 390px;
+      height: 844px;
+      background: var(--phone-bg);
+      border-radius: 50px;
+      border: 8px solid #cbd5e1;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.14);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .island-dot { width: 10px; height: 10px; border-radius: 50%; background: #1e293b; }
+    .island-lens { width: 10px; height: 10px; border-radius: 50%; background: #0f172a; }
+
+    .status-bar {
+      height: 48px;
+      padding: 12px 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      z-index: 99;
+    }
+
+    .guide-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .tag-entry { background: #ecfdf5; color: #047857; border: 1px dashed #059669; }
+    .tag-switch { background: #e0e7ff; color: #4338ca; border: 1px dashed #6366f1; }
+    .tag-exit { background: #fff1f2; color: #be123c; border: 1px dashed #e11d48; }
+
+    body.hide-guides .guide-tag { display: none !important; }
+
+    /* ================= 空间卡片舞台 (浅色 Deck) ================= */
+    .deck-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      padding: 10px 14px 90px;
+    }
+
+    .spatial-deck-track {
+      display: flex;
+      height: 100%;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    /* 三大空间全屏独立卡片 */
+    .space-card {
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      position: relative;
+    }
+
+    .space-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .space-title {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+    }
+
+    .proto-card {
+      background: #f8fafc;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .proto-card:active {
+      background: #f1f5f9;
+      transform: scale(0.99);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #0f172a;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .skeleton-line {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+      margin: 6px 0;
+    }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-line.w-60 { width: 60%; }
+
+    /* ================= 底部空间指示坞 (浅色透亮) ================= */
+    .spatial-dock {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      height: 52px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 10px;
+      z-index: 100;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+    .space-tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .space-tab-btn.active {
+      background: #e0e7ff;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* 下钻面板 (浅色) */
+    .spatial-sub-panel {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 16px;
+    }
+    .spatial-sub-panel.show {
+      transform: translateY(0);
+    }
+    .panel-header {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      margin-bottom: 12px;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      z-index: 400;
+    }
+
+    .action-toast {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 1000;
+      white-space: nowrap;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .action-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-meta-bar">
+    <a href="index.html">← 返回所有方案概览</a>
+    <button class="toggle-guide-btn active" id="toggleGuideBtn" onclick="toggleGuide()">
+      <span>💡</span> 交互动线高亮已开启
+    </button>
+  </div>
+
+  <div class="device-shell">
+    <div class="island">
+      <div class="island-dot"></div>
+      <div class="island-lens"></div>
+    </div>
+    <div class="status-bar">
+      <span>09:41</span>
+      <span>5G · 100%</span>
+    </div>
+
+    <div class="action-toast" id="actionToast">
+      <span id="toastText">已切换</span>
+    </div>
+
+    <!-- 空间卡片舞台 -->
+    <div class="deck-container">
+      <div class="spatial-deck-track" id="deckTrack">
+
+        <!-- ================= 空间 1: MyAgent 主中枢空间 ================= -->
+        <div class="space-card">
+          <div class="space-header">
+            <div class="space-title">
+              <span>🧠 MyAgent 空间</span>
+            </div>
+            <span class="guide-tag tag-entry">智能中枢</span>
+          </div>
+
+          <div class="proto-card">
+            <div class="card-title">
+              <span>日常多轮推理与对话</span>
+              <span class="guide-tag tag-entry">主对话</span>
+            </div>
+            <div class="card-desc">支持在提问中随时调遣分身（第一视角接力解答）。</div>
+            <div class="skeleton-line w-80"></div>
+          </div>
+
+          <div class="proto-card" onclick="openPanel('panel-agent-meta')">
+            <div class="card-title">
+              <span>记忆中心与自动化定时</span>
+              <span class="guide-tag tag-entry">后台</span>
+            </div>
+            <div class="card-desc">管理用户画像、定时论文早报抓取规则。</div>
+            <div class="skeleton-line w-60"></div>
+          </div>
+
+          <div style="margin-top: auto; padding: 12px; border-radius: 14px; background: #e0e7ff; border: 1px dashed var(--primary); font-size: 11px; color: #3730a3;">
+            👈 <b>手势交互提示</b>：向左滑动进入【听记工作台空间】，向右滑动返回。
+          </div>
+        </div>
+
+        <!-- ================= 空间 2: 帮我听记空间 ================= -->
+        <div class="space-card">
+          <div class="space-header">
+            <div class="space-title">
+              <span>🎙️ 帮我听记空间</span>
+            </div>
+            <span class="guide-tag tag-entry">核心二</span>
+          </div>
+
+          <div class="proto-card" onclick="openPanel('panel-listen-detail')">
+            <div class="card-title">
+              <span>🔗 链接 / 音频即时解析</span>
+              <span class="guide-tag tag-entry">采集入口</span>
+            </div>
+            <div class="card-desc">粘贴直播网址或录音，自动解析音视频与逐字稿。</div>
+            <div class="skeleton-line w-80"></div>
+          </div>
+
+          <div class="proto-card" onclick="openPanel('panel-listen-detail')">
+            <div class="card-title">
+              <span>🔴 2026 具身大模型论坛速记</span>
+              <span class="guide-tag tag-entry">已提炼成果</span>
+            </div>
+            <div class="card-desc">4 条学术新观点已生成。点击可一键反哺给分身。</div>
+            <div class="skeleton-line w-60"></div>
+          </div>
+
+          <!-- 核心交互亮点：反哺到右侧分身空间 -->
+          <div class="proto-card" style="border-color: #059669; background: #ecfdf5;" onclick="showToast('已飞入右侧【分身空间】进行知识学习！'); setTimeout(() => switchSpace(2), 600);">
+            <div class="card-title" style="color: #047857;">
+              <span>🔄 将纪要甩入【分身空间】反哺</span>
+              <span class="guide-tag tag-switch">知识反哺流转</span>
+            </div>
+            <div class="card-desc" style="color: #065f46;">点击触发空间跨越交互，直接注入分身知识库！</div>
+          </div>
+        </div>
+
+        <!-- ================= 空间 3: AI 分身空间 ================= -->
+        <div class="space-card">
+          <div class="space-header">
+            <div class="space-title">
+              <span>👥 AI 分身空间</span>
+            </div>
+            <span class="guide-tag tag-entry">核心一</span>
+          </div>
+
+          <div class="proto-card" onclick="openPanel('panel-persona-1v1')">
+            <div class="card-title">
+              <span>👤 我的专属分身：张教授</span>
+              <span class="guide-tag tag-entry">1v1 对话</span>
+            </div>
+            <div class="card-desc">已反哺吸收 12 篇论文与 3 场听记成果。</div>
+            <div class="skeleton-line w-80"></div>
+          </div>
+
+          <div class="proto-card" onclick="openPanel('panel-persona-plaza')">
+            <div class="card-title">
+              <span>🏛️ 智库专家广场</span>
+              <span class="guide-tag tag-entry">广场 & 群聊</span>
+            </div>
+            <div class="card-desc">浏览平台权威学者，支持多专家组队轮流观点碰撞。</div>
+            <div class="skeleton-line w-60"></div>
+          </div>
+
+          <div class="proto-card" onclick="openPanel('panel-persona-build')">
+            <div class="card-title">
+              <span>＋ 打造新的个人分身</span>
+              <span class="guide-tag tag-entry">构建</span>
+            </div>
+            <div class="card-desc">全网提炼观点风格，快速生成数字镜像。</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= 底部空间指示坞 ================= -->
+    <div class="spatial-dock">
+      <div class="space-tab-btn active" id="tab0" onclick="switchSpace(0)">
+        <span>🧠 MyAgent</span>
+      </div>
+      <div class="space-tab-btn" id="tab1" onclick="switchSpace(1)">
+        <span>🎙️ 听记</span>
+      </div>
+      <div class="space-tab-btn" id="tab2" onclick="switchSpace(2)">
+        <span>👥 分身</span>
+      </div>
+    </div>
+
+    <!-- ================= 下钻面板 ================= -->
+    <div class="spatial-sub-panel" id="panel-listen-detail">
+      <div class="panel-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closePanel('panel-listen-detail')">
+          ‹ 返回空间
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">听记研讨成果</div>
+        <div></div>
+      </div>
+      <div class="proto-card">
+        <div class="card-title">时间戳速记与嘉宾观点</div>
+        <div class="skeleton-line w-80"></div>
+        <div class="skeleton-line w-60"></div>
+      </div>
+    </div>
+
+    <div class="spatial-sub-panel" id="panel-persona-plaza">
+      <div class="panel-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closePanel('panel-persona-plaza')">
+          ‹ 退出广场
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">专家智库广场</div>
+        <div></div>
+      </div>
+      <div class="proto-card" onclick="showToast('已发起多专家接力碰撞！')">
+        <div class="card-title">⚡️ 多位专家跨学科接力群聊</div>
+        <div class="card-desc">点击即刻开聊</div>
+      </div>
+    </div>
+
+    <div class="spatial-sub-panel" id="panel-persona-1v1">
+      <div class="panel-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closePanel('panel-persona-1v1')">
+          ‹ 退出对话
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">分身第一视角问答</div>
+        <div></div>
+      </div>
+      <div class="proto-card">
+        <div class="card-title">以分身人设语气交流</div>
+        <div class="skeleton-line w-80"></div>
+      </div>
+    </div>
+
+    <div class="spatial-sub-panel" id="panel-persona-build">
+      <div class="panel-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closePanel('panel-persona-build')">
+          ✕ 取消
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">分身提炼向导</div>
+        <div></div>
+      </div>
+      <div class="proto-card">
+        <div class="card-title">录入主页与代表作</div>
+        <div class="skeleton-line w-80"></div>
+      </div>
+    </div>
+
+    <div class="spatial-sub-panel" id="panel-agent-meta">
+      <div class="panel-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closePanel('panel-agent-meta')">
+          ‹ 返回
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">记忆与定时中心</div>
+        <div></div>
+      </div>
+      <div class="proto-card">
+        <div class="card-title">长期记忆库与任务巡检</div>
+        <div class="skeleton-line w-80"></div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    let currentSpace = 0;
+    const track = document.getElementById('deckTrack');
+
+    function switchSpace(index) {
+      currentSpace = index;
+      track.style.transform = `translateX(-${index * 100}%)`;
+
+      [0, 1, 2].forEach(i => {
+        document.getElementById(`tab${i}`).classList.remove('active');
+      });
+      document.getElementById(`tab${index}`).classList.add('active');
+
+      const names = ['MyAgent 空间', '帮我听记空间', 'AI分身空间'];
+      showToast(`已滑入【${names[index]}】`);
+    }
+
+    function openPanel(id) {
+      const panel = document.getElementById(id);
+      if (panel) {
+        panel.classList.add('show');
+        showToast('进入全屏面板（左上角返回）');
+      }
+    }
+
+    function closePanel(id) {
+      const panel = document.getElementById(id);
+      if (panel) {
+        panel.classList.remove('show');
+        showToast('退出面板返回空间');
+      }
+    }
+
+    function toggleGuide() {
+      const body = document.body;
+      const btn = document.getElementById('toggleGuideBtn');
+      if (body.classList.contains('hide-guides')) {
+        body.classList.remove('hide-guides');
+        btn.classList.add('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已开启';
+      } else {
+        body.classList.add('hide-guides');
+        btn.classList.remove('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已关闭';
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(text) {
+      const toast = document.getElementById('actionToast');
+      const toastText = document.getElementById('toastText');
+      toastText.innerText = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>方案三：业务双核·顶部双轨分段 + 悬浮 Copilot (浅色)</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --phone-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.06);
+      --primary: #0284c7;
+      --primary-glow: rgba(2, 132, 199, 0.25);
+      --accent: #d97706;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .top-meta-bar {
+      width: 100%;
+      max-width: 440px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .top-meta-bar a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .toggle-guide-btn {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .toggle-guide-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .device-shell {
+      width: 390px;
+      height: 844px;
+      background: var(--phone-bg);
+      border-radius: 50px;
+      border: 8px solid #cbd5e1;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.14);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+    }
+    .island-dot { width: 10px; height: 10px; border-radius: 50%; background: #1e293b; }
+    .island-lens { width: 10px; height: 10px; border-radius: 50%; background: #0f172a; }
+
+    .status-bar {
+      height: 48px;
+      padding: 12px 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      z-index: 99;
+    }
+
+    .guide-tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .tag-entry { background: #ecfdf5; color: #047857; border: 1px dashed #059669; }
+    .tag-switch { background: #fffbeb; color: #b45309; border: 1px dashed #d97706; }
+    .tag-exit { background: #fff1f2; color: #be123c; border: 1px dashed #e11d48; }
+
+    body.hide-guides .guide-tag { display: none !important; }
+
+    /* ================= 顶部双核大分段切换条 (浅色) ================= */
+    .dual-header-wrap {
+      padding: 6px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(20px);
+      z-index: 50;
+    }
+    .app-brand-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+    }
+    .system-btn {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    /* 双核分段药丸 */
+    .segmented-dual-pill {
+      background: #e2e8f0;
+      border-radius: 14px;
+      padding: 3px;
+      display: flex;
+      position: relative;
+    }
+    .segment-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 11px;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      position: relative;
+      z-index: 2;
+    }
+    .segment-tab.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .segment-tab.active.track-listen {
+      border-bottom: 2px solid var(--primary);
+    }
+    .segment-tab.active.track-persona {
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* 主视图滑动视口 */
+    .track-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .track-page {
+      position: absolute;
+      inset: 0;
+      padding: 14px 18px 40px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .track-page.active {
+      display: flex;
+    }
+
+    .proto-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .proto-card:active {
+      background: #f1f5f9;
+      transform: scale(0.99);
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .skeleton-line {
+      height: 8px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+      margin: 6px 0;
+    }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-line.w-60 { width: 60%; }
+
+    /* ================= 悬浮 MyAgent 智能球 (浅色亮眼) ================= */
+    .floating-copilot-btn {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      box-shadow: 0 10px 25px -4px rgba(2, 132, 199, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      z-index: 100;
+      transition: transform 0.2s ease;
+    }
+    .floating-copilot-btn:active {
+      transform: scale(0.92);
+    }
+    .copilot-pulse {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid rgba(2, 132, 199, 0.4);
+      animation: pulse 2.2s infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    /* ================= MyAgent 呼出抽屉 ================= */
+    .copilot-drawer {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .copilot-drawer.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .copilot-sheet-panel {
+      background: #ffffff;
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+      max-height: 80%;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      padding-bottom: 24px;
+    }
+    .copilot-drawer.show .copilot-sheet-panel {
+      transform: translateY(0);
+    }
+    .sheet-header {
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .sheet-body {
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f8fafc;
+    }
+
+    /* 下钻全屏页 */
+    .sub-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--phone-bg);
+      z-index: 250;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.28s ease;
+    }
+    .sub-screen.show {
+      transform: translateX(0);
+    }
+    .sub-screen-header {
+      height: 52px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: #ffffff;
+    }
+
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      z-index: 350;
+    }
+
+    .action-toast {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 1000;
+      white-space: nowrap;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .action-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-meta-bar">
+    <a href="index.html">← 返回所有方案概览</a>
+    <button class="toggle-guide-btn active" id="toggleGuideBtn" onclick="toggleGuide()">
+      <span>💡</span> 交互动线高亮已开启
+    </button>
+  </div>
+
+  <div class="device-shell">
+    <div class="island">
+      <div class="island-dot"></div>
+      <div class="island-lens"></div>
+    </div>
+    <div class="status-bar">
+      <span>09:41</span>
+      <span>5G · 100%</span>
+    </div>
+
+    <div class="action-toast" id="actionToast">
+      <span id="toastText">已切换</span>
+    </div>
+
+    <!-- 顶部双核大分段切换条 -->
+    <div class="dual-header-wrap">
+      <div class="app-brand-row">
+        <div class="brand-title">SoulAgent 双核工作台</div>
+        <div class="system-btn" onclick="openScreen('screen-settings')">
+          <span>⚙️ 设置/记忆</span>
+        </div>
+      </div>
+
+      <!-- 双核分段选择药丸 -->
+      <div class="segmented-dual-pill">
+        <div class="segment-tab active track-listen" id="tab-listen" onclick="switchTrack('listen')">
+          <span>🎙️ 帮我听记</span>
+          <span class="guide-tag tag-switch">轻点切换</span>
+        </div>
+        <div class="segment-tab track-persona" id="tab-persona" onclick="switchTrack('persona')">
+          <span>👥 智库与AI分身</span>
+          <span class="guide-tag tag-switch">轻点切换</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 双核内容视口 -->
+    <div class="track-viewport">
+
+      <!-- ================= 轨道 1: 帮我听记工作台 ================= -->
+      <div class="track-page active" id="page-track-listen">
+        <div class="proto-card" onclick="openScreen('screen-listen-flow')">
+          <div class="card-top">
+            <div class="card-title">🔗 任意网络音视频 / 现场录音解析</div>
+            <span class="guide-tag tag-entry">主入口</span>
+          </div>
+          <div class="card-desc">粘贴直播地址、公开课、B站、会议网址或上传录音文件。</div>
+          <div class="skeleton-line w-80"></div>
+          <div style="margin-top: 8px; font-size: 11px; color: var(--primary); font-weight: 600;">点击立刻发起听记 ❯</div>
+        </div>
+
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 4px;">
+          官方直播与精选学术论坛：
+        </div>
+
+        <div class="proto-card" onclick="openScreen('screen-listen-detail')">
+          <div class="card-top">
+            <div class="card-title">🔴 现场进行：北京智源大会主论坛</div>
+            <span class="guide-tag tag-entry">点击下钻</span>
+          </div>
+          <div class="card-desc">AI 正在实时提炼嘉宾金句与时间戳速记。</div>
+          <div class="skeleton-line w-60"></div>
+        </div>
+
+        <div class="proto-card" onclick="openScreen('screen-listen-detail')">
+          <div class="card-top">
+            <div class="card-title">📁 已转录：多模态前沿研讨公开课</div>
+            <span class="guide-tag tag-entry">已沉淀</span>
+          </div>
+          <div class="card-desc">时长 52 分钟 · 4 条学术新观点已生成。</div>
+        </div>
+      </div>
+
+      <!-- ================= 轨道 2: 智库与AI分身 ================= -->
+      <div class="track-page" id="page-track-persona">
+        <div class="proto-card" onclick="openScreen('screen-persona-manage')">
+          <div class="card-top">
+            <div class="card-title">👤 我的 AI 分身：张教授</div>
+            <span class="guide-tag tag-entry">人设管理</span>
+          </div>
+          <div class="card-desc">已学习 15 篇论文 · 点击查看资料库、微调人设或自测提问。</div>
+          <div class="skeleton-line w-80"></div>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px;">
+            <span style="color: var(--accent); font-weight: 600;" onclick="event.stopPropagation(); openScreen('screen-persona-chat')">💬 发起 1v1 单独提问</span>
+            <span style="color: var(--text-muted);">查看资料管理 ❯</span>
+          </div>
+        </div>
+
+        <div class="proto-card" onclick="openScreen('screen-persona-plaza')">
+          <div class="card-top">
+            <div class="card-title">🏛️ 专家智库广场 (含多专家群聊)</div>
+            <span class="guide-tag tag-entry">智库广场</span>
+          </div>
+          <div class="card-desc">浏览平台权威学者分身，支持单挑请教，或多选专家接力碰撞讨论。</div>
+          <div class="skeleton-line w-60"></div>
+        </div>
+
+        <div class="proto-card" onclick="openScreen('screen-persona-create')">
+          <div class="card-top">
+            <div class="card-title">＋ 构建新的专属分身</div>
+            <span class="guide-tag tag-entry">新建向导</span>
+          </div>
+          <div class="card-desc">只需 3 步：输入主页 → AI全网提炼 → 学习思考语气与成果。</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= 悬浮 MyAgent 智能呼叫球 ================= -->
+    <div class="floating-copilot-btn" onclick="openCopilotDrawer()">
+      <div class="copilot-pulse"></div>
+      <span style="font-size: 16px;">🧠</span>
+      <span>MyAgent</span>
+    </div>
+
+    <!-- ================= MyAgent 抽屉控制台 ================= -->
+    <div class="copilot-drawer" id="copilotDrawer" onclick="closeCopilotDrawer(event)">
+      <div class="copilot-sheet-panel" onclick="event.stopPropagation()">
+        <div class="sheet-header">
+          <div style="font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 6px; color: #0f172a;">
+            <span>🧠 MyAgent 主控台</span>
+            <span class="guide-tag tag-entry">随时呼出</span>
+          </div>
+          <div style="color: var(--primary); font-size: 13px; cursor: pointer; font-weight: 600;" onclick="closeCopilotDrawer()">
+            ✕ 收起
+            <span class="guide-tag tag-exit">下滑退出</span>
+          </div>
+        </div>
+        <div class="sheet-body">
+          <div class="proto-card">
+            <div class="card-title">💬 对话 MyAgent (综合中枢)</div>
+            <div class="card-desc">不仅回答常规问题，还可以像调 skill 一样调用您的 AI 分身协同参与回答。</div>
+            <div class="skeleton-line w-80"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="proto-card" onclick="showToast('查看长期记忆');">
+              <div class="card-title">🧠 长期记忆</div>
+              <div class="card-desc">已记录个人偏好</div>
+            </div>
+            <div class="proto-card" onclick="showToast('查看自动化定时任务');">
+              <div class="card-title">⏰ 定时任务</div>
+              <div class="card-desc">早报追踪运行中</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 下钻页面：听记详情与反哺 ================= -->
+    <div class="sub-screen" id="screen-listen-detail">
+      <div class="sub-screen-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closeScreen('screen-listen-detail')">
+          ‹ 返回双核工作台
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">听记研讨详情</div>
+        <div></div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;">
+        <div class="proto-card">
+          <div class="card-title">📝 全文速记与时间戳</div>
+          <div class="skeleton-line w-80"></div>
+          <div class="skeleton-line w-60"></div>
+        </div>
+        <div class="proto-card" style="background: #e0f2fe; border-color: #bae6fd;" onclick="showToast('已成功保存至【我的分身资料库】！')">
+          <div class="card-title" style="color: #0369a1;">🔄 一键知识反哺</div>
+          <div class="card-desc" style="color: #075985;">将本场会议提取的高价值观点，反哺保存回张教授分身，实现闭环演进。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 下钻页面：分身广场 ================= -->
+    <div class="sub-screen" id="screen-persona-plaza">
+      <div class="sub-screen-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closeScreen('screen-persona-plaza')">
+          ‹ 退出广场
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">专家智库广场</div>
+        <div></div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="proto-card" onclick="openScreen('screen-persona-chat')">
+          <div class="card-title">👨‍🏫 李院士（量子计算）</div>
+          <div class="card-desc">点击发起 1v1 单独对话请教</div>
+        </div>
+        <div class="proto-card" onclick="showToast('已选中2位专家，发起多专家接力辩论！')">
+          <div class="card-title">⚡️ 多专家跨界群聊研讨</div>
+          <div class="card-desc">勾选多位学者接力发言</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 下钻页面：分身1v1独立问答 ================= -->
+    <div class="sub-screen" id="screen-persona-chat">
+      <div class="sub-screen-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closeScreen('screen-persona-chat')">
+          ‹ 退出对话
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">分身第一视角问答</div>
+        <div></div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="proto-card">
+          <div class="card-title">🎯 第一人称语气独立回复</div>
+          <div class="card-desc">基于分身专属知识库回答，不混杂 MyAgent 主助手视角。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 下钻页面：分身构建 ================= -->
+    <div class="sub-screen" id="screen-persona-create">
+      <div class="sub-screen-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closeScreen('screen-persona-create')">
+          ✕ 取消
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">分身创建向导</div>
+        <div></div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="proto-card">
+          <div class="card-title">3 阶段全自动提炼</div>
+          <div class="skeleton-line w-80"></div>
+          <div class="skeleton-line w-60"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 下钻页面：设置中心 ================= -->
+    <div class="sub-screen" id="screen-settings">
+      <div class="sub-screen-header">
+        <div style="color: var(--primary); cursor: pointer; font-size: 14px; font-weight: 600;" onclick="closeScreen('screen-settings')">
+          ‹ 返回
+          <span class="guide-tag tag-exit">退出</span>
+        </div>
+        <div style="font-size: 15px; font-weight: 600;">系统设置与底座</div>
+        <div></div>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div class="proto-card">
+          <div class="card-title">🧠 长期记忆管理</div>
+          <div class="card-desc">查看、修正或遗忘已记录的用户偏好。</div>
+        </div>
+        <div class="proto-card">
+          <div class="card-title">⏰ 定时研究任务</div>
+          <div class="card-desc">行业早报与技术周报定时推送。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+
+  <script>
+    function switchTrack(track) {
+      document.getElementById('tab-listen').classList.remove('active');
+      document.getElementById('tab-persona').classList.remove('active');
+      document.getElementById('page-track-listen').classList.remove('active');
+      document.getElementById('page-track-persona').classList.remove('active');
+
+      if (track === 'listen') {
+        document.getElementById('tab-listen').classList.add('active');
+        document.getElementById('page-track-listen').classList.add('active');
+        showToast('已切换至【帮我听记工作台】');
+      } else {
+        document.getElementById('tab-persona').classList.add('active');
+        document.getElementById('page-track-persona').classList.add('active');
+        showToast('已切换至【智库与AI分身】');
+      }
+    }
+
+    function openCopilotDrawer() {
+      document.getElementById('copilotDrawer').classList.add('show');
+      showToast('唤出 MyAgent 全局智能抽屉');
+    }
+
+    function closeCopilotDrawer() {
+      document.getElementById('copilotDrawer').classList.remove('show');
+      showToast('已收起 MyAgent 抽屉');
+    }
+
+    function openScreen(screenId) {
+      const el = document.getElementById(screenId);
+      if (el) {
+        el.classList.add('show');
+        showToast('进入子页面（左上角返回）');
+      }
+    }
+
+    function closeScreen(screenId) {
+      const el = document.getElementById(screenId);
+      if (el) {
+        el.classList.remove('show');
+        showToast('已退出');
+      }
+    }
+
+    function toggleGuide() {
+      const body = document.body;
+      const btn = document.getElementById('toggleGuideBtn');
+      if (body.classList.contains('hide-guides')) {
+        body.classList.remove('hide-guides');
+        btn.classList.add('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已开启';
+      } else {
+        body.classList.add('hide-guides');
+        btn.classList.remove('active');
+        btn.innerHTML = '<span>💡</span> 交互动线高亮已关闭';
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(text) {
+      const toast = document.getElementById('actionToast');
+      const toastText = document.getElementById('toastText');
+      toastText.innerText = text;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

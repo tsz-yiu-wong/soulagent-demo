@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Platform Demo</title>
+  <style>
+    :root {
+      --bg-base: #f7f8fa;
+      --bg-sidebar: #ffffff;
+      --bg-sidebar-hover: #f1f3f7;
+      --bg-sidebar-active: #e8ecf4;
+      --bg-card: #ffffff;
+      --bg-input: #ffffff;
+      --border-color: #e5e7eb;
+      --border-subtle: #f0f1f4;
+      --text-main: #1f2430;
+      --text-muted: #4b5563;
+      --text-dim: #9ca3af;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --tag-public-bg: #ecfdf5;
+      --tag-public-text: #059669;
+      --tag-private-bg: #fff7ed;
+      --tag-private-text: #ea580c;
+      --tag-prefix-bg: #eff6ff;
+      --tag-prefix-text: #2563eb;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      user-select: none;
+    }
+
+    /* 侧边栏顶部Tab导航（一行一个） */
+    .sidebar-top {
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-nav-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+
+    .tab-nav-item:hover:not(.disabled) {
+      background-color: var(--bg-sidebar-hover);
+      color: var(--text-main);
+    }
+
+    .tab-nav-item.active {
+      background-color: var(--bg-sidebar-active);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tab-nav-item.primary-highlight {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-color: #dbeafe;
+    }
+
+    .tab-nav-item.primary-highlight:hover {
+      background-color: #dbeafe;
+    }
+
+    .tab-nav-item.disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      color: var(--text-dim);
+    }
+
+    .nav-icon {
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+    }
+
+    /* 滚动列表区 */
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      height: 26px;
+      min-height: 26px;
+      margin-bottom: 4px;
+      box-sizing: border-box;
+    }
+
+    .sidebar-section-header .sidebar-section-title {
+      padding: 0;
+      margin-bottom: 0;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      padding: 4px 10px;
+      margin-bottom: 4px;
+    }
+
+    .btn-add-avatar {
+      display: none;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      color: var(--primary);
+      background-color: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+      padding: 1px 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .sidebar-section-header:hover .btn-add-avatar {
+      display: inline-flex;
+    }
+
+    .btn-add-avatar:hover {
+      background-color: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    /* AI分身模块 */
+    .avatar-group-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      height: 38px;
+      min-height: 38px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .avatar-group-item:hover {
+      background-color: var(--bg-sidebar-hover);
+    }
+
+    .avatar-group-item.active {
+      background-color: var(--bg-sidebar-active);
+    }
+
+    .avatar-item-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .btn-toggle-sub {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      color: var(--text-dim);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .btn-toggle-sub:hover {
+      background-color: rgba(0, 0, 0, 0.06);
+      color: var(--text-main);
+    }
+
+    .btn-toggle-sub svg {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.2s ease;
+    }
+
+    .btn-toggle-sub.collapsed svg,
+    .avatar-group-item.collapsed .btn-toggle-sub svg {
+      transform: rotate(-90deg);
+    }
+
+    .toggle-sub-placeholder {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .avatar-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #fff;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .avatar-name {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .avatar-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background-color: var(--tag-public-bg);
+      color: var(--tag-public-text);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .avatar-badge.private {
+      background-color: var(--tag-private-bg);
+      color: var(--tag-private-text);
+    }
+
+    .avatar-item-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-avatar-action {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      color: var(--text-muted);
+      background-color: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0 4px;
+      font-size: 11px;
+      line-height: 1;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-avatar-manage {
+      width: 22px;
+      padding: 0;
+    }
+
+    .btn-avatar-newchat {
+      gap: 3px;
+      padding: 0 6px;
+    }
+
+    .avatar-group-item:hover .btn-avatar-action {
+      display: inline-flex;
+    }
+
+    .btn-avatar-action:hover {
+      color: var(--primary);
+      border-color: #bfdbfe;
+      background-color: var(--primary-light);
+    }
+
+    .btn-avatar-action svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    /* 分身下的对话列表 */
+    .avatar-sub-chats {
+      margin-left: 18px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-left: 1px dashed var(--border-color);
+      padding-left: 10px;
+    }
+
+    .sub-chat-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s ease;
+    }
+
+    .sub-chat-item:hover {
+      background-color: var(--bg-sidebar-hover);
+      color: var(--text-main);
+    }
+
+    .sub-chat-item.active {
+      background-color: var(--bg-sidebar-active);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* 历史对话列表 */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      overflow: hidden;
+    }
+
+    .history-item:hover {
+      background-color: var(--bg-sidebar-hover);
+      color: var(--text-main);
+    }
+
+    .history-item.active {
+      background-color: var(--bg-sidebar-active);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .history-tag {
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background-color: var(--tag-prefix-bg);
+      color: var(--tag-prefix-text);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .history-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 右侧主工作区 */
+    .main-container {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 视图类型1：纯新建对话（极简：仅输入框 + 按钮） */
+    .view-new-chat-minimal {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .minimal-input-box {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.15s ease;
+    }
+
+    .minimal-input-box:focus-within {
+      border-color: var(--primary);
+    }
+
+    .minimal-input-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 14px;
+      padding: 6px 8px;
+    }
+
+    .minimal-input-box input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn-send {
+      background-color: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-send:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* 视图类型2：点击黄铁军新建对话（顶部信息卡片 + 输入框） */
+    .view-avatar-new-chat {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 36px 48px;
+      overflow-y: auto;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .expert-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      display: flex;
+      gap: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .expert-avatar-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+    .expert-info {
+      flex: 1;
+    }
+
+    .expert-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .expert-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .expert-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background-color: var(--tag-public-bg);
+      color: var(--tag-public-text);
+      font-weight: 500;
+    }
+
+    .expert-badge.private {
+      background-color: var(--tag-private-bg);
+      color: var(--tag-private-text);
+    }
+
+    .expert-title {
+      font-size: 13px;
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .expert-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .avatar-chat-bottom {
+      margin-top: auto;
+      padding-bottom: 24px;
+    }
+
+    /* 视图类型3：分身管理（知识库与记忆） */
+    .view-avatar-manage {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 36px 48px;
+      overflow-y: auto;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* 管理页顶部各个分身快捷切换小卡片 */
+    .manage-avatar-switcher {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 4px 0 14px 0;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex-wrap: nowrap;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .manage-avatar-switcher::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .manage-avatar-switcher::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .manage-avatar-switcher::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 4px;
+    }
+
+    .manage-avatar-switcher::-webkit-scrollbar-thumb:hover {
+      background: #cbd5e1;
+    }
+
+    .manage-avatar-card {
+      width: 220px;
+      flex: 0 0 220px;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .manage-avatar-card:hover {
+      border-color: #cbd5e1;
+      background-color: var(--bg-sidebar-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .manage-avatar-card.active {
+      background-color: #f8faff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary), 0 4px 12px rgba(37, 99, 235, 0.08);
+    }
+
+    .manage-avatar-card.manage-avatar-card-add {
+      border: 1.5px dashed #cbd5e1;
+      background-color: transparent;
+      box-shadow: none;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .manage-avatar-card.manage-avatar-card-add:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    .manage-avatar-add-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background-color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: inherit;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.18s ease;
+    }
+
+    .manage-avatar-card.manage-avatar-card-add:hover .manage-avatar-add-icon {
+      background-color: #dbeafe;
+      color: var(--primary);
+    }
+
+    .manage-avatar-add-text {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: inherit;
+    }
+
+    .manage-avatar-card-icon {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .manage-avatar-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .manage-avatar-card-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .manage-avatar-card-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .manage-avatar-card.active .manage-avatar-card-name {
+      color: var(--primary);
+    }
+
+    .manage-avatar-card-desc {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .manage-avatar-card.active .manage-avatar-card-desc {
+      color: var(--text-muted);
+    }
+
+    .manage-avatar-card-check {
+      font-size: 13px;
+      color: var(--primary);
+      display: none;
+      margin-left: auto;
+      font-weight: bold;
+    }
+
+    .manage-avatar-card.active .manage-avatar-card-check {
+      display: block;
+    }
+
+    .manage-header {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .manage-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .manage-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .manage-tabs {
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 14px;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: var(--primary);
+      border-radius: 2px;
+    }
+
+    .assets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .asset-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .asset-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: var(--shadow-md);
+    }
+
+    .asset-main {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .asset-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .asset-meta {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .visibility-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .visibility-toggle-btn.public {
+      background-color: var(--tag-public-bg);
+      color: var(--tag-public-text);
+      border-color: #a7f3d0;
+    }
+
+    .visibility-toggle-btn.private {
+      background-color: var(--tag-private-bg);
+      color: var(--tag-private-text);
+      border-color: #fed7aa;
+    }
+
+    .visibility-toggle-btn:hover {
+      filter: brightness(0.96);
+    }
+
+    /* 公开/私密开关 Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* 视图类型4：通用对话历史详情 */
+    .view-chat-detail {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 24px 36px;
+      overflow-y: auto;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .chat-detail-avatar-card {
+      margin-bottom: 20px;
+    }
+
+    .chat-detail-header {
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-detail-tag {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background-color: var(--tag-prefix-bg);
+      color: var(--tag-prefix-text);
+      font-weight: 500;
+    }
+
+    .chat-detail-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .chat-messages {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 20px;
+      overflow-y: auto;
+    }
+
+    .msg-bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background-color: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-agent {
+      align-self: flex-start;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* 视图类型5：AI分身广场 */
+    .view-avatar-plaza {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 36px 48px;
+      overflow-y: auto;
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .plaza-header {
+      margin-bottom: 24px;
+    }
+
+    .plaza-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .plaza-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .plaza-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .plaza-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .plaza-card:hover {
+      border-color: #bfdbfe;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .plaza-card-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .plaza-card-info h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .plaza-card-info p {
+      font-size: 12px;
+      color: var(--primary);
+    }
+
+    .plaza-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar">
+    <!-- 顶部Tab导航（一行一个） -->
+    <div class="sidebar-top">
+      <button class="tab-nav-item active primary-highlight" id="btnSidebarNewChat">
+        <span class="nav-icon">+</span>
+        <span class="nav-text">新建对话</span>
+      </button>
+      <button class="tab-nav-item" id="btnSidebarListen">
+        <span class="nav-icon">🎧</span>
+        <span class="nav-text">帮我听</span>
+      </button>
+      <button class="tab-nav-item" id="btnSidebarPlaza">
+        <span class="nav-icon">🏛️</span>
+        <span class="nav-text">AI分身广场</span>
+      </button>
+    </div>
+
+    <!-- 侧边栏滚动区域 -->
+    <div class="sidebar-content">
+      <!-- AI分身模块 -->
+      <div>
+        <div class="sidebar-section-header">
+          <span class="sidebar-section-title">AI分身</span>
+          <button class="btn-add-avatar" id="btnCreateAvatar" title="新建分身">+新建分身</button>
+        </div>
+        <div class="avatar-group-item" id="itemAvatarHuang" data-avatar-type="huang">
+          <div class="avatar-item-left">
+            <button class="btn-toggle-sub" title="展开/收起对话" aria-label="展开/收起对话">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="avatar-icon">黄</div>
+            <span class="avatar-name">黄铁军</span>
+            <span class="avatar-badge">公开</span>
+          </div>
+          <div class="avatar-item-right">
+            <button class="btn-avatar-action btn-avatar-manage" id="btnManageHuang" data-manage-name="黄铁军" title="管理资产与记忆" aria-label="管理资产与记忆">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button class="btn-avatar-action btn-avatar-newchat" data-avatar-type="huang" title="新建对话" aria-label="新建对话">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>新建</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 黄铁军分身下的对话 -->
+        <div class="avatar-sub-chats">
+          <div class="sub-chat-item" data-id="huang-sub-1" data-tag="黄铁军" data-avatar-type="huang">脉冲视觉芯片应用架构讨论</div>
+          <div class="sub-chat-item" data-id="huang-sub-2" data-tag="黄铁军" data-avatar-type="huang">关于具身智能类脑路线推演</div>
+        </div>
+
+        <!-- 写诗分身 私密（有对话） -->
+        <div class="avatar-group-item" id="itemAvatarPoetry" data-avatar-type="poetry-private">
+          <div class="avatar-item-left">
+            <button class="btn-toggle-sub" title="展开/收起对话" aria-label="展开/收起对话">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="avatar-icon" style="background: linear-gradient(135deg, #0d9488, #059669);">诗</div>
+            <span class="avatar-name">写诗分身</span>
+            <span class="avatar-badge private">私密</span>
+          </div>
+          <div class="avatar-item-right">
+            <button class="btn-avatar-action btn-avatar-manage" data-manage-name="写诗分身 (私密)" title="管理资产与记忆" aria-label="管理资产与记忆">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button class="btn-avatar-action btn-avatar-newchat" data-avatar-type="poetry-private" title="新建对话" aria-label="新建对话">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>新建</span>
+            </button>
+          </div>
+        </div>
+        <div class="avatar-sub-chats">
+          <div class="sub-chat-item" data-id="poetry-sub-1" data-tag="写诗分身" data-avatar-type="poetry-private">七言绝句韵律与意境推敲</div>
+          <div class="sub-chat-item" data-id="poetry-sub-2" data-tag="写诗分身" data-avatar-type="poetry-private">现代哲理诗《时间的纹理》创作</div>
+        </div>
+      </div>
+
+      <!-- 底部历史对话 -->
+      <div>
+        <div class="sidebar-section-title">历史对话</div>
+        <div class="history-list">
+          <div class="history-item" data-id="hist-1" data-tag="MyAgent" data-title="智源大会发言提纲整理">
+            <span class="history-tag">【MyAgent】</span>
+            <span class="history-text">智源大会发言提纲整理</span>
+          </div>
+          <div class="history-item" data-id="hist-2" data-tag="王仲远" data-avatar-type="wang" data-title="多模态大模型前沿学术研讨">
+            <span class="history-tag">【王仲远】</span>
+            <span class="history-text">多模态大模型前沿学术研讨</span>
+          </div>
+          <div class="history-item" data-id="hist-3" data-tag="MyAgent" data-title="周五学术沙龙与日程规划">
+            <span class="history-tag">【MyAgent】</span>
+            <span class="history-text">周五学术沙龙与日程规划</span>
+          </div>
+          <div class="history-item" data-id="hist-4" data-tag="王仲远" data-avatar-type="wang" data-title="具身具脑技术协同可行性方案">
+            <span class="history-tag">【王仲远】</span>
+            <span class="history-text">具身具脑技术协同可行性方案</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 右侧主区域 -->
+  <main class="main-container">
+
+    <!-- 视图1：顶层纯新建对话（极简：仅输入框 + 发送按钮） -->
+    <section class="view-new-chat-minimal" id="viewNewChatMinimal">
+      <div class="minimal-input-box">
+        <input type="text" id="minimalChatInput" placeholder="给 MyAgent 发送消息..." />
+        <button class="btn-send" id="btnSendMinimal">发送</button>
+      </div>
+    </section>
+
+    <!-- 视图2：点击AI分身新建对话（顶部专家信息卡片 + 下方输入框） -->
+    <section class="view-avatar-new-chat" id="viewAvatarNewChat">
+      <div class="expert-card">
+        <div class="expert-avatar-large" id="expertAvatarLarge">黄</div>
+        <div class="expert-info">
+          <div class="expert-header">
+            <h2 class="expert-name" id="expertName">黄铁军</h2>
+            <span class="expert-badge" id="expertBadge">公开</span>
+          </div>
+          <div class="expert-title" id="expertTitle">智源研究院学术顾问 · 北京大学计算机学院教授 · 类脑计算与脉冲视觉专家</div>
+          <p class="expert-desc" id="expertDesc">
+            长期从事视觉信息处理与类脑智能研究，主持研制超高速脉冲视觉芯片与“天眸芯”系统。此AI分身融合了黄铁军教授在类脑视觉、神经形态计算与人工生命等领域的学术见解与公开论述。
+          </p>
+        </div>
+      </div>
+
+      <div class="avatar-chat-bottom">
+        <div class="minimal-input-box" style="max-width: 100%;">
+          <input type="text" id="avatarChatInput" placeholder="向 黄铁军 分身请教问题..." />
+          <button class="btn-send" id="btnSendAvatar">发送</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视图3：分身管理（知识库与记忆，支持设置公开/仅自己可见） -->
+    <section class="view-avatar-manage" id="viewAvatarManage">
+      <!-- 顶部当前各个分身小卡片快捷切换（暂时注释）
+      <div class="manage-avatar-switcher" id="manageAvatarSwitcher">
+        <div class="manage-avatar-card active" data-avatar-type="huang">
+          <div class="manage-avatar-card-icon" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">黄</div>
+          <div class="manage-avatar-card-info">
+            <div class="manage-avatar-card-title">
+              <span class="manage-avatar-card-name">黄铁军</span>
+              <span class="avatar-badge">公开</span>
+            </div>
+            <div class="manage-avatar-card-desc">脉冲视觉芯片与具身智能</div>
+          </div>
+          <span class="manage-avatar-card-check">✓</span>
+        </div>
+
+        <div class="manage-avatar-card" data-avatar-type="poetry-private">
+          <div class="manage-avatar-card-icon" style="background: linear-gradient(135deg, #0d9488, #059669);">诗</div>
+          <div class="manage-avatar-card-info">
+            <div class="manage-avatar-card-title">
+              <span class="manage-avatar-card-name">写诗分身</span>
+              <span class="avatar-badge private">私密</span>
+            </div>
+            <div class="manage-avatar-card-desc">古典诗律与现代意象创作</div>
+          </div>
+          <span class="manage-avatar-card-check">✓</span>
+        </div>
+
+        新建分身虚线卡片
+        <div class="manage-avatar-card manage-avatar-card-add" id="manageBtnAddAvatar" title="新建分身">
+          <div class="manage-avatar-add-icon">+</div>
+          <span class="manage-avatar-add-text">新建分身</span>
+        </div>
+      </div>
+      -->
+
+      <div class="manage-header">
+        <div>
+          <h2 class="manage-title" id="manageTitle">黄铁军 · 分身管理</h2>
+          <p class="manage-subtitle">管理该AI分身所挂载的知识资产与记忆，可按需切换可见范围</p>
+        </div>
+      </div>
+
+      <!-- Tab 切换 -->
+      <div class="manage-tabs">
+        <button class="tab-btn active" id="tabBtnKnowledge">知识库 (<span id="kbCount">3</span>)</button>
+        <button class="tab-btn" id="tabBtnMemory">记忆 (<span id="memCount">3</span>)</button>
+        <button class="tab-btn" id="tabBtnSettings">管理</button>
+      </div>
+
+      <!-- 知识库列表 -->
+      <div class="assets-list" id="knowledgeList">
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">超高速脉冲视觉芯片系统设计与原理.pdf</div>
+            <div class="asset-meta">格式：PDF · 大小：14.2 MB · 上传时间：2026-08-15</div>
+          </div>
+          <button class="visibility-toggle-btn public" onclick="toggleVisibility(this)">
+            <span>🌐</span>
+            <span class="vis-text">公开</span>
+          </button>
+        </div>
+
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">具身智能与神经形态芯片前沿洞察.docx</div>
+            <div class="asset-meta">格式：Word · 大小：3.8 MB · 上传时间：2026-08-20</div>
+          </div>
+          <button class="visibility-toggle-btn public" onclick="toggleVisibility(this)">
+            <span>🌐</span>
+            <span class="vis-text">公开</span>
+          </button>
+        </div>
+
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">个人学术手稿与未公开实验纪要</div>
+            <div class="asset-meta">格式：Markdown · 大小：850 KB · 上传时间：2026-09-02</div>
+          </div>
+          <button class="visibility-toggle-btn private" onclick="toggleVisibility(this)">
+            <span>🔒</span>
+            <span class="vis-text">仅自己可见</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 记忆列表 -->
+      <div class="assets-list" id="memoryList" style="display: none;">
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">思考范式偏好：坚持第一性原理与生物感知机制启发的计算体系</div>
+            <div class="asset-meta">记忆类型：认知原则 · 更新时间：2026-09-10</div>
+          </div>
+          <button class="visibility-toggle-btn public" onclick="toggleVisibility(this)">
+            <span>🌐</span>
+            <span class="vis-text">公开</span>
+          </button>
+        </div>
+
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">解答偏好：倾向于结合系统架构图与底层脉冲信号时序分析具体问题</div>
+            <div class="asset-meta">记忆类型：表达习惯 · 更新时间：2026-09-12</div>
+          </div>
+          <button class="visibility-toggle-btn public" onclick="toggleVisibility(this)">
+            <span>🌐</span>
+            <span class="vis-text">公开</span>
+          </button>
+        </div>
+
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">视网膜仿生光电传感器低功耗研发进展与实验盲点</div>
+            <div class="asset-meta">记忆类型：工作备忘 · 更新时间：2026-09-18</div>
+          </div>
+          <button class="visibility-toggle-btn private" onclick="toggleVisibility(this)">
+            <span>🔒</span>
+            <span class="vis-text">仅自己可见</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 管理设置列表 -->
+      <div class="assets-list" id="settingsList" style="display: none;">
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">分身公开状态</div>
+            <div class="asset-meta">开启后分身将展示在AI分身广场，允许其他用户体验；关闭后仅自己可见</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="shelfStatusText" style="font-size: 13px; font-weight: 500; color: var(--tag-public-text);">公开</span>
+            <label class="switch">
+              <input type="checkbox" id="shelfToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视图4：通用对话历史详情 -->
+    <section class="view-chat-detail" id="viewChatDetail">
+      <div class="chat-detail-header">
+        <span class="chat-detail-tag" id="detailTag">【MyAgent】</span>
+        <span class="chat-detail-title" id="detailTitle">对话标题</span>
+      </div>
+
+      <!-- 分身信息卡片（仅在分身对话时显示） -->
+      <div class="expert-card chat-detail-avatar-card" id="chatDetailAvatarCard" style="display: none;">
+        <div class="expert-avatar-large" id="detailCardAvatar">黄</div>
+        <div class="expert-info">
+          <div class="expert-header">
+            <h2 class="expert-name" id="detailCardName">黄铁军</h2>
+            <span class="expert-badge" id="detailCardBadge">公开</span>
+          </div>
+          <div class="expert-title" id="detailCardTitle">智源研究院学术顾问 · 北京大学计算机学院教授 · 类脑计算与脉冲视觉专家</div>
+          <p class="expert-desc" id="detailCardDesc">
+            长期从事视觉信息处理与类脑智能研究，主持研制超高速脉冲视觉芯片与“天眸芯”系统。此AI分身融合了黄铁军教授在类脑视觉、神经形态计算与人工生命等领域的学术见解与公开论述。
+          </p>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <!-- 动态装填 -->
+      </div>
+
+      <div class="minimal-input-box" style="max-width: 100%;">
+        <input type="text" placeholder="输入回复内容..." />
+        <button class="btn-send">发送</button>
+      </div>
+    </section>
+
+    <!-- 视图5：AI分身广场 -->
+    <section class="view-avatar-plaza" id="viewAvatarPlaza">
+      <div class="plaza-header">
+        <h2 class="plaza-title">AI分身广场</h2>
+        <p class="plaza-subtitle">浏览与体验智源学者与专家的公开AI分身</p>
+      </div>
+
+      <div class="plaza-grid">
+        <div class="plaza-card" id="plazaCardHuang">
+          <div class="plaza-card-top">
+            <div class="avatar-icon" style="width: 40px; height: 40px; font-size: 16px;">黄</div>
+            <div class="plaza-card-info">
+              <h3>黄铁军</h3>
+              <p>类脑计算与脉冲视觉专家</p>
+            </div>
+          </div>
+          <p class="plaza-card-desc">探索超高速脉冲视觉芯片与生物启发式类脑智能体系。</p>
+        </div>
+
+        <div class="plaza-card" id="plazaCardWang">
+          <div class="plaza-card-top">
+            <div class="avatar-icon" style="width: 40px; height: 40px; font-size: 16px; background: linear-gradient(135deg, #059669, #10b981);">王</div>
+            <div class="plaza-card-info">
+              <h3>王仲远</h3>
+              <p>多模态与大模型系统专家</p>
+            </div>
+          </div>
+          <p class="plaza-card-desc">深入研讨大规模多模态模型前沿发展与具身计算实践。</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // 视图引用
+    const viewNewChatMinimal = document.getElementById('viewNewChatMinimal');
+    const viewAvatarNewChat = document.getElementById('viewAvatarNewChat');
+    const viewAvatarManage = document.getElementById('viewAvatarManage');
+    const viewChatDetail = document.getElementById('viewChatDetail');
+    const viewAvatarPlaza = document.getElementById('viewAvatarPlaza');
+
+    // 侧边栏按钮引用
+    const btnSidebarNewChat = document.getElementById('btnSidebarNewChat');
+    const btnSidebarPlaza = document.getElementById('btnSidebarPlaza');
+    const itemAvatarHuang = document.getElementById('itemAvatarHuang');
+    const btnManageHuang = document.getElementById('btnManageHuang');
+    const plazaCardHuang = document.getElementById('plazaCardHuang');
+    const plazaCardWang = document.getElementById('plazaCardWang');
+    const itemAvatarPoetry = document.getElementById('itemAvatarPoetry');
+
+    // 输入与发送引用
+    const minimalChatInput = document.getElementById('minimalChatInput');
+    const btnSendMinimal = document.getElementById('btnSendMinimal');
+    const avatarChatInput = document.getElementById('avatarChatInput');
+    const btnSendAvatar = document.getElementById('btnSendAvatar');
+
+    let currentAvatarType = 'huang';
+
+    // 分身详情配置表
+    const AVATAR_PROFILES = {
+      'huang': {
+        avatarText: '黄',
+        avatarBg: 'var(--primary)',
+        name: '黄铁军',
+        badge: '公开',
+        isPrivate: false,
+        title: '智源研究院学术顾问 · 北京大学计算机学院教授 · 类脑计算与脉冲视觉专家',
+        desc: '长期从事视觉信息处理与类脑智能研究，主持研制超高速脉冲视觉芯片与“天眸芯”系统。此AI分身融合了黄铁军教授在类脑视觉、神经形态计算与人工生命等领域的学术见解与公开论述。',
+        placeholder: '向 黄铁军 分身请教问题...'
+      },
+      'poetry-private': {
+        avatarText: '诗',
+        avatarBg: 'linear-gradient(135deg, #0d9488, #059669)',
+        name: '写诗分身',
+        badge: '私密',
+        isPrivate: true,
+        title: '文学与韵律创作助手 · 诗词鉴赏与现代诗生成',
+        desc: '专精于古典诗词格律（平仄、押韵、对仗）与现代抒情、哲理诗歌的创作与润色，助您捕捉灵感与修辞意境。',
+        placeholder: '向 写诗分身 抛出一个意象或诗歌主题...'
+      },
+      'wang': {
+        avatarText: '王',
+        avatarBg: 'linear-gradient(135deg, #059669, #10b981)',
+        name: '王仲远',
+        badge: '公开',
+        isPrivate: false,
+        title: '智源研究院院长 · 清华大学惠妍讲席教授 · 多模态与大模型系统专家',
+        desc: '长期致力于知识图谱、多模态大模型与具身智能系统的学术创新与产业化应用，主导推动悟道大模型体系研发。此AI分身融合了王仲远博士在大模型工程化、多模态智能与具身协同等领域的学术洞察与公开演讲论述。',
+        placeholder: '向 王仲远 院长请教多模态与大模型问题...'
+      }
+    };
+
+    // 隐藏全部主区域视图
+    function hideAllViews() {
+      viewNewChatMinimal.style.display = 'none';
+      viewAvatarNewChat.style.display = 'none';
+      viewAvatarManage.style.display = 'none';
+      viewChatDetail.style.display = 'none';
+      viewAvatarPlaza.style.display = 'none';
+    }
+
+    // 清除侧边栏选中高亮
+    function clearActiveStates() {
+      document.querySelectorAll('.tab-nav-item, .avatar-group-item, .sub-chat-item, .history-item').forEach(el => {
+        el.classList.remove('active');
+        if (el.id === 'btnSidebarNewChat') {
+          el.classList.remove('primary-highlight');
+        }
+      });
+    }
+
+    // 切换至指定分身的新建对话页
+    function switchToAvatar(avatarType) {
+      currentAvatarType = avatarType;
+      clearActiveStates();
+      hideAllViews();
+
+      const profile = AVATAR_PROFILES[avatarType];
+      if (profile) {
+        const avatarLarge = document.getElementById('expertAvatarLarge');
+        avatarLarge.textContent = profile.avatarText;
+        avatarLarge.style.background = profile.avatarBg;
+
+        document.getElementById('expertName').textContent = profile.name;
+
+        const badgeEl = document.getElementById('expertBadge');
+        badgeEl.textContent = profile.badge;
+        if (profile.isPrivate) {
+          badgeEl.classList.add('private');
+        } else {
+          badgeEl.classList.remove('private');
+        }
+
+        document.getElementById('expertTitle').textContent = profile.title;
+        document.getElementById('expertDesc').textContent = profile.desc;
+        document.getElementById('avatarChatInput').placeholder = profile.placeholder;
+      }
+
+      viewAvatarNewChat.style.display = 'flex';
+    }
+
+    // 1. 点击侧边栏顶部“新建对话”：右边仅输入框与发送按钮
+    btnSidebarNewChat.addEventListener('click', () => {
+      clearActiveStates();
+      btnSidebarNewChat.classList.add('active', 'primary-highlight');
+      hideAllViews();
+      viewNewChatMinimal.style.display = 'flex';
+    });
+
+    // 2. 点击“AI分身广场”
+    btnSidebarPlaza.addEventListener('click', () => {
+      clearActiveStates();
+      btnSidebarPlaza.classList.add('active');
+      hideAllViews();
+      viewAvatarPlaza.style.display = 'flex';
+    });
+
+    // 广场中点击黄铁军卡片直达其分身
+    plazaCardHuang.addEventListener('click', () => {
+      itemAvatarHuang.classList.add('active');
+      switchToAvatar('huang');
+    });
+
+    // 广场中点击王仲远卡片直达其专家新建对话
+    if (plazaCardWang) {
+      plazaCardWang.addEventListener('click', () => {
+        switchToAvatar('wang');
+      });
+    }
+
+    // 3. 分身子对话展开/收起切换函数
+    function toggleAvatarSubChats(avatarItem) {
+      if (!avatarItem) return;
+      const subChats = avatarItem.nextElementSibling;
+      if (subChats && subChats.classList.contains('avatar-sub-chats')) {
+        const isHidden = subChats.style.display === 'none';
+        subChats.style.display = isHidden ? '' : 'none';
+        avatarItem.classList.toggle('collapsed', !isHidden);
+        const toggleBtn = avatarItem.querySelector('.btn-toggle-sub');
+        if (toggleBtn) {
+          toggleBtn.classList.toggle('collapsed', !isHidden);
+        }
+      }
+    }
+
+    // 点击分身项：执行展开/收起
+    document.querySelectorAll('.avatar-group-item').forEach(item => {
+      item.addEventListener('click', () => {
+        toggleAvatarSubChats(item);
+      });
+    });
+
+    // 分身管理数据配置
+    const MANAGE_AVATAR_DATA = {
+      'huang': {
+        name: '黄铁军',
+        title: '黄铁军 · 分身管理',
+        subtitle: '管理该AI分身所挂载的知识资产与记忆，可按需切换可见范围',
+        isShelfOn: true,
+        knowledge: [
+          { title: '超高速脉冲视觉芯片系统设计与原理.pdf', meta: '格式：PDF · 大小：14.2 MB · 上传时间：2026-08-15', isPublic: true },
+          { title: '具身智能与神经形态芯片前沿洞察.docx', meta: '格式：Word · 大小：3.8 MB · 上传时间：2026-08-20', isPublic: true },
+          { title: '个人学术手稿与未公开实验纪要', meta: '格式：Markdown · 大小：850 KB · 上传时间：2026-09-02', isPublic: false }
+        ],
+        memory: [
+          { title: '思考范式偏好：坚持第一性原理与生物感知机制启发的计算体系', meta: '记忆类型：认知原则 · 更新时间：2026-09-10', isPublic: true },
+          { title: '解答偏好：倾向于结合系统架构图与底层脉冲信号时序分析具体问题', meta: '记忆类型：表达习惯 · 更新时间：2026-09-12', isPublic: true },
+          { title: '视网膜仿生光电传感器低功耗研发进展与实验盲点', meta: '记忆类型：工作备忘 · 更新时间：2026-09-18', isPublic: false }
+        ]
+      },
+      'poetry-private': {
+        name: '写诗分身 (私密)',
+        title: '写诗分身 (私密) · 分身管理',
+        subtitle: '管理该AI分身所挂载的诗歌格律知识与创作灵感记忆',
+        isShelfOn: false,
+        knowledge: [
+          { title: '平水韵与词林正韵格律对照汇编.pdf', meta: '格式：PDF · 大小：5.6 MB · 上传时间：2026-09-01', isPublic: true },
+          { title: '现代哲理诗与意象修辞创作范本.docx', meta: '格式：Word · 大小：2.1 MB · 上传时间：2026-09-05', isPublic: true },
+          { title: '个人未公开诗稿与意象灵感笔记', meta: '格式：Markdown · 大小：320 KB · 上传时间：2026-09-15', isPublic: false }
+        ],
+        memory: [
+          { title: '创作风格偏好：追求意境深远，偏好里尔克式沉思与古典工整对仗结合', meta: '记忆类型：风格特征 · 更新时间：2026-09-12', isPublic: true },
+          { title: '韵律校准偏好：严格校验押韵平仄与绝句颔颈联对仗，标注文学背景注释', meta: '记忆类型：韵律法则 · 更新时间：2026-09-14', isPublic: true },
+          { title: '灵感手记：秋夜脉冲探索与时间纹理意象沉淀', meta: '记忆类型：工作备忘 · 更新时间：2026-09-19', isPublic: false }
+        ]
+      }
+    };
+
+    let currentManageAvatarKey = 'huang';
+
+    function renderAssetCard(item) {
+      const pubClass = item.isPublic ? 'public' : 'private';
+      const icon = item.isPublic ? '🌐' : '🔒';
+      const text = item.isPublic ? '公开' : '仅自己可见';
+      return `
+        <div class="asset-card">
+          <div class="asset-main">
+            <div class="asset-title">${item.title}</div>
+            <div class="asset-meta">${item.meta}</div>
+          </div>
+          <button class="visibility-toggle-btn ${pubClass}" onclick="toggleVisibility(this)">
+            <span>${icon}</span>
+            <span class="vis-text">${text}</span>
+          </button>
+        </div>
+      `;
+    }
+
+    // 切换指定分身的管理视图
+    function switchManageAvatar(avatarType) {
+      const data = MANAGE_AVATAR_DATA[avatarType];
+      if (!data) return;
+      currentManageAvatarKey = avatarType;
+
+      // 1. 更新顶部小卡片选中高亮态
+      document.querySelectorAll('.manage-avatar-card[data-avatar-type]').forEach(card => {
+        card.classList.toggle('active', card.dataset.avatarType === avatarType);
+      });
+
+      // 2. 同步侧边栏分身高亮
+      clearActiveStates();
+      if (avatarType === 'huang' && itemAvatarHuang) {
+        itemAvatarHuang.classList.add('active');
+      } else if (avatarType === 'poetry-private' && itemAvatarPoetry) {
+        itemAvatarPoetry.classList.add('active');
+      }
+
+      // 3. 更新标题与副标题
+      const titleEl = document.getElementById('manageTitle');
+      if (titleEl) titleEl.textContent = data.title;
+      const subtitleEl = document.querySelector('.manage-subtitle');
+      if (subtitleEl) subtitleEl.textContent = data.subtitle;
+
+      // 4. 重新装填知识库与记忆资产列表
+      if (knowledgeList) {
+        knowledgeList.innerHTML = data.knowledge.map(renderAssetCard).join('');
+        const kbCountEl = document.getElementById('kbCount');
+        if (kbCountEl) kbCountEl.textContent = data.knowledge.length;
+      }
+      if (memoryList) {
+        memoryList.innerHTML = data.memory.map(renderAssetCard).join('');
+        const memCountEl = document.getElementById('memCount');
+        if (memCountEl) memCountEl.textContent = data.memory.length;
+      }
+
+      // 5. 同步更新管理Tab中的公开/私密开关状态
+      if (shelfToggle && shelfStatusText) {
+        shelfToggle.checked = data.isShelfOn;
+        shelfStatusText.textContent = data.isShelfOn ? '公开' : '私密';
+        shelfStatusText.style.color = data.isShelfOn ? 'var(--tag-public-text)' : 'var(--text-dim)';
+      }
+    }
+
+    // 4. 点击分身右侧 hover 的“管理”icon
+    document.querySelectorAll('.btn-avatar-manage, .btn-manage').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止冒泡触发折叠展开
+        hideAllViews();
+        const parentItem = btn.closest('.avatar-group-item');
+        const avatarType = parentItem && parentItem.id === 'itemAvatarPoetry' ? 'poetry-private' : (parentItem && parentItem.dataset.avatarType ? parentItem.dataset.avatarType : 'huang');
+        switchManageAvatar(avatarType);
+        viewAvatarManage.style.display = 'flex';
+      });
+    });
+
+    // 5. 点击分身右侧 hover 的“新建对话”icon
+    document.querySelectorAll('.btn-avatar-newchat').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止冒泡触发折叠展开
+        const parentItem = btn.closest('.avatar-group-item');
+        const avatarType = btn.dataset.avatarType || (parentItem && parentItem.dataset.avatarType) || 'huang';
+        clearActiveStates();
+        if (parentItem) parentItem.classList.add('active');
+        switchToAvatar(avatarType);
+      });
+    });
+
+    // 6. 展开/收起分身对话 icon 点击
+    document.querySelectorAll('.btn-toggle-sub').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const parentItem = btn.closest('.avatar-group-item');
+        toggleAvatarSubChats(parentItem);
+      });
+    });
+
+    // 点击管理页顶部的分身小卡片：直接切换到对应分身管理内容
+    document.querySelectorAll('.manage-avatar-card[data-avatar-type]').forEach(card => {
+      card.addEventListener('click', () => {
+        const avatarType = card.dataset.avatarType;
+        switchManageAvatar(avatarType);
+      });
+    });
+
+    // 新建分身虚线卡片点击
+    const manageBtnAddAvatar = document.getElementById('manageBtnAddAvatar');
+    if (manageBtnAddAvatar) {
+      manageBtnAddAvatar.addEventListener('click', () => {
+        if (btnCreateAvatar) {
+          btnCreateAvatar.click();
+        }
+      });
+    }
+
+    // 知识库、记忆与管理 Tab 切换
+    const tabBtnKnowledge = document.getElementById('tabBtnKnowledge');
+    const tabBtnMemory = document.getElementById('tabBtnMemory');
+    const tabBtnSettings = document.getElementById('tabBtnSettings');
+    const knowledgeList = document.getElementById('knowledgeList');
+    const memoryList = document.getElementById('memoryList');
+    const settingsList = document.getElementById('settingsList');
+
+    tabBtnKnowledge.addEventListener('click', () => {
+      tabBtnKnowledge.classList.add('active');
+      tabBtnMemory.classList.remove('active');
+      tabBtnSettings.classList.remove('active');
+      knowledgeList.style.display = 'flex';
+      memoryList.style.display = 'none';
+      settingsList.style.display = 'none';
+    });
+
+    tabBtnMemory.addEventListener('click', () => {
+      tabBtnMemory.classList.add('active');
+      tabBtnKnowledge.classList.remove('active');
+      tabBtnSettings.classList.remove('active');
+      memoryList.style.display = 'flex';
+      knowledgeList.style.display = 'none';
+      settingsList.style.display = 'none';
+    });
+
+    tabBtnSettings.addEventListener('click', () => {
+      tabBtnSettings.classList.add('active');
+      tabBtnKnowledge.classList.remove('active');
+      tabBtnMemory.classList.remove('active');
+      settingsList.style.display = 'flex';
+      knowledgeList.style.display = 'none';
+      memoryList.style.display = 'none';
+    });
+
+    // 公开/私密开关逻辑
+    const shelfToggle = document.getElementById('shelfToggle');
+    const shelfStatusText = document.getElementById('shelfStatusText');
+
+    if (shelfToggle) {
+      shelfToggle.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        if (MANAGE_AVATAR_DATA[currentManageAvatarKey]) {
+          MANAGE_AVATAR_DATA[currentManageAvatarKey].isShelfOn = isChecked;
+        }
+        const avatarBadge = itemAvatarHuang ? itemAvatarHuang.querySelector('.avatar-badge') : null;
+        const expertBadge = document.getElementById('expertBadge');
+
+        if (isChecked) {
+          shelfStatusText.textContent = '公开';
+          shelfStatusText.style.color = 'var(--tag-public-text)';
+          if (avatarBadge) {
+            avatarBadge.textContent = '公开';
+            avatarBadge.classList.remove('private');
+            avatarBadge.style.backgroundColor = 'var(--tag-public-bg)';
+            avatarBadge.style.color = 'var(--tag-public-text)';
+          }
+          if (expertBadge) {
+            expertBadge.textContent = '公开';
+            expertBadge.classList.remove('private');
+            expertBadge.style.backgroundColor = 'var(--tag-public-bg)';
+            expertBadge.style.color = 'var(--tag-public-text)';
+          }
+        } else {
+          shelfStatusText.textContent = '私密';
+          shelfStatusText.style.color = 'var(--text-dim)';
+          if (avatarBadge) {
+            avatarBadge.textContent = '私密';
+            avatarBadge.classList.add('private');
+            avatarBadge.style.backgroundColor = 'var(--tag-private-bg)';
+            avatarBadge.style.color = 'var(--tag-private-text)';
+          }
+          if (expertBadge) {
+            expertBadge.textContent = '私密';
+            expertBadge.classList.add('private');
+            expertBadge.style.backgroundColor = 'var(--tag-private-bg)';
+            expertBadge.style.color = 'var(--tag-private-text)';
+          }
+        }
+      });
+    }
+
+    // 新建分身按钮点击阻止冒泡
+    const btnCreateAvatar = document.getElementById('btnCreateAvatar');
+    if (btnCreateAvatar) {
+      btnCreateAvatar.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    // 切换“公开”与“仅自己可见”
+    function toggleVisibility(button) {
+      const isPublic = button.classList.contains('public');
+      const textSpan = button.querySelector('.vis-text');
+      const iconSpan = button.querySelector('span:first-child');
+
+      if (isPublic) {
+        button.classList.remove('public');
+        button.classList.add('private');
+        iconSpan.textContent = '🔒';
+        textSpan.textContent = '仅自己可见';
+      } else {
+        button.classList.remove('private');
+        button.classList.add('public');
+        iconSpan.textContent = '🌐';
+        textSpan.textContent = '公开';
+      }
+    }
+
+    // 渲染对话详情页顶部的分身信息卡片
+    function renderDetailAvatarCard(avatarTypeOrTag) {
+      const cardEl = document.getElementById('chatDetailAvatarCard');
+      if (!cardEl) return;
+
+      let type = avatarTypeOrTag;
+      if (!AVATAR_PROFILES[type]) {
+        if (type === '王仲远') type = 'wang';
+        else if (type === '写诗分身') type = 'poetry-private';
+        else if (type === '黄铁军' || type === '黄铁军(公开)' || type === '黄铁军(私密)') type = AVATAR_PROFILES['huang'] ? 'huang' : 'huang-public';
+        else type = null;
+      }
+
+      const profile = AVATAR_PROFILES[type];
+      if (profile) {
+        const avatarEl = document.getElementById('detailCardAvatar');
+        const nameEl = document.getElementById('detailCardName');
+        const badgeEl = document.getElementById('detailCardBadge');
+        const titleEl = document.getElementById('detailCardTitle');
+        const descEl = document.getElementById('detailCardDesc');
+
+        if (avatarEl) {
+          avatarEl.textContent = profile.avatarText;
+          avatarEl.style.background = profile.avatarBg;
+        }
+        if (nameEl) nameEl.textContent = profile.name;
+        if (badgeEl) {
+          badgeEl.textContent = profile.badge;
+          badgeEl.classList.toggle('private', !!profile.isPrivate);
+        }
+        if (titleEl) titleEl.textContent = profile.title;
+        if (descEl) descEl.textContent = profile.desc;
+
+        cardEl.style.display = 'flex';
+      } else {
+        cardEl.style.display = 'none';
+      }
+    }
+
+    // 5. 点击分身下的对话
+    document.querySelectorAll('.sub-chat-item').forEach(item => {
+      item.addEventListener('click', () => {
+        clearActiveStates();
+        item.classList.add('active');
+        hideAllViews();
+
+        const title = item.textContent.trim();
+        const tag = item.dataset.tag || '黄铁军';
+        const avatarType = item.dataset.avatarType || tag;
+        document.getElementById('detailTag').textContent = `【${tag}】`;
+        document.getElementById('detailTitle').textContent = title;
+
+        renderDetailAvatarCard(avatarType);
+
+        const id = item.dataset.id;
+        let userMsg = `请问${title}的核心逻辑应该如何拆解？`;
+        let agentMsg = `在神经拟态与类脑计算的框架下，我们首先要关注信息的时空编码与脉冲发射频率。区别于传统人工神经网络的帧驱动机制，类脑体系依靠离散事件流直接反映动态变化，具有极低功耗与纳秒级时延优势。`;
+
+        if (id === 'huang-sub-2') {
+          userMsg = `关于具身智能的类脑路线，当前主要的瓶颈和突破口在哪些层面？`;
+          agentMsg = `主要在于多模态传感脉冲化融合与实时闭环控制。目前天眸芯在端侧感知上实现了超低时延，下一步的关键在于将运动控制回路与类脑决策网络进行毫秒级的低延迟对齐。`;
+        } else if (id === 'poetry-sub-1') {
+          userMsg = `写一首描写秋夜智源学者潜心探索脑科学与AI的七言绝句，要求押平水韵十一真韵。`;
+          agentMsg = `秋夜研思客意深，<br/>微毫脉冲探灵真。<br/>机心欲解千回意，<br/>冷月霜华照赤辰。<br/><br/>*注：押平水韵上平十一真韵（深、真、辰），颔联与颈联对仗工整，借微毫脉冲喻类脑探索。*`;
+        } else if (id === 'poetry-sub-2') {
+          userMsg = `为我的散文诗集写一段关于时间与计算的序诗，风格偏向里尔克或博尔赫斯。`;
+          agentMsg = `不是钟表里金属齿轮的咬合，<br/>是光子撞击硅片时的那一瞬战栗。<br/>我们在无声的数据深渊里垂钓，<br/>每一束脉冲，都是时间未曾言说的倒影——<br/>世界在计算中老去，<br/>而思维在此刻新生。`;
+        }
+
+        document.getElementById('chatMessages').innerHTML = `
+          <div class="msg-bubble msg-user">${userMsg}</div>
+          <div class="msg-bubble msg-agent">${agentMsg}</div>
+        `;
+        viewChatDetail.style.display = 'flex';
+      });
+    });
+
+    // 6. 点击历史对话
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        clearActiveStates();
+        item.classList.add('active');
+        hideAllViews();
+
+        const tag = item.dataset.tag;
+        const title = item.dataset.title;
+        const avatarType = item.dataset.avatarType || tag;
+        document.getElementById('detailTag').textContent = `【${tag}】`;
+        document.getElementById('detailTitle').textContent = title;
+
+        renderDetailAvatarCard(avatarType);
+
+        document.getElementById('chatMessages').innerHTML = `
+          <div class="msg-bubble msg-user">帮我梳理一下关于“${title}”的主要要点。</div>
+          <div class="msg-bubble msg-agent">已为您整理相关核心记录与行动项：<br/>1. 明确核心技术路线与分阶段目标；<br/>2. 联合相关团队进行算力与实验平台对齐；<br/>3. 输出可落地的技术评测方案。</div>
+        `;
+        viewChatDetail.style.display = 'flex';
+      });
+    });
+
+    // 7. 发送消息与会话沉淀
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function openChatDetail(tag, title, userMsg, avatarType) {
+      clearActiveStates();
+      hideAllViews();
+      document.getElementById('detailTag').textContent = `【${tag}】`;
+      document.getElementById('detailTitle').textContent = title;
+      renderDetailAvatarCard(avatarType || tag);
+      document.getElementById('chatMessages').innerHTML = `
+        <div class="msg-bubble msg-user">${escapeHtml(userMsg)}</div>
+      `;
+      viewChatDetail.style.display = 'flex';
+    }
+
+    function sendNewChatMessage(sourceType) {
+      let text = '';
+      let tag = '';
+      let isAvatarSub = false;
+      let parentSubContainer = null;
+
+      if (sourceType === 'minimal') {
+        text = minimalChatInput ? minimalChatInput.value.trim() : '';
+        if (!text) return;
+        minimalChatInput.value = '';
+        tag = 'MyAgent';
+        isAvatarSub = false;
+      } else {
+        const input = document.getElementById('avatarChatInput');
+        text = input ? input.value.trim() : '';
+        if (!text) return;
+        input.value = '';
+
+        if (currentAvatarType === 'wang') {
+          tag = '王仲远';
+          isAvatarSub = false;
+        } else if (currentAvatarType === 'huang') {
+          tag = '黄铁军';
+          isAvatarSub = true;
+          parentSubContainer = itemAvatarHuang ? itemAvatarHuang.nextElementSibling : null;
+        } else if (currentAvatarType === 'poetry-private') {
+          tag = '写诗分身';
+          isAvatarSub = true;
+          parentSubContainer = itemAvatarPoetry ? itemAvatarPoetry.nextElementSibling : null;
+        }
+      }
+
+      if (isAvatarSub && parentSubContainer && parentSubContainer.classList.contains('avatar-sub-chats')) {
+        const subItem = document.createElement('div');
+        subItem.className = 'sub-chat-item active';
+        subItem.dataset.id = 'sub-' + Date.now();
+        subItem.dataset.tag = tag;
+        subItem.dataset.avatarType = currentAvatarType;
+        subItem.textContent = text;
+        subItem.addEventListener('click', () => {
+          clearActiveStates();
+          subItem.classList.add('active');
+          openChatDetail(tag, text, text, currentAvatarType);
+        });
+        parentSubContainer.insertBefore(subItem, parentSubContainer.firstChild);
+        openChatDetail(tag, text, text, currentAvatarType);
+        subItem.classList.add('active');
+      } else {
+        const historyList = document.querySelector('.history-list');
+        if (historyList) {
+          const histItem = document.createElement('div');
+          histItem.className = 'history-item active';
+          histItem.dataset.id = 'hist-' + Date.now();
+          histItem.dataset.tag = tag;
+          histItem.dataset.title = text;
+          if (sourceType === 'avatar') {
+            histItem.dataset.avatarType = currentAvatarType;
+          }
+          histItem.innerHTML = `
+            <span class="history-tag">【${escapeHtml(tag)}】</span>
+            <span class="history-text">${escapeHtml(text)}</span>
+          `;
+          histItem.addEventListener('click', () => {
+            clearActiveStates();
+            histItem.classList.add('active');
+            openChatDetail(tag, text, text, histItem.dataset.avatarType);
+          });
+          historyList.insertBefore(histItem, historyList.firstChild);
+          openChatDetail(tag, text, text, histItem.dataset.avatarType);
+          histItem.classList.add('active');
+        }
+      }
+    }
+
+    if (btnSendMinimal) btnSendMinimal.addEventListener('click', () => sendNewChatMessage('minimal'));
+    if (minimalChatInput) {
+      minimalChatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendNewChatMessage('minimal');
+      });
+    }
+
+    if (btnSendAvatar) btnSendAvatar.addEventListener('click', () => sendNewChatMessage('avatar'));
+    if (avatarChatInput) {
+      avatarChatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendNewChatMessage('avatar');
+      });
+    }
+
+    // 详情页继续发送消息
+    const detailChatInput = document.querySelector('#viewChatDetail .minimal-input-box input');
+    const btnDetailSend = document.querySelector('#viewChatDetail .minimal-input-box .btn-send');
+    function sendDetailMessage() {
+      if (!detailChatInput) return;
+      const text = detailChatInput.value.trim();
+      if (!text) return;
+      const chatMessages = document.getElementById('chatMessages');
+      if (chatMessages) {
+        const userBubble = document.createElement('div');
+        userBubble.className = 'msg-bubble msg-user';
+        userBubble.textContent = text;
+        chatMessages.appendChild(userBubble);
+      }
+      detailChatInput.value = '';
+    }
+    if (btnDetailSend) btnDetailSend.addEventListener('click', sendDetailMessage);
+    if (detailChatInput) {
+      detailChatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendDetailMessage();
+      });
+    }
+
+    // 初始默认打开“新建对话”视图
+    viewNewChatMinimal.style.display = 'flex';
+  </script>
+</body>
+</html>
